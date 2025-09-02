@@ -1,0 +1,111 @@
+/* Stats */
+.stats-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+
+  .stat-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 12px;
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+
+    mat-icon { font-size: 28px; height: 28px; width: 28px; }
+
+    .value { font-size: 20px; font-weight: 700; line-height: 1; }
+    .label { font-size: 12px; opacity: 0.9; margin-top: 2px; }
+  }
+
+  .online   { background: #2e7d32; }
+  .total    { background: #1976d2; }
+  .active   { background: #ffb300; }
+  .inactive { background: #c62828; }
+}
+
+/* Top toolbar */
+.user-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  .search-field {
+    flex: 1;
+    max-width: 320px;
+    min-width: 240px;
+    mat-form-field { width: 100%; }
+  }
+
+  .add-btn {
+    background-color: #1976d2;
+    color: #fff;
+    font-weight: 600;
+    mat-icon { margin-right: 6px; }
+    &:hover { background-color: #5a37aa; }
+  }
+}
+
+/* Table look */
+.full-width-table {
+  width: 100%;
+  th { font-weight: 700; }
+
+  td, th { padding: 12px 10px; text-align: left; }
+
+  .user-cell {
+    .name { font-weight: 600; }
+    .sub  { color: #7a7a7a; font-size: 12px; margin-top: 2px; }
+  }
+
+  .email-cell { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    &-icon { font-size: 18px; height: 18px; width: 18px; }
+  }
+  .badge-ok { background: rgba(46, 125, 50, 0.12); color: #2e7d32; }
+  .badge-no { background: rgba(198, 40, 40, 0.12); color: #c62828; }
+
+  .edit-btn {
+    color: #1976d2;
+    &:hover { background-color: rgba(107, 70, 193, 0.08); }
+  }
+  .delete-btn {
+    color: #e53935;
+    &:hover { background-color: rgba(229, 57, 53, 0.08); }
+  }
+
+  button.is-active   { border-color: #2e7d32; color: #2e7d32; }
+  button.is-inactive { border-color: #e53935; color: #616161; }
+}
+
+/* Footer: paginator left + count right */
+.list-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+
+  .count {
+    color: #5f6368;
+    font-size: 13px;
+  }
+
+  ::ng-deep .mat-mdc-paginator .mat-mdc-paginator-container {
+    justify-content: flex-start; /* paginator controls on the left */
+  }
+}
+
+.muted { color: #7a7a7a; }

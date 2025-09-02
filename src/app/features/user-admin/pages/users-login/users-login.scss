@@ -1,0 +1,112 @@
+.login-container {
+  display: flex;
+  min-height: 100vh;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  .logo {
+  width: 120px;      // Adjust as needed
+  margin-bottom: 40px;
+}
+
+  .login-form {
+    flex: 1;
+    padding: 80px;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    h2 {
+      font-size: 28px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #4a5568;
+      margin-bottom: 32px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+
+      label {
+        font-size: 14px;
+        font-weight: 500;
+        margin-top: 16px;
+        margin-bottom: 4px;
+      }
+
+      input[type="email"],
+      input[type="password"] {
+        padding: 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+
+      .options {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 16px 0;
+
+        .remember {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        a {
+          font-size: 14px;
+          color: #6b46c1;
+          text-decoration: none;
+        }
+      }
+
+      .primary-btn {
+        background-color: #6b46c1;
+        color: white;
+        border: none;
+        padding: 12px;
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        margin-top: 8px;
+
+        &:hover {
+          background-color: #553c9a;
+        }
+      }
+    }
+
+    .signup {
+      margin-top: 24px;
+      font-size: 14px;
+
+      a {
+        color: #6b46c1;
+        text-decoration: none;
+        font-weight: 500;
+      }
+    }
+  }
+
+  .login-illustration {
+  flex: 1;
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d8fd 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+
+  img {
+    max-width: 90%;
+    height: auto;
+    border-radius: 12px; /* Optional: rounded corners */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Soft shadow */
+  }
+}
+
+}

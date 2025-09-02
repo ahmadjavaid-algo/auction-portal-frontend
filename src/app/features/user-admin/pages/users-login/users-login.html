@@ -1,0 +1,31 @@
+<div class="login-container">
+  <div class="login-form">
+    <h2>Welcome back</h2>
+    <p class="subtitle">Please enter your details</p>
+
+    <form (ngSubmit)="login()">
+      <label>Email address</label>
+      <input type="email" [(ngModel)]="email" name="email" required />
+
+      <label>Password</label>
+      <input type="password" [(ngModel)]="password" name="password" required />
+
+      <div class="options">
+        <label class="remember">
+          <input type="checkbox" /> Remember for 30 days
+        </label>
+        <a href="#">Forgot password</a>
+      </div>
+
+      <button type="submit" class="primary-btn">Sign in</button>
+    </form>
+
+    <div class="signup">
+      Don’t have an account? <a href="#">Sign up</a>
+    </div>
+  </div>
+
+  <div class="login-illustration">
+    <img src="https://media.istockphoto.com/id/1169397243/vector/human-resources-concept-vector-illustration.jpg?s=612x612&w=0&k=20&c=IwFeMVZa7OVr65_NsHu2zhhOOWYLJj3BuTI1hdVtb7w=" alt="Illustration" />
+  </div>
+</div>
