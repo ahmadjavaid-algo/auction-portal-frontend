@@ -26,4 +26,16 @@ export class RolesService {
     const params = new HttpParams().set('RoleId', roleId);
     return this.http.get<Role>(`${this.base}/get`, { headers: this.authHeaders(), params });
   }
+  add(role: Role): Observable<number> {
+    return this.http.post<number>(`${this.base}/add`, role, { headers: this.authHeaders() });
+  }
+
+  update(role: Role): Observable<boolean> {
+    return this.http.put<boolean>(`${this.base}/update`, role, { headers: this.authHeaders() });
+  }
+
+  activate(roleId: number, active: boolean): Observable<boolean> {
+    const payload = { roleId, active };
+    return this.http.put<boolean>(`${this.base}/activate`, payload, { headers: this.authHeaders() });
+  }
 }

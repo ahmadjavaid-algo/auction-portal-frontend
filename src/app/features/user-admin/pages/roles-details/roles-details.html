@@ -1,0 +1,128 @@
+<div class="page details-theme">
+  <!-- Back -->
+  <button mat-button class="back" (click)="back()">
+    <mat-icon>arrow_back</mat-icon>
+    Back to Roles
+  </button>
+
+  <!-- Loading -->
+  <ng-container *ngIf="loading">
+    <div class="busy">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Loading role…</span>
+    </div>
+  </ng-container>
+
+  <!-- Error -->
+  <ng-container *ngIf="!loading && error">
+    <mat-card class="error-card">
+      <mat-card-title>Error</mat-card-title>
+      <mat-card-content>{{ error }}</mat-card-content>
+      <mat-card-actions align="end">
+        <button mat-stroked-button color="primary" (click)="back()">OK</button>
+      </mat-card-actions>
+    </mat-card>
+  </ng-container>
+
+  <!-- Profile -->
+  <ng-container *ngIf="!loading && role">
+    <section class="profile-card mat-elevation-z2">
+
+      <!-- Hero / Header -->
+      <div class="hero">
+        <div class="hero-left">
+          <div class="avatar">{{ initials }}</div>
+
+          <div class="title">
+            <h1>{{ role.roleName }}</h1>
+            <div class="subtitle">[{{ role.roleCode }}]</div>
+
+            <div class="pills">
+              <span class="pill" [class.ok]="role.active" [class.no]="role.active === false">
+                <mat-icon class="pill-icn">{{ role.active ? 'check_circle' : 'pause_circle' }}</mat-icon>
+                {{ role.active ? 'Active' : 'Inactive' }}
+              </span>
+
+              <span class="pill muted">
+                <mat-icon class="pill-icn">fingerprint</mat-icon>
+                ID {{ role.roleId }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <ul class="meta">
+          <li>
+            <div class="meta-label">Code</div>
+            <div class="meta-value">{{ role.roleCode }}</div>
+          </li>
+          <li>
+            <div class="meta-label">Description</div>
+            <div class="meta-value">{{ role.description || '—' }}</div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Sections -->
+      <div class="sections">
+        <div class="section">
+          <h3><mat-icon>badge</mat-icon> Role</h3>
+          <div class="grid">
+            <div class="item">
+              <div class="label">Role name</div>
+              <div class="value">{{ role.roleName }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Role code</div>
+              <div class="value">{{ role.roleCode }}</div>
+            </div>
+            <div class="item full">
+              <div class="label">Description</div>
+              <div class="value">{{ role.description || '—' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3><mat-icon>history</mat-icon> Audit</h3>
+          <div class="grid">
+            <div class="item">
+              <div class="label">Created by</div>
+              <div class="value">{{ role.createdById ?? '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Created</div>
+              <div class="value">{{ role.createdDate ? (role.createdDate | date:'medium') : '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Modified by</div>
+              <div class="value">{{ role.modifiedById ?? '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Modified</div>
+              <div class="value">{{ role.modifiedDate ? (role.modifiedDate | date:'medium') : '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Status</div>
+              <div class="value">{{ role.active ? 'Active' : 'Inactive' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <div class="audit">
+          <div>Created by <strong>{{ role.createdById ?? '—' }}</strong></div>
+          <div>Modified by <strong>{{ role.modifiedById ?? '—' }}</strong></div>
+        </div>
+        <div class="buttons">
+          <button mat-stroked-button color="primary" (click)="back()">
+            <mat-icon>arrow_back</mat-icon>
+            Back
+          </button>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</div>

@@ -1,0 +1,162 @@
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+.layout-container {
+  display: flex;
+  min-height: 100vh;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+.sidebar {
+  background: #1976d2;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  width: 220px;
+  transition: width 0.3s ease;
+
+  &.collapsed {
+    width: 60px;
+
+    .logo span,
+    nav a span:not(.material-icons) {
+      display: none;
+    }
+
+    nav a {
+      justify-content: center;
+    }
+
+    .toggle-btn {
+      align-self: center;
+    }
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    img {
+      width: 55px;
+      height: 40px;
+    }
+
+    span {
+      font-weight: 600;
+      font-size: 18px;
+    }
+  }
+
+  .toggle-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 22px;
+    margin: 16px 0;
+    align-self: flex-end;
+  }
+
+  nav {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      padding: 8px;
+      border-radius: 4px;
+      transition: background 0.2s;
+
+      .material-icons {
+        font-size: 20px;
+      }
+
+      &.active,
+      &:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+    }
+  }
+}
+
+.main-content {
+  flex: 1;
+  background: #f9f9fc;
+  padding: 24px;
+  position: relative; // Important to ensure dropdown context
+
+  .topbar {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    position: relative;
+    z-index: 1000;
+
+    /* NEW/UPDATED: make the user area a horizontal flex row */
+    .user {
+      position: relative;
+      cursor: pointer;
+      z-index: 10000;
+      transform: translateY(-9px);
+      display: inline-flex;          /* <-- ensures horizontal layout */
+      align-items: center;           /* <-- vertical centering */
+      gap: 6px;                      /* space between name & arrow */
+      white-space: nowrap;           /* prevent wrapping under the arrow */
+
+      .name {
+        font-weight: 500;
+        color: #333;
+        line-height: 2;              /* avoid baseline drift */
+      }
+
+      /* normalize the arrow icon’s box so it aligns perfectly */
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        line-height: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        vertical-align: middle;
+      }
+
+      /* dropdown */
+      ul {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 22px;       /* a bit lower so it doesn’t touch the label */
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(0,0,0,.1);
+        list-style: none;
+        padding: 8px 0;
+        border-radius: 6px;
+        min-width: 160px;
+        z-index: 10001;
+
+        li a {
+          display: block;
+          padding: 8px 16px;
+          color: #333;
+          text-decoration: none;
+
+          &:hover { background: #eee; }
+        }
+      }
+
+      &.open ul { display: block; }
+    }
+  }
+}

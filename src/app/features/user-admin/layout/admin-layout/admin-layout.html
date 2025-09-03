@@ -1,0 +1,52 @@
+
+
+
+
+<div class="layout-container">
+  <!-- Sidebar -->
+  <aside [class.collapsed]="sidebarCollapsed" class="sidebar">
+    <div class="logo">
+      <a routerLink="/dashboard" style="display: flex; align-items: center; text-decoration: none;">
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8" alt="Logo" />
+        <span *ngIf="!sidebarCollapsed" style="margin-left: 8px; color: white;">Auction Portal</span>
+      </a>
+    </div>
+
+    <button class="toggle-btn" (click)="toggleSidebar()">
+      <span class="material-icons">{{ sidebarCollapsed ? 'menu' : 'close' }}</span>
+    </button>
+
+    <nav>
+      <a routerLink="users" routerLinkActive="active">
+        <mat-icon>people</mat-icon>
+        <span *ngIf="!sidebarCollapsed">Users</span>
+      </a>
+        <a routerLink="roles" routerLinkActive="active"> <!-- ⬅️ add -->
+        <mat-icon>admin_panel_settings</mat-icon>
+        <span *ngIf="!sidebarCollapsed">Roles</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="topbar">
+      <div #dropdown class="user" [class.open]="dropdownOpen" (click)="toggleDropdown()">
+        <span class="name">{{ displayName }}</span>
+        <mat-icon>expand_more</mat-icon>
+        <ul>
+          <li>
+           <a (click)="changePassword()">Change Password</a>
+          </li>
+
+
+
+          <li><a (click)="logout()">Logout</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <!-- Routed Content -->
+    <router-outlet></router-outlet>
+  </main>
+</div>
