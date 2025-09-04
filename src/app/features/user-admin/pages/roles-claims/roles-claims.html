@@ -1,0 +1,85 @@
+<div class="claims-panel" *ngIf="!loading; else loadingTpl">
+  <header class="panel-toolbar">
+    <div class="left">
+      <h4>Permissions</h4>
+      <div class="sub">Role ID: {{ roleId }}</div>
+    </div>
+
+    <div class="right">
+<mat-form-field
+  appearance="outline"
+  class="search dense"
+  [class.centered]="!!filter" 
+>
+  <mat-icon matPrefix *ngIf="!filter">search</mat-icon>
+  <input
+    matInput
+    [(ngModel)]="filter"
+    (input)="applyFilter()"
+    aria-label="Search permissions" />
+</mat-form-field>
+
+
+      <button mat-stroked-button (click)="toggleAll(true)">Select all ({{ data.filteredData.length }})</button>
+      <button mat-stroked-button (click)="toggleAll(false)">Clear all</button>
+
+      <button mat-flat-button color="primary" class="save-btn"
+              [disabled]="!dirty" (click)="save()">
+        <mat-icon>save</mat-icon>&nbsp;Save
+      </button>
+    </div>
+  </header>
+
+  <div class="table-wrap mat-elevation-z2">
+    <table mat-table [dataSource]="data" class="claims-table">
+
+      <ng-container matColumnDef="selected">
+        <th mat-header-cell *matHeaderCellDef class="thin">Sel</th>
+        <td mat-cell *matCellDef="let row">
+          <mat-checkbox [checked]="row.selected" (change)="toggleOne(row)"></mat-checkbox>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="claimCode">
+        <th mat-header-cell *matHeaderCellDef>Code</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="mono">{{ row.claimCode }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="endpoint">
+        <th mat-header-cell *matHeaderCellDef>Endpoint</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="truncate" [matTooltip]="row.endpoint">{{ row.endpoint || '—' }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="description">
+        <th mat-header-cell *matHeaderCellDef>Description</th>
+        <td mat-cell *matCellDef="let row">
+          <span class="muted truncate" [matTooltip]="row.description">{{ row.description || '—' }}</span>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+  </div>
+
+  <footer class="panel-footer">
+    <div class="left">
+      <strong>{{ selectedCount }}</strong> selected of {{ data.filteredData.length }} shown
+      ({{ data.data.length }} total)
+    </div>
+    <div class="right" *ngIf="dirty">
+      <mat-icon>error_outline</mat-icon>&nbsp;Unsaved changes
+    </div>
+  </footer>
+</div>
+
+<ng-template #loadingTpl>
+  <div class="loading">
+    <mat-progress-spinner mode="indeterminate" diameter="28"></mat-progress-spinner>
+    <span>Loading permissions…</span>
+  </div>
+</ng-template>

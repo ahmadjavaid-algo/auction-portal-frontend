@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Role } from '../models/role.model';
 import { AuthService } from '../services/auth';
+import { RoleClaim } from '../models/role-claim.model';
 
 // Use '/api' if you run the Angular proxy; otherwise swap to 'http://localhost:5070/api'
 const API_BASE = 'http://localhost:5070/api';
@@ -12,7 +13,7 @@ export class RolesService {
   private http = inject(HttpClient);
   private auth = inject(AuthService);
   private base = `${API_BASE}/Roles`;
-
+  private rcBase = `${API_BASE}/RoleClaims`;
   private authHeaders(): HttpHeaders {
     const token = this.auth.token;
     return new HttpHeaders(token ? { Authorization: `Bearer ${token}` } : {});
@@ -37,5 +38,26 @@ export class RolesService {
   activate(roleId: number, active: boolean): Observable<boolean> {
     const payload = { roleId, active };
     return this.http.put<boolean>(`${this.base}/activate`, payload, { headers: this.authHeaders() });
+  }
+  getRoleClaimsList(): Observable<RoleClaim[]> {
+    return this.http.get<RoleClaim[]>(
+      `${this.rcBase}/list`,
+      { headers: this.authHeaders() }
+    );
+  }
+
+  /** Claims currently associated with a role */
+  getRoleClaimsByRole(roleId: number): Observable<RoleClaim[]> {
+    const params = new HttpParams().set('RoleId', roleId);
+    return this.http.get<RoleClaim[]>(
+      `${this.rcBase}/byrole`,
+      { headers: this.authHeaders(), params }
+    );
+  }
+
+  /** Replace full set for a role (atomic add/remove) */
+  setRoleClaims(roleId: number, claimIds: number[]): Observable<boolean> {
+    const payload = { roleId, claimIds };
+    return this.http.post<boolean>(`${this.rcBase}/set`, payload, { headers: this.authHeaders() });
   }
 }

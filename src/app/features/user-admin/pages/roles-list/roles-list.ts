@@ -15,20 +15,12 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { RolesService } from '../../../../services/roles.service';
 import { Role } from '../../../../models/role.model';
-
-// When you create RolesForm next, keep this same API as UsersForm.
 import { RolesForm } from '../roles-form/roles-form';
+import { RolesClaims } from '../roles-claims/roles-claims';
+
 type RoleFormResult =
   | { action: 'create'; payload: Role }
   | { action: 'edit';   payload: Role };
-
-type DisplayRole = {
-  roleId: number;
-  roleName: string;
-  roleCode: string;
-  description?: string | null;
-  active?: boolean | null; // GetList is trimmed; may be null
-};
 
 @Component({
   selector: 'app-roles-list',
@@ -44,7 +36,8 @@ type DisplayRole = {
     MatButtonModule,
     MatDialogModule,
     MatSnackBarModule,
-    MatTooltipModule
+    MatTooltipModule,
+    RolesClaims
   ],
   templateUrl: './roles-list.html',
   styleUrls: ['./roles-list.scss']
@@ -55,14 +48,17 @@ export class RolesList {
   private dialog = inject(MatDialog);
   private snack = inject(MatSnackBar);
 
-  // order mirrors the users page, but columns adapted for Roles
-  displayedColumns: string[] = ['role', 'code', 'description', 'status', 'actions'];
-  roles = new MatTableDataSource<DisplayRole>([]);
+  displayedColumns: string[] = ['expand', 'role', 'code', 'description', 'status', 'actions'];
+
+  // Use the canonical model directly
+  roles = new MatTableDataSource<Role>([]);
   totalItems = 0;
 
   pageSize = 10;
   pageIndex = 0;
   searchTerm = '';
+
+  expandedRoleId: number | null = null;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
@@ -79,15 +75,8 @@ export class RolesList {
   private loadRoles(): void {
     this.rolesSvc.getList().subscribe({
       next: (list: Role[]) => {
-        const mapped: DisplayRole[] = list.map(r => ({
-          roleId: r.roleId,
-          roleName: r.roleName,
-          roleCode: r.roleCode,
-          description: r.description ?? null,
-          active: r.active ?? null // may be null (GetList returns trimmed cols)
-        }));
-        this.roles.data = mapped;
-        this.totalItems = mapped.length;
+        this.roles.data = list;            // no mapping
+        this.totalItems = list.length;
         if (this.paginator) this.roles.paginator = this.paginator;
         this.applyPagingTotals();
       },
@@ -114,7 +103,6 @@ export class RolesList {
     this.totalItems = this.roles.filter ? this.roles.filteredData.length : this.roles.data.length;
   }
 
-  /** Range helpers for the right-bottom label (template look) */
   get rangeStart(): number {
     if (!this.totalItems) return 0;
     return this.pageIndex * this.pageSize + 1;
@@ -123,7 +111,13 @@ export class RolesList {
     return Math.min(this.totalItems, (this.pageIndex + 1) * this.pageSize);
   }
 
-  // ----- Create -----
+  toggleExpand(roleId: number): void {
+    this.expandedRoleId = this.expandedRoleId === roleId ? null : roleId;
+  }
+  isExpanded(roleId: number): boolean {
+    return this.expandedRoleId === roleId;
+  }
+
   openCreateRole(): void {
     const ref = this.dialog.open<RolesForm, { mode: 'create' }, RoleFormResult>(RolesForm, {
       width: '820px',
@@ -142,8 +136,7 @@ export class RolesList {
     });
   }
 
-  // ----- Edit -----
-  editRole(row: DisplayRole): void {
+  editRole(row: Role): void {
     this.rolesSvc.getById(row.roleId).subscribe({
       next: (full) => {
         const ref = this.dialog.open<RolesForm, { mode: 'edit'; initialData: Role }, RoleFormResult>(RolesForm, {
@@ -165,8 +158,7 @@ export class RolesList {
     });
   }
 
-  /** Toggle Active/Inactive with backend call (uses simple service signature) */
-  toggleActive(r: DisplayRole): void {
+  toggleActive(r: Role): void {
     const newState = !r.active;
     this.rolesSvc.activate(r.roleId, newState).subscribe({
       next: (ok) => {
@@ -181,7 +173,6 @@ export class RolesList {
     });
   }
 
-  // Navigate to details page
   viewRole(roleId: number): void {
     this.router.navigate(['/admin/roles', roleId]);
   }

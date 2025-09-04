@@ -1,0 +1,71 @@
+.claims-panel {
+  border-radius: 10px;
+  background: #fff;
+  padding: 12px;
+  border: 1px solid #ececec;
+  width: 100%;
+
+  .panel-toolbar {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 10px; flex-wrap: wrap; margin-bottom: 10px;
+
+    .left {
+      h4 { margin: 0; font-weight: 700; }
+      .sub { color: #6b7280; font-size: 12px; margin-top: 2px; }
+    }
+
+    .right {
+      display: flex; align-items: center; gap: 8px;
+      margin-right: 16px; /* ← nudge buttons left so Save stays on-page */
+      flex-wrap: wrap;    /* if space gets tight, wrap nicely */
+
+      /* Slim, responsive search */
+      .search { width: clamp(240px, 28vw, 360px); }
+
+      /* ↓ Compact the material field to ~36px */
+      ::ng-deep .search .mat-mdc-text-field-wrapper { height: 36px; }
+      ::ng-deep .search .mat-mdc-form-field-flex    { min-height: 36px; }
+      ::ng-deep .search .mat-mdc-form-field-infix   { padding-block: 2px; }
+      ::ng-deep .search .mat-mdc-form-field-subscript-wrapper { display: none; }
+      ::ng-deep .search .mat-mdc-form-field-icon-prefix,
+      ::ng-deep .search .mat-mdc-form-field-icon-suffix  { width: 20px; height: 40px; font-size: 20px; }
+      ::ng-deep .search .mat-mdc-icon-button.mat-mdc-button-base { width: 32px; height: 32px; }
+      ::ng-deep .search .mat-mdc-input-element { text-align: left; }
+
+
+      /* Make the action buttons a bit denser too */
+      .mat-mdc-button-base { min-height: 36px; padding: 0 12px; }
+      .save-btn { font-weight: 700; }
+    }
+  }
+
+  .table-wrap { border-radius: 8px; overflow: auto; max-height: 60vh; }
+
+  .claims-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    ::ng-deep .mat-mdc-header-row,
+    ::ng-deep .mat-mdc-row { height: 44px; }
+    td, th { padding: 8px 12px; }
+
+    .mat-column-selected  { width: 56px; }
+    .mat-column-claimCode { width: 160px; }
+    .mat-column-endpoint  { width: 280px; }
+
+    th { font-weight: 700; background: #fafafa; border-bottom: 1px solid #eee; }
+    td { border-bottom: 1px solid #f1f1f1; }
+
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .muted { color: #6f6f6f; }
+    .truncate { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  }
+
+  .panel-footer {
+    margin-top: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+    .right { color: #b45309; display: flex; align-items: center; gap: 4px; }
+  }
+}
+
+.loading { display: flex; align-items: center; gap: 10px; padding: 10px 6px; }
