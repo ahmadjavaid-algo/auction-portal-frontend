@@ -27,16 +27,13 @@
   <!-- Profile -->
   <ng-container *ngIf="!loading && user">
     <section class="profile-card mat-elevation-z2">
-
-      <!-- Hero / Header -->
+      <!-- Hero -->
       <div class="hero">
         <div class="hero-left">
           <div class="avatar">{{ initials }}</div>
-
           <div class="title">
             <h1>
-              {{ user.firstName }}
-              <span *ngIf="user.lastName"> {{ user.lastName }}</span>
+              {{ user.firstName }}<span *ngIf="user.lastName"> {{ user.lastName }}</span>
             </h1>
             <div class="subtitle">@{{ user.userName }}</div>
 
@@ -63,19 +60,19 @@
           <li>
             <div class="meta-label">Last login</div>
             <div class="meta-value">
-              {{ user.loginDate ? (user.loginDate | date: 'yyyy-MM-dd HH:mm') : '—' }}
+              {{ user.loginDate ? (user.loginDate | date:'yyyy-MM-dd HH:mm') : '—' }}
             </div>
           </li>
-              <li>
-      <div class="meta-label">Roles</div>
-      <div class="meta-value roles">
-        <ng-container *ngIf="hasRoles; else noRoles">
-          <span class="role-chip" *ngFor="let rid of roleIds">#{{ rid }}</span>
-        </ng-container>
-        <ng-template #noRoles>—</ng-template>
-      </div>
-    </li>
-
+          <li>
+            <div class="meta-label">Roles</div>
+            <div class="meta-value roles">
+              <ng-container *ngIf="hasRoles; else noRoles">
+                <!-- show whatever you have; roleIds or roleNames -->
+                <span class="role-chip" *ngFor="let rid of roleIds">#{{ rid }}</span>
+              </ng-container>
+              <ng-template #noRoles>—</ng-template>
+            </div>
+          </li>
         </ul>
       </div>
 
