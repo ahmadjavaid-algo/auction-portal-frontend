@@ -189,7 +189,7 @@ export class UsersList {
     });
   }
 
-  deleteUser(_id: number): void { /* hook if needed later */ }
+  
   openChangePassword(_u: DisplayUser): void { /* hook if needed later */ }
 
   // Navigate to details page

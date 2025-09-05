@@ -14,7 +14,7 @@ import { AuthService } from '../../../../services/auth';
 export class UsersLogin {
   private auth = inject(AuthService);
   private router = inject(Router);
-
+  currentYear = new Date().getFullYear();
   // bound to your template
   email = '';
   password = '';
@@ -38,7 +38,7 @@ export class UsersLogin {
         this.loading = false;
         if (resp?.success) {
           
-          this.router.navigate(['/admin/users']);
+          this.router.navigate(['/admin/dashboard']);
         } else {
           this.error = resp?.message ?? 'Invalid credentials.';
         }

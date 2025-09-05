@@ -2,7 +2,7 @@
   <!-- Sidebar -->
   <aside [class.collapsed]="sidebarCollapsed" class="sidebar">
     <div class="logo">
-      <a routerLink="/dashboard" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:white">
+      <a routerLink="dashboard" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:white">
         <img
           src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8"
           alt="Logo" />
@@ -15,6 +15,12 @@
     </button>
 
     <nav>
+      <a routerLink="dashboard"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }">
+        <mat-icon>space_dashboard</mat-icon>
+        <span class="label" *ngIf="!sidebarCollapsed">Dashboard</span>
+      </a>
       <a routerLink="users" routerLinkActive="active">
         <mat-icon>people</mat-icon>
         <span class="label" *ngIf="!sidebarCollapsed">Users</span>
