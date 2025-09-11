@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { User } from '../models/user.model';
+import { User,UserStats } from '../models/user.model';
 import { AuthService } from '../services/auth'; // AuthService sits at src/app/services/auth.ts
 
 // If you set up an Angular proxy: const API_BASE = '/api';
@@ -49,5 +49,9 @@ activateUser(model: Pick<User, 'userId' | 'active' | 'modifiedById'>): Observabl
     headers: this.authHeaders(),
   });
 }
-
+  getStats(): Observable<UserStats> {
+    return this.http.get<UserStats>(`${this.base}/getstats`, {
+      headers: this.authHeaders(),
+    });
+  }
 }

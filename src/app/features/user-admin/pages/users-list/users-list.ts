@@ -13,21 +13,9 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 import { UsersService } from '../../../../services/users.service';
-import { User } from '../../../../models/user.model';
+import { User,UserStats } from '../../../../models/user.model';
 import { UsersForm, UserFormResult } from '../users-form/users-form';
 import { AuthService } from '../../../../services/auth';
-
-type DisplayUser = {
-  userId: number;
-  fullName: string;
-  userName?: string | null;
-  email: string;
-  emailConfirmed?: boolean | null;
-  lastLogin?: Date | null;
-  active?: boolean | null;
-  role?: string | null;         // placeholder (not in GetList)
-  createdAt?: Date | null;      // fallback if you still want it
-};
 
 @Component({
   selector: 'app-users-list',
@@ -56,19 +44,26 @@ export class UsersList {
 
   // order matches template: name/id • email/verified • last login • status • actions
   displayedColumns: string[] = ['user', 'email', 'verified', 'lastLogin', 'status', 'actions'];
-  users = new MatTableDataSource<DisplayUser>([]);
+  users = new MatTableDataSource<User>([]);
   totalItems = 0;
 
   pageSize = 10;
   pageIndex = 0;
   searchTerm = '';
-
+  stats: UserStats = { totalUsers: 0, activeUsers: 0, inactiveUsers: 0 };
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
   ngOnInit(): void {
     this.loadUsers();
-    this.users.filterPredicate = (d, f) =>
-      (d.fullName + ' ' + (d.email || '') + ' ' + (d.userName || '')).toLowerCase().includes(f);
+    this.loadStats();
+    this.users.filterPredicate = (u, f) => {
+      const haystack = [
+        this.getFullName(u),
+        u.email ?? '',
+        u.userName ?? ''
+      ].join(' ').toLowerCase();
+      return haystack.includes(f);
+    };
   }
 
   ngAfterViewInit(): void {
@@ -78,26 +73,42 @@ export class UsersList {
   private loadUsers(): void {
     this.usersSvc.getList().subscribe({
       next: (list: User[]) => {
-        const mapped: DisplayUser[] = list.map(u => ({
-          userId: u.userId,
-          userName: u.userName,
-          fullName: (u.firstName?.trim() || '') + (u.lastName ? ' ' + u.lastName : '') || u.userName,
-          email: u.email,
-          emailConfirmed: u.emailConfirmed ?? null,
-          lastLogin: u.loginDate ? new Date(u.loginDate) : null,  // may be null (GetList is trimmed)
-          active: u.active ?? null,
-          role: '-', // placeholder (not in GetList)
-          createdAt: u.createdDate ? new Date(u.createdDate) : null
-        }));
-        this.users.data = mapped;
-        this.totalItems = mapped.length;
+        this.users.data = list ?? [];
+        this.totalItems = this.users.data.length;
         if (this.paginator) this.users.paginator = this.paginator;
         this.applyPagingTotals();
       },
       error: (e) => console.error('Failed to load users', e)
     });
   }
+  private loadStats(): void {
+    this.usersSvc.getStats().subscribe({
+      next: (s) => (this.stats = s),
+      error: () => this.snack.open('Failed to load user stats.', 'Dismiss', { duration: 3000 })
+    });
+  }
+  // ---- Display helpers (used by template & filtering) ----
+  getFullName(u: User): string {
+    const f = (u.firstName ?? '').trim();
+    const l = (u.lastName ?? '').trim();
+    const full = [f, l].filter(Boolean).join(' ');
+    return full || u.userName || '';
+  }
 
+  getLastLogin(u: User): Date | null {
+    return u.loginDate ? new Date(u.loginDate) : null;
+  }
+
+  getCreatedAt(u: User): Date | null {
+    return u.createdDate ? new Date(u.createdDate) : null;
+  }
+
+  getRoleLabel(u: User): string {
+    // You can plug real role names here once you have them
+    return Array.isArray(u.roleId) && u.roleId.length ? `${u.roleId.length} role(s)` : '—';
+  }
+
+  // ---- Search / Paging ----
   onSearch(): void {
     this.users.filter = this.searchTerm.trim().toLowerCase();
     this.totalItems = this.users.filteredData.length;
@@ -121,7 +132,7 @@ export class UsersList {
   get rangeStart(): number {
     if (!this.totalItems) return 0;
     return this.pageIndex * this.pageSize + 1;
-  }
+    }
   get rangeEnd(): number {
     return Math.min(this.totalItems, (this.pageIndex + 1) * this.pageSize);
   }
@@ -146,7 +157,7 @@ export class UsersList {
   }
 
   // ----- Edit -----
-  editUser(row: DisplayUser): void {
+  editUser(row: User): void {
     this.usersSvc.getById(row.userId).subscribe({
       next: (full) => {
         const ref = this.dialog.open<UsersForm, { mode: 'edit'; initialData: User }, UserFormResult>(UsersForm, {
@@ -169,8 +180,8 @@ export class UsersList {
   }
 
   /** Toggle Active/Inactive with backend call */
-  toggleActive(u: DisplayUser): void {
-    const newState = !u.active;
+  toggleActive(u: User): void {
+    const newState = !(u.active ?? false);
     const payload: Partial<User> = {
       userId: u.userId,
       active: newState,
@@ -189,8 +200,7 @@ export class UsersList {
     });
   }
 
-  
-  openChangePassword(_u: DisplayUser): void { /* hook if needed later */ }
+  openChangePassword(_u: User): void { /* hook if needed later */ }
 
   // Navigate to details page
   viewUser(userId: number): void {

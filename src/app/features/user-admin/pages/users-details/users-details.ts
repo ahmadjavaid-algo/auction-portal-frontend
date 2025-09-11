@@ -68,7 +68,7 @@ export class UsersDetails {
     return (first + last).toUpperCase();
   }
 
-  /** ---- Helpers for roles (handles number | number[] | null/undefined) ---- */
+  
   get roleIds(): number[] {
     const v: any = this.user?.roleId;
     if (Array.isArray(v)) {

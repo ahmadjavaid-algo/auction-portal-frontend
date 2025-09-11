@@ -1,0 +1,73 @@
+<form class="dialog-form" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
+  <!-- Honeypots to discourage autofill -->
+  <input type="text" autocomplete="username" tabindex="-1" aria-hidden="true"
+         style="position:absolute;left:-9999px;width:0;height:0;opacity:0;" />
+  <input type="password" autocomplete="current-password" tabindex="-1" aria-hidden="true"
+         style="position:absolute;left:-9999px;width:0;height:0;opacity:0;" />
+
+  <!-- Header -->
+  <div class="header">
+    <div class="title">
+      <h2>{{ mode === 'edit' ? 'Edit Email' : 'Create Email' }}</h2>
+      <p class="sub">Fill in the details below. Fields marked * are required.</p>
+    </div>
+  </div>
+
+  <!-- Scrollable body -->
+  <mat-dialog-content class="body">
+    <div class="sheet">
+      <div class="grid">
+
+        <!-- Row 1 -->
+        <mat-form-field appearance="outline">
+          <mat-label>Code *</mat-label>
+          <input matInput formControlName="emailCode" autocomplete="off" autocapitalize="none" />
+          <mat-error *ngIf="form.get('emailCode')?.hasError('required')">
+            Code is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Subject *</mat-label>
+          <input matInput formControlName="emailSubject" autocomplete="off" />
+          <mat-error *ngIf="form.get('emailSubject')?.hasError('required')">
+            Subject is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Row 2 -->
+        <mat-form-field appearance="outline">
+          <mat-label>To *</mat-label>
+          <input matInput type="email" formControlName="emailTo" name="no-email-to" autocomplete="off" />
+          <mat-error *ngIf="form.get('emailTo')?.hasError('required')">Recipient is required</mat-error>
+          <mat-error *ngIf="form.get('emailTo')?.hasError('email')">Enter a valid email</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>From *</mat-label>
+          <input matInput type="email" formControlName="emailFrom" name="no-email-from" autocomplete="off" />
+          <mat-error *ngIf="form.get('emailFrom')?.hasError('required')">Sender is required</mat-error>
+          <mat-error *ngIf="form.get('emailFrom')?.hasError('email')">Enter a valid email</mat-error>
+        </mat-form-field>
+
+        <!-- Row 3 -->
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Body *</mat-label>
+          <textarea matInput rows="8" formControlName="emailBody"></textarea>
+          <mat-error *ngIf="form.get('emailBody')?.hasError('required')">Body is required</mat-error>
+        </mat-form-field>
+
+
+
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <!-- Actions -->
+  <mat-dialog-actions align="end" class="actions">
+    <button mat-stroked-button type="button" class="btn-cancel" (click)="onCancel()">Cancel</button>
+    <button mat-flat-button type="submit" class="btn-primary" [disabled]="form.invalid">
+      {{ mode === 'edit' ? 'Update' : 'Create' }}
+    </button>
+  </mat-dialog-actions>
+</form>

@@ -1,4 +1,5 @@
 <!-- Stats strip -->
+<!-- Stats strip -->
 <section class="stats-strip">
   <div class="stat-card system">
     <div class="icon-wrap"><mat-icon>security</mat-icon></div>
@@ -11,7 +12,7 @@
   <div class="stat-card total">
     <div class="icon-wrap"><mat-icon>groups</mat-icon></div>
     <div>
-      <div class="value">12</div>
+      <div class="value">{{ stats?.totalRoles ?? 0 }}</div>
       <div class="label">Total Roles</div>
     </div>
   </div>
@@ -19,7 +20,7 @@
   <div class="stat-card active">
     <div class="icon-wrap"><mat-icon>verified_user</mat-icon></div>
     <div>
-      <div class="value">11</div>
+      <div class="value">{{ stats?.activeRoles ?? 0 }}</div>
       <div class="label">Active Roles</div>
     </div>
   </div>
@@ -27,11 +28,14 @@
   <div class="stat-card inactive">
     <div class="icon-wrap"><mat-icon>person_off</mat-icon></div>
     <div>
-      <div class="value">1</div>
+      <div class="value">{{ stats?.inactiveRoles ?? 0 }}</div>
       <div class="label">Inactive Roles</div>
     </div>
   </div>
 </section>
+
+<!-- (rest of your template unchanged) -->
+
 
 <!-- Toolbar -->
 <div class="role-header">

@@ -26,3 +26,8 @@ export interface User {
   modifiedDate?: string | null;
   active?: boolean;
 }
+export interface UserStats {
+  totalUsers: number;
+  activeUsers: number;
+  inactiveUsers: number;
+}

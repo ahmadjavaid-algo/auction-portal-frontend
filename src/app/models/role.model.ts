@@ -10,4 +10,11 @@ export interface Role {
   modifiedById?: number | null;
   modifiedDate?: string | null;
   active?: boolean;
+
 }
+export interface RoleStats {
+  totalRoles: number;
+  activeRoles: number;
+  inactiveRoles: number;
+}
+

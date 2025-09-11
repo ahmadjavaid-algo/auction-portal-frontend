@@ -1,0 +1,135 @@
+<!-- Stats strip -->
+<section class="stats-strip">
+  <div class="stat-card online">
+    <div class="icon-wrap"><mat-icon>outbox</mat-icon></div>
+    <div>
+      <div class="value">{{ stats?.queued ?? 0 }}</div>
+      <div class="label">Queued Emails</div>
+    </div>
+  </div>
+
+  <div class="stat-card total">
+    <div class="icon-wrap"><mat-icon>mail</mat-icon></div>
+    <div>
+      <div class="value">{{ stats?.totalEmails ?? 0 }}</div>
+      <div class="label">Total Emails</div>
+    </div>
+  </div>
+
+  <div class="stat-card active">
+    <div class="icon-wrap"><mat-icon>verified</mat-icon></div>
+    <div>
+      <div class="value">{{ stats?.activeEmails ?? 0 }}</div>
+      <div class="label">Active Emails</div>
+    </div>
+  </div>
+
+  <div class="stat-card inactive">
+    <div class="icon-wrap"><mat-icon>do_not_disturb_on</mat-icon></div>
+    <div>
+      <div class="value">{{ stats?.inactiveEmails ?? 0 }}</div>
+      <div class="label">Inactive Emails</div>
+    </div>
+  </div>
+</section>
+
+<!-- Toolbar -->
+<div class="email-header">
+  <mat-form-field appearance="outline" class="search-field">
+    <mat-label>Search emails</mat-label>
+    <input matInput [(ngModel)]="searchTerm" (input)="onSearch()" />
+    <button mat-icon-button *ngIf="searchTerm" matSuffix (click)="searchTerm=''; onSearch()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </mat-form-field>
+
+  <button mat-flat-button class="add-btn" (click)="openCreateEmail()">
+    <mat-icon>post_add</mat-icon>
+    Add Email
+  </button>
+</div>
+
+<!-- Data panel + table -->
+<div class="panel">
+  <table mat-table [dataSource]="emails" class="full-width-table">
+
+    <!-- Code -->
+    <ng-container matColumnDef="code">
+      <th mat-header-cell *matHeaderCellDef>Code</th>
+      <td mat-cell *matCellDef="let e">
+        <div class="user-cell">
+          <div class="name">{{ e.emailCode || '—' }}</div>
+          <div class="sub">ID {{ e.emailId }}</div>
+        </div>
+      </td>
+    </ng-container>
+
+    <!-- Subject -->
+    <ng-container matColumnDef="subject">
+      <th mat-header-cell *matHeaderCellDef>Subject</th>
+      <td mat-cell *matCellDef="let e">
+        <div class="subject-cell">{{ e.emailSubject || '—' }}</div>
+      </td>
+    </ng-container>
+
+    <!-- To -->
+    <ng-container matColumnDef="to">
+      <th mat-header-cell *matHeaderCellDef>To</th>
+      <td mat-cell *matCellDef="let e">
+        <div class="email-cell">{{ e.emailTo || '—' }}</div>
+      </td>
+    </ng-container>
+
+    <!-- From -->
+    <ng-container matColumnDef="from">
+      <th mat-header-cell *matHeaderCellDef>From</th>
+      <td mat-cell *matCellDef="let e">
+        <div class="email-cell">{{ e.emailFrom || '—' }}</div>
+      </td>
+    </ng-container>
+
+    <!-- Status -->
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef>Status</th>
+      <td mat-cell *matCellDef="let e">
+        <button mat-stroked-button
+                [class.is-active]="e.active"
+                [class.is-inactive]="e.active === false"
+                (click)="toggleActive(e)">
+          {{ e.active ? 'Active' : 'Inactive' }}
+        </button>
+      </td>
+    </ng-container>
+
+    <!-- Actions -->
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef>Actions</th>
+      <td mat-cell *matCellDef="let e">
+        <button mat-icon-button class="edit-btn" (click)="editEmail(e)" matTooltip="Edit">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button (click)="viewEmail(e.emailId)" aria-label="View details" matTooltip="View details">
+          <mat-icon>visibility</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+</div>
+
+<!-- Footer -->
+<div class="list-footer">
+  <mat-paginator
+    [length]="totalItems"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[5,10,20]"
+    [pageIndex]="pageIndex"
+    (page)="onPageChange($event)">
+  </mat-paginator>
+
+  <div class="count">
+    {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }}
+  </div>
+</div>

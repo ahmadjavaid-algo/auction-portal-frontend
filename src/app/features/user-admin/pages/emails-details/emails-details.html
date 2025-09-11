@@ -1,0 +1,129 @@
+<div class="page details-theme">
+  <!-- Back -->
+  <button mat-button class="back" (click)="back()">
+    <mat-icon>arrow_back</mat-icon>
+    Back to Emails
+  </button>
+
+  <!-- Loading -->
+  <ng-container *ngIf="loading">
+    <div class="busy">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Loading email…</span>
+    </div>
+  </ng-container>
+
+  <!-- Error -->
+  <ng-container *ngIf="!loading && error">
+    <mat-card class="error-card">
+      <mat-card-title>Error</mat-card-title>
+      <mat-card-content>{{ error }}</mat-card-content>
+      <mat-card-actions align="end">
+        <button mat-stroked-button color="primary" (click)="back()">OK</button>
+      </mat-card-actions>
+    </mat-card>
+  </ng-container>
+
+  <!-- Details -->
+  <ng-container *ngIf="!loading && email">
+    <section class="profile-card mat-elevation-z2">
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-left">
+          <div class="avatar">{{ initials }}</div>
+          <div class="title">
+            <h1>
+              {{ email.emailSubject || '(No subject)' }}
+            </h1>
+            <div class="subtitle">{{ email.emailCode || '—' }}</div>
+
+            <div class="pills">
+              <span class="pill" [class.ok]="email.active" [class.no]="!email.active">
+                <mat-icon class="pill-icn">{{ email.active ? 'check_circle' : 'pause_circle' }}</mat-icon>
+                {{ email.active ? 'Active' : 'Inactive' }}
+              </span>
+
+              <span class="pill" [class.ok]="hasBody" [class.no]="!hasBody">
+                <mat-icon class="pill-icn">{{ hasBody ? 'description' : 'help_outline' }}</mat-icon>
+                {{ hasBody ? 'Body present' : 'No body' }}
+              </span>
+
+              <span class="pill muted">
+                <mat-icon class="pill-icn">fingerprint</mat-icon>
+                ID {{ email.emailId }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <ul class="meta">
+          <li>
+            <div class="meta-label">To</div>
+            <div class="meta-value">{{ email.emailTo || '—' }}</div>
+          </li>
+          <li>
+            <div class="meta-label">From</div>
+            <div class="meta-value">{{ email.emailFrom || '—' }}</div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Sections -->
+      <div class="sections">
+        <div class="section">
+          <h3><mat-icon>mail</mat-icon> Envelope</h3>
+          <div class="grid">
+            <div class="item">
+              <div class="label">Code</div>
+              <div class="value">{{ email.emailCode || '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Subject</div>
+              <div class="value">{{ email.emailSubject || '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">To</div>
+              <div class="value">{{ email.emailTo || '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">From</div>
+              <div class="value">{{ email.emailFrom || '—' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3><mat-icon>description</mat-icon> Content & Audit</h3>
+          <div class="grid">
+            <div class="item">
+              <div class="label">Body</div>
+              <div class="value value-body">{{ email.emailBody || '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Created</div>
+              <div class="value">{{ email.createdDate ? (email.createdDate | date:'medium') : '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Modified</div>
+              <div class="value">{{ email.modifiedDate ? (email.modifiedDate | date:'medium') : '—' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer / Audit -->
+      <div class="footer">
+        <div class="audit">
+          <div>Created by <strong>{{ email.createdById ?? '—' }}</strong></div>
+          <div>Modified by <strong>{{ email.modifiedById ?? '—' }}</strong></div>
+        </div>
+        <div class="buttons">
+          <button mat-stroked-button color="primary" (click)="back()">
+            <mat-icon>arrow_back</mat-icon>
+            Back
+          </button>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</div>

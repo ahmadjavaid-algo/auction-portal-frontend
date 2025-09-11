@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { LoginRequest, LoginResponse } from '../models/application-user-operation';
+import { LoginRequest, LoginResponse ,ForgotPasswordRequest, ResetPasswordRequest} from '../models/application-user-operation';
 import { Observable, tap } from 'rxjs';
 
 const TOKEN_KEY = 'ap_token';
@@ -67,5 +67,19 @@ export class AuthService {
 
   get isAuthenticated(): boolean {
     return !!this.token && !this.isTokenExpired();
+  }
+  forgotPassword(email: string): Observable<boolean> {
+    const body: ForgotPasswordRequest = { email };
+    return this.http.post<boolean>(`${this.base}/forgotpassword`, body);
+  }
+
+  /** POST /ApplicationUserOperations/resetpassword */
+  resetPassword(email: string, newPassword: string, code: string): Observable<boolean> {
+    const body: ResetPasswordRequest = {
+      email,
+      newPasswordHash: newPassword, // server expects NewPasswordHash
+      resetCode: code               // server expects ResetCode (plain token)
+    };
+    return this.http.post<boolean>(`${this.base}/resetpassword`, body);
   }
 }

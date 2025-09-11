@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { Role } from '../models/role.model';
 import { AuthService } from '../services/auth';
 import { RoleClaim } from '../models/role-claim.model';
-
+import { RoleStats } from '../models/role.model';
 // Use '/api' if you run the Angular proxy; otherwise swap to 'http://localhost:5070/api'
 const API_BASE = 'http://localhost:5070/api';
 
@@ -59,5 +59,8 @@ export class RolesService {
   setRoleClaims(roleId: number, claimIds: number[]): Observable<boolean> {
     const payload = { roleId, claimIds };
     return this.http.post<boolean>(`${this.rcBase}/set`, payload, { headers: this.authHeaders() });
+  }
+  getStats(): Observable<RoleStats> {
+    return this.http.get<RoleStats>(`${this.base}/getstats`, { headers: this.authHeaders() });
   }
 }

@@ -23,6 +23,15 @@ export interface LoginRequest {
   userName: string;      // server expects UserName
   passwordHash: string;  // server expects PasswordHash (we send plain text)
 }
+export interface ForgotPasswordRequest {
+  email: string;
+}
 
+/** Payload for reset password */
+export interface ResetPasswordRequest {
+  email: string;
+  newPasswordHash: string;
+  resetCode: string;
+}
 // What we expect back for login
 export type LoginResponse = ApplicationUserOperation;

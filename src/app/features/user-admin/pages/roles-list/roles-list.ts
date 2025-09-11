@@ -14,7 +14,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { RolesService } from '../../../../services/roles.service';
-import { Role } from '../../../../models/role.model';
+import { Role,RoleStats } from '../../../../models/role.model';
 import { RolesForm } from '../roles-form/roles-form';
 import { RolesClaims } from '../roles-claims/roles-claims';
 
@@ -59,11 +59,13 @@ export class RolesList {
   searchTerm = '';
 
   expandedRoleId: number | null = null;
+  stats: RoleStats = { totalRoles: 0, activeRoles: 0, inactiveRoles: 0 };
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
   ngOnInit(): void {
     this.loadRoles();
+    this.loadStats();
     this.roles.filterPredicate = (d, f) =>
       (d.roleName + ' ' + d.roleCode + ' ' + (d.description || '')).toLowerCase().includes(f);
   }
@@ -83,7 +85,12 @@ export class RolesList {
       error: (e) => console.error('Failed to load roles', e)
     });
   }
-
+  private loadStats(): void {
+    this.rolesSvc.getStats().subscribe({
+      next: (s) => (this.stats = s),
+      error: () => this.snack.open('Failed to load role stats.', 'Dismiss', { duration: 3000 })
+    });
+  }
   onSearch(): void {
     this.roles.filter = this.searchTerm.trim().toLowerCase();
     this.totalItems = this.roles.filteredData.length;
