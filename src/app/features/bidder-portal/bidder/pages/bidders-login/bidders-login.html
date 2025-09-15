@@ -1,0 +1,40 @@
+<div class="login-container">
+  <div class="login-form">
+    <div class="brand-head">
+      <img
+        class="logo"
+        src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8"
+        alt="Algo Auction Portal"
+      />
+      <span class="brand-name">Algo Auction Portal</span>
+    </div>
+    <h2>Welcome back</h2>
+    <p class="subtitle">Please enter your details</p>
+
+    <form (ngSubmit)="login()">
+      <label>Email address</label>
+      <input type="email" [(ngModel)]="email" name="email" required />
+
+      <label>Password</label>
+      <input type="password" [(ngModel)]="password" name="password" required />
+
+      <div class="options">
+        <label class="remember">
+          <input type="checkbox" /> Remember for 30 days
+        </label>
+        <a routerLink="/admin/forgot-password">Forgot password</a>
+      </div>
+
+
+      <button type="submit" class="primary-btn">Sign in</button>
+    </form>
+
+    <div class="signup">
+      Don’t have an account? <a href="#">Request Access</a>
+    </div>
+  </div>
+
+  <div class="login-illustration">
+    <img src="https://media.istockphoto.com/id/1169397243/vector/human-resources-concept-vector-illustration.jpg?s=612x612&w=0&k=20&c=IwFeMVZa7OVr65_NsHu2zhhOOWYLJj3BuTI1hdVtb7w=" alt="Illustration" />
+  </div>
+</div>

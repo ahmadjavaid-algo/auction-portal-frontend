@@ -1,0 +1,200 @@
+<div class="dashboard-page">
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-left">
+      <div class="wave">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+      </div>
+      <div class="title">
+        <h1>Welcome back, {{ adminName }}</h1>
+        <p class="sub">Your car auctions at a glance — live traffic, bids and verifications.</p>
+      </div>
+    </div>
+
+    <div class="hero-actions">
+      <button mat-stroked-button class="ghost" matTooltip="Schedule a new auction">
+        <mat-icon>calendar_month</mat-icon>
+        Schedule Auction
+      </button>
+      <button mat-flat-button class="cta" matTooltip="List a new vehicle">
+        <mat-icon>add_circle</mat-icon>
+        Add Vehicle
+      </button>
+    </div>
+  </section>
+
+  <!-- KPI Tiles -->
+  <section class="stats-grid">
+    <div class="stat-card" *ngFor="let s of stats; let i = index" [style.--i]="i">
+      <div class="icon-wrap"><mat-icon>{{ s.icon }}</mat-icon></div>
+      <div class="meta">
+        <div class="value">
+          <span class="count-up" [attr.data-value]="s.value">0</span>
+        </div>
+        <div class="label">{{ s.label }}</div>
+      </div>
+      <div class="trend" [class.up]="s.up" [class.down]="!s.up">
+        <mat-icon>{{ s.up ? 'trending_up' : 'trending_down' }}</mat-icon>
+        <span>{{ s.delta }}</span>
+      </div>
+
+      <!-- subtle sparkline -->
+      <svg class="spark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="g" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="var(--brand-500)"/>
+            <stop offset="1" stop-color="var(--teal-500)"/>
+          </linearGradient>
+        </defs>
+        <path d="M0,22 L12,18 L22,24 L32,12 L42,16 L55,10 L68,14 L82,8 L100,12"
+              stroke="url(#g)" fill="none" stroke-width="2" />
+      </svg>
+    </div>
+  </section>
+
+  <!-- Main Grid -->
+  <section class="main-grid">
+    <!-- Left column -->
+    <div class="panel live-auctions">
+      <div class="panel-h">
+        <h3><mat-icon>local_fire_department</mat-icon> Auctions at a Glance</h3>
+        <button mat-stroked-button class="mini"><mat-icon>visibility</mat-icon> View all</button>
+      </div>
+
+      <ul class="auction-list">
+        <li *ngFor="let a of liveAuctions">
+          <div class="id mono">{{ a.lot }}</div>
+          <div class="car">{{ a.car }}</div>
+
+          <div class="time">
+            <div class="clock">
+              <span class="ring" [style.--pct]="100 - Math.min(99, (a.endsInMin/120)*100)"></span>
+              <mat-icon>schedule</mat-icon>
+            </div>
+            <div class="muted">{{ a.endsInMin }}m left</div>
+          </div>
+
+          <div class="bids">
+            <mat-icon>gavel</mat-icon>
+            <span>{{ a.bids }}</span>
+          </div>
+
+
+
+          <div class="status" [class.live]="a.status === 'Live'" [class.scheduled]="a.status==='Scheduled'">
+            {{ a.status }}
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="panel performance">
+      <div class="panel-h">
+        <h3><mat-icon>insights</mat-icon> Performance (7 days)</h3>
+      </div>
+
+      <div class="perf-grid">
+        <div class="big-number">
+          <div class="caption">Revenue</div>
+          <div class="num">$126,400</div>
+          <div class="chip up"><mat-icon>north_east</mat-icon> +12%</div>
+        </div>
+
+        <!-- simple sparkline -->
+        <svg class="big-spark" viewBox="0 0 220 80" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="gg" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="var(--brand-500)"/>
+              <stop offset="1" stop-color="var(--teal-500)"/>
+            </linearGradient>
+          </defs>
+          <path d="M0,60 L24,56 L44,62 L64,40 L84,46 L110,30 L136,42 L168,28 L220,36"
+                stroke="url(#gg)" fill="none" stroke-width="3" />
+        </svg>
+
+        <div class="mini-kpis">
+          <div class="mini">
+            <div class="label">Avg. Bid</div>
+            <div class="val">$1,240</div>
+          </div>
+          <div class="mini">
+            <div class="label">Conversion</div>
+            <div class="val">38%</div>
+          </div>
+          <div class="mini">
+            <div class="label">Sell-through</div>
+            <div class="val">74%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="panel kyc">
+      <div class="panel-h">
+        <h3><mat-icon>pending_actions</mat-icon> Verification Queue</h3>
+        <button mat-stroked-button class="mini"><mat-icon>bolt</mat-icon> Review</button>
+      </div>
+
+      <ul class="queue">
+        <li *ngFor="let k of kycQueue">
+          <div class="avatar" [style.background]=" 'linear-gradient(135deg, var(--brand-500), var(--teal-500))' ">
+            {{ k.name | slice:0:1 }}
+          </div>
+          <div class="who">
+            <div class="name">{{ k.name }}</div>
+            <div class="sub">{{ k.handle }}</div>
+          </div>
+          <div class="doc chip">{{ k.doc }}</div>
+          <div class="age muted">{{ k.age }}</div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="panel bidders">
+      <div class="panel-h">
+        <h3><mat-icon>leaderboard</mat-icon> Top Bidders Today</h3>
+      </div>
+
+      <ul class="tops">
+        <li *ngFor="let b of topBidders; let i = index">
+          <div class="rank">#{{ i + 1 }}</div>
+          <div class="dot" [style.background]="b.color"></div>
+          <div class="who">
+            <div class="name">{{ b.name }}</div>
+            <div class="sub">{{ b.handle }}</div>
+          </div>
+          <div class="bcount chip"><mat-icon>gavel</mat-icon> {{ b.bids }}</div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="panel activity">
+      <div class="panel-h">
+        <h3><mat-icon>history</mat-icon> Recent Activity</h3>
+      </div>
+
+      <ul class="timeline">
+        <li *ngFor="let a of activity">
+          <div class="bullet"><mat-icon>{{ a.icon }}</mat-icon></div>
+          <div class="text">{{ a.text }}</div>
+          <div class="time muted">{{ a.time }}</div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="panel health">
+      <div class="panel-h"><h3><mat-icon>shield</mat-icon> System Health</h3></div>
+      <div class="health-grid">
+        <div class="radial" style="--val: 97">
+          <span>Uptime</span>
+          <strong>99.7%</strong>
+        </div>
+        <div class="radial" style="--val: 64">
+          <span>Queue</span>
+          <strong>64%</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

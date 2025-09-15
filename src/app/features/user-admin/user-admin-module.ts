@@ -13,8 +13,9 @@ import { Dashboard } from './pages/dashboard/dashboard';
 import { EmailsList } from './pages/emails-list/emails-list';
 import { EmailsDetails } from './pages/emails-details/emails-details';
 import { UsersForgotpassword } from './pages/users-forgotpassword/users-forgotpassword';
-import { UsersResetpassword } from './pages/users-resetpassword/users-resetpassword'; // ← NEW
-
+import { UsersResetpassword } from './pages/users-resetpassword/users-resetpassword'; 
+import { BiddersList } from './pages/bidders-list/bidders-list';
+import { BiddersDetails } from './pages/bidders-details/bidders-details';
 @NgModule({
   imports: [
     CommonModule,
@@ -29,7 +30,9 @@ import { UsersResetpassword } from './pages/users-resetpassword/users-resetpassw
     EmailsList,
     EmailsDetails,
     UsersForgotpassword,
-    UsersResetpassword 
+    UsersResetpassword ,
+    BiddersList,
+    BiddersDetails
   ]
 })
 export class UserAdminModule {}

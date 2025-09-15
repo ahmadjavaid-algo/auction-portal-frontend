@@ -1,0 +1,103 @@
+<form class="dialog-form" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
+  <!-- Honeypots to stop browser credential autofill -->
+  <input type="text" autocomplete="username" tabindex="-1" aria-hidden="true"
+         style="position:absolute;left:-9999px;width:0;height:0;opacity:0;" />
+  <input type="password" autocomplete="current-password" tabindex="-1" aria-hidden="true"
+         style="position:absolute;left:-9999px;width:0;height:0;opacity:0;" />
+
+  <!-- Header -->
+  <div class="header">
+    <div class="title">
+      <h2>{{ mode === 'edit' ? 'Edit User' : 'Create User' }}</h2>
+      <p class="sub">Fill in the details below. Fields marked * are required.</p>
+    </div>
+  </div>
+
+  <!-- Scrollable body -->
+  <mat-dialog-content class="body">
+    <div class="sheet">
+      <div class="grid">
+
+        <!-- Row 1 -->
+        <mat-form-field appearance="outline">
+          <mat-label>First name</mat-label>
+          <input matInput formControlName="firstName" autocomplete="off" autocapitalize="none" />
+          <mat-error *ngIf="form.get('firstName')?.hasError('required')">
+            First name is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Last name</mat-label>
+          <input matInput formControlName="lastName" autocomplete="off" autocapitalize="none" />
+        </mat-form-field>
+
+        <!-- Row 2 -->
+        <mat-form-field appearance="outline">
+          <mat-label>Username</mat-label>
+          <input matInput formControlName="userName" name="no-username" autocomplete="off" />
+          <mat-error *ngIf="form.get('userName')?.hasError('required')">
+            Username is required
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" name="no-email" autocomplete="off" />
+          <mat-error *ngIf="form.get('email')?.hasError('required')">Email is required</mat-error>
+          <mat-error *ngIf="form.get('email')?.hasError('email')">Enter a valid email</mat-error>
+        </mat-form-field>
+
+        <!-- Row 3 -->
+        <mat-form-field appearance="outline">
+          <mat-label>Phone</mat-label>
+          <input matInput formControlName="phoneNumber" autocomplete="off" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Identification #</mat-label>
+          <input matInput formControlName="identificationNumber" autocomplete="off" />
+        </mat-form-field>
+
+        <!-- Row 4 -->
+        <mat-form-field appearance="outline">
+          <mat-label>Address</mat-label>
+          <input matInput formControlName="address1" autocomplete="off" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Postal Code</mat-label>
+          <input matInput formControlName="postalCode" autocomplete="off" />
+        </mat-form-field>
+
+
+        <!-- Row 6 -->
+        <div class="full toggles">
+          <mat-slide-toggle formControlName="emailConfirmed" color="primary">
+            Email confirmed
+          </mat-slide-toggle>
+        </div>
+
+        <!-- Row 7 (create only) -->
+        <mat-form-field *ngIf="mode === 'create'" appearance="outline" class="full">
+          <mat-label>Password</mat-label>
+          <input matInput type="password" formControlName="passwordHash"
+                 name="new-password" autocomplete="new-password" />
+          <mat-error *ngIf="form.get('passwordHash')?.hasError('required')">Password is required</mat-error>
+          <mat-error *ngIf="form.get('passwordHash')?.hasError('minlength')">
+            Password must be at least 6 characters
+          </mat-error>
+        </mat-form-field>
+
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <!-- Actions -->
+  <mat-dialog-actions align="end" class="actions">
+    <button mat-stroked-button type="button" class="btn-cancel" (click)="onCancel()">Cancel</button>
+    <button mat-flat-button type="submit" class="btn-primary" [disabled]="form.invalid">
+      {{ mode === 'edit' ? 'Update' : 'Create' }}
+    </button>
+  </mat-dialog-actions>
+</form>

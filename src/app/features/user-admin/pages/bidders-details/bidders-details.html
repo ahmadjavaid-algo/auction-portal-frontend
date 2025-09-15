@@ -1,0 +1,135 @@
+<div class="page details-theme">
+  <!-- Back -->
+  <button mat-button class="back" (click)="back()">
+    <mat-icon>arrow_back</mat-icon>
+    Back to Users
+  </button>
+
+  <!-- Loading -->
+  <ng-container *ngIf="loading">
+    <div class="busy">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Loading user…</span>
+    </div>
+  </ng-container>
+
+  <!-- Error -->
+  <ng-container *ngIf="!loading && error">
+    <mat-card class="error-card">
+      <mat-card-title>Error</mat-card-title>
+      <mat-card-content>{{ error }}</mat-card-content>
+      <mat-card-actions align="end">
+        <button mat-stroked-button color="primary" (click)="back()">OK</button>
+      </mat-card-actions>
+    </mat-card>
+  </ng-container>
+
+  <!-- Profile -->
+  <ng-container *ngIf="!loading && user">
+    <section class="profile-card mat-elevation-z2">
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-left">
+          <div class="avatar">{{ initials }}</div>
+          <div class="title">
+            <h1>
+              {{ user.firstName }}<span *ngIf="user.lastName"> {{ user.lastName }}</span>
+            </h1>
+            <div class="subtitle">@{{ user.userName }}</div>
+
+            <div class="pills">
+              <span class="pill" [class.ok]="user.active" [class.no]="!user.active">
+                <mat-icon class="pill-icn">{{ user.active ? 'check_circle' : 'pause_circle' }}</mat-icon>
+                {{ user.active ? 'Active' : 'Inactive' }}
+              </span>
+
+              <span class="pill" [class.ok]="user.emailConfirmed" [class.no]="!user.emailConfirmed">
+                <mat-icon class="pill-icn">{{ user.emailConfirmed ? 'mark_email_read' : 'mark_email_unread' }}</mat-icon>
+                {{ user.emailConfirmed ? 'Email verified' : 'Email not confirmed' }}
+              </span>
+
+              <span class="pill muted">
+                <mat-icon class="pill-icn">fingerprint</mat-icon>
+                ID {{ user.userId }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <ul class="meta">
+          <li>
+            <div class="meta-label">Last login</div>
+            <div class="meta-value">
+              {{ user.loginDate ? (user.loginDate | date:'yyyy-MM-dd HH:mm') : '—' }}
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Sections -->
+      <div class="sections">
+        <div class="section">
+          <h3><mat-icon>contact_mail</mat-icon> Contact</h3>
+          <div class="grid">
+            <div class="item">
+              <div class="label">Email</div>
+              <div class="value">{{ user.email }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Phone</div>
+              <div class="value">{{ user.phoneNumber || '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Address</div>
+              <div class="value">{{ user.address1 || '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Postal code</div>
+              <div class="value">{{ user.postalCode || '—' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3><mat-icon>badge</mat-icon> Account</h3>
+          <div class="grid">
+            <div class="item">
+              <div class="label">Identification #</div>
+              <div class="value">{{ user.identificationNumber || '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Security stamp</div>
+              <div class="value">{{ user.securityStamp || '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Code</div>
+              <div class="value">{{ user.code || '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Created</div>
+              <div class="value">{{ user.createdDate ? (user.createdDate | date:'medium') : '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Modified</div>
+              <div class="value">{{ user.modifiedDate ? (user.modifiedDate | date:'medium') : '—' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer / Audit -->
+      <div class="footer">
+        <div class="audit">
+          <div>Created by <strong>{{ user.createdById ?? '—' }}</strong></div>
+          <div>Modified by <strong>{{ user.modifiedById ?? '—' }}</strong></div>
+        </div>
+        <div class="buttons">
+          <button mat-stroked-button color="primary" (click)="back()">
+            <mat-icon>arrow_back</mat-icon>
+            Back
+          </button>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</div>

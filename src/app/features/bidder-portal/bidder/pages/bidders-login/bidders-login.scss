@@ -1,0 +1,175 @@
+.login-container {
+  /* brand tokens */
+  --brand-900: #0b1437;
+  --brand-800: #122154;
+  --brand-700: #19306f;
+  --primary-500: #3461ff;
+  --primary-400: #5d7dff;
+  --primary-300: #89a0ff;
+
+  --bg-1: #f5f7ff;
+  --bg-2: #eef3ff;
+  --surface: #ffffff;
+
+  --text-1: #0f172a;
+  --text-2: #475569;
+
+  --blue-500: #2563eb;
+  --green-500: #22c55e;
+  --amber-500: #f59e0b;
+  --red-500: #ef4444;
+  --teal-500: #06b6d4;
+
+  --shadow-1: 0 10px 24px rgba(16,24,40,.10);
+  --shadow-2: 0 18px 48px rgba(16,24,40,.16);
+  --ring: 0 0 0 3px rgba(52,97,255,.18);
+
+  display: flex;
+  min-height: 100vh;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+
+  /* ============ LEFT: form ============ */
+  .login-form {
+    flex: 1;
+    padding: 80px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    /* ▶ Brand row (logo + name) */
+    .brand-head{
+      display: flex;
+      align-items: center;        /* vertical alignment */
+      gap: 12px;
+      margin: -6px 0 18px;        /* pull closer to top, add breathing room below */
+    }
+    .brand-head .logo{
+      width: 48px;                /* bigger logo */
+      height: 36px;
+      border-radius: 10px;
+      flex: 0 0 auto;
+      box-shadow: 0 6px 16px rgba(15,23,42,.12);
+    }
+    .brand-head .brand-name{
+      font-size: 20px;            /* larger title text */
+      line-height: 1;             /* tight baseline */
+      font-weight: 800;
+      letter-spacing: .25px;
+      color: var(--brand-700);    /* matches sidebar tone */
+      transform: translateY(1px); /* subtle baseline nudge for perfect optical center */
+      white-space: nowrap;        /* keep in one line */
+    }
+
+    h2 {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0 0 8px;
+      color: var(--text-1);
+    }
+
+    .subtitle {
+      color: var(--text-2);
+      margin-bottom: 32px;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+
+      label {
+        font-size: 14px;
+        font-weight: 600;
+        margin-top: 16px;
+        margin-bottom: 6px;
+        color: var(--text-1);
+      }
+
+      input[type="email"],
+      input[type="password"],
+      input[type="text"]{
+        padding: 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        font-size: 14px;
+        background: #f3f7ff;
+        transition: box-shadow .15s, border-color .15s, background .15s;
+
+        &:focus{
+          background: #fff;
+          border-color: var(--primary-500);
+          box-shadow: var(--ring);
+          outline: none;
+        }
+      }
+
+      .options {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 16px 0;
+
+        .remember { display: flex; align-items: center; gap: 6px; }
+
+        a {
+          font-size: 14px;
+          color: var(--primary-500);
+          text-decoration: none;
+        }
+      }
+
+      .primary-btn {
+        background: linear-gradient(135deg, var(--primary-500), var(--teal-500));
+        color: #fff;
+        border: none;
+        padding: 12px;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 8px;
+        box-shadow: 0 14px 30px rgba(52,97,255,.26);
+        transition: transform .12s, box-shadow .2s;
+
+        &:hover { transform: translateY(-1px); box-shadow: 0 18px 36px rgba(52,97,255,.32); }
+      }
+    }
+
+    .signup {
+      margin-top: 24px;
+      font-size: 14px;
+
+      a {
+        color: var(--primary-500); /* fixed: was an invalid gradient value */
+        text-decoration: none;
+        font-weight: 600;
+      }
+    }
+  }
+
+  /* ============ RIGHT: illustration ============ */
+  .login-illustration{
+    flex: 1;
+    background: linear-gradient(180deg, var(--brand-900) 0%, var(--brand-800) 60%, var(--brand-700) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+
+    img{
+      max-width: 88%;
+      height: auto;
+      border-radius: 14px;
+      box-shadow: 0 10px 28px rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.4);
+      background: #fff;
+    }
+  }
+
+  /* Responsive polish for small screens */
+  @media (max-width: 960px){
+    .login-form{ padding: 48px 28px; }
+    .brand-head .logo{ width: 40px; height: 30px; }
+    .brand-head .brand-name{ font-size: 18px; }
+  }
+}

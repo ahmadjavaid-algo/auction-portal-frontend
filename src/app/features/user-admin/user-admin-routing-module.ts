@@ -12,7 +12,9 @@ import { AdminLayout } from './layout/admin-layout/admin-layout';
 import { EmailsList } from './pages/emails-list/emails-list';
 import { EmailsDetails } from './pages/emails-details/emails-details';
 import { UsersForgotpassword } from './pages/users-forgotpassword/users-forgotpassword';
-import { UsersResetpassword } from './pages/users-resetpassword/users-resetpassword'; // ← NEW
+import { UsersResetpassword } from './pages/users-resetpassword/users-resetpassword'; 
+import { BiddersList } from './pages/bidders-list/bidders-list';
+import { BiddersDetails } from './pages/bidders-details/bidders-details';
 
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -35,6 +37,8 @@ const routes: Routes = [
       { path: 'roles/:id', component: RolesDetails, title: 'Role Details' },
       { path: 'emails', component: EmailsList, title: 'Emails' },
       { path: 'emails/:id', component: EmailsDetails, title: 'Email Details' },
+      { path: 'bidders', component: BiddersList, title: 'Bidders' },
+      { path: 'bidders/:id', component: BiddersDetails, title: 'Bidder Details' },
 
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' }
     ]
