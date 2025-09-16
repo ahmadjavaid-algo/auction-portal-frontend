@@ -1,49 +1,54 @@
-<div class="layout-container">
-  <!-- Sidebar -->
-  <aside [class.collapsed]="sidebarCollapsed" class="sidebar">
-    <div class="logo">
-      <a routerLink="dashboard" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:white">
+<div class="site-layout">
+  <!-- Top bar -->
+  <header class="site-header">
+    <div class="shell">
+      <!-- Left: brand -->
+      <a routerLink="/bidder/dashboard" class="brand-link">
         <img
           src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8"
-          alt="Logo" />
-        <span *ngIf="!sidebarCollapsed">Auction Portal</span>
+          alt="Algo"
+        />
+        <span>Algo Auction</span>
       </a>
-    </div>
 
-    <button class="toggle-btn" (click)="toggleSidebar()">
-      <span class="material-icons">{{ sidebarCollapsed ? 'menu' : 'close' }}</span>
-    </button>
+      <!-- Center: main navigation -->
+      <nav class="main-nav">
+        <a routerLink="/bidder/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">Home</a>
+        <a routerLink="/platform">Platform</a>
+        <a routerLink="/news">Auctions</a>
+        <a routerLink="/shop">New Cars</a>
+        <a routerLink="/pages">Pricing</a>
+        <a routerLink="/contact">Get in Touch</a>
+        <a routerLink="/favorites" class="fav">
+          <mat-icon>favorite_border</mat-icon>
+          <span>Favorites</span>
+        </a>
+        <button class="sell-btn" routerLink="/sell">Sell Now</button>
+      </nav>
 
-    <nav>
-      <a routerLink="dashboard"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }">
-        <mat-icon>space_dashboard</mat-icon>
-        <span class="label" *ngIf="!sidebarCollapsed">Dashboard</span>
-      </a>
-    </nav>
-  </aside>
+      <!-- Right: notifications + user dropdown -->
+      <div class="header-right">
+        <button class="icon-btn" aria-label="Notifications">
+          <mat-icon>notifications</mat-icon>
+          <span class="dot"></span>
+        </button>
 
-  <!-- Main -->
-  <main class="main-content">
-    <header class="topbar">
-      <button class="icon-btn" aria-label="Notifications">
-        <mat-icon>notifications</mat-icon>
-        <span class="dot"></span>
-      </button>
-
-      <div #dropdown class="user" [class.open]="dropdownOpen" (click)="toggleDropdown()">
-        <div class="avatar">{{ (displayName || 'U') | slice:0:1 }}</div>
-        <span class="name">{{ displayName }}</span>
-        <mat-icon>expand_more</mat-icon>
-        <ul>
-          <li><a (click)="changePassword()">Change Password</a></li>
-          <li><a (click)="logout()">Logout</a></li>
-        </ul>
+        <div #dropdown class="user" [class.open]="dropdownOpen" (click)="toggleDropdown()">
+          <div class="avatar">{{ (displayName || 'U') | slice:0:1 }}</div>
+          <span class="name">{{ displayName }}</span>
+          <mat-icon>expand_more</mat-icon>
+          <ul>
+            <li><a (click)="changePassword()">Account</a></li>
+            <li><a (click)="changePassword()">Change Password</a></li>
+            <li><a (click)="logout()">Logout</a></li>
+          </ul>
+        </div>
       </div>
-    </header>
+    </div>
+  </header>
 
-    <!-- Routed Content -->
+  <!-- Page body -->
+  <main class="site-body">
     <router-outlet></router-outlet>
   </main>
 </div>
