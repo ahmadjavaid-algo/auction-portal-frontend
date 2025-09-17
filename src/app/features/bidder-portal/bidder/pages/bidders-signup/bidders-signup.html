@@ -1,1 +1,132 @@
-<p>bidders-signup works!</p>
+<div class="signup-container">
+  <div class="auth-card">
+    <!-- Centered translucent panel -->
+    <div class="panel">
+      <div class="panel-inner">
+        <!-- Brand row -->
+        <div class="brand-head">
+          <img
+            class="logo"
+            src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8"
+            alt="Algo"
+          />
+          <div class="brand-text">
+            <div class="brand-name">Algo Auction Portal</div>
+            <div class="brand-tag">Create your bidder account</div>
+          </div>
+        </div>
+
+        <h1>Sign up</h1>
+        <p class="hint">Join Algo Auction Portal. It takes less than a minute.</p>
+
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <!-- Email -->
+          <label class="field">
+            <span class="label">Email</span>
+            <input type="email" formControlName="email" autocomplete="email" />
+            <small class="error" *ngIf="f['email'].touched && f['email'].invalid">
+              Please enter a valid email address.
+            </small>
+          </label>
+
+          <!-- Username -->
+          <label class="field">
+            <span class="label">Username</span>
+            <input type="text" formControlName="userName" autocomplete="username" />
+            <small class="error" *ngIf="f['userName'].touched && f['userName'].invalid">
+              Username is required (max 100 chars).
+            </small>
+          </label>
+
+          <!-- First / Last name -->
+          <div class="row-2">
+            <label class="field">
+              <span class="label">First name</span>
+              <input type="text" formControlName="firstName" autocomplete="given-name" />
+              <small class="error" *ngIf="f['firstName'].touched && f['firstName'].invalid">
+                First name is required.
+              </small>
+            </label>
+
+            <label class="field">
+              <span class="label">Last name (optional)</span>
+              <input type="text" formControlName="lastName" autocomplete="family-name" />
+            </label>
+          </div>
+
+          <!-- Phone -->
+          <label class="field">
+            <span class="label">Phone (optional)</span>
+            <input type="tel" formControlName="phoneNumber" autocomplete="tel" />
+          </label>
+
+          <!-- Identification / Address / Postal -->
+          <div class="row-2">
+            <label class="field">
+              <span class="label">Identification # (optional)</span>
+              <input type="text" formControlName="identificationNumber" />
+            </label>
+
+            <label class="field">
+              <span class="label">Postal code (optional)</span>
+              <input type="text" formControlName="postalCode" autocomplete="postal-code" />
+            </label>
+          </div>
+
+          <label class="field">
+            <span class="label">Address (optional)</span>
+            <input type="text" formControlName="address1" autocomplete="street-address" />
+          </label>
+
+          <!-- Password / Confirm -->
+          <div class="row-2">
+            <label class="field">
+              <span class="label">Password</span>
+              <input
+                type="password"
+                formControlName="passwordHash"
+                autocomplete="new-password"
+              />
+              <small class="error" *ngIf="f['passwordHash'].touched && f['passwordHash'].invalid">
+                Minimum 6 characters.
+              </small>
+            </label>
+
+            <label class="field">
+              <span class="label">Confirm password</span>
+              <input
+                type="password"
+                formControlName="confirm"
+                autocomplete="new-password"
+              />
+              <small
+                class="error"
+                *ngIf="f['confirm'].touched && (f['confirm'].hasError('required') || f['confirm'].hasError('mismatch'))"
+              >
+                Passwords must match.
+              </small>
+            </label>
+          </div>
+
+          <!-- Terms -->
+          <label class="checkbox">
+            <input type="checkbox" formControlName="acceptTerms" />
+            <span>I agree to the Terms & Privacy Policy</span>
+          </label>
+
+          <!-- Error from API -->
+          <div class="error api" *ngIf="error">{{ error }}</div>
+
+          <button type="submit" class="btn-primary" [disabled]="loading || form.invalid">
+            {{ loading ? 'Creating…' : 'Create account' }}
+          </button>
+
+          <div class="foot">
+            Already have an account?
+            <a (click)="goToLogin()">Sign in</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
