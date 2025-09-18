@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BidderAuthService } from '../../../../../services/bidderauth';
 
 @Component({
-  selector: 'app-users-resetpassword',
+  selector: 'app-bidders-resetpassword',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './bidders-resetpassword.html',

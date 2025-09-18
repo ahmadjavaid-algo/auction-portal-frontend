@@ -1,0 +1,131 @@
+<!-- Loading -->
+<div class="center" *ngIf="loading">
+  <mat-progress-spinner mode="indeterminate" diameter="44"></mat-progress-spinner>
+</div>
+
+<!-- Error -->
+<div class="error" *ngIf="!loading && error">
+  <mat-icon>error_outline</mat-icon>
+  <span>{{ error }}</span>
+  <button mat-stroked-button color="primary" (click)="refresh()">Retry</button>
+</div>
+
+<!-- Content -->
+<section class="account" *ngIf="!loading && !error && user">
+
+  <!-- Top summary (clean, no gradient) -->
+  <mat-card class="summary">
+    <div class="left">
+      <div class="avatar">{{ initials }}</div>
+      <div class="identity">
+        <h2 class="name">{{ user.firstName }} {{ user.lastName }}</h2>
+        <div class="username">@{{ user.userName }}</div>
+
+        <div class="pills">
+          <span class="pill on" *ngIf="user.active">Active</span>
+          <span class="pill ok" *ngIf="user.emailConfirmed">Email verified</span>
+          <span class="pill muted">ID {{ user.userId }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="right actions">
+      <button class="btn ghost" (click)="refresh()">
+        <mat-icon>refresh</mat-icon><span>Refresh</span>
+      </button>
+      <button class="btn primary" (click)="changePassword()">
+        <mat-icon>lock_reset</mat-icon><span>Change Password</span>
+      </button>
+      <button class="btn ghost warn" (click)="logout()">
+        <mat-icon>logout</mat-icon><span>Logout</span>
+      </button>
+    </div>
+
+    <div class="meta">
+      <div class="meta-item">
+        <mat-icon>schedule</mat-icon>
+        <span>Last login</span>
+        <strong>{{ user.loginDate | date:'medium' }}</strong>
+      </div>
+      <div class="meta-item">
+        <mat-icon>calendar_today</mat-icon>
+        <span>Created</span>
+        <strong>{{ user.createdDate | date:'medium' }}</strong>
+      </div>
+      <div class="meta-item" *ngIf="user.modifiedDate">
+        <mat-icon>edit_calendar</mat-icon>
+        <span>Modified</span>
+        <strong>{{ user.modifiedDate | date:'medium' }}</strong>
+      </div>
+    </div>
+  </mat-card>
+
+  <!-- Two-column grid -->
+  <div class="grid">
+    <!-- Contact -->
+    <mat-card class="card">
+      <div class="card-head">
+        <mat-icon>contact_mail</mat-icon>
+        <h3>Contact</h3>
+      </div>
+      <mat-divider></mat-divider>
+
+      <div class="fields">
+        <div class="field">
+          <div class="label">Email</div>
+          <div class="value selectable">{{ user.email || '—' }}</div>
+        </div>
+        <div class="field">
+          <div class="label">Phone</div>
+          <div class="value selectable">{{ user.phoneNumber || '—' }}</div>
+        </div>
+        <div class="field">
+          <div class="label">Address</div>
+          <div class="value">{{ user.address1 || '—' }}</div>
+        </div>
+        <div class="field">
+          <div class="label">Postal Code</div>
+          <div class="value">{{ user.postalCode || '—' }}</div>
+        </div>
+      </div>
+    </mat-card>
+
+    <!-- Account -->
+    <mat-card class="card">
+      <div class="card-head">
+        <mat-icon>account_circle</mat-icon>
+        <h3>Account</h3>
+      </div>
+      <mat-divider></mat-divider>
+
+      <div class="fields">
+        <div class="field">
+          <div class="label">Username</div>
+          <div class="value selectable">{{ user.userName }}</div>
+        </div>
+        <div class="field">
+          <div class="label">Identification #</div>
+          <div class="value selectable">{{ user.identificationNumber || '—' }}</div>
+        </div>
+        <div class="field">
+          <div class="label">Security Stamp</div>
+          <div class="value">{{ user.securityStamp || '—' }}</div>
+        </div>
+        <div class="field">
+          <div class="label">Status</div>
+          <div class="value">
+            <span class="status" [class.on]="user.active" [class.off]="!user.active">
+              <span class="dot"></span>{{ user.active ? 'Active' : 'Inactive' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </mat-card>
+  </div>
+
+  <div class="footer">
+    <button class="btn ghost" (click)="back()">
+      <mat-icon>arrow_back</mat-icon><span>Back to Dashboard</span>
+    </button>
+  </div>
+</section>

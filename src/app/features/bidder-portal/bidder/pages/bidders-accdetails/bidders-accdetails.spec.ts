@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { BiddersForgotpassword } from './bidders-forgotpassword';
+import { BiddersAccdetails } from './bidders-accdetails';
 
-describe('BiddersForgotpassword', () => {
-  let component: BiddersForgotpassword;
-  let fixture: ComponentFixture<BiddersForgotpassword>;
+describe('BiddersAccdetails', () => {
+  let component: BiddersAccdetails;
+  let fixture: ComponentFixture<BiddersAccdetails>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [BiddersForgotpassword]
+      imports: [BiddersAccdetails]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(BiddersForgotpassword);
+    fixture = TestBed.createComponent(BiddersAccdetails);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

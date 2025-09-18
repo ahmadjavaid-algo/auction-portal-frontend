@@ -43,12 +43,29 @@ export class BidderLayout {
     }
   }
 
+/** Open current bidder's account details page */
+goAccount(ev?: Event): void {
+  ev?.preventDefault();
+  ev?.stopPropagation();      // don't re-toggle the dropdown
+  this.dropdownOpen = false;
+
+  if (!this.auth.isAuthenticated || !this.auth.currentUser?.userId) {
+    this.router.navigate(['/bidder/login'], { queryParams: { returnUrl: '/bidder/accdetails' } });
+    return;
+  }
+
+  this.router.navigate(['/bidder/accdetails']);  // <-- matches your routing table
+}
+
+
   changePassword(): void {
-    // Hook up to your Password dialog later; friendly placeholder for now.
+    // Keep your placeholder for now (or navigate if you have a route ready)
+    this.dropdownOpen = false;
     this.snack.open('Change password coming soon.', 'OK', { duration: 2500 });
   }
 
   logout(): void {
+    this.dropdownOpen = false;
     this.auth.logout();
     this.router.navigate(['/bidder/login']);
   }

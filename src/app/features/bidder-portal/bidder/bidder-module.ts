@@ -8,6 +8,7 @@ import { BidderLayout } from './bidder-layout/bidder-layout';
 import { BiddersForgotpassword } from './pages/bidders-forgotpassword/bidders-forgotpassword';
 import { BiddersResetpassword } from './pages/bidders-resetpassword/bidders-resetpassword';
 import { BiddersSignup } from './pages/bidders-signup/bidders-signup';
+import { BiddersAccdetails } from './pages/bidders-accdetails/bidders-accdetails';
 
 @NgModule({
   declarations: [],
@@ -19,7 +20,8 @@ import { BiddersSignup } from './pages/bidders-signup/bidders-signup';
     BidderLayout,
     BiddersForgotpassword,
     BiddersResetpassword,
-    BiddersSignup
+    BiddersSignup,
+    BiddersAccdetails
   ]
 })
 export class BidderModule { }

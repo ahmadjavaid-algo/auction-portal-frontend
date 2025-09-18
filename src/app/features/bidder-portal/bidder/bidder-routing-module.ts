@@ -7,6 +7,7 @@ import { BidderLayout } from './bidder-layout/bidder-layout';
 import { BiddersResetpassword } from './pages/bidders-resetpassword/bidders-resetpassword';
 import { BiddersForgotpassword } from './pages/bidders-forgotpassword/bidders-forgotpassword';
 import { BiddersSignup } from './pages/bidders-signup/bidders-signup';
+import { BiddersAccdetails } from './pages/bidders-accdetails/bidders-accdetails';
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
 
@@ -22,7 +23,8 @@ const routes: Routes = [
       canActivate: [bidderauthGuard],
       children: [
         { path: 'dashboard', component: Dashboard, title: 'Dashboard' },
-        { path: '', pathMatch: 'full', redirectTo: 'dashboard' }
+        { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+        {path: 'accdetails', component: BiddersAccdetails, title: 'Account Details' },
       ]
     }
 ];

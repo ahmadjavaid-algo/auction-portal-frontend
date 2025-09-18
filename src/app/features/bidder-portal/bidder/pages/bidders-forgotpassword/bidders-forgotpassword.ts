@@ -5,7 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { BidderAuthService } from '../../../../../services/bidderauth';
 
 @Component({
-  selector: 'app-users-forgotpassword',
+  selector: 'app-bidders-forgotpassword',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './bidders-forgotpassword.html',
