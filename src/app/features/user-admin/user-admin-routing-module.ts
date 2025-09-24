@@ -15,7 +15,11 @@ import { UsersForgotpassword } from './pages/users-forgotpassword/users-forgotpa
 import { UsersResetpassword } from './pages/users-resetpassword/users-resetpassword'; 
 import { BiddersList } from './pages/bidders-list/bidders-list';
 import { BiddersDetails } from './pages/bidders-details/bidders-details';
-
+import { MakesModelsYearsCategoriesList } from './pages/makes-models-years-categories-list/makes-models-years-categories-list';
+import { ProductsDetails } from './pages/products-details/products-details';
+import { ProductsList } from './pages/products-list/products-list';
+import { InventoryDetails } from './pages/inventory-details/inventory-details';
+import { InventoryList } from './pages/inventory-list/inventory-list';
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
 
@@ -39,7 +43,11 @@ const routes: Routes = [
       { path: 'emails/:id', component: EmailsDetails, title: 'Email Details' },
       { path: 'bidders', component: BiddersList, title: 'Bidders' },
       { path: 'bidders/:id', component: BiddersDetails, title: 'Bidder Details' },
-
+      { path: 'make', component: MakesModelsYearsCategoriesList, title: 'Make' },
+      { path: 'products', component: ProductsList, title: 'Products' },
+      { path: 'products/:id', component: ProductsDetails, title: 'Product Details' },
+      { path: 'inventory', component: InventoryList, title: 'Inventory' },
+      { path: 'inventory/:id', component: InventoryDetails, title: 'Inventory Details' },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' }
     ]
   }

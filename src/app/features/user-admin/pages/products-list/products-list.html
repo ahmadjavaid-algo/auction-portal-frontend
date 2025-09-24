@@ -1,0 +1,188 @@
+<!-- Stats strip -->
+<section class="stats-strip">
+  <div class="stat-card total">
+    <div class="icon-wrap"><mat-icon>inventory_2</mat-icon></div>
+    <div>
+      <div class="value">{{ stats?.total ?? 0 }}</div>
+      <div class="label">Total Products</div>
+    </div>
+  </div>
+
+  <div class="stat-card active">
+    <div class="icon-wrap"><mat-icon>verified</mat-icon></div>
+    <div>
+      <div class="value">{{ stats?.active ?? 0 }}</div>
+      <div class="label">Active</div>
+    </div>
+  </div>
+
+  <div class="stat-card inactive">
+    <div class="icon-wrap"><mat-icon>do_not_disturb_on</mat-icon></div>
+    <div>
+      <div class="value">{{ stats?.inactive ?? 0 }}</div>
+      <div class="label">Inactive</div>
+    </div>
+  </div>
+
+  <div class="stat-card online">
+    <div class="icon-wrap"><mat-icon>category</mat-icon></div>
+    <div>
+      <div class="value">{{ stats?.categories ?? 0 }}</div>
+      <div class="label">Categories</div>
+    </div>
+  </div>
+</section>
+
+<!-- Toolbar -->
+<div class="products-header">
+  <mat-form-field appearance="outline" class="search-field">
+    <mat-label>Search products</mat-label>
+    <input matInput [(ngModel)]="searchTerm" (input)="onSearch()" />
+    <button mat-icon-button *ngIf="searchTerm" matSuffix (click)="searchTerm=''; onSearch()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </mat-form-field>
+
+  <!-- Bulk add button -->
+  <button
+    mat-stroked-button
+    class="bulk-btn"
+    (click)="addSelectedToInventory()"
+    [disabled]="selectedCount === 0"
+    matTooltip="Add selected products to inventory">
+    <mat-icon>playlist_add_check</mat-icon>
+    Add to inventory ({{ selectedCount }})
+  </button>
+
+  <button mat-flat-button class="add-btn" (click)="openCreateProduct()">
+    <mat-icon>post_add</mat-icon>
+    Add Product
+  </button>
+</div>
+
+<!-- Data panel + table -->
+<div class="panel">
+  <table mat-table [dataSource]="products" class="full-width-table">
+
+    <!-- Select -->
+    <ng-container matColumnDef="select">
+      <th mat-header-cell *matHeaderCellDef>
+        <mat-checkbox
+          [indeterminate]="someSelectableSelected"
+          [checked]="allSelectableSelected"
+          (change)="masterToggle()"
+          matTooltip="Select all (only those not already in inventory)">
+        </mat-checkbox>
+      </th>
+      <td mat-cell *matCellDef="let p">
+        <mat-checkbox
+          [disabled]="isInInventory(p.productId)"
+          [checked]="isInInventory(p.productId) || selection.isSelected(p)"
+          (change)="toggleRow(p)"
+          matTooltip="{{ isInInventory(p.productId) ? 'Already in inventory' : 'Select for bulk add' }}">
+        </mat-checkbox>
+      </td>
+    </ng-container>
+
+    <!-- Name -->
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef>Name</th>
+      <td mat-cell *matCellDef="let p">
+        <div class="user-cell">
+          <div class="name">{{ p.displayName || '—' }}</div>
+          <div class="sub">ID {{ p.productId }}</div>
+        </div>
+      </td>
+    </ng-container>
+
+    <!-- Make -->
+    <ng-container matColumnDef="make">
+      <th mat-header-cell *matHeaderCellDef>Make</th>
+      <td mat-cell *matCellDef="let p">
+        <div class="name">{{ p.makeName || '—' }}</div>
+        <div class="sub">ID {{ p.makeId }}</div>
+      </td>
+    </ng-container>
+
+    <!-- Model -->
+    <ng-container matColumnDef="model">
+      <th mat-header-cell *matHeaderCellDef>Model</th>
+      <td mat-cell *matCellDef="let p">
+        <div class="name">{{ p.modelName || '—' }}</div>
+        <div class="sub">ID {{ p.modelId }}</div>
+      </td>
+    </ng-container>
+
+    <!-- Year -->
+    <ng-container matColumnDef="year">
+      <th mat-header-cell *matHeaderCellDef>Year</th>
+      <td mat-cell *matCellDef="let p">
+        <div class="name">{{ p.yearName || '—' }}</div>
+        <div class="sub">ID {{ p.yearId }}</div>
+      </td>
+    </ng-container>
+
+    <!-- Category -->
+    <ng-container matColumnDef="category">
+      <th mat-header-cell *matHeaderCellDef>Category</th>
+      <td mat-cell *matCellDef="let p">
+        <div class="name">{{ p.categoryName || '—' }}</div>
+        <div class="sub">ID {{ p.categoryId }}</div>
+      </td>
+    </ng-container>
+
+    <!-- Status -->
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef>Status</th>
+      <td mat-cell *matCellDef="let p">
+        <button mat-stroked-button
+                [class.is-active]="p.active"
+                [class.is-inactive]="p.active === false"
+                (click)="toggleActive(p)">
+          {{ p.active ? 'Active' : 'Inactive' }}
+        </button>
+      </td>
+    </ng-container>
+
+    <!-- Actions -->
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef>Actions</th>
+      <td mat-cell *matCellDef="let p">
+        <!-- Plus/check action remains -->
+        <button mat-icon-button
+                [disabled]="isInInventory(p.productId)"
+                (click)="addToInventory(p)"
+                matTooltip="{{ isInInventory(p.productId) ? 'Already in inventory' : 'Add to inventory' }}">
+          <mat-icon>
+            {{ isInInventory(p.productId) ? 'check_circle' : 'add_circle' }}
+          </mat-icon>
+        </button>
+
+        <button mat-icon-button class="edit-btn" (click)="editProduct(p)" matTooltip="Edit">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button (click)="viewProduct(p.productId)" aria-label="View details" matTooltip="View details">
+          <mat-icon>visibility</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+</div>
+
+<!-- Footer -->
+<div class="list-footer">
+  <mat-paginator
+    [length]="totalItems"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[5,10,20]"
+    [pageIndex]="pageIndex"
+    (page)="onPageChange($event)">
+  </mat-paginator>
+
+  <div class="count">
+    {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }}
+  </div>
+</div>

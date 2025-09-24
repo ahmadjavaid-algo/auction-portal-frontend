@@ -1,0 +1,51 @@
+<form class="dialog-form" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
+  <!-- Header -->
+  <div class="header">
+    <div class="title">
+      <h2>{{ mode === 'edit' ? 'Edit year' : 'Create year' }}</h2>
+      <p class="sub">Choose a model and enter the year name. Fields marked * are required.</p>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <mat-dialog-content class="body">
+    <div class="sheet">
+      <div class="grid">
+
+        <!-- Model dropdown -->
+        <mat-form-field appearance="outline">
+          <mat-label>Model *</mat-label>
+          <mat-select formControlName="modelId" [disabled]="loadingModels">
+            <mat-option *ngFor="let m of models" [value]="m.modelId">
+                {{ m.modelName }} (ID {{ m.modelId }})
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('modelId')?.hasError('required')">
+            Model is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Year name -->
+        <mat-form-field appearance="outline">
+          <mat-label>Year name *</mat-label>
+          <input matInput formControlName="yearName" autocapitalize="none" />
+          <mat-error *ngIf="form.get('yearName')?.hasError('required')">
+            Year name is required
+          </mat-error>
+          <mat-error *ngIf="form.get('yearName')?.hasError('maxlength')">
+            Max 50 characters
+          </mat-error>
+        </mat-form-field>
+
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <!-- Actions -->
+  <mat-dialog-actions align="end" class="actions">
+    <button mat-stroked-button type="button" class="btn-cancel" (click)="onCancel()">Cancel</button>
+    <button mat-flat-button type="submit" class="btn-primary" [disabled]="form.invalid">
+      {{ mode === 'edit' ? 'Update' : 'Create' }}
+    </button>
+  </mat-dialog-actions>
+</form>

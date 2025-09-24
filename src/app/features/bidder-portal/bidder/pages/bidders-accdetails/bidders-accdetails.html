@@ -12,24 +12,27 @@
 
 <!-- Content -->
 <section class="account" *ngIf="!loading && !error && user">
+  <!-- Header strip -->
+  <div class="page-crumbs">
+    <span>My Account</span>
+    <mat-icon>chevron_right</mat-icon>
+    <span class="current">Profile</span>
+  </div>
 
-  <!-- Top summary (clean, no gradient) -->
-  <mat-card class="summary">
-    <div class="left">
-      <div class="avatar">{{ initials }}</div>
-      <div class="identity">
-        <h2 class="name">{{ user.firstName }} {{ user.lastName }}</h2>
-        <div class="username">@{{ user.userName }}</div>
+  <!-- Hero/profile header -->
+  <div class="hero">
+    <div class="avatar">{{ initials }}</div>
+    <div class="who">
+    <!-- in the hero header name line -->
+    <h2 class="name">
+      {{ user.firstName }} {{ user.lastName }}
+      <span class="verified" *ngIf="user.emailConfirmed">Verified</span>
+    </h2>
 
-        <div class="pills">
-          <span class="pill on" *ngIf="user.active">Active</span>
-          <span class="pill ok" *ngIf="user.emailConfirmed">Email verified</span>
-          <span class="pill muted">ID {{ user.userId }}</span>
-        </div>
-      </div>
+      <div class="email">{{ user.email || '—' }}</div>
     </div>
 
-    <div class="right actions">
+    <div class="hero-actions">
       <button class="btn ghost" (click)="refresh()">
         <mat-icon>refresh</mat-icon><span>Refresh</span>
       </button>
@@ -40,85 +43,72 @@
         <mat-icon>logout</mat-icon><span>Logout</span>
       </button>
     </div>
+  </div>
 
-    <div class="meta">
-      <div class="meta-item">
-        <mat-icon>schedule</mat-icon>
-        <span>Last login</span>
-        <strong>{{ user.loginDate | date:'medium' }}</strong>
-      </div>
-      <div class="meta-item">
-        <mat-icon>calendar_today</mat-icon>
-        <span>Created</span>
-        <strong>{{ user.createdDate | date:'medium' }}</strong>
-      </div>
-      <div class="meta-item" *ngIf="user.modifiedDate">
-        <mat-icon>edit_calendar</mat-icon>
-        <span>Modified</span>
-        <strong>{{ user.modifiedDate | date:'medium' }}</strong>
-      </div>
-    </div>
-  </mat-card>
-
-  <!-- Two-column grid -->
-  <div class="grid">
-    <!-- Contact -->
-    <mat-card class="card">
-      <div class="card-head">
-        <mat-icon>contact_mail</mat-icon>
-        <h3>Contact</h3>
-      </div>
-      <mat-divider></mat-divider>
-
-      <div class="fields">
-        <div class="field">
-          <div class="label">Email</div>
-          <div class="value selectable">{{ user.email || '—' }}</div>
-        </div>
-        <div class="field">
-          <div class="label">Phone</div>
-          <div class="value selectable">{{ user.phoneNumber || '—' }}</div>
-        </div>
-        <div class="field">
-          <div class="label">Address</div>
-          <div class="value">{{ user.address1 || '—' }}</div>
-        </div>
-        <div class="field">
-          <div class="label">Postal Code</div>
-          <div class="value">{{ user.postalCode || '—' }}</div>
-        </div>
+  <!-- Two top cards (like the screenshot) -->
+  <div class="cards two-col">
+    <!-- Personal details -->
+    <mat-card class="panel">
+      <div class="panel-title">Personal details</div>
+      <div class="rows">
+        <div class="row"><div class="label">Full name:</div><div class="val">{{ user.firstName }} {{ user.lastName }}</div></div>
+        <div class="row"><div class="label">Address:</div><div class="val">{{ user.address1 || '—' }}</div></div>
+        <div class="row"><div class="label">Phone Number:</div><div class="val selectable">{{ user.phoneNumber || '—' }}</div></div>
+        <div class="row"><div class="label">Email:</div><div class="val selectable">{{ user.email || '—' }}</div></div>
+        <div class="row"><div class="label">Postal Code:</div><div class="val">{{ user.postalCode || '—' }}</div></div>
       </div>
     </mat-card>
 
-    <!-- Account -->
-    <mat-card class="card">
-      <div class="card-head">
-        <mat-icon>account_circle</mat-icon>
-        <h3>Account</h3>
-      </div>
-      <mat-divider></mat-divider>
-
-      <div class="fields">
-        <div class="field">
-          <div class="label">Username</div>
-          <div class="value selectable">{{ user.userName }}</div>
-        </div>
-        <div class="field">
-          <div class="label">Identification #</div>
-          <div class="value selectable">{{ user.identificationNumber || '—' }}</div>
-        </div>
-        <div class="field">
-          <div class="label">Security Stamp</div>
-          <div class="value">{{ user.securityStamp || '—' }}</div>
-        </div>
-        <div class="field">
-          <div class="label">Status</div>
-          <div class="value">
-            <span class="status" [class.on]="user.active" [class.off]="!user.active">
-              <span class="dot"></span>{{ user.active ? 'Active' : 'Inactive' }}
-            </span>
+    <!-- Account details -->
+    <mat-card class="panel">
+      <div class="panel-title">Account details</div>
+      <div class="rows">
+        <div class="row"><div class="label">User Name:</div><div class="val selectable">{{ user.userName }}</div></div>
+        <div class="row"><div class="label">Account Created:</div><div class="val">{{ user.createdDate | date:'medium' }}</div></div>
+        <div class="row"><div class="label">Last Login:</div><div class="val">{{ user.loginDate | date:'medium' }}</div></div>
+        <div class="row"><div class="label">Identification #:</div><div class="val selectable">{{ user.identificationNumber || '—' }}</div></div>
+        <!-- in Account details: Account Verification row -->
+        <div class="row">
+          <div class="label">Account Verification:</div>
+          <div class="val">
+            <span class="badge verified" *ngIf="user.emailConfirmed">Verified</span>
+            <span class="badge" *ngIf="!user.emailConfirmed">Unverified</span>
           </div>
         </div>
+
+        <div class="row"><div class="label">Status:</div>
+          <div class="val">
+            <span class="dot" [class.on]="user.active"></span>
+            <span>{{ user.active ? 'Active' : 'Inactive' }}</span>
+          </div>
+        </div>
+        <div class="row"><div class="label">Security Stamp:</div><div class="val">{{ user.securityStamp || '—' }}</div></div>
+        <div class="row"><div class="label">User ID:</div><div class="val">ID {{ user.userId }}</div></div>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- Lower cards (optional sections to mirror screenshot visual) -->
+  <div class="cards two-col">
+    <!-- Security Settings -->
+    <mat-card class="panel">
+      <div class="panel-title">Security Settings</div>
+      <div class="rows">
+        <div class="row"><div class="label">Password Last Changed:</div><div class="val">—</div></div>
+        <div class="row"><div class="label">Two-Factor Authentication:</div><div class="val"><span class="badge">Disabled</span></div></div>
+        <div class="row"><div class="label">Login Notifications:</div><div class="val"><span class="badge">Disabled</span></div></div>
+        <div class="row"><div class="label">Recent Account Activity:</div><div class="val">—</div></div>
+      </div>
+    </mat-card>
+
+    <!-- Preferences -->
+    <mat-card class="panel">
+      <div class="panel-title">Preferences</div>
+      <div class="rows">
+        <div class="row"><div class="label">Email Notifications:</div><div class="val"><span class="badge">Subscribed</span></div></div>
+        <div class="row"><div class="label">Default Dashboard View:</div><div class="val">—</div></div>
+        <div class="row"><div class="label">Dark Mode:</div><div class="val">—</div></div>
+        <div class="row"><div class="label">Language for Content:</div><div class="val">—</div></div>
       </div>
     </mat-card>
   </div>

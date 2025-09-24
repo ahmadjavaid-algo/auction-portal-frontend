@@ -1,0 +1,148 @@
+<div class="page details-theme">
+  <!-- Back -->
+  <button mat-button class="back" (click)="back()">
+    <mat-icon>arrow_back</mat-icon>
+    Back to Inventory
+  </button>
+
+  <!-- Loading -->
+  <ng-container *ngIf="loading">
+    <div class="busy">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Loading inventory…</span>
+    </div>
+  </ng-container>
+
+  <!-- Error -->
+  <ng-container *ngIf="!loading && error">
+    <mat-card class="error-card">
+      <mat-card-title>Error</mat-card-title>
+      <mat-card-content>{{ error }}</mat-card-content>
+      <mat-card-actions align="end">
+        <button mat-stroked-button color="primary" (click)="back()">OK</button>
+      </mat-card-actions>
+    </mat-card>
+  </ng-container>
+
+  <!-- Details -->
+  <ng-container *ngIf="!loading && inventory">
+    <section class="profile-card mat-elevation-z2">
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-left">
+          <div class="avatar">{{ initials }}</div>
+          <div class="title">
+            <h1>
+              {{ product?.DisplayName || '(No display name)' }}
+            </h1>
+            <div class="subtitle">
+              Inventory #{{ inventory.inventoryId }} • Product #{{ inventory.productId }}
+            </div>
+
+            <div class="pills">
+              <span class="pill" [class.ok]="inventory.active" [class.no]="!inventory.active">
+                <mat-icon class="pill-icn">{{ inventory.active ? 'check_circle' : 'pause_circle' }}</mat-icon>
+                {{ inventory.active ? 'Active' : 'Inactive' }}
+              </span>
+
+              <span class="pill" [class.ok]="hasJSON" [class.no]="!hasJSON">
+                <mat-icon class="pill-icn">{{ hasJSON ? 'integration_instructions' : 'help_outline' }}</mat-icon>
+                {{ hasJSON ? 'Product JSON present' : 'No product JSON' }}
+              </span>
+
+              <span class="pill muted">
+                <mat-icon class="pill-icn">fingerprint</mat-icon>
+                ID {{ inventory.inventoryId }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <ul class="meta">
+          <li>
+            <div class="meta-label">Make</div>
+            <div class="meta-value">{{ product?.Make || '—' }}</div>
+          </li>
+          <li>
+            <div class="meta-label">Model</div>
+            <div class="meta-value">{{ product?.Model || '—' }}</div>
+          </li>
+          <li>
+            <div class="meta-label">Year</div>
+            <div class="meta-value">{{ product?.Year || '—' }}</div>
+          </li>
+          <li>
+            <div class="meta-label">Category</div>
+            <div class="meta-value">{{ product?.Category || '—' }}</div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Sections -->
+      <div class="sections">
+        <div class="section">
+          <h3><mat-icon>inventory_2</mat-icon> Inventory</h3>
+          <div class="grid">
+            <div class="item">
+              <div class="label">Inventory ID</div>
+              <div class="value">{{ inventory.inventoryId }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Product ID</div>
+              <div class="value">{{ inventory.productId }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Description</div>
+              <div class="value value-body">{{ inventory.description || '—' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3><mat-icon>description</mat-icon> Product Snapshot & Audit</h3>
+          <div class="grid">
+            <div class="item">
+              <div class="label">Display Name</div>
+              <div class="value">{{ product?.DisplayName || '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Make / Model</div>
+              <div class="value">{{ (product?.Make || '—') + ' / ' + (product?.Model || '—') }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Year</div>
+              <div class="value">{{ product?.Year || '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Category</div>
+              <div class="value">{{ product?.Category || '—' }}</div>
+            </div>
+
+            <div class="item">
+              <div class="label">Created</div>
+              <div class="value">{{ inventory.createdDate ? (inventory.createdDate | date:'medium') : '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Modified</div>
+              <div class="value">{{ inventory.modifiedDate ? (inventory.modifiedDate | date:'medium') : '—' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer / Audit -->
+      <div class="footer">
+        <div class="audit">
+          <div>Created by <strong>{{ inventory.createdById ?? '—' }}</strong></div>
+          <div>Modified by <strong>{{ inventory.modifiedById ?? '—' }}</strong></div>
+        </div>
+        <div class="buttons">
+          <button mat-stroked-button color="primary" (click)="back()">
+            <mat-icon>arrow_back</mat-icon>
+            Back
+          </button>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</div>

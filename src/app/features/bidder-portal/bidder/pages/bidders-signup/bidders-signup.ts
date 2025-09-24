@@ -48,12 +48,12 @@ export class BiddersSignup {
     );
   }
 
-  /** allow dot-access in templates (f.email, f.userName, etc.) */
+
   get f(): Record<string, AbstractControl> {
     return this.form.controls as Record<string, AbstractControl>;
   }
 
-  /** cross-field validator: password === confirm */
+
   private match(a: string, b: string) {
     return (g: AbstractControl): ValidationErrors | null => {
       const va = g.get(a)?.value;
@@ -75,7 +75,6 @@ export class BiddersSignup {
 
     const v = this.form.getRawValue();
 
-    // Build a Bidder payload compatible with sp_Bidder_Insert
     const payload: Bidder = {
       userId: 0,
       userName: v.userName?.trim(),

@@ -16,6 +16,13 @@ import { UsersForgotpassword } from './pages/users-forgotpassword/users-forgotpa
 import { UsersResetpassword } from './pages/users-resetpassword/users-resetpassword'; 
 import { BiddersList } from './pages/bidders-list/bidders-list';
 import { BiddersDetails } from './pages/bidders-details/bidders-details';
+import { MakesModelsYearsCategoriesList } from './pages/makes-models-years-categories-list/makes-models-years-categories-list';
+import { ProductsDetails } from './pages/products-details/products-details';
+import { ProductsList } from './pages/products-list/products-list';
+import { ProductsForm } from './pages/products-form/products-form';
+import { InventoryDetails } from './pages/inventory-details/inventory-details';
+import { InventoryForm } from './pages/inventory-form/inventory-form';
+import { InventoryList } from './pages/inventory-list/inventory-list';
 @NgModule({
   imports: [
     CommonModule,
@@ -32,7 +39,14 @@ import { BiddersDetails } from './pages/bidders-details/bidders-details';
     UsersForgotpassword,
     UsersResetpassword ,
     BiddersList,
-    BiddersDetails
+    BiddersDetails,
+    MakesModelsYearsCategoriesList,
+    ProductsDetails,
+    ProductsList,
+    ProductsForm,
+    InventoryDetails,
+    InventoryForm,
+    InventoryList
   ]
 })
 export class UserAdminModule {}

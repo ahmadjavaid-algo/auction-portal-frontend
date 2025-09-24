@@ -1,0 +1,90 @@
+<form class="dialog-form" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
+  <!-- Header -->
+  <div class="header">
+    <div class="title">
+      <h2>{{ mode === 'edit' ? 'Edit product' : 'Create product' }}</h2>
+      <p class="sub">Fill in the details below. Fields marked * are required.</p>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <mat-dialog-content class="body">
+    <div class="sheet">
+      <div class="grid">
+
+        <!-- Display Name -->
+        <mat-form-field class="full" appearance="outline">
+          <mat-label>Display name *</mat-label>
+          <input matInput formControlName="displayName" autocomplete="off" autocapitalize="none" />
+          <mat-error *ngIf="form.get('displayName')?.hasError('required')">
+            Display name is required
+          </mat-error>
+          <mat-error *ngIf="form.get('displayName')?.hasError('maxlength')">
+            Max 150 characters
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Make -->
+        <mat-form-field appearance="outline">
+          <mat-label>Make *</mat-label>
+          <mat-select formControlName="makeId" [disabled]="loadingMakes">
+            <mat-option *ngFor="let m of makes" [value]="m.makeId">
+              {{ m.makeName }} (ID {{ m.makeId }})
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('makeId')?.hasError('required')">
+            Make is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Model (filtered by Make) -->
+        <mat-form-field appearance="outline">
+          <mat-label>Model *</mat-label>
+          <mat-select formControlName="modelId" [disabled]="loadingModels">
+            <mat-option *ngFor="let md of modelsFiltered" [value]="md.modelId">
+              {{ md.modelName }} (ID {{ md.modelId }})
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('modelId')?.hasError('required')">
+            Model is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Year -->
+        <mat-form-field appearance="outline">
+          <mat-label>Year *</mat-label>
+          <mat-select formControlName="yearId" [disabled]="loadingYears">
+            <mat-option *ngFor="let y of years" [value]="y.yearId">
+              {{ y.yearName}} (ID{{ y.yearId }})
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('yearId')?.hasError('required')">
+            Year is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Category -->
+        <mat-form-field appearance="outline">
+          <mat-label>Category *</mat-label>
+          <mat-select formControlName="categoryId" [disabled]="loadingCategories">
+            <mat-option *ngFor="let c of categories" [value]="c.categoryId">
+              {{ c.categoryName }} (ID {{ c.categoryId }})
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('categoryId')?.hasError('required')">
+            Category is required
+          </mat-error>
+        </mat-form-field>
+
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <!-- Actions -->
+  <mat-dialog-actions align="end" class="actions">
+    <button mat-stroked-button type="button" class="btn-cancel" (click)="onCancel()">Cancel</button>
+    <button mat-flat-button type="submit" class="btn-primary" [disabled]="form.invalid">
+      {{ mode === 'edit' ? 'Update' : 'Create' }}
+    </button>
+  </mat-dialog-actions>
+</form>

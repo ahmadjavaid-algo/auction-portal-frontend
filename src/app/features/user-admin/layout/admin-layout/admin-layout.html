@@ -38,7 +38,23 @@
         <mat-icon>gavel</mat-icon>
         <span class="label" *ngIf="!sidebarCollapsed">Bidders</span>
       </a>
+      <a routerLink="make" routerLinkActive="active">
+        <mat-icon>directions_car</mat-icon>
+        <span class="label" *ngIf="!sidebarCollapsed">Product Configuration</span>
+      </a>
+      <a routerLink="products" routerLinkActive="active">
+        <mat-icon>category</mat-icon>
+        <span class="label" *ngIf="!sidebarCollapsed">Products</span>
+      </a>
+
+      <a routerLink="inventory" routerLinkActive="active">
+        <mat-icon>inventory_2</mat-icon>
+        <span class="label" *ngIf="!sidebarCollapsed">Inventory</span>
+      </a>
+
+
     </nav>
+
   </aside>
 
   <!-- Main -->

@@ -58,7 +58,13 @@
         font-weight:800; cursor:pointer;
         box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
         transition: background .15s, transform .08s, box-shadow .2s;
-       &:hover{ transform: translateY(-1px); border:1px solid rgba(0, 0, 0, 0.977);  background:#ffffff;color:#000000; box-shadow: 0 16px 32px rgba(255, 255, 255, 0.32); transform: translate(-1px);}
+        &:hover{
+          transform: translateY(-1px);
+          border:1px solid rgba(0, 0, 0, 0.977);
+          background:#ffffff;color:#000000;
+          box-shadow: 0 16px 32px rgba(255, 255, 255, 0.32);
+          transform: translate(-1px);
+        }
       }
     }
 
@@ -107,6 +113,12 @@
       }
       .name{ font-weight:600; color:#111; white-space:nowrap; }
       mat-icon{ color:#5b657a; }
+
+      /* ▼▼ remove bullets and default spacing on dropdown list ▼▼ */
+      ul,
+      ul li{ list-style:none; margin:0; padding:0; }
+      ul li::marker{ content:none; }
+      /* ▲▲ ----------------------------------------------------- ▲▲ */
 
       ul{
         display:none; position:absolute; right:0; top: calc(100% + 8px);
