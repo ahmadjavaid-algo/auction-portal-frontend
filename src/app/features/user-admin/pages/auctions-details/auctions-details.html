@@ -1,0 +1,145 @@
+<div class="page details-theme">
+  <!-- Back -->
+  <button mat-button class="back" (click)="back()">
+    <mat-icon>arrow_back</mat-icon>
+    Back to Auctions
+  </button>
+
+  <!-- Loading -->
+  <ng-container *ngIf="loading">
+    <div class="busy">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Loading auction…</span>
+    </div>
+  </ng-container>
+
+  <!-- Error -->
+  <ng-container *ngIf="!loading && error">
+    <mat-card class="error-card">
+      <mat-card-title>Error</mat-card-title>
+      <mat-card-content>{{ error }}</mat-card-content>
+      <mat-card-actions align="end">
+        <button mat-stroked-button color="primary" (click)="back()">OK</button>
+      </mat-card-actions>
+    </mat-card>
+  </ng-container>
+
+  <!-- Details -->
+  <ng-container *ngIf="!loading && auction">
+    <section class="profile-card mat-elevation-z2">
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-left">
+          <div class="avatar">{{ initials }}</div>
+          <div class="title">
+            <h1>
+              {{ auction.auctionName || '(No auction name)' }}
+            </h1>
+            <div class="subtitle">
+              Auction #{{ auction.auctionId }} • Status #{{ auction.auctionStatusId }}
+            </div>
+
+            <div class="pills">
+              <span class="pill" [class.ok]="auction.active" [class.no]="!auction.active">
+                <mat-icon class="pill-icn">{{ auction.active ? 'check_circle' : 'pause_circle' }}</mat-icon>
+                {{ auction.active ? 'Active' : 'Inactive' }}
+              </span>
+
+              <span class="pill" [class.ok]="hasSchedule" [class.no]="!hasSchedule">
+                <mat-icon class="pill-icn">{{ hasSchedule ? 'event_available' : 'event_busy' }}</mat-icon>
+                {{ hasSchedule ? 'Schedule set' : 'No schedule' }}
+              </span>
+
+              <span class="pill muted">
+                <mat-icon class="pill-icn">fingerprint</mat-icon>
+                ID {{ auction.auctionId }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <ul class="meta">
+          <li>
+            <div class="meta-label">Status Code</div>
+            <div class="meta-value">{{ auction.auctionStatusCode || '—' }}</div>
+          </li>
+          <li>
+            <div class="meta-label">Status Name</div>
+            <div class="meta-value">{{ auction.auctionStatusName || '—' }}</div>
+          </li>
+          <li>
+            <div class="meta-label">Starts</div>
+            <div class="meta-value">{{ getStart() ? (getStart() | date:'medium') : '—' }}</div>
+          </li>
+          <li>
+            <div class="meta-label">Ends</div>
+            <div class="meta-value">{{ getEnd() ? (getEnd() | date:'medium') : '—' }}</div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Sections -->
+      <div class="sections">
+        <div class="section">
+          <h3><mat-icon>gavel</mat-icon> Auction</h3>
+          <div class="grid">
+            <div class="item">
+              <div class="label">Auction ID</div>
+              <div class="value">{{ auction.auctionId }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Status</div>
+              <div class="value">
+                {{ auction.auctionStatusName || auction.auctionStatusCode || '—' }}
+              </div>
+            </div>
+            <div class="item">
+              <div class="label">Name</div>
+              <div class="value">{{ auction.auctionName || '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Start Date/Time</div>
+              <div class="value">{{ getStart() ? (getStart() | date:'medium') : '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">End Date/Time</div>
+              <div class="value">{{ getEnd() ? (getEnd() | date:'medium') : '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Bid Increment</div>
+              <div class="value">{{ auction.bidIncrement ?? '—' }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3><mat-icon>description</mat-icon> Audit</h3>
+          <div class="grid">
+            <div class="item">
+              <div class="label">Created</div>
+              <div class="value">{{ auction.createdDate ? (auction.createdDate | date:'medium') : '—' }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Modified</div>
+              <div class="value">{{ auction.modifiedDate ? (auction.modifiedDate | date:'medium') : '—' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer / Audit -->
+      <div class="footer">
+        <div class="audit">
+          <div>Created by <strong>{{ auction.createdById ?? '—' }}</strong></div>
+          <div>Modified by <strong>{{ auction.modifiedById ?? '—' }}</strong></div>
+        </div>
+        <div class="buttons">
+          <button mat-stroked-button color="primary" (click)="back()">
+            <mat-icon>arrow_back</mat-icon>
+            Back
+          </button>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</div>

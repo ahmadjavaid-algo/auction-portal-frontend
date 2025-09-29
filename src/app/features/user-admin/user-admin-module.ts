@@ -23,6 +23,9 @@ import { ProductsForm } from './pages/products-form/products-form';
 import { InventoryDetails } from './pages/inventory-details/inventory-details';
 import { InventoryForm } from './pages/inventory-form/inventory-form';
 import { InventoryList } from './pages/inventory-list/inventory-list';
+import { AuctionsList } from './pages/auctions-list/auctions-list';
+import { AuctionsForm } from './pages/auctions-form/auctions-form';
+import { AuctionsDetails } from './pages/auctions-details/auctions-details';
 @NgModule({
   imports: [
     CommonModule,
@@ -46,7 +49,10 @@ import { InventoryList } from './pages/inventory-list/inventory-list';
     ProductsForm,
     InventoryDetails,
     InventoryForm,
-    InventoryList
+    InventoryList,
+    AuctionsList,
+    AuctionsForm,
+    AuctionsDetails
   ]
 })
 export class UserAdminModule {}

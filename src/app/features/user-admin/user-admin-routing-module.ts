@@ -20,6 +20,8 @@ import { ProductsDetails } from './pages/products-details/products-details';
 import { ProductsList } from './pages/products-list/products-list';
 import { InventoryDetails } from './pages/inventory-details/inventory-details';
 import { InventoryList } from './pages/inventory-list/inventory-list';
+import { AuctionsList } from './pages/auctions-list/auctions-list';
+import { AuctionsDetails } from './pages/auctions-details/auctions-details';
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
 
@@ -48,6 +50,8 @@ const routes: Routes = [
       { path: 'products/:id', component: ProductsDetails, title: 'Product Details' },
       { path: 'inventory', component: InventoryList, title: 'Inventory' },
       { path: 'inventory/:id', component: InventoryDetails, title: 'Inventory Details' },
+      { path: 'auctions', component: AuctionsList, title: 'Auctions' },
+      { path: 'auctions/:id', component: AuctionsDetails, title: 'Auction Details' },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' }
     ]
   }

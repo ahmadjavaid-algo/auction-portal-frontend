@@ -53,8 +53,8 @@ type Section = 'make' | 'model' | 'year' | 'category';
 export class MakesModelsYearsCategoriesList {
   private makesSvc = inject(MakesService);
   private modelsSvc = inject(ModelsService);
-  private yearsSvc = inject(YearsService);
-  private catsSvc  = inject(CategorysService);
+  private yearsSvc  = inject(YearsService);
+  private catsSvc   = inject(CategorysService);
 
   private dialog = inject(MatDialog);
   private snack  = inject(MatSnackBar);
@@ -63,10 +63,10 @@ export class MakesModelsYearsCategoriesList {
   section: Section = 'make';
 
   // Data sources for each table
-  makes   = new MatTableDataSource<Make>([]);
-  models  = new MatTableDataSource<Model>([]);
-  years   = new MatTableDataSource<Year>([]);
-  cats    = new MatTableDataSource<Category>([]);
+  makes  = new MatTableDataSource<Make>([]);
+  models = new MatTableDataSource<Model>([]);
+  years  = new MatTableDataSource<Year>([]);
+  cats   = new MatTableDataSource<Category>([]);
 
   // Columns per table
   colsMake     = ['name', 'status', 'actions'];
@@ -80,6 +80,9 @@ export class MakesModelsYearsCategoriesList {
   pageIndex = 0;
   totalItems = 0;
 
+  // Stats strip (recomputed whenever data/filters/section change)
+  stats = { total: 0, active: 0, inactive: 0, parentsDistinct: 0 };
+
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
   ngOnInit(): void {
@@ -89,7 +92,7 @@ export class MakesModelsYearsCategoriesList {
 
   ngAfterViewInit(): void {
     this.applyPaginatorToActive();
-    this.updateTotals();
+    this.updateTotalsAndStats();
   }
 
   // ---- Loaders ----
@@ -156,13 +159,13 @@ export class MakesModelsYearsCategoriesList {
     this.activeDS.filter = f;
     this.paginator?.firstPage();
     this.pageIndex = 0;
-    this.updateTotals();
+    this.updateTotalsAndStats();
   }
 
   onPageChange(e: PageEvent): void {
     this.pageSize = e.pageSize;
     this.pageIndex = e.pageIndex;
-    this.updateTotals();
+    this.updateTotalsAndStats();
   }
 
   get activeDS(): MatTableDataSource<any> {
@@ -183,16 +186,58 @@ export class MakesModelsYearsCategoriesList {
     }
   }
 
+  get sectionTitle(): string {
+    switch (this.section) {
+      case 'make': return 'Makes';
+      case 'model': return 'Models';
+      case 'year': return 'Years';
+      case 'category': return 'Categories';
+    }
+  }
+
+  get parentLabel(): string {
+    switch (this.section) {
+      case 'make': return '—';
+      case 'model': return 'Distinct Makes';
+      case 'year': return 'Distinct Models';
+      case 'category': return 'Distinct Years';
+    }
+  }
+
+  get sectionIcon(): string {
+    switch (this.section) {
+      case 'make': return 'directions_car';
+      case 'model': return 'view_in_ar';
+      case 'year': return 'calendar_today';
+      case 'category': return 'category';
+    }
+  }
+
   private applyPaginatorToActive(): void {
     if (this.paginator) this.activeDS.paginator = this.paginator;
   }
 
-  private updateTotals(): void {
-    this.totalItems = this.activeDS.filter ? this.activeDS.filteredData.length : this.activeDS.data.length;
+  private updateTotalsAndStats(): void {
+    const src = this.activeDS.filter ? this.activeDS.filteredData : this.activeDS.data;
+    const total = src.length;
+    const active = src.filter((x: any) => x.active === true).length;
+    const inactive = total - active;
+
+    let parentsDistinct = 0;
+    if (this.section === 'model') {
+      parentsDistinct = new Set(src.map((r: any) => r.makeId)).size;
+    } else if (this.section === 'year') {
+      parentsDistinct = new Set(src.map((r: any) => r.modelId)).size;
+    } else if (this.section === 'category') {
+      parentsDistinct = new Set(src.map((r: any) => r.yearId)).size;
+    }
+
+    this.totalItems = total;
+    this.stats = { total, active, inactive, parentsDistinct };
   }
 
   private updateTotalsIfActive(s: Section): void {
-    if (this.section === s) this.updateTotals();
+    if (this.section === s) this.updateTotalsAndStats();
   }
 
   get rangeStart(): number {
@@ -204,7 +249,6 @@ export class MakesModelsYearsCategoriesList {
   }
 
   // ---- Actions ----
-  /** Open Create dialog for the current section (Make/Model/Year/Category wired). */
   openCreate(): void {
     if (this.section === 'make') {
       const ref = this.dialog.open<MakesForm, { mode: 'create'; initialData?: Make | null }, MakeFormResult>(
@@ -267,7 +311,6 @@ export class MakesModelsYearsCategoriesList {
     }
   }
 
-  /** Open Edit dialog for the selected row (Make/Model/Year/Category wired). */
   editRow(row: any): void {
     if (this.section === 'make') {
       this.makesSvc.getById(row.makeId).subscribe({
@@ -401,7 +444,7 @@ export class MakesModelsYearsCategoriesList {
     if (ok) {
       row.active = newState;
       this.snack.open(`Record ${newState ? 'activated' : 'deactivated'}.`, 'OK', { duration: 1800 });
-      this.updateTotals();
+      this.updateTotalsAndStats();
     } else {
       this.snack.open('Failed to change status.', 'Dismiss', { duration: 2500 });
     }

@@ -17,7 +17,6 @@ import { InventoryService } from '../../../../services/inventory.service';
 import { Inventory } from '../../../../models/inventory.model';
 import { AuthService } from '../../../../services/auth';
 
-// ⬇️ Dialog (standalone)
 import { InventoryForm, InventoryFormResult } from '../inventory-form/inventory-form';
 
 @Component({
@@ -47,7 +46,15 @@ export class InventoryList {
   private auth = inject(AuthService);
 
   /** order must match template columns */
-  displayedColumns: string[] = ['name', 'product', 'description', 'status', 'actions'];
+  displayedColumns: string[] = [
+    'name',
+    'product',
+    'chassis',
+    'registration',
+    'description',
+    'status',
+    'actions'
+  ];
   inventory = new MatTableDataSource<Inventory>([]);
   totalItems = 0;
 
@@ -66,15 +73,24 @@ export class InventoryList {
   ngOnInit(): void {
     this.loadInventory();
 
-    // Search over display name, description, product id, and productJSON
+    // Search across display name, category fields in JSON, chassis/registration, etc.
     this.inventory.filterPredicate = (i: Inventory, filter: string) => {
-      const anyi = i as any; // might include displayName from API
+      const pj = this.safeParseProductJSON(i.productJSON);
       const haystack = [
-        anyi.displayName ?? '',            // if API adds a friendly name
+        i.displayName ?? '',
         i.description ?? '',
         String(i.productId ?? ''),
-        i.productJSON ?? ''
-      ].join(' ').toLowerCase();
+        pj?.DisplayName ?? pj?.displayName ?? '',
+        pj?.Make ?? pj?.make ?? '',
+        pj?.Model ?? pj?.model ?? '',
+        pj?.Year ?? pj?.year ?? '',
+        pj?.Category ?? pj?.category ?? '',
+        i.chassisNo ?? '',
+        i.registrationNo ?? ''
+      ]
+        .join(' ')
+        .toLowerCase();
+
       return haystack.includes(filter);
     };
   }
@@ -114,20 +130,16 @@ export class InventoryList {
     };
   }
 
-  // ---- Display helpers ----
   getCreatedAt(i: Inventory): Date | null {
     return i.createdDate ? new Date(i.createdDate) : null;
   }
 
-  /** Safely read DisplayName from productJSON or from any extra field the API may provide */
   getProductName(i: Inventory): string {
-    const anyi = i as any;
-    if (anyi.displayName) return String(anyi.displayName);
+    if (i.displayName) return i.displayName;
     const pj = this.safeParseProductJSON(i.productJSON);
     return pj?.DisplayName || pj?.displayName || `#${i.productId}`;
   }
 
-  /** Safely read Category from productJSON */
   getProductCategory(i: Inventory): string {
     const pj = this.safeParseProductJSON(i.productJSON);
     return pj?.Category || pj?.categoryName || pj?.category || '';
@@ -135,14 +147,9 @@ export class InventoryList {
 
   private safeParseProductJSON(json: string | null | undefined): any | null {
     if (!json) return null;
-    try {
-      return JSON.parse(json);
-    } catch {
-      return null;
-    }
+    try { return JSON.parse(json); } catch { return null; }
   }
 
-  // ---- Search / Paging ----
   onSearch(): void {
     this.inventory.filter = this.searchTerm.trim().toLowerCase();
     this.totalItems = this.inventory.filteredData.length;
@@ -162,7 +169,6 @@ export class InventoryList {
     this.totalItems = this.inventory.filter ? this.inventory.filteredData.length : this.inventory.data.length;
   }
 
-  /** Range helpers for the right-bottom label */
   get rangeStart(): number {
     if (!this.totalItems) return 0;
     return this.pageIndex * this.pageSize + 1;
@@ -171,8 +177,6 @@ export class InventoryList {
     return Math.min(this.totalItems, (this.pageIndex + 1) * this.pageSize);
   }
 
-  // ===== Dialogs =====
-  /** Create */
   openCreateInventory(): void {
     const ref = this.dialog.open<InventoryForm, { mode: 'create' }, InventoryFormResult>(InventoryForm, {
       width: '720px',
@@ -193,9 +197,7 @@ export class InventoryList {
     });
   }
 
-  /** Edit */
   editInventory(row: Inventory): void {
-    // fetch fresh copy if desired; using row directly is fine if list has full fields
     const ref = this.dialog.open<InventoryForm, { mode: 'edit'; initialData: Inventory }, InventoryFormResult>(InventoryForm, {
       width: '720px',
       data: { mode: 'edit', initialData: row }
@@ -219,7 +221,6 @@ export class InventoryList {
     });
   }
 
-  /** Toggle Active/Inactive */
   toggleActive(i: Inventory): void {
     const newState = !(i.active ?? false);
     const payload = {
@@ -241,7 +242,6 @@ export class InventoryList {
     });
   }
 
-  // Optional details route
   viewInventory(inventoryId: number): void {
     this.router.navigate(['/admin/inventory', inventoryId]);
   }

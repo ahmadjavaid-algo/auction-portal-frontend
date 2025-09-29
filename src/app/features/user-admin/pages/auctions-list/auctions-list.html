@@ -1,10 +1,10 @@
-<!-- Stats strip (unchanged) -->
+<!-- Stats strip -->
 <section class="stats-strip">
   <div class="stat-card total">
-    <div class="icon-wrap"><mat-icon>inventory_2</mat-icon></div>
+    <div class="icon-wrap"><mat-icon>gavel</mat-icon></div>
     <div>
       <div class="value">{{ stats?.total ?? 0 }}</div>
-      <div class="label">Total Inventory</div>
+      <div class="label">Total Auctions</div>
     </div>
   </div>
 
@@ -27,8 +27,8 @@
   <div class="stat-card online">
     <div class="icon-wrap"><mat-icon>view_list</mat-icon></div>
     <div>
-      <div class="value">{{ stats?.products ?? 0 }}</div>
-      <div class="label">Distinct Products</div>
+      <div class="value">{{ stats?.statuses ?? 0 }}</div>
+      <div class="label">Distinct Statuses</div>
     </div>
   </div>
 </section>
@@ -36,75 +36,66 @@
 <!-- Toolbar -->
 <div class="inventory-header">
   <mat-form-field appearance="outline" class="search-field">
-    <mat-label>Search inventory</mat-label>
+    <mat-label>Search auctions</mat-label>
     <input matInput [(ngModel)]="searchTerm" (input)="onSearch()" />
     <button mat-icon-button *ngIf="searchTerm" matSuffix (click)="searchTerm=''; onSearch()">
       <mat-icon>close</mat-icon>
     </button>
   </mat-form-field>
 
-  <button mat-flat-button class="add-btn" (click)="openCreateInventory()">
+  <button mat-flat-button class="add-btn" (click)="openCreateAuction()">
     <mat-icon>post_add</mat-icon>
-    Add Inventory
+    Add Auction
   </button>
 </div>
 
 <!-- Data panel + table -->
 <div class="panel">
-  <table mat-table [dataSource]="inventory" class="full-width-table">
+  <table mat-table [dataSource]="auctions" class="full-width-table">
 
     <!-- Name -->
     <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef>Name</th>
-      <td mat-cell *matCellDef="let i">
+      <td mat-cell *matCellDef="let a">
         <div class="user-cell">
-          <div class="name">{{ getProductName(i) }}</div>
-          <div class="sub">Inventory #{{ i.inventoryId }}</div>
+          <div class="name">{{ a.auctionName || '—' }}</div>
+          <div class="sub">Auction #{{ a.auctionId }}</div>
         </div>
       </td>
     </ng-container>
 
-    <!-- Product -->
-    <ng-container matColumnDef="product">
-      <th mat-header-cell *matHeaderCellDef>Product</th>
-      <td mat-cell *matCellDef="let i">
-        {{ i.productId }}
+    <!-- Schedule -->
+    <ng-container matColumnDef="schedule">
+      <th mat-header-cell *matHeaderCellDef>Schedule</th>
+      <td mat-cell *matCellDef="let a">
+        <div class="subject-cell">
+          {{ getStart(a) ? (getStart(a) | date:'medium') : '—' }}
+          &nbsp;→&nbsp;
+          {{ getEnd(a) ? (getEnd(a) | date:'medium') : '—' }}
+        </div>
+        <div class="sub">
+          {{ a.auctionStatusName || a.auctionStatusCode || '' }}
+        </div>
       </td>
     </ng-container>
 
-    <!-- NEW: Chassis No -->
-    <ng-container matColumnDef="chassis">
-      <th mat-header-cell *matHeaderCellDef>Chassis No</th>
-      <td mat-cell *matCellDef="let i">
-        {{ i.chassisNo || '—' }}
+    <!-- Bid Increment -->
+    <ng-container matColumnDef="bid">
+      <th mat-header-cell *matHeaderCellDef>Bid Increment</th>
+      <td mat-cell *matCellDef="let a">
+        {{ a.bidIncrement ?? '—' }}
       </td>
     </ng-container>
 
-    <!-- NEW: Registration No -->
-    <ng-container matColumnDef="registration">
-      <th mat-header-cell *matHeaderCellDef>Registration No</th>
-      <td mat-cell *matCellDef="let i">
-        {{ i.registrationNo || '—' }}
-      </td>
-    </ng-container>
-
-    <!-- Description -->
-    <ng-container matColumnDef="description">
-      <th mat-header-cell *matHeaderCellDef>Description</th>
-      <td mat-cell *matCellDef="let i">
-        <div class="subject-cell">{{ i.description || '—' }}</div>
-      </td>
-    </ng-container>
-
-    <!-- Status -->
+    <!-- Status (Active toggle) -->
     <ng-container matColumnDef="status">
       <th mat-header-cell *matHeaderCellDef>Status</th>
-      <td mat-cell *matCellDef="let i">
+      <td mat-cell *matCellDef="let a">
         <button mat-stroked-button
-                [class.is-active]="i.active"
-                [class.is-inactive]="i.active === false"
-                (click)="toggleActive(i)">
-          {{ i.active ? 'Active' : 'Inactive' }}
+                [class.is-active]="a.active"
+                [class.is-inactive]="a.active === false"
+                (click)="toggleActive(a)">
+          {{ a.active ? 'Active' : 'Inactive' }}
         </button>
       </td>
     </ng-container>
@@ -112,11 +103,11 @@
     <!-- Actions -->
     <ng-container matColumnDef="actions">
       <th mat-header-cell *matHeaderCellDef>Actions</th>
-      <td mat-cell *matCellDef="let i">
-        <button mat-icon-button class="edit-btn" (click)="editInventory(i)" matTooltip="Edit">
+      <td mat-cell *matCellDef="let a">
+        <button mat-icon-button class="edit-btn" (click)="editAuction(a)" matTooltip="Edit">
           <mat-icon>edit</mat-icon>
         </button>
-        <button mat-icon-button (click)="viewInventory(i.inventoryId)" aria-label="View details" matTooltip="View details">
+        <button mat-icon-button (click)="viewAuction(a.auctionId)" aria-label="View details" matTooltip="View details">
           <mat-icon>visibility</mat-icon>
         </button>
       </td>

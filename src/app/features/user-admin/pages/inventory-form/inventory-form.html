@@ -3,7 +3,9 @@
   <div class="header">
     <div class="title">
       <h2>{{ mode === 'edit' ? 'Edit inventory' : 'Create inventory' }}</h2>
-      <p class="sub">Choose a product and (optionally) add a description. Fields marked * are required.</p>
+      <p class="sub">
+        Choose a product and (optionally) add details. Fields marked * are required.
+      </p>
     </div>
   </div>
 
@@ -23,6 +25,20 @@
           <mat-error *ngIf="form.get('productId')?.hasError('required')">
             Product is required
           </mat-error>
+        </mat-form-field>
+
+        <!-- NEW: Chassis No -->
+        <mat-form-field appearance="outline">
+          <mat-label>Chassis No</mat-label>
+          <input matInput formControlName="chassisNo" maxlength="64" />
+          <mat-hint align="end">{{ (form.get('chassisNo')?.value?.length || 0) }}/64</mat-hint>
+        </mat-form-field>
+
+        <!-- NEW: Registration No -->
+        <mat-form-field appearance="outline">
+          <mat-label>Registration No</mat-label>
+          <input matInput formControlName="registrationNo" maxlength="64" />
+          <mat-hint align="end">{{ (form.get('registrationNo')?.value?.length || 0) }}/64</mat-hint>
         </mat-form-field>
 
         <!-- Description -->

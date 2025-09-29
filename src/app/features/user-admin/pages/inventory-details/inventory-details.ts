@@ -47,7 +47,6 @@ export class InventoryDetails {
   error: string | null = null;
   inventory: Inventory | null = null;
 
-  // parsed product JSON (if present)
   product: ProductSnapshot = null;
 
   ngOnInit(): void {
@@ -75,7 +74,6 @@ export class InventoryDetails {
     this.router.navigate(['/admin/inventory']);
   }
 
-  /** Avatar initials (e.g., "IN" or from DisplayName if available) */
   get initials(): string {
     if (this.product?.DisplayName) {
       const parts = String(this.product.DisplayName).trim().split(/\s+/);

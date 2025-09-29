@@ -1,38 +1,63 @@
+<!-- Stats strip (replicated style, section-aware) -->
+<section class="stats-strip">
+  <div class="stat-card total">
+    <div class="icon-wrap">
+      <mat-icon>{{ sectionIcon }}</mat-icon>
+    </div>
+    <div>
+      <div class="value">{{ stats?.total ?? 0 }}</div>
+      <div class="label">Total {{ sectionTitle }}</div>
+    </div>
+  </div>
+
+  <div class="stat-card active">
+    <div class="icon-wrap"><mat-icon>verified</mat-icon></div>
+    <div>
+      <div class="value">{{ stats?.active ?? 0 }}</div>
+      <div class="label">Active</div>
+    </div>
+  </div>
+
+  <div class="stat-card inactive">
+    <div class="icon-wrap"><mat-icon>do_not_disturb_on</mat-icon></div>
+    <div>
+      <div class="value">{{ stats?.inactive ?? 0 }}</div>
+      <div class="label">Inactive</div>
+    </div>
+  </div>
+
+  <div class="stat-card online">
+    <div class="icon-wrap"><mat-icon>hub</mat-icon></div>
+    <div>
+      <div class="value">{{ stats?.parentsDistinct ?? 0 }}</div>
+      <div class="label">{{ parentLabel }}</div>
+    </div>
+  </div>
+</section>
+
 <!-- Segmented switcher (Make / Model / Year / Category) -->
 <section class="switcher">
   <div class="seg">
-    <button
-      type="button"
-      class="seg-btn"
-      [class.active]="section==='make'"
-      (click)="section='make'; onSectionChange('make')">
+    <button type="button" class="seg-btn" [class.active]="section==='make'"
+            (click)="section='make'; onSectionChange('make')">
       <mat-icon>directions_car</mat-icon>
       <span>Make</span>
     </button>
 
-    <button
-      type="button"
-      class="seg-btn"
-      [class.active]="section==='model'"
-      (click)="section='model'; onSectionChange('model')">
+    <button type="button" class="seg-btn" [class.active]="section==='model'"
+            (click)="section='model'; onSectionChange('model')">
       <mat-icon>view_in_ar</mat-icon>
       <span>Model</span>
     </button>
 
-    <button
-      type="button"
-      class="seg-btn"
-      [class.active]="section==='year'"
-      (click)="section='year'; onSectionChange('year')">
+    <button type="button" class="seg-btn" [class.active]="section==='year'"
+            (click)="section='year'; onSectionChange('year')">
       <mat-icon>calendar_today</mat-icon>
       <span>Year</span>
     </button>
 
-    <button
-      type="button"
-      class="seg-btn"
-      [class.active]="section==='category'"
-      (click)="section='category'; onSectionChange('category')">
+    <button type="button" class="seg-btn" [class.active]="section==='category'"
+            (click)="section='category'; onSectionChange('category')">
       <mat-icon>category</mat-icon>
       <span>Category</span>
     </button>
@@ -58,7 +83,7 @@
 <!-- Panel + ONE table depending on the selected section -->
 <div class="panel">
 
-  <!-- MAKE -->
+<!-- MAKE -->
   <table mat-table [dataSource]="makes" class="full-width-table" *ngIf="section==='make'">
     <ng-container matColumnDef="name">
       <th mat-header-cell *matHeaderCellDef>Make</th>
@@ -251,3 +276,4 @@
     {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }}
   </div>
 </div>
+
