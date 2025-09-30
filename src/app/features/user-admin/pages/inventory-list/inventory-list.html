@@ -43,6 +43,28 @@
     </button>
   </mat-form-field>
 
+  <!-- Selection actions (inline, on-brand) -->
+<div class="selection-toolbar" *ngIf="selection.selected.length">
+  <div class="selection-chip" title="Selected rows">
+    <mat-icon>check_box</mat-icon>
+    <span>{{ selection.selected.length }} selected</span>
+    <button
+      mat-icon-button
+      type="button"
+      class="selection-clear"
+      (click)="clearSelection()"
+      aria-label="Clear selection">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <button mat-flat-button class="chip-action" (click)="addSelectedToAuction()">
+    <mat-icon>playlist_add</mat-icon>
+    Add to Auction
+  </button>
+</div>
+
+
   <button mat-flat-button class="add-btn" (click)="openCreateInventory()">
     <mat-icon>post_add</mat-icon>
     Add Inventory
@@ -52,6 +74,26 @@
 <!-- Data panel + table -->
 <div class="panel">
   <table mat-table [dataSource]="inventory" class="full-width-table">
+
+    <!-- Select (header: master toggle) -->
+    <ng-container matColumnDef="select">
+      <th mat-header-cell *matHeaderCellDef>
+        <mat-checkbox
+          (change)="masterToggle()"
+          [checked]="isAllSelected()"
+          [indeterminate]="selection.selected.length && !isAllSelected()"
+          [aria-label]="checkboxLabel()">
+        </mat-checkbox>
+      </th>
+      <td mat-cell *matCellDef="let i">
+        <mat-checkbox
+          (click)="$event.stopPropagation()"
+          (change)="$event ? selection.toggle(i) : null"
+          [checked]="selection.isSelected(i)"
+          [aria-label]="checkboxLabel(i)">
+        </mat-checkbox>
+      </td>
+    </ng-container>
 
     <!-- Name -->
     <ng-container matColumnDef="name">
@@ -72,7 +114,7 @@
       </td>
     </ng-container>
 
-    <!-- NEW: Chassis No -->
+    <!-- Chassis No -->
     <ng-container matColumnDef="chassis">
       <th mat-header-cell *matHeaderCellDef>Chassis No</th>
       <td mat-cell *matCellDef="let i">
@@ -80,7 +122,7 @@
       </td>
     </ng-container>
 
-    <!-- NEW: Registration No -->
+    <!-- Registration No -->
     <ng-container matColumnDef="registration">
       <th mat-header-cell *matHeaderCellDef>Registration No</th>
       <td mat-cell *matCellDef="let i">

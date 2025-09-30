@@ -1,17 +1,16 @@
 export interface InventoryAuction {
-  inventoryauctionId: number;
-  inventoryauctionStatusId: number;
+  inventoryAuctionId: number;
+  inventoryAuctionStatusId: number;
   inventoryId: number;
   auctionId: number;
 
-  buyNowPrice: number;  
-  reservePrice: number;  
-  bidIncrement: number;           
+  buyNowPrice: number;
+  reservePrice: number;
+  bidIncrement: number;
 
-  inventoryauctionStatusCode?: string | null; 
-  inventoryauctionStatusName?: string | null; 
+  inventoryAuctionStatusCode?: string | null;
+  inventoryAuctionStatusName?: string | null;
 
-  // audit
   createdById?: number | null;
   createdDate?: string | null;
   modifiedById?: number | null;

@@ -12,12 +12,19 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { SelectionModel } from '@angular/cdk/collections';
+
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 import { InventoryService } from '../../../../services/inventory.service';
 import { Inventory } from '../../../../models/inventory.model';
 import { AuthService } from '../../../../services/auth';
+import { InventoryAuctionService } from '../../../../services/inventoryauctions.service';
 
 import { InventoryForm, InventoryFormResult } from '../inventory-form/inventory-form';
+import { AddToAuctionDialog, AddToAuctionResult } from '../add-to-auction.dialog/add-to-auction.dialog';
 
 @Component({
   selector: 'app-inventory-list',
@@ -33,13 +40,15 @@ import { InventoryForm, InventoryFormResult } from '../inventory-form/inventory-
     MatButtonModule,
     MatDialogModule,
     MatSnackBarModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatCheckboxModule
   ],
   templateUrl: './inventory-list.html',
   styleUrls: ['./inventory-list.scss']
 })
 export class InventoryList {
   private invSvc = inject(InventoryService);
+  private invAucSvc = inject(InventoryAuctionService); // NEW
   private router = inject(Router);
   private dialog = inject(MatDialog);
   private snack = inject(MatSnackBar);
@@ -47,6 +56,7 @@ export class InventoryList {
 
   /** order must match template columns */
   displayedColumns: string[] = [
+    'select',
     'name',
     'product',
     'chassis',
@@ -68,6 +78,9 @@ export class InventoryList {
   // loading indicator
   loading = false;
 
+  // row selection (multi)
+  selection = new SelectionModel<Inventory>(true, []);
+
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
   ngOnInit(): void {
@@ -87,9 +100,7 @@ export class InventoryList {
         pj?.Category ?? pj?.category ?? '',
         i.chassisNo ?? '',
         i.registrationNo ?? ''
-      ]
-        .join(' ')
-        .toLowerCase();
+      ].join(' ').toLowerCase();
 
       return haystack.includes(filter);
     };
@@ -107,6 +118,7 @@ export class InventoryList {
         if (this.paginator) this.inventory.paginator = this.paginator;
         this.applyPagingTotals();
         this.computeStats();
+        this.selection.clear(); // reset selections on reload
       },
       error: (e) => {
         console.error('Failed to load inventory', e);
@@ -122,12 +134,7 @@ export class InventoryList {
     const inactive = all.length - active;
     const prodSet = new Set(all.map(i => i.productId));
 
-    this.stats = {
-      total: all.length,
-      active,
-      inactive,
-      products: prodSet.size
-    };
+    this.stats = { total: all.length, active, inactive, products: prodSet.size };
   }
 
   getCreatedAt(i: Inventory): Date | null {
@@ -157,6 +164,7 @@ export class InventoryList {
       this.paginator.firstPage();
       this.pageIndex = 0;
     }
+    this.trimSelectionToCurrentFilter();
   }
 
   onPageChange(e: PageEvent): void {
@@ -177,6 +185,90 @@ export class InventoryList {
     return Math.min(this.totalItems, (this.pageIndex + 1) * this.pageSize);
   }
 
+  // ===== Selection helpers =====
+  private get visibleRows(): Inventory[] {
+    return this.inventory.filter ? this.inventory.filteredData : this.inventory.data;
+  }
+
+  isAllSelected(): boolean {
+    const visible = this.visibleRows;
+    return visible.length > 0 && visible.every(r => this.selection.isSelected(r));
+  }
+
+  masterToggle(): void {
+    const visible = this.visibleRows;
+    if (this.isAllSelected()) {
+      visible.forEach(r => this.selection.deselect(r));
+    } else {
+      visible.forEach(r => this.selection.select(r));
+    }
+  }
+
+  checkboxLabel(row?: Inventory): string {
+    if (!row) return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
+    return `${this.selection.isSelected(row) ? 'deselect' : 'select'} inventory #${row.inventoryId}`;
+  }
+
+  clearSelection(): void {
+    this.selection.clear();
+  }
+
+  private trimSelectionToCurrentFilter(): void {
+    const set = new Set(this.visibleRows.map(r => r.inventoryId));
+    this.selection.selected
+      .filter(r => !set.has(r.inventoryId))
+      .forEach(r => this.selection.deselect(r));
+  }
+
+  get selectedIds(): number[] {
+    return this.selection.selected.map(r => r.inventoryId);
+  }
+
+  // ===== Add to Auction (batch) =====
+  addSelectedToAuction(): void {
+    if (!this.selection.selected.length) return;
+
+    const ref = this.dialog.open<AddToAuctionDialog, { count: number }, AddToAuctionResult>(
+      AddToAuctionDialog,
+      { width: '680px', data: { count: this.selection.selected.length } }
+    );
+
+    ref.afterClosed().subscribe(res => {
+      if (!res) return;
+
+      const { auctionId, inventoryAuctionStatusId, buyNowPrice, reservePrice } = res;
+      const createdById = this.auth.currentUser?.userId ?? null;
+
+      const calls = this.selection.selected.map(i =>
+        this.invAucSvc.add({
+          inventoryauctionId: 0,
+          inventoryId: i.inventoryId,
+          auctionId,
+          inventoryAuctionStatusId,
+          buyNowPrice: buyNowPrice ?? 0,
+          reservePrice: reservePrice ?? 0,
+          bidIncrement: 0,
+          createdById,
+          modifiedById: createdById,
+          active: true
+        } as any).pipe(catchError(() => of(-1)))
+      );
+
+      forkJoin(calls).pipe(
+        map(results => {
+          const success = results.filter(x => typeof x === 'number' && x > 0).length;
+          const failed = results.length - success;
+          return { success, failed };
+        })
+      ).subscribe(({ success, failed }) => {
+        if (success) this.snack.open(`Added ${success} item(s) to auction #${auctionId}.`, 'OK', { duration: 2500 });
+        if (failed) this.snack.open(`${failed} item(s) could not be added (maybe already in this auction).`, 'Dismiss', { duration: 3500 });
+        this.clearSelection();
+      });
+    });
+  }
+
+  // ===== CRUD actions (unchanged) =====
   openCreateInventory(): void {
     const ref = this.dialog.open<InventoryForm, { mode: 'create' }, InventoryFormResult>(InventoryForm, {
       width: '720px',

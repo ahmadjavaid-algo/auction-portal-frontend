@@ -43,8 +43,68 @@
   display: flex; align-items: center; justify-content: space-between;
   gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
 
-  .search-field { flex: 1; max-width: 420px; min-width: 260px; }
+  /* Make search a bit wider for balance */
+  .search-field { flex: 1 1 420px; min-width: 260px; max-width: 560px; }
   ::ng-deep .mat-mdc-form-field-infix { padding-top: 10px; padding-bottom: 10px; }
+
+    .selection-toolbar {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+  }
+
+  .selection-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px 8px 10px;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #3730a3;
+    border: 1px solid #e0e7ff;
+    line-height: 1;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    /* Tight, centered "X" button */
+    .selection-clear {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      margin-left: 2px;
+      line-height: 0;
+
+      /* Override MDC icon-button default 40x40 box */
+      &.mat-mdc-icon-button {
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+      }
+      .mat-mdc-button-touch-target { width: 28px; height: 28px; }
+      mat-icon { font-size: 18px; width: 18px; height: 18px; }
+    }
+  }
+
+
+  .chip-action {
+    background: linear-gradient(135deg, var(--primary-500), var(--teal-500));
+    color: #fff !important;
+    font-weight: 700;
+    padding: 8px 12px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-1);
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: transform .15s ease, box-shadow .2s ease, filter .2s ease;
+
+    &:hover { transform: translateY(-1px); filter: brightness(1.05); box-shadow: var(--shadow-2); }
+    mat-icon { color: #fff; }
+  }
 
   .add-btn {
     background: linear-gradient(135deg, var(--primary-500), var(--teal-500));
@@ -107,3 +167,6 @@ button.is-inactive { border-color: #ef4444 !important; color: #6b7280 !important
   .count { color:#5f6368; font-size: 13px; }
   ::ng-deep .mat-mdc-paginator .mat-mdc-paginator-container { justify-content:flex-start; }
 }
+
+/* Remove old badge styling */
+.sel-badge { display: none !important; }

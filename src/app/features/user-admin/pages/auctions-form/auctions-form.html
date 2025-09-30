@@ -33,19 +33,43 @@
           <mat-error *ngIf="form.get('auctionStatusId')?.hasError('required')">Status is required</mat-error>
         </mat-form-field>
 
-        <!-- Start -->
+        <!-- Start date -->
         <mat-form-field appearance="outline">
-          <mat-label>Start date/time *</mat-label>
-          <input matInput type="datetime-local" formControlName="startDateTime" />
-          <mat-error *ngIf="form.get('startDateTime')?.hasError('required')">Start is required</mat-error>
+          <mat-label>Start date *</mat-label>
+          <input matInput [matDatepicker]="sd" formControlName="startDate" />
+          <mat-datepicker-toggle matSuffix [for]="sd"></mat-datepicker-toggle>
+          <mat-datepicker #sd></mat-datepicker>
+          <mat-error *ngIf="form.get('startDate')?.hasError('required')">Start date is required</mat-error>
         </mat-form-field>
 
-        <!-- End -->
+        <!-- Start time -->
         <mat-form-field appearance="outline">
-          <mat-label>End date/time *</mat-label>
-          <input matInput type="datetime-local" formControlName="endDateTime" />
-          <mat-error *ngIf="form.get('endDateTime')?.hasError('required')">End is required</mat-error>
+          <mat-label>Start time *</mat-label>
+          <input matInput type="time" step="60" formControlName="startTime" />
+          <mat-error *ngIf="form.get('startTime')?.hasError('required')">Start time is required</mat-error>
         </mat-form-field>
+
+        <!-- End date -->
+        <mat-form-field appearance="outline">
+          <mat-label>End date *</mat-label>
+          <input matInput [matDatepicker]="ed" formControlName="endDate" />
+          <mat-datepicker-toggle matSuffix [for]="ed"></mat-datepicker-toggle>
+          <mat-datepicker #ed></mat-datepicker>
+          <mat-error *ngIf="form.get('endDate')?.hasError('required')">End date is required</mat-error>
+        </mat-form-field>
+
+        <!-- End time -->
+        <mat-form-field appearance="outline">
+          <mat-label>End time *</mat-label>
+          <input matInput type="time" step="60" formControlName="endTime" />
+          <mat-error *ngIf="form.get('endTime')?.hasError('required')">End time is required</mat-error>
+        </mat-form-field>
+
+        <!-- Range error -->
+        <div class="full range-error" *ngIf="rangeInvalid$ | async">
+          <mat-icon>error</mat-icon>
+          End must be after start.
+        </div>
 
         <!-- Bid Increment -->
         <mat-form-field appearance="outline">
@@ -55,8 +79,11 @@
           <mat-error *ngIf="form.get('bidIncrement')?.hasError('min')">Must be ≥ 0</mat-error>
         </mat-form-field>
 
-        <!-- filler to align grid -->
-        <div></div>
+        <!-- Timezone note -->
+        <div class="tz-note">
+          <mat-icon>schedule</mat-icon>
+          Times are saved in your local timezone.
+        </div>
 
       </div>
     </div>

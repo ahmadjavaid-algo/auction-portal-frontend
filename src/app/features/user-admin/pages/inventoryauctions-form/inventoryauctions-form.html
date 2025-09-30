@@ -1,1 +1,86 @@
-<p>inventoryauctions-form works!</p>
+<form class="dialog-form" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
+  <!-- Header -->
+  <div class="header">
+    <div class="title">
+      <h2>{{ mode === 'edit' ? 'Edit inventory in auction' : 'Add inventory to auction' }}</h2>
+      <p class="sub">
+        Select an Inventory and an Auction. Prices are optional. Bid Increment is snapshotted from the selected
+        auction by the server.
+      </p>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <mat-dialog-content class="body">
+    <div class="sheet">
+      <div class="grid">
+
+        <!-- Inventory -->
+        <mat-form-field appearance="outline">
+          <mat-label>Inventory *</mat-label>
+          <mat-select formControlName="inventoryId" [disabled]="loadingInventories">
+            <mat-option *ngFor="let i of inventories" [value]="i.inventoryId">
+              {{ inventoryLabel($any(i)) }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('inventoryId')?.hasError('required')">
+            Inventory is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Auction -->
+        <mat-form-field appearance="outline">
+          <mat-label>Auction *</mat-label>
+          <mat-select formControlName="auctionId" [disabled]="loadingAuctions">
+            <mat-option *ngFor="let a of auctions" [value]="a.auctionId">
+              {{ auctionLabel($any(a)) }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('auctionId')?.hasError('required')">
+            Auction is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Status Id -->
+        <mat-form-field appearance="outline">
+          <mat-label>Inventory Auction Status Id *</mat-label>
+          <input matInput type="number" formControlName="inventoryAuctionStatusId" min="1" />
+          <mat-error *ngIf="form.get('inventoryAuctionStatusId')?.hasError('required')">
+            Status Id is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Buy Now -->
+        <mat-form-field appearance="outline">
+          <mat-label>Buy Now Price</mat-label>
+          <input matInput type="number" formControlName="buyNowPrice" min="0" />
+          <mat-hint align="end">Optional</mat-hint>
+        </mat-form-field>
+
+        <!-- Reserve -->
+        <mat-form-field appearance="outline">
+          <mat-label>Reserve Price</mat-label>
+          <input matInput type="number" formControlName="reservePrice" min="0" />
+          <mat-hint align="end">Optional</mat-hint>
+        </mat-form-field>
+
+        <!-- Info -->
+        <mat-form-field class="full" appearance="outline" floatLabel="always" subscriptSizing="dynamic">
+          <mat-label>Note</mat-label>
+          <textarea matInput rows="2" disabled>
+Bid Increment is automatically snapshotted from the selected Auction on save.
+          </textarea>
+        </mat-form-field>
+
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <!-- Actions -->
+  <mat-dialog-actions align="end" class="actions">
+    <button mat-stroked-button type="button" class="btn-cancel" (click)="onCancel()">Cancel</button>
+    <button mat-flat-button type="submit" class="btn-primary" [disabled]="form.invalid">
+      {{ mode === 'edit' ? 'Update' : 'Create' }}
+    </button>
+  </mat-dialog-actions>
+</form>

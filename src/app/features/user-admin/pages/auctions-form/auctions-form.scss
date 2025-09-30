@@ -89,3 +89,30 @@ mat-form-field { width: 100%; }
 /* Optional scrollbar polish */
 .body::-webkit-scrollbar { width: 10px; }
 .body::-webkit-scrollbar-thumb { background: rgba(15, 23, 42, 0.15); border-radius: 8px; }
+/* keep your existing styles … */
+
+/* New bits for range error + tz note */
+.range-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #b91c1c;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+}
+
+.tz-note {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #475569;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}

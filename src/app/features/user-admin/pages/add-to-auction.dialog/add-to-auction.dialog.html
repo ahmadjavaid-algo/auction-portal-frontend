@@ -1,0 +1,45 @@
+<form class="dialog-form" [formGroup]="form" (ngSubmit)="submit()">
+  <div class="header">
+    <h2>Add {{ data.count }} item(s) to an auction</h2>
+    <p class="sub">Choose a target auction and the initial status. Prices are optional.</p>
+  </div>
+
+  <mat-dialog-content class="body">
+    <div class="sheet">
+      <div class="grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Auction *</mat-label>
+          <mat-select formControlName="auctionId" [disabled]="loadingAuctions">
+            <mat-option *ngFor="let a of auctions" [value]="a.auctionId">
+              {{ a.auctionName || ('Auction #' + a.auctionId) }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Status *</mat-label>
+          <mat-select formControlName="inventoryAuctionStatusId">
+            <mat-option *ngFor="let s of statuses" [value]="s.id">
+              {{ s.name }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Buy now price</mat-label>
+          <input matInput type="number" formControlName="buyNowPrice" min="0" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Reserve price</mat-label>
+          <input matInput type="number" formControlName="reservePrice" min="0" />
+        </mat-form-field>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end" class="actions">
+    <button mat-stroked-button type="button" (click)="cancel()">Cancel</button>
+    <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">Add</button>
+  </mat-dialog-actions>
+</form>

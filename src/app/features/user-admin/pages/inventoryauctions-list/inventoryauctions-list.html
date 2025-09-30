@@ -1,1 +1,101 @@
-<p>inventoryauctions-list works!</p>
+
+<div class="ia-wrapper">
+  <div class="ia-header">
+    <div class="title">
+      <mat-icon>inventory_2</mat-icon>
+      <span>Inventory in this auction</span>
+      <span class="count">({{ rows.length }})</span>
+    </div>
+
+    <button mat-stroked-button class="add" (click)="addItem()" matTooltip="Add inventory to auction">
+      <mat-icon>add</mat-icon>
+      Add
+    </button>
+  </div>
+
+  <div class="inner-panel">
+    <ng-container *ngIf="!loading; else busy">
+      <table mat-table [dataSource]="rows" class="inner-table">
+        <!-- Inventory (Display Name + Chassis No like inventory-list) -->
+        <ng-container matColumnDef="inventory">
+          <th mat-header-cell *matHeaderCellDef>Inventory</th>
+          <td mat-cell *matCellDef="let r">
+            <div class="user-cell">
+              <div class="name">{{ getInvName(r.inventoryId) }}</div>
+              <div class="sub">
+                <ng-container *ngIf="getChassis(r.inventoryId); else idOnly">
+                  Chassis {{ getChassis(r.inventoryId) }} • #{{ r.inventoryId }}
+                </ng-container>
+                <ng-template #idOnly>#{{ r.inventoryId }}</ng-template>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Status -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let r">
+            {{ r.inventoryAuctionStatusName || r.inventoryAuctionStatusCode || '—' }}
+          </td>
+        </ng-container>
+
+        <!-- Bid Increment (snapshot) -->
+        <ng-container matColumnDef="bid">
+          <th mat-header-cell *matHeaderCellDef>Bid Increment</th>
+          <td mat-cell *matCellDef="let r">{{ r.bidIncrement ?? '—' }}</td>
+        </ng-container>
+
+        <!-- Buy Now -->
+        <ng-container matColumnDef="buy">
+          <th mat-header-cell *matHeaderCellDef>Buy Now</th>
+          <td mat-cell *matCellDef="let r">{{ r.buyNowPrice ?? '—' }}</td>
+        </ng-container>
+
+        <!-- Reserve -->
+        <ng-container matColumnDef="reserve">
+          <th mat-header-cell *matHeaderCellDef>Reserve</th>
+          <td mat-cell *matCellDef="let r">{{ r.reservePrice ?? '—' }}</td>
+        </ng-container>
+
+        <!-- Active -->
+        <ng-container matColumnDef="active">
+          <th mat-header-cell *matHeaderCellDef>Active</th>
+          <td mat-cell *matCellDef="let r">
+            <button mat-stroked-button
+                    [class.is-active]="r.active"
+                    [class.is-inactive]="r.active === false"
+                    (click)="toggleActive(r)">
+              {{ r.active ? 'Active' : 'Inactive' }}
+            </button>
+          </td>
+        </ng-container>
+
+        <!-- Actions -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let r">
+            <button mat-icon-button class="edit" (click)="editItem(r)" matTooltip="Edit">
+              <mat-icon>edit</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+
+      <div class="empty" *ngIf="rows.length === 0">
+        <mat-icon>info</mat-icon>
+        No inventory is assigned to this auction yet.
+      </div>
+    </ng-container>
+
+    <ng-template #busy>
+      <div class="busy">
+        <mat-spinner diameter="28"></mat-spinner>
+        <span>Loading…</span>
+      </div>
+    </ng-template>
+  </div>
+</div>
