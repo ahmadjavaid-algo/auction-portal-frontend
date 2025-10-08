@@ -30,6 +30,7 @@ import { InventoryauctionsList } from './pages/inventoryauctions-list/inventorya
 import { InventoryauctionsDetails } from './pages/inventoryauctions-details/inventoryauctions-details';
 import { InventoryauctionsForm } from './pages/inventoryauctions-form/inventoryauctions-form';
 import { AddToAuctionDialog } from './pages/add-to-auction.dialog/add-to-auction.dialog';
+import { InventoryImagesform } from './pages/inventory-imagesform/inventory-imagesform';
 @NgModule({
   imports: [
     CommonModule,
@@ -57,7 +58,8 @@ import { AddToAuctionDialog } from './pages/add-to-auction.dialog/add-to-auction
     AuctionsList,
     AuctionsForm,
     AuctionsDetails,
-    AddToAuctionDialog
+    AddToAuctionDialog,
+    InventoryImagesform
   ]
 })
 export class UserAdminModule {}

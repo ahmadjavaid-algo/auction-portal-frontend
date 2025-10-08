@@ -136,6 +136,53 @@
             </div>
           </div>
         </div>
+
+        <!-- Files / Images -->
+        <div class="section">
+          <h3><mat-icon>collections</mat-icon> Files</h3>
+
+          <div class="files-busy" *ngIf="filesLoading">
+            <mat-spinner diameter="24"></mat-spinner>
+            <span>Loading files…</span>
+          </div>
+
+          <div class="empty" *ngIf="!filesLoading && !docs.length">
+            <mat-icon>insert_drive_file</mat-icon>
+            <span>No files uploaded yet.</span>
+          </div>
+
+          <div class="gallery" *ngIf="!filesLoading && docs.length">
+            <div class="card" *ngFor="let d of docs">
+              <div class="thumb" (click)="openUrl(d)" [class.clickable]="d.documentUrl">
+                <img *ngIf="isImage(d) && d.documentUrl" [src]="d.documentUrl" [alt]="displayName(d)" />
+                <div class="doc-icon" *ngIf="!isImage(d) || !d.documentUrl">
+                  <mat-icon>insert_drive_file</mat-icon>
+                </div>
+              </div>
+
+              <div class="meta-row">
+                <div class="name" [title]="displayName(d)">{{ displayName(d) }}</div>
+                <div class="actions">
+                  <button
+                    mat-icon-button
+                    class="open"
+                    *ngIf="d.documentUrl"
+                    (click)="openUrl(d)"
+                    matTooltip="Open">
+                    <mat-icon>open_in_new</mat-icon>
+                  </button>
+                  <button
+                    mat-icon-button
+                    class="remove"
+                    (click)="remove(d)"
+                    matTooltip="Remove">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Footer / Audit -->

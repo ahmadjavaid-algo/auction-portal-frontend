@@ -22,6 +22,7 @@ import { InventoryDetails } from './pages/inventory-details/inventory-details';
 import { InventoryList } from './pages/inventory-list/inventory-list';
 import { AuctionsList } from './pages/auctions-list/auctions-list';
 import { AuctionsDetails } from './pages/auctions-details/auctions-details';
+import { InventoryImagesform } from './pages/inventory-imagesform/inventory-imagesform';
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
 

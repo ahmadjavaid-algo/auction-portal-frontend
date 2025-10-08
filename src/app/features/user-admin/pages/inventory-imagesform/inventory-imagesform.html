@@ -1,0 +1,58 @@
+<section class="dialog-shell">
+  <h2 class="dialog-title">
+    <mat-icon>image</mat-icon>
+    Upload Inventory Files
+  </h2>
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div class="grid">
+      <mat-form-field appearance="outline" class="type-field">
+        <mat-label>Document Type</mat-label>
+        <mat-select formControlName="documentTypeId" required>
+          <mat-option *ngFor="let t of documentTypes" [value]="t.id">{{ t.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <div class="file-row">
+      <label class="btn gradient file-btn">
+        <input type="file" multiple accept=".jpg,.jpeg,.png,.pdf,.docx" (change)="onFilesChange($event)" />
+        <mat-icon>upload</mat-icon>
+        Choose files
+      </label>
+
+      <div class="file-list" *ngIf="files.length">
+        <div class="chip" *ngFor="let f of files" [class.failed]="f.status==='failed'" [class.linked]="f.status==='linked'">
+          <mat-icon *ngIf="f.status==='pending'">insert_drive_file</mat-icon>
+          <mat-icon *ngIf="f.status==='uploading'">cloud_upload</mat-icon>
+          <mat-icon *ngIf="f.status==='linked'">check_circle</mat-icon>
+          <mat-icon *ngIf="f.status==='failed'">error</mat-icon>
+          <span class="name">{{ f.file.name }}</span>
+          <span class="msg" *ngIf="f.message">&nbsp;— {{ f.message }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button
+        type="button"
+        mat-stroked-button
+        class="btn ghost"
+        (click)="close()">
+        <mat-icon>close</mat-icon>
+        Cancel
+      </button>
+
+      <button
+        type="submit"
+        mat-flat-button
+        class="btn gradient submit-btn"
+        [disabled]="uploading || !files.length">
+        <mat-icon>cloud_upload</mat-icon>
+        {{ uploading ? 'Uploading...' : 'Upload & Attach' }}
+      </button>
+    </div>
+
+    <mat-progress-bar *ngIf="uploading" mode="indeterminate"></mat-progress-bar>
+  </form>
+</section>

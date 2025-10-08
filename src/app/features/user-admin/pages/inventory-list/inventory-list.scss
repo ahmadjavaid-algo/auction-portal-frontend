@@ -47,7 +47,7 @@
   .search-field { flex: 1 1 420px; min-width: 260px; max-width: 560px; }
   ::ng-deep .mat-mdc-form-field-infix { padding-top: 10px; padding-bottom: 10px; }
 
-    .selection-toolbar {
+  .selection-toolbar {
     display: inline-flex;
     align-items: center;
     gap: 10px;
@@ -71,7 +71,6 @@
       height: 18px;
     }
 
-    /* Tight, centered "X" button */
     .selection-clear {
       display: inline-flex;
       align-items: center;
@@ -80,7 +79,6 @@
       margin-left: 2px;
       line-height: 0;
 
-      /* Override MDC icon-button default 40x40 box */
       &.mat-mdc-icon-button {
         width: 28px;
         height: 28px;
@@ -90,7 +88,6 @@
       mat-icon { font-size: 18px; width: 18px; height: 18px; }
     }
   }
-
 
   .chip-action {
     background: linear-gradient(135deg, var(--primary-500), var(--teal-500));
@@ -149,6 +146,7 @@ td, th { padding: 14px 12px !important; text-align: left; }
 
 /* Actions + status */
 .edit-btn { color: var(--blue-500); }
+.upload-btn { color: var(--teal-600); } /* NEW: subtle brand for upload */
 
 :host ::ng-deep .mat-mdc-stroked-button {
   border-radius: 999px !important;

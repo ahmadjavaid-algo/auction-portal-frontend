@@ -13,6 +13,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { SelectionModel } from '@angular/cdk/collections';
 
 import { forkJoin, of } from 'rxjs';
@@ -25,6 +26,12 @@ import { InventoryAuctionService } from '../../../../services/inventoryauctions.
 
 import { InventoryForm, InventoryFormResult } from '../inventory-form/inventory-form';
 import { AddToAuctionDialog, AddToAuctionResult } from '../add-to-auction.dialog/add-to-auction.dialog';
+
+// NEW: dialog uploader
+import {
+  InventoryImagesform,
+  InventoryImagesDialogResult
+} from '../inventory-imagesform/inventory-imagesform';
 
 @Component({
   selector: 'app-inventory-list',
@@ -41,14 +48,15 @@ import { AddToAuctionDialog, AddToAuctionResult } from '../add-to-auction.dialog
     MatDialogModule,
     MatSnackBarModule,
     MatProgressSpinnerModule,
-    MatCheckboxModule
+    MatCheckboxModule,
+    MatTooltipModule
   ],
   templateUrl: './inventory-list.html',
   styleUrls: ['./inventory-list.scss']
 })
 export class InventoryList {
   private invSvc = inject(InventoryService);
-  private invAucSvc = inject(InventoryAuctionService); // NEW
+  private invAucSvc = inject(InventoryAuctionService);
   private router = inject(Router);
   private dialog = inject(MatDialog);
   private snack = inject(MatSnackBar);
@@ -265,6 +273,23 @@ export class InventoryList {
         if (failed) this.snack.open(`${failed} item(s) could not be added (maybe already in this auction).`, 'Dismiss', { duration: 3500 });
         this.clearSelection();
       });
+    });
+  }
+
+  // ===== NEW: open upload/images dialog for a row (no route nav) =====
+  openUploadFor(row: Inventory): void {
+    const ref = this.dialog.open<InventoryImagesform, { inventoryId: number }, InventoryImagesDialogResult>(
+      InventoryImagesform,
+      { width: '720px', data: { inventoryId: row.inventoryId } }
+    );
+
+    ref.afterClosed().subscribe(result => {
+      if (!result) return;
+      if (result.refresh) {
+        this.snack.open('Images uploaded.', 'OK', { duration: 2000 });
+        // If you want to refresh counters/table, uncomment:
+        // this.loadInventory();
+      }
     });
   }
 

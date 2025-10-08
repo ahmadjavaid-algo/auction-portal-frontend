@@ -44,26 +44,25 @@
   </mat-form-field>
 
   <!-- Selection actions (inline, on-brand) -->
-<div class="selection-toolbar" *ngIf="selection.selected.length">
-  <div class="selection-chip" title="Selected rows">
-    <mat-icon>check_box</mat-icon>
-    <span>{{ selection.selected.length }} selected</span>
-    <button
-      mat-icon-button
-      type="button"
-      class="selection-clear"
-      (click)="clearSelection()"
-      aria-label="Clear selection">
-      <mat-icon>close</mat-icon>
+  <div class="selection-toolbar" *ngIf="selection.selected.length">
+    <div class="selection-chip" title="Selected rows">
+      <mat-icon>check_box</mat-icon>
+      <span>{{ selection.selected.length }} selected</span>
+      <button
+        mat-icon-button
+        type="button"
+        class="selection-clear"
+        (click)="clearSelection()"
+        aria-label="Clear selection">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <button mat-flat-button class="chip-action" (click)="addSelectedToAuction()">
+      <mat-icon>playlist_add</mat-icon>
+      Add to Auction
     </button>
   </div>
-
-  <button mat-flat-button class="chip-action" (click)="addSelectedToAuction()">
-    <mat-icon>playlist_add</mat-icon>
-    Add to Auction
-  </button>
-</div>
-
 
   <button mat-flat-button class="add-btn" (click)="openCreateInventory()">
     <mat-icon>post_add</mat-icon>
@@ -155,6 +154,16 @@
     <ng-container matColumnDef="actions">
       <th mat-header-cell *matHeaderCellDef>Actions</th>
       <td mat-cell *matCellDef="let i">
+        <!-- NEW: Upload images/files for this inventory -->
+        <button
+          mat-icon-button
+          class="upload-btn"
+          (click)="openUploadFor(i)"
+          aria-label="Upload images"
+          matTooltip="Upload images/files">
+          <mat-icon>cloud_upload</mat-icon>
+        </button>
+
         <button mat-icon-button class="edit-btn" (click)="editInventory(i)" matTooltip="Edit">
           <mat-icon>edit</mat-icon>
         </button>
