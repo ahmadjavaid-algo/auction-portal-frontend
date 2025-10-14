@@ -1,0 +1,67 @@
+<div class="auctions-page">
+  <!-- top breadcrumb / title -->
+  <div class="crumbs">
+    <span>Home</span>
+    <mat-icon>chevron_right</mat-icon>
+    <span class="current">Auctions</span>
+    <span class="count" *ngIf="!loading">({{ cards.length }})</span>
+  </div>
+
+  <!-- tiny loader -->
+  <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+
+  <!-- error -->
+  <div class="err" *ngIf="!loading && error">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ error }}</span>
+  </div>
+
+  <!-- cards grid -->
+  <section class="grid" *ngIf="!loading && !error">
+    <article
+      class="auction-card"
+      *ngFor="let c of cards"
+      [ngStyle]="{ '--photo': 'url(' + c.coverUrl + ')' }"
+    >
+      <div class="card-photo"></div>
+
+      <div class="card-body">
+        <div class="status" [class.live]="(c.status||'').toLowerCase()==='live'">
+          {{ c.status || '—' }}
+        </div>
+
+        <h2 class="name">{{ c.auction.auctionName || ('Auction #' + c.auction.auctionId) }}</h2>
+
+        <div class="meta">
+          <div class="when">
+            <mat-icon>schedule</mat-icon>
+            <span>{{ formatRange(c.start, c.end) }}</span>
+          </div>
+          <div class="lots">
+            <mat-icon>inventory_2</mat-icon>
+            <span>{{ c.lots }} lots</span>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a class="btn primary"
+             [routerLink]="['/bidder/auctions', c.auction.auctionId]"
+             matTooltip="View auction and place bids">
+            View Auction
+          </a>
+
+          <a class="btn ghost"
+             [routerLink]="['/bidder/auctions', c.auction.auctionId]"
+             matTooltip="See inventory in this auction">
+            Browse Cars
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <div class="empty" *ngIf="cards.length===0">
+      <mat-icon>info</mat-icon>
+      <span>No auctions are available right now.</span>
+    </div>
+  </section>
+</div>

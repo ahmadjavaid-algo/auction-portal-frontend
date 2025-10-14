@@ -1,24 +1,63 @@
-import { Component, AfterViewInit, OnDestroy, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { BidderAuthService } from '../../../../../services/bidderauth'; // <- adjust path if needed
+
+import { BidderAuthService } from '../../../../../services/bidderauth';
+import { InventoryAuctionService } from '../../../../../services/inventoryauctions.service';
+import { InventoryDocumentFileService } from '../../../../../services/inventorydocumentfile.service';
+import { InventoryService } from '../../../../../services/inventory.service';
+
+import { InventoryAuction } from '../../../../../models/inventoryauction.model';
+import { InventoryDocumentFile } from '../../../../../models/inventorydocumentfile.model';
+import { Inventory } from '../../../../../models/inventory.model';
+
+import { forkJoin, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
+
+type Slide = {
+  auction: InventoryAuction;
+  imageUrl: string | null;
+  year?: string | number | null;
+  make?: string | null;
+  model?: string | null;
+};
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatButtonModule, MatTooltipModule, MatProgressBarModule],
+  imports: [
+    CommonModule,
+    RouterLink,
+    MatIconModule,
+    MatButtonModule,
+    MatTooltipModule,
+    MatProgressBarModule,
+  ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss'],
 })
-export class Dashboard implements AfterViewInit, OnDestroy {
-  /** Expose Math so we can use it in template bindings */
+export class Dashboard {
   readonly Math = Math;
 
-  /** Pull the logged-in name from your AuthService (no hardcoding) */
   private auth = inject(BidderAuthService);
+  private auctionSvc = inject(InventoryAuctionService);
+  private fileSvc = inject(InventoryDocumentFileService);
+  private inventorySvc = inject(InventoryService);
+
+  loading = true;
+  error: string | null = null;
+
+  slides: Slide[] = [];
+  index = 0;
+
+  // fallback if no image is found
+  private fallbackHero =
+    'https://carwow-uk-wp-3.imgix.net/GT-R-driving-front.jpg';
+
   get adminName(): string {
     const u = this.auth.currentUser;
     if (!u) return 'Admin';
@@ -26,69 +65,147 @@ export class Dashboard implements AfterViewInit, OnDestroy {
     return name || u.userName || 'Admin';
   }
 
-  // KPI tiles
-  stats = [
-    { icon: 'local_fire_department', label: 'Live Auctions', value: 18, delta: '+3', up: true },
-    { icon: 'directions_car',        label: 'Vehicles Listed', value: 742, delta: '+56', up: true },
-    { icon: 'gavel',                 label: 'Bids Today', value: 5230, delta: '-4%', up: false },
-    { icon: 'attach_money',          label: 'Revenue (7d)', value: 126, delta: '+12%', up: true },
-    { icon: 'verified_user',         label: 'KYC Approved', value: 128, delta: '+9', up: true },
-    { icon: 'pending_actions',       label: 'KYC Pending', value: 7,  delta: '–',  up: true },
-  ];
+  ngOnInit(): void {
+    this.loading = true;
 
-  // Live auctions snapshot
-  liveAuctions = [
-    { lot: 'AU-1042', car: 'Toyota Prado 2019 TXL',  endsInMin: 26,  bids: 34, topBid: 36_500, status: 'Live' },
-    { lot: 'AU-1041', car: 'Honda Civic 2021 Oriel', endsInMin: 58,  bids: 21, topBid: 24_900, status: 'Live' },
-    { lot: 'AU-1039', car: 'Kia Sportage 2020 AWD',   endsInMin: 120, bids: 12, topBid: 29_300, status: 'Scheduled' },
-  ];
+    forkJoin({
+      auctions: this.auctionSvc.getList().pipe(
+        catchError(() => of([] as InventoryAuction[]))
+      ),
+      files: this.fileSvc.getList().pipe(
+        catchError(() => of([] as InventoryDocumentFile[]))
+      ),
+    })
+      .pipe(
+        switchMap(({ auctions, files }) => {
+          const active = (auctions || []).filter((a) => a.active ?? true);
 
-  // Verification queue
-  kycQueue = [
-    { name: 'Hiba Khan',  handle: '@hibak',  doc: 'CNIC',    age: '2h' },
-    { name: 'Bilal A.',   handle: '@bilal',  doc: 'Passport',age: '5h' },
-    { name: 'M. Ali',     handle: '@alidee', doc: 'DL',      age: '1d' },
-  ];
+          // newest 10
+          const recent = [...active]
+            .sort((a, b) =>
+              this.dateDesc(a.createdDate || a.modifiedDate, b.createdDate || b.modifiedDate)
+            )
+            .slice(0, 10);
 
-  // Top bidders today
-  topBidders = [
-    { name: 'Zain R.',   handle: '@zain',   bids: 188, color: '#6ee7b7' },
-    { name: 'Ayesha S.', handle: '@ayesha', bids: 163, color: '#93c5fd' },
-    { name: 'Junaid I.', handle: '@junaid', bids: 151, color: '#fca5a5' },
-  ];
+          const imagesMap = this.buildImagesMap(files);
 
-  // Activity feed
-  activity = [
-    { icon: 'gavel',            text: 'Bid placed on AU-1042 (Prado) — $36,500', time: '2m' },
-    { icon: 'directions_car',   text: 'New vehicle listed: Corolla 2022 Altis',  time: '14m' },
-    { icon: 'person_add',       text: 'New dealer signed up: Prime Motors',      time: '43m' },
-    { icon: 'verified_user',    text: 'KYC verified: @hibak',                    time: '1h'  },
-  ];
+          const baseSlides: Slide[] = recent.map((a) => ({
+            auction: a,
+            imageUrl: this.pickRandom(imagesMap.get(a.inventoryId)) ?? null,
+          }));
 
-  private counterTimer?: any;
+          const calls = baseSlides.map((s) =>
+            this.inventorySvc
+              .getById(s.auction.inventoryId)
+              .pipe(catchError(() => of(null as Inventory | null)))
+          );
 
-  ngAfterViewInit(): void {
-    // lightweight number animation for tiles
-    const els = Array.from(document.querySelectorAll<HTMLElement>('.count-up'));
-    const anim = (el: HTMLElement) => {
-      const target = Number(el.dataset['value'] || '0');
-      const dur = 900; // ms
-      const step = (t0: number) => {
-        const p = Math.min(1, (performance.now() - t0) / dur);
-        const val = Math.floor(target * (0.2 + 0.8 * p * (2 - p))); // ease-out
-        el.innerText = this.formatNumber(val);
-        if (p < 1) requestAnimationFrame(() => step(t0));
-      };
-      requestAnimationFrame(() => step(performance.now()));
-    };
-    this.counterTimer = setTimeout(() => els.forEach(anim), 300);
+          if (!calls.length) return of(baseSlides);
+
+          return forkJoin(calls).pipe(
+            map((inventories: (Inventory | null)[]) => {
+              inventories.forEach((inv, i) => {
+                const snap = this.safeParse(inv?.productJSON);
+                baseSlides[i].year = snap?.Year ?? snap?.year ?? null;
+                baseSlides[i].make = snap?.Make ?? snap?.make ?? null;
+                baseSlides[i].model = snap?.Model ?? snap?.model ?? null;
+              });
+              return baseSlides;
+            })
+          );
+        })
+      )
+      .subscribe({
+        next: (slides) => {
+          this.slides = slides ?? [];
+          this.index = 0;
+          this.loading = false;
+        },
+        error: () => {
+          this.error = 'Failed to load dashboard.';
+          this.loading = false;
+        },
+      });
   }
 
-  ngOnDestroy(): void {
-    if (this.counterTimer) clearTimeout(this.counterTimer);
+  /* ===== helpers ===== */
+
+  // Robust “is image” check using url, extension, or name.
+  private isImageFile(f: InventoryDocumentFile): boolean {
+    const url = (f.documentUrl || '').toLowerCase();
+    const name = (f.documentName || '').toLowerCase();
+
+    // If your API later adds `documentExtension` (e.g., 'jpg' without dot), read it too:
+    const extFromUrl = url.match(/\.(\w+)(?:\?|#|$)/)?.[1] || '';
+    const extFromName = name.match(/\.(\w+)(?:\?|#|$)/)?.[1] || '';
+
+    const ext = (extFromUrl || extFromName).replace(/[^a-z0-9]/g, '');
+    const ok = ['jpg', 'jpeg', 'png', 'webp'];
+
+    return !!url && (ok.includes(ext) || ok.some((e) => url.endsWith('.' + e)));
   }
 
-  formatNumber(n: number): string {
-    return n >= 1000 ? n.toLocaleString() : String(n);
+  private buildImagesMap(files: InventoryDocumentFile[]): Map<number, string[]> {
+    const map = new Map<number, string[]>();
+
+    (files || [])
+      .filter((f) => (f.active ?? true) && !!f.inventoryId && !!f.documentUrl && this.isImageFile(f))
+      .forEach((f) => {
+        const list = map.get(f.inventoryId) || [];
+        list.push(f.documentUrl!);
+        map.set(f.inventoryId, list);
+      });
+
+    return map;
+  }
+
+  private pickRandom(arr?: string[]): string | undefined {
+    if (!arr || !arr.length) return undefined;
+    const i = Math.floor(Math.random() * arr.length);
+    return arr[i];
+  }
+
+  private dateDesc(a?: string | null, b?: string | null): number {
+    const ta = a ? Date.parse(a) : 0;
+    const tb = b ? Date.parse(b) : 0;
+    return tb - ta;
+  }
+
+  private safeParse(json?: string | null): any | null {
+    if (!json) return null;
+    try {
+      return JSON.parse(json);
+    } catch {
+      return null;
+    }
+  }
+
+  get current(): Slide | null {
+    return this.slides.length ? this.slides[this.index] : null;
+  }
+
+  get bgUrl(): string {
+    const url = this.current?.imageUrl || this.fallbackHero;
+    // IMPORTANT: must be 'url(...)' for the CSS var
+    return `url('${url}')`;
+  }
+
+  prev(): void {
+    if (!this.slides.length) return;
+    this.index = (this.index - 1 + this.slides.length) % this.slides.length;
+  }
+
+  next(): void {
+    if (!this.slides.length) return;
+    this.index = (this.index + 1) % this.slides.length;
+  }
+
+  formatMoney(n?: number | null): string {
+    if (n == null) return '$0';
+    return n.toLocaleString(undefined, {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0,
+    });
   }
 }

@@ -159,7 +159,7 @@ export class InventoryDetails {
   }
 
   remove(d: InvDoc): void {
-    if (!confirm(`Remove "${this.displayName(d)}"?`)) return;
+    // if (!confirm(`Remove "${this.displayName(d)}"?`)) return;
 
     const payload = {
       inventoryDocumentFileId: d.inventoryDocumentFileId,

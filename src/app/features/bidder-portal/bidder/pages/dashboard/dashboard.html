@@ -1,28 +1,46 @@
 <div class="landing">
   <section
     class="hero-banner"
-    style="--photo:url('https://carwow-uk-wp-3.imgix.net/GT-R-driving-front.jpg');"
+    [ngStyle]="{'--photo': bgUrl}"
   >
-    <button class="arrow prev" aria-label="Previous slide"><span>&lsaquo;</span></button>
-    <button class="arrow next" aria-label="Next slide"><span>&rsaquo;</span></button>
+    <button class="arrow prev" aria-label="Previous slide" (click)="prev()"><span>&lsaquo;</span></button>
+    <button class="arrow next" aria-label="Next slide" (click)="next()"><span>&rsaquo;</span></button>
 
     <div class="hero-shell">
       <div class="copy">
-        <div class="year">2019</div>
+        <div class="year">
+          {{ (current?.year || '—') }}
+        </div>
+
         <h1 class="title">
-          <span>Mercedes-Benz</span>
-          <span>AMG GT-R</span>
+          <span>{{ (current?.make || '—') }}</span>
+          <span>{{ (current?.model || '—') }}</span>
         </h1>
 
         <p class="starting">
-          Starting Bid from <a class="price" href="javascript:void(0)">$3400</a>
+          Starting Bid from
+          <a class="price" href="javascript:void(0)">
+            {{ formatMoney(current?.auction?.reservePrice) }}
+          </a>
         </p>
 
         <div class="actions">
-          <button class="btn btn-primary">Place Bid</button>
-          <button class="btn btn-ghost">Check Car</button>
+          <button class="btn btn-primary" [routerLink]="['/portal/auctions', current?.auction?.inventoryAuctionId]" matTooltip="Place a bid">
+            Place Bid
+          </button>
+          <button class="btn btn-ghost" [routerLink]="['/portal/auctions', current?.auction?.inventoryAuctionId]" matTooltip="View car details">
+            Check Car
+          </button>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- Optional tiny loader/error to match your UI while hero hydrates -->
+  <section style="padding: 0 16px 16px;">
+    <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+    <div *ngIf="error && !loading" style="color:#b00020; font-weight:600; margin-top:8px;">
+      {{ error }}
     </div>
   </section>
 </div>
