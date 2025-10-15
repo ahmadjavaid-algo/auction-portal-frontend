@@ -1,1 +1,84 @@
-<p>auctions-details works!</p>
+<div class="auction-details">
+  <!-- crumbs -->
+  <div class="crumbs">
+    <a routerLink="/bidder/auctions">Auctions</a>
+    <mat-icon>chevron_right</mat-icon>
+    <span class="current">
+      {{ auction?.auctionName || ('Auction #' + auctionId) }}
+    </span>
+    <span class="count" *ngIf="!loading">({{ lots.length }} lots)</span>
+  </div>
+
+  <!-- hero -->
+  <section class="hero" [ngStyle]="{'--photo': 'url(' + heroUrl + ')'}">
+    <div class="overlay">
+      <h1>{{ auction?.auctionName || ('Auction #' + auctionId) }}</h1>
+      <div class="meta">
+        <div class="when">
+          <mat-icon>schedule</mat-icon>
+          <span>{{ formatRange(auction?.startDateTime || null, auction?.endDateTime || null) }}</span>
+        </div>
+        <div class="lots">
+          <mat-icon>inventory_2</mat-icon>
+          <span>{{ lots.length }} lots</span>
+        </div>
+        <div class="status" *ngIf="auction?.auctionStatusName || auction?.auctionStatusCode">
+          <mat-icon>verified</mat-icon>
+          <span>{{ auction?.auctionStatusName || auction?.auctionStatusCode }}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+
+  <div class="err" *ngIf="!loading && error">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ error }}</span>
+  </div>
+
+  <!-- grid of lots -->
+  <section class="grid" *ngIf="!loading && !error">
+    <article class="lot-card" *ngFor="let c of lots" [ngStyle]="{'--photo': 'url(' + c.imageUrl + ')'}">
+      <div class="photo"></div>
+
+      <div class="body">
+        <h3 class="title">{{ c.title }}</h3>
+        <div class="sub">{{ c.sub }}</div>
+
+        <div class="numbers">
+          <div class="num" *ngIf="c.reserve != null">
+            <div class="label">Reserve</div>
+            <div class="value">{{ money(c.reserve) }}</div>
+          </div>
+          <div class="num" *ngIf="c.buyNow != null">
+            <div class="label">Buy Now</div>
+            <div class="value">{{ money(c.buyNow) }}</div>
+          </div>
+          <div class="num" *ngIf="c.bidIncrement != null">
+            <div class="label">Bid Increment</div>
+            <div class="value">{{ money(c.bidIncrement) }}</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a class="btn primary"
+             [routerLink]="['/bidder/auctions', auctionId, c.invAuc.inventoryAuctionId]"
+             matTooltip="Bid on this car">
+            Place Bid
+          </a>
+          <a class="btn ghost"
+             [routerLink]="['/bidder/auctions', auctionId, c.invAuc.inventoryAuctionId]"
+             matTooltip="View details">
+            View Details
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <div class="empty" *ngIf="lots.length===0">
+      <mat-icon>info</mat-icon>
+      No listings in this auction yet.
+    </div>
+  </section>
+</div>
