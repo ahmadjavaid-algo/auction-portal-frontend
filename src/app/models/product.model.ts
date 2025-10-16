@@ -8,6 +8,7 @@ export interface Product {
   modelName: string;
   makeName: string;
   yearName: string;
+  categoryName: string;
   // audit (optional on the wire)
   createdById?: number | null;
   createdDate?: string | null;

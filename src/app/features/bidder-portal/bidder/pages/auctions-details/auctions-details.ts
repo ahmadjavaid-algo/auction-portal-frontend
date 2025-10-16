@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { MatIconModule } from '@angular/material/icon';
@@ -25,12 +26,18 @@ import { ProductsService } from '../../../../../services/products.service';
 type LotCard = {
   invAuc: InventoryAuction;
   inventory: Inventory | null;
-  title: string;            // "2023 Mercedes G63" (or fallbacks)
-  sub: string;              // "Chassis 123 • #45" etc.
+  title: string;
+  sub: string;
   imageUrl: string;
   buyNow?: number | null;
   reserve?: number | null;
   bidIncrement?: number | null;
+
+  // meta for filters/sort
+  yearName?: string | null;
+  makeName?: string | null;
+  modelName?: string | null;
+  categoryName?: string | null;
 };
 
 @Component({
@@ -38,6 +45,7 @@ type LotCard = {
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     RouterLink,
     MatIconModule,
     MatButtonModule,
@@ -62,8 +70,18 @@ export class AuctionsDetails {
   auctionId!: number;
   auction: Auction | null = null;
 
-  heroUrl = 'https://images.unsplash.com/photo-1517940310602-75e447f00b52?q=80&w=1200&auto=format&fit=crop';
+  heroUrl = 'https://images.unsplash.com/photo-1517940310602-75e447f00b52?q=80&w=1400&auto=format&fit=crop';
+
+  /** raw cards (unfiltered) */
   lots: LotCard[] = [];
+
+  /** search + filters + sort */
+  q = '';
+  filters = { make: '', model: '', year: '', category: '' };
+  sortBy: 'newest' | 'price_low' | 'price_high' | 'year_new' | 'year_old' = 'newest';
+
+  /** option lists */
+  options = { makes: [] as string[], models: [] as string[], years: [] as string[], categories: [] as string[] };
 
   ngOnInit(): void {
     this.auctionId = Number(this.route.snapshot.paramMap.get('auctionId') || this.route.snapshot.paramMap.get('id'));
@@ -84,35 +102,29 @@ export class AuctionsDetails {
     })
     .pipe(
       map(({ auctions, invAucs, files, invs, products }) => {
-        // find auction row
         this.auction = (auctions || []).find(a => a.auctionId === this.auctionId) || null;
 
-        // inventories in this auction
         const rows = (invAucs || []).filter(x => (x as any).auctionId === this.auctionId && (x.active ?? true));
 
-        // map: inventoryId -> images[]
         const imageMap = this.buildImagesMap(files);
 
-        // map: inventoryId -> inventory
         const invMap = new Map<number, Inventory>();
         (invs || []).forEach(i => invMap.set(i.inventoryId, i));
 
-        // map: productId -> product (for Year/Make/Model/Category names)
         const prodMap = new Map<number, Product>();
         (products || []).forEach(p => prodMap.set(p.productId, p));
 
-        // build lot cards
         const cards: LotCard[] = rows.map(r => {
           const inv = invMap.get(r.inventoryId) || null;
           const prod = inv ? prodMap.get(inv.productId) || null : null;
           const snap = this.safeParse(inv?.productJSON);
 
-          // Prefer true Product metadata -> "YYYY Make Model"
-          const y = (prod?.yearName ?? snap?.Year ?? snap?.year) ?? '';
-          const mk = (prod?.makeName ?? snap?.Make ?? snap?.make) ?? '';
-          const md = (prod?.modelName ?? snap?.Model ?? snap?.model) ?? '';
+          const yearName = (prod?.yearName ?? snap?.Year ?? snap?.year) ?? null;
+          const makeName = (prod?.makeName ?? snap?.Make ?? snap?.make) ?? null;
+          const modelName = (prod?.modelName ?? snap?.Model ?? snap?.model) ?? null;
+          const categoryName = (prod?.categoryName ?? snap?.Category ?? snap?.category) ?? null;
 
-          const titleFromMeta = [y, mk, md].filter(Boolean).join(' ');
+          const titleFromMeta = [yearName, makeName, modelName].filter(Boolean).join(' ');
           const title =
             titleFromMeta ||
             inv?.displayName ||
@@ -132,21 +144,23 @@ export class AuctionsDetails {
             imageUrl: cover,
             buyNow: r.buyNowPrice ?? null,
             reserve: r.reservePrice ?? null,
-            bidIncrement: r.bidIncrement ?? null
+            bidIncrement: r.bidIncrement ?? null,
+            yearName, makeName, modelName, categoryName
           };
         });
 
-        // hero image from first card that has an image
         const firstImg = cards.find(c => !!c.imageUrl)?.imageUrl;
         if (firstImg) this.heroUrl = firstImg;
 
-        // newest first by created/modified
+        // newest first
         this.lots = cards.sort((a, b) =>
           this.dateDesc(
             (a.inventory?.modifiedDate || a.inventory?.createdDate) ?? null,
             (b.inventory?.modifiedDate || b.inventory?.createdDate) ?? null
           )
         );
+
+        this.buildFilterOptions();
       })
     )
     .subscribe({
@@ -155,8 +169,64 @@ export class AuctionsDetails {
     });
   }
 
-  /* ===== helpers ===== */
+  /** ===== Filtering + Sorting ===== */
+  get filteredLots(): LotCard[] {
+    const q = this.q.trim().toLowerCase();
+    return this.lots.filter(c => {
+      const hay = `${c.title} ${c.sub} ${c.makeName ?? ''} ${c.modelName ?? ''} ${c.yearName ?? ''} ${c.categoryName ?? ''}`.toLowerCase();
+      if (q && !hay.includes(q)) return false;
 
+      if (this.filters.make && (c.makeName ?? '') !== this.filters.make) return false;
+      if (this.filters.model && (c.modelName ?? '') !== this.filters.model) return false;
+      if (this.filters.year && String(c.yearName ?? '') !== this.filters.year) return false;
+      if (this.filters.category && (c.categoryName ?? '') !== this.filters.category) return false;
+
+      return true;
+    });
+  }
+
+  get results(): LotCard[] {
+    const list = [...this.filteredLots];
+    const priceOf = (c: LotCard) =>
+      (c.buyNow ?? undefined) ?? (c.reserve ?? undefined) ?? Number.POSITIVE_INFINITY;
+
+    switch (this.sortBy) {
+      case 'price_low':
+        return list.sort((a, b) => (priceOf(a) - priceOf(b)));
+      case 'price_high':
+        return list.sort((a, b) => (priceOf(b) - priceOf(a)));
+      case 'year_new':
+        return list.sort((a, b) => (parseInt(String(b.yearName||0)) - parseInt(String(a.yearName||0))));
+      case 'year_old':
+        return list.sort((a, b) => (parseInt(String(a.yearName||0)) - parseInt(String(b.yearName||0))));
+      default: // newest
+        return list.sort((a, b) =>
+          this.dateDesc(
+            (a.inventory?.modifiedDate || a.inventory?.createdDate) ?? null,
+            (b.inventory?.modifiedDate || b.inventory?.createdDate) ?? null
+          )
+        );
+    }
+  }
+
+  clearAll(): void {
+    this.q = '';
+    this.filters = { make: '', model: '', year: '', category: '' };
+    this.sortBy = 'newest';
+  }
+  clearOne(key: keyof typeof this.filters): void { this.filters[key] = ''; }
+
+  private buildFilterOptions(): void {
+    const uniq = (arr: (string | null | undefined)[]) =>
+      Array.from(new Set(arr.filter(Boolean) as string[])).sort((a, b) => a.localeCompare(b));
+
+    this.options.makes = uniq(this.lots.map(l => l.makeName));
+    this.options.models = uniq(this.lots.map(l => l.modelName));
+    this.options.years = uniq(this.lots.map(l => (l.yearName ?? null) as any));
+    this.options.categories = uniq(this.lots.map(l => l.categoryName));
+  }
+
+  /* ===== helpers ===== */
   private buildImagesMap(files: InventoryDocumentFile[]): Map<number, string[]> {
     const m = new Map<number, string[]>();
     const isImg = (u?: string | null, n?: string | null) => {
@@ -201,4 +271,6 @@ export class AuctionsDetails {
     if (n == null) return '—';
     return n.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
   }
+
+  trackById = (_: number, c: LotCard) => (c.invAuc as any).inventoryAuctionId ?? c.sub;
 }

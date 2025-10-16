@@ -3,10 +3,8 @@
   <div class="crumbs">
     <a routerLink="/bidder/auctions">Auctions</a>
     <mat-icon>chevron_right</mat-icon>
-    <span class="current">
-      {{ auction?.auctionName || ('Auction #' + auctionId) }}
-    </span>
-    <span class="count" *ngIf="!loading">({{ lots.length }} lots)</span>
+    <span class="current">{{ auction?.auctionName || ('Auction #' + auctionId) }}</span>
+    <span class="count" *ngIf="!loading">({{ results.length }} lots)</span>
   </div>
 
   <!-- hero -->
@@ -20,7 +18,7 @@
         </div>
         <div class="lots">
           <mat-icon>inventory_2</mat-icon>
-          <span>{{ lots.length }} lots</span>
+          <span>{{ results.length }} lots</span>
         </div>
         <div class="status" *ngIf="auction?.auctionStatusName || auction?.auctionStatusCode">
           <mat-icon>verified</mat-icon>
@@ -37,9 +35,71 @@
     <span>{{ error }}</span>
   </div>
 
-  <!-- grid of lots -->
-  <section class="grid" *ngIf="!loading && !error">
-    <article class="lot-card" *ngFor="let c of lots" [ngStyle]="{'--photo': 'url(' + c.imageUrl + ')'}">
+  <!-- top toolbar: search + filters + sort -->
+  <div class="toolbar" *ngIf="!loading && !error">
+    <div class="searchbar">
+      <mat-icon>search</mat-icon>
+      <input type="text" placeholder="Search car, chassis, make, model…" [(ngModel)]="q" />
+      <button *ngIf="q" class="clear" (click)="q = ''" matTooltip="Clear">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="select">
+      <label>Make</label>
+      <select [(ngModel)]="filters.make">
+        <option value="">All</option>
+        <option *ngFor="let m of options.makes" [value]="m">{{ m }}</option>
+      </select>
+    </div>
+
+    <div class="select">
+      <label>Model</label>
+      <select [(ngModel)]="filters.model">
+        <option value="">All</option>
+        <option *ngFor="let m of options.models" [value]="m">{{ m }}</option>
+      </select>
+    </div>
+
+    <div class="select">
+      <label>Year</label>
+      <select [(ngModel)]="filters.year">
+        <option value="">All</option>
+        <option *ngFor="let y of options.years" [value]="y">{{ y }}</option>
+      </select>
+    </div>
+
+    <div class="select">
+      <label>Category</label>
+      <select [(ngModel)]="filters.category">
+        <option value="">All</option>
+        <option *ngFor="let c of options.categories" [value]="c">{{ c }}</option>
+      </select>
+    </div>
+
+    <div class="select">
+      <label>Sort</label>
+      <select [(ngModel)]="sortBy">
+        <option value="newest">Newest</option>
+        <option value="price_low">Price: Low → High</option>
+        <option value="price_high">Price: High → Low</option>
+        <option value="year_new">Year: Newest</option>
+        <option value="year_old">Year: Oldest</option>
+      </select>
+    </div>
+
+    <button class="link clear-all"
+            (click)="clearAll()"
+            *ngIf="q || filters.make || filters.model || filters.year || filters.category || sortBy!=='newest'">
+      Clear all
+    </button>
+  </div>
+
+  <!-- grid of lots (4 per row on desktop) -->
+  <div class="grid" *ngIf="!loading && !error">
+    <article class="lot-card"
+             *ngFor="let c of results; trackBy: trackById"
+             [ngStyle]="{'--photo': 'url(' + c.imageUrl + ')'}">
       <div class="photo"></div>
 
       <div class="body">
@@ -76,9 +136,9 @@
       </div>
     </article>
 
-    <div class="empty" *ngIf="lots.length===0">
+    <div class="empty" *ngIf="results.length===0">
       <mat-icon>info</mat-icon>
-      No listings in this auction yet.
+      No results match your filters.
     </div>
-  </section>
+  </div>
 </div>

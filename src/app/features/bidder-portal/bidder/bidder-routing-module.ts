@@ -10,6 +10,7 @@ import { BiddersSignup } from './pages/bidders-signup/bidders-signup';
 import { BiddersAccdetails } from './pages/bidders-accdetails/bidders-accdetails';
 import { AuctionsDetails } from './pages/auctions-details/auctions-details';
 import { AuctionsList } from './pages/auctions-list/auctions-list';
+import { ProductDetails } from './pages/product-details/product-details';
 
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -30,6 +31,7 @@ const routes: Routes = [
         {path: 'accdetails', component: BiddersAccdetails, title: 'Account Details' },
         { path: 'auctions', component: AuctionsList, title: 'Auctions' },
         { path: 'auctions/:id', component: AuctionsDetails, title: 'Auction Details' },
+        { path: 'auctions/:id/:id', component: ProductDetails, title: 'Product Details' },
       ]
     }
 ];

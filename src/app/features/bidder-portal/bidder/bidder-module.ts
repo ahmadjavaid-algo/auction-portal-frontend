@@ -11,6 +11,7 @@ import { BiddersSignup } from './pages/bidders-signup/bidders-signup';
 import { BiddersAccdetails } from './pages/bidders-accdetails/bidders-accdetails';
 import { AuctionsDetails } from './pages/auctions-details/auctions-details';
 import { AuctionsList } from './pages/auctions-list/auctions-list';
+import { ProductDetails } from './pages/product-details/product-details';
 
 @NgModule({
   declarations: [],
@@ -25,7 +26,8 @@ import { AuctionsList } from './pages/auctions-list/auctions-list';
     BiddersSignup,
     BiddersAccdetails,
     AuctionsDetails,
-    AuctionsList
+    AuctionsList,
+    ProductDetails
   ]
 })
 export class BidderModule { }
