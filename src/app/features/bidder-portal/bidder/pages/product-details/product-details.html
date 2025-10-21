@@ -14,9 +14,8 @@
   </div>
 
   <section class="page" *ngIf="!error">
-    <!-- LEFT: gallery + info + specs -->
+    <!-- LEFT -->
     <div class="main">
-      <!-- hero/media -->
       <div class="media">
         <div class="stage" [ngStyle]="{'--photo': 'url(' + (activeImage || images[0]) + ')'}"></div>
 
@@ -32,45 +31,27 @@
         </div>
       </div>
 
-      <!-- title + meta -->
       <div class="title-block">
         <h1>{{ title }}</h1>
         <div class="sub">{{ subtitle }}</div>
 
         <div class="meta">
-          <div class="chip">
-            <span class="label">Reserve</span>
-            <span class="value">{{ money(lot?.reservePrice ?? null) }}</span>
-          </div>
-          <div class="chip">
-            <span class="label">Buy Now</span>
-            <span class="value">{{ money(lot?.buyNowPrice ?? null) }}</span>
-          </div>
-          <div class="chip">
-            <span class="label">Bid Increment</span>
-            <span class="value">{{ money(lot?.bidIncrement ?? null) }}</span>
-          </div>
-          <div class="chip">
-            <span class="label">Auction Window</span>
-            <span class="value">{{ formatRange(auction?.startDateTime||null, auction?.endDateTime||null) }}</span>
-          </div>
+          <div class="chip"><span class="label">Reserve</span><span class="value">{{ money(lot?.reservePrice ?? null) }}</span></div>
+          <div class="chip"><span class="label">Buy Now</span><span class="value">{{ money(lot?.buyNowPrice ?? null) }}</span></div>
+          <div class="chip"><span class="label">Bid Increment</span><span class="value">{{ money(lot?.bidIncrement ?? null) }}</span></div>
+          <div class="chip"><span class="label">Auction Window</span><span class="value">{{ formatRange(auction?.startDateTime||null, auction?.endDateTime||null) }}</span></div>
         </div>
 
         <div class="cta-row">
-          <a class="btn primary"
-             [routerLink]="['/bidder/auctions', auctionId, lotId]"
-             matTooltip="Place your bid">
+          <a class="btn primary" [routerLink]="['/bidder/auctions', auctionId, lotId]" matTooltip="Place your bid">
             <mat-icon>gavel</mat-icon> Place Bid
           </a>
-          <a class="btn ghost"
-             [routerLink]="['/bidder/auctions', auctionId, lotId]"
-             matTooltip="See bidding activity">
+          <a class="btn ghost" [routerLink]="['/bidder/auctions', auctionId, lotId]" matTooltip="See bidding activity">
             <mat-icon>visibility</mat-icon> View Auction
           </a>
         </div>
       </div>
 
-      <!-- specs -->
       <div class="panel specs">
         <h3>Vehicle details</h3>
         <div class="grid">
@@ -81,55 +62,63 @@
         </div>
       </div>
 
-      <!-- description (if present in productJSON) -->
       <div class="panel" *ngIf="inventory?.description">
         <h3>Description</h3>
         <p class="desc">{{ inventory?.description }}</p>
       </div>
     </div>
 
-    <!-- RIGHT: sticky sidebar -->
+    <!-- RIGHT: new bulky rail -->
     <aside class="sidebar">
-      <div class="sticky">
-        <div class="bid-card">
-          <div class="head">
-            <mat-icon>schedule</mat-icon>
-            <div class="titles">
-              <div class="t1">Auction status</div>
-              <div class="t2">{{ auction?.auctionStatusName || auction?.auctionStatusCode || '—' }}</div>
-            </div>
-          </div>
-          <div class="rows">
-            <div>
-              <div class="label">Starts</div>
-              <div class="value">{{ auction?.startDateTime ? (auction?.startDateTime | date:'medium') : '—' }}</div>
-            </div>
-            <div>
-              <div class="label">Ends</div>
-              <div class="value">{{ auction?.endDateTime ? (auction?.endDateTime | date:'medium') : '—' }}</div>
+      <div class="rail">
+        <!-- auction status / schedule -->
+        <section class="status">
+          <div class="status-top">
+            <div class="icon"><mat-icon>schedule</mat-icon></div>
+            <div class="labels">
+              <div class="kicker">Auction status</div>
+              <div class="state">{{ auction?.auctionStatusName || auction?.auctionStatusCode || '—' }}</div>
             </div>
           </div>
 
-
-        </div>
-
-        <div class="related">
-          <div class="r-head">Related auctions</div>
-
-          <a class="r-card" *ngFor="let r of related" [routerLink]="r.link">
-            <div class="photo" [ngStyle]="{'--photo': 'url(' + r.imageUrl + ')'}"></div>
-            <div class="text">
-              <div class="title">{{ r.title }}</div>
-              <div class="sub">{{ r.sub }}</div>
-              <div class="money">
-                <span *ngIf="r.reserve != null">Reserve {{ money(r.reserve) }}</span>
-                <span *ngIf="r.buyNow != null"> • Buy {{ money(r.buyNow) }}</span>
-              </div>
+          <div class="timegrid">
+            <div class="tblock">
+              <div class="tlabel">Starts</div>
+              <div class="tvalue">{{ auction?.startDateTime ? (auction?.startDateTime | date:'medium') : '—' }}</div>
             </div>
+            <div class="tblock">
+              <div class="tlabel">Ends</div>
+              <div class="tvalue">{{ auction?.endDateTime ? (auction?.endDateTime | date:'medium') : '—' }}</div>
+            </div>
+          </div>
+
+          <a class="rail-cta" [routerLink]="['/bidder/auctions', auctionId, lotId]">
+            <mat-icon>gavel</mat-icon> Bid on this car
           </a>
+        </section>
 
-          <div class="empty" *ngIf="related.length===0">No related listings found.</div>
-        </div>
+        <!-- related auctions list -->
+        <section class="related-rail">
+          <div class="r-head">
+            <span>Related auctions</span>
+          </div>
+
+          <div class="tiles">
+            <a class="tile" *ngFor="let r of related" [routerLink]="r.link">
+              <div class="thumb" [ngStyle]="{'--photo': 'url(' + r.imageUrl + ')'}"></div>
+              <div class="copy">
+                <div class="title">{{ r.title }}</div>
+                <div class="sub">{{ r.sub }}</div>
+                <div class="money">
+                  <span *ngIf="r.reserve != null">Reserve {{ money(r.reserve) }}</span>
+                  <span *ngIf="r.buyNow != null"> • Buy {{ money(r.buyNow) }}</span>
+                </div>
+              </div>
+            </a>
+
+            <div class="empty" *ngIf="related.length===0">No related listings found.</div>
+          </div>
+        </section>
       </div>
     </aside>
   </section>

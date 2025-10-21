@@ -95,12 +95,20 @@
     </button>
   </div>
 
-  <!-- grid of lots (4 per row on desktop) -->
+  <!-- grid of lots -->
   <div class="grid" *ngIf="!loading && !error">
     <article class="lot-card"
              *ngFor="let c of results; trackBy: trackById"
              [ngStyle]="{'--photo': 'url(' + c.imageUrl + ')'}">
-      <div class="photo"></div>
+      <div class="photo">
+        <!-- countdown pill -->
+        <div class="timer-pill"
+             [class.live]="c.countdownState==='live'"
+             [class.ended]="c.countdownState==='ended'">
+          <mat-icon inline>schedule</mat-icon>
+          <span>{{ c.countdownText || '—' }}</span>
+        </div>
+      </div>
 
       <div class="body">
         <h3 class="title">{{ c.title }}</h3>

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -33,11 +33,15 @@ type LotCard = {
   reserve?: number | null;
   bidIncrement?: number | null;
 
-  // meta for filters/sort
+
   yearName?: string | null;
   makeName?: string | null;
   modelName?: string | null;
   categoryName?: string | null;
+
+  
+  countdownText?: string;                     
+  countdownState?: 'scheduled' | 'live' | 'ended';
 };
 
 @Component({
@@ -55,7 +59,7 @@ type LotCard = {
   templateUrl: './auctions-details.html',
   styleUrls: ['./auctions-details.scss']
 })
-export class AuctionsDetails {
+export class AuctionsDetails implements OnDestroy {
   private route = inject(ActivatedRoute);
 
   private auctionsSvc = inject(AuctionService);
@@ -72,17 +76,22 @@ export class AuctionsDetails {
 
   heroUrl = 'https://images.unsplash.com/photo-1517940310602-75e447f00b52?q=80&w=1400&auto=format&fit=crop';
 
-  /** raw cards (unfiltered) */
+
   lots: LotCard[] = [];
 
-  /** search + filters + sort */
+
   q = '';
   filters = { make: '', model: '', year: '', category: '' };
   sortBy: 'newest' | 'price_low' | 'price_high' | 'year_new' | 'year_old' = 'newest';
 
-  /** option lists */
+
   options = { makes: [] as string[], models: [] as string[], years: [] as string[], categories: [] as string[] };
 
+
+  private tickHandle: any = null;
+  private auctionStart: number | null = null; 
+  private auctionEnd: number | null = null;   
+ 
   ngOnInit(): void {
     this.auctionId = Number(this.route.snapshot.paramMap.get('auctionId') || this.route.snapshot.paramMap.get('id'));
     if (!this.auctionId) {
@@ -103,6 +112,10 @@ export class AuctionsDetails {
     .pipe(
       map(({ auctions, invAucs, files, invs, products }) => {
         this.auction = (auctions || []).find(a => a.auctionId === this.auctionId) || null;
+
+
+        this.auctionStart = this.auction?.startDateTime ? Date.parse(this.auction.startDateTime as any) : null;
+        this.auctionEnd   = this.auction?.endDateTime   ? Date.parse(this.auction.endDateTime as any)   : null;
 
         const rows = (invAucs || []).filter(x => (x as any).auctionId === this.auctionId && (x.active ?? true));
 
@@ -152,7 +165,7 @@ export class AuctionsDetails {
         const firstImg = cards.find(c => !!c.imageUrl)?.imageUrl;
         if (firstImg) this.heroUrl = firstImg;
 
-        // newest first
+        
         this.lots = cards.sort((a, b) =>
           this.dateDesc(
             (a.inventory?.modifiedDate || a.inventory?.createdDate) ?? null,
@@ -161,6 +174,10 @@ export class AuctionsDetails {
         );
 
         this.buildFilterOptions();
+
+       
+        this.updateCountdowns();      
+        this.startTicker();            
       })
     )
     .subscribe({
@@ -169,7 +186,11 @@ export class AuctionsDetails {
     });
   }
 
-  /** ===== Filtering + Sorting ===== */
+  ngOnDestroy(): void {
+    if (this.tickHandle) clearInterval(this.tickHandle);
+  }
+
+
   get filteredLots(): LotCard[] {
     const q = this.q.trim().toLowerCase();
     return this.lots.filter(c => {
@@ -226,7 +247,56 @@ export class AuctionsDetails {
     this.options.categories = uniq(this.lots.map(l => l.categoryName));
   }
 
-  /* ===== helpers ===== */
+
+
+  private startTicker(): void {
+    if (this.tickHandle) clearInterval(this.tickHandle);
+    this.tickHandle = setInterval(() => this.updateCountdowns(), 1000);
+  }
+
+  private updateCountdowns(): void {
+    const now = Date.now(); 
+
+    for (const c of this.lots) {
+
+      const start = this.auctionStart;
+      const end   = this.auctionEnd;
+
+      if (!start || !end) {
+        c.countdownText = '—';
+        c.countdownState = 'scheduled';
+        continue;
+      }
+
+      if (now < start) {
+        c.countdownState = 'scheduled';
+        c.countdownText = 'Starts ' + this.fmtCountdown(start - now);
+      } else if (now <= end) {
+        c.countdownState = 'live';
+        c.countdownText = this.fmtCountdown(end - now); 
+      } else {
+        c.countdownState = 'ended';
+        c.countdownText = 'Ended';
+      }
+    }
+  }
+
+  private fmtCountdown(ms: number): string {
+
+    const day = 24 * 60 * 60 * 1000;
+    if (ms >= day) {
+      const d = Math.floor(ms / day);
+      return `${d} Day${d > 1 ? 's' : ''}`;
+    }
+
+    let s = Math.max(0, Math.floor(ms / 1000));
+    const hh = Math.floor(s / 3600); s -= hh * 3600;
+    const mm = Math.floor(s / 60);   s -= mm * 60;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${hh}:${pad(mm)}:${pad(s)}`;
+  }
+
+
   private buildImagesMap(files: InventoryDocumentFile[]): Map<number, string[]> {
     const m = new Map<number, string[]>();
     const isImg = (u?: string | null, n?: string | null) => {
