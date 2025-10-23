@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Auction } from '../models/auction.model';
+import { AuctionTimebox } from '../models/auction-timebox.model';
 import { AuthService } from '../services/auth';
 const API_BASE = 'http://localhost:5070/api';
 
@@ -34,5 +35,8 @@ export class AuctionService {
 activate(payload: { AuctionId: number; Active: boolean; ModifiedById?: number | null }): Observable<boolean> {
   return this.http.put<boolean>(`${this.base}/activate`, payload, { headers: this.authHeaders() });
 }
-
+ getTimebox(auctionId: number): Observable<AuctionTimebox> {
+    const params = new HttpParams().set('AuctionId', auctionId);
+    return this.http.get<AuctionTimebox>(`${this.base}/gettimebox`, { headers: this.authHeaders(), params });
+  }
 }

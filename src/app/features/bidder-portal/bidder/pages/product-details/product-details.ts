@@ -25,10 +25,10 @@ import { ProductsService } from '../../../../../services/products.service';
 type SpecRow = { label: string; value: string | number | null | undefined };
 
 type RelatedCard = {
-  link: any[];            // routerLink array
+  link: any[];            
   title: string;
   imageUrl: string;
-  sub: string;            // e.g. chassis + lot #
+  sub: string;            
   buyNow?: number | null;
   reserve?: number | null;
 };
@@ -57,38 +57,38 @@ export class ProductDetails {
   private invSvc      = inject(InventoryService);
   private productsSvc = inject(ProductsService);
 
-  // route params
+  
   auctionId!: number;
   inventoryAuctionId!: number;
 
-  // page state
+  
   loading = true;
   error: string | null = null;
 
-  // core entities
+  
   auction: Auction | null = null;
   lot: InventoryAuction | null = null;
   inventory: Inventory | null = null;
   product: Product | null = null;
 
-  // media
+ 
   images: string[] = [];
   activeImage = '';
 
-  // presentation
+  
   title = 'Listing';
   subtitle = '';
   money = (n?: number | null) =>
     n == null ? '—' : n.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
-  // specs table
+  
   specs: SpecRow[] = [];
 
-  // related items
+  
   related: RelatedCard[] = [];
 
   ngOnInit(): void {
-    // REACT to route param changes (Angular reuses the component)
+    
     this.route.paramMap.subscribe(pm => {
       this.auctionId = Number(pm.get('auctionId') || 0);
       this.inventoryAuctionId = Number(pm.get('inventoryAuctionId') ?? pm.get('id'));
@@ -104,7 +104,7 @@ export class ProductDetails {
       return;
     }
 
-    // reset state for a fresh render
+  
     this.loading = true;
     this.error = null;
     this.images = [];
@@ -127,20 +127,20 @@ export class ProductDetails {
     })
     .pipe(
       map(({ auctions, invAucs, files, invs, products }) => {
-        // current lot
+        
         this.lot = (invAucs || []).find(a => ((a as any).inventoryAuctionId ?? (a as any).inventoryauctionId) === this.inventoryAuctionId) || null;
         if (!this.lot) throw new Error('Listing not found');
 
-        // determine auction
+     
         const currentAuctionId = (this.lot as any).auctionId ?? this.auctionId;
         this.auctionId = currentAuctionId;
         this.auction = (auctions || []).find(a => a.auctionId === currentAuctionId) || null;
 
-        // inventory + product
+       
         this.inventory = (invs || []).find(i => i.inventoryId === this.lot!.inventoryId) || null;
         this.product = this.inventory ? (products || []).find(p => p.productId === this.inventory!.productId) || null : null;
 
-        // title / subtitle
+        
         const snap = this.safeParse(this.inventory?.productJSON);
         const year = this.product?.yearName ?? snap?.Year ?? snap?.year;
         const make = this.product?.makeName ?? snap?.Make ?? snap?.make;
@@ -150,7 +150,7 @@ export class ProductDetails {
         const chassis = this.inventory?.chassisNo || snap?.Chassis || snap?.chassis;
         this.subtitle = chassis ? `Chassis ${chassis} • Lot #${(this.lot as any).inventoryAuctionId ?? ''}` : `Lot #${(this.lot as any).inventoryAuctionId ?? ''}`;
 
-        // images
+        
         const isImg = (u?: string | null, n?: string | null) => {
           const s = (u || n || '').toLowerCase();
           return ['.jpg', '.jpeg', '.png', '.webp'].some(x => s.endsWith(x));
@@ -161,7 +161,7 @@ export class ProductDetails {
           .slice(0, 32);
         if (this.images.length) this.activeImage = this.images[0];
 
-        // specs
+       
         const colorExterior = snap?.ExteriorColor ?? snap?.exteriorColor ?? null;
         const colorInterior = snap?.InteriorColor ?? snap?.interiorColor ?? null;
         const drivetrain    = snap?.Drivetrain ?? snap?.drivetrain ?? null;
@@ -193,7 +193,7 @@ export class ProductDetails {
         ];
         this.specs = rows;
 
-        // related auctions
+        
         const allLots = (invAucs || []).filter(x => (x.active ?? true));
         const makeName = this.product?.makeName ?? make ?? '';
         const catName  = categoryName ?? '';
@@ -238,7 +238,7 @@ export class ProductDetails {
           .slice(0, 6)
           .map(({ _score, ...rest }: any) => rest);
 
-        // UX: jump to top on new item
+       
         try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
       })
     )
@@ -250,7 +250,7 @@ export class ProductDetails {
 
   selectImage(url: string): void { this.activeImage = url; }
 
-  // utils
+
   private safeParse(json?: string | null): any | null {
     if (!json) return null;
     try { return JSON.parse(json); } catch { return null; }

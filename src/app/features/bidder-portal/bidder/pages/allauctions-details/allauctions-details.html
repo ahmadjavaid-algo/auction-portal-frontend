@@ -1,0 +1,153 @@
+<div class="all-auctions">
+  <div class="crumbs">
+    <a routerLink="/bidder/dashboard">Home</a>
+    <mat-icon>chevron_right</mat-icon>
+    <span class="current">All Auctions</span>
+    <span class="count" *ngIf="!loading">({{ results.length }} lots)</span>
+  </div>
+
+  <section class="hero" [ngStyle]="{'--photo': 'url(' + heroUrl + ')'}">
+    <div class="overlay">
+      <h1>All Auctions</h1>
+      <div class="meta">
+        <div class="lots">
+          <mat-icon>inventory_2</mat-icon>
+          <span>{{ results.length }} lots</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+
+  <div class="err" *ngIf="!loading && error">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ error }}</span>
+  </div>
+
+  <div class="toolbar" *ngIf="!loading && !error">
+    <div class="searchbar">
+      <mat-icon>search</mat-icon>
+      <input type="text" placeholder="Search car, auction, chassis, make, model…" [(ngModel)]="q" />
+      <button *ngIf="q" class="clear" (click)="q = ''" matTooltip="Clear">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="select">
+      <label>Auction</label>
+      <select [(ngModel)]="filters.auction">
+        <option value="">All</option>
+        <option *ngFor="let a of options.auctions" [value]="a">{{ a }}</option>
+      </select>
+    </div>
+
+    <div class="select">
+      <label>Make</label>
+      <select [(ngModel)]="filters.make">
+        <option value="">All</option>
+        <option *ngFor="let m of options.makes" [value]="m">{{ m }}</option>
+      </select>
+    </div>
+
+    <div class="select">
+      <label>Model</label>
+      <select [(ngModel)]="filters.model">
+        <option value="">All</option>
+        <option *ngFor="let m of options.models" [value]="m">{{ m }}</option>
+      </select>
+    </div>
+
+    <div class="select">
+      <label>Year</label>
+      <select [(ngModel)]="filters.year">
+        <option value="">All</option>
+        <option *ngFor="let y of options.years" [value]="y">{{ y }}</option>
+      </select>
+    </div>
+
+    <div class="select">
+      <label>Category</label>
+      <select [(ngModel)]="filters.category">
+        <option value="">All</option>
+        <option *ngFor="let c of options.categories" [value]="c">{{ c }}</option>
+      </select>
+    </div>
+
+    <div class="select">
+      <label>Sort</label>
+      <select [(ngModel)]="sortBy">
+        <option value="newest">Newest</option>
+        <option value="start_time">Auction Start Time</option>
+        <option value="price_low">Price: Low → High</option>
+        <option value="price_high">Price: High → Low</option>
+        <option value="year_new">Year: Newest</option>
+        <option value="year_old">Year: Oldest</option>
+      </select>
+    </div>
+
+    <button class="link clear-all"
+            (click)="clearAll()"
+            *ngIf="q || filters.auction || filters.make || filters.model || filters.year || filters.category || sortBy!=='newest'">
+      Clear all
+    </button>
+  </div>
+
+  <div class="grid" *ngIf="!loading && !error">
+    <article class="lot-card"
+             *ngFor="let c of results; trackBy: trackById"
+             [ngStyle]="{'--photo': 'url(' + c.imageUrl + ')'}">
+      <div class="photo">
+        <div class="timer-pill"
+             [class.live]="c.countdownState==='live'"
+             [class.ended]="c.countdownState==='ended'">
+          <mat-icon inline>schedule</mat-icon>
+          <span>{{ c.countdownText || '—' }}</span>
+        </div>
+      </div>
+
+      <div class="body">
+        <div class="auction-chip" *ngIf="c.auctionName">
+          <mat-icon>event</mat-icon>
+          <span>{{ c.auctionName }}</span>
+        </div>
+
+        <h3 class="title">{{ c.title }}</h3>
+        <div class="sub">{{ c.sub }}</div>
+
+        <div class="numbers">
+          <div class="num" *ngIf="c.reserve != null">
+            <div class="label">Reserve</div>
+            <div class="value">{{ c.reserve | currency:'USD':'symbol':'1.0-0' }}</div>
+          </div>
+          <div class="num" *ngIf="c.buyNow != null">
+            <div class="label">Buy Now</div>
+            <div class="value">{{ c.buyNow | currency:'USD':'symbol':'1.0-0' }}</div>
+          </div>
+          <div class="num" *ngIf="c.bidIncrement != null">
+            <div class="label">Bid Increment</div>
+            <div class="value">{{ c.bidIncrement | currency:'USD':'symbol':'1.0-0' }}</div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <a class="btn primary"
+             [routerLink]="['/bidder/auctions', c.auctionId, c.inventoryAuctionId]"
+             matTooltip="Bid on this car">
+            Place Bid
+          </a>
+          <a class="btn ghost"
+             [routerLink]="['/bidder/auctions', c.auctionId, c.inventoryAuctionId]"
+             matTooltip="View details">
+            View Details
+          </a>
+        </div>
+      </div>
+    </article>
+
+    <div class="empty" *ngIf="results.length===0">
+      <mat-icon>info</mat-icon>
+      <span>No results match your filters.</span>
+    </div>
+  </div>
+</div>

@@ -12,6 +12,7 @@ import { BiddersAccdetails } from './pages/bidders-accdetails/bidders-accdetails
 import { AuctionsDetails } from './pages/auctions-details/auctions-details';
 import { AuctionsList } from './pages/auctions-list/auctions-list';
 import { ProductDetails } from './pages/product-details/product-details';
+import { AllauctionsDetails } from './pages/allauctions-details/allauctions-details';
 
 @NgModule({
   declarations: [],
@@ -27,7 +28,8 @@ import { ProductDetails } from './pages/product-details/product-details';
     BiddersAccdetails,
     AuctionsDetails,
     AuctionsList,
-    ProductDetails
+    ProductDetails,
+    AllauctionsDetails
   ]
 })
 export class BidderModule { }
