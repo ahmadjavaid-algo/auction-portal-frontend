@@ -1,0 +1,157 @@
+<div class="info-page">
+  <!-- HERO -->
+  <header class="hero">
+    <div class="stack">
+      <h1>Let’s build your next auction</h1>
+      <p class="sub"></p>
+    </div>
+
+    <div class="chips" aria-label="Key highlights">
+      <div class="chip"><strong>99.9%</strong> uptime</div>
+      <div class="chip"><strong>1M+</strong> bidders served</div>
+      <div class="chip"><strong>24/5</strong> support</div>
+      <div class="chip"><strong>API</strong> & webhooks</div>
+    </div>
+  </header>
+
+  <!-- GRID: CONTACT FORM + QUICK LINKS -->
+  <section class="grid">
+    <!-- LEFT: Form -->
+    <article class="panel contact">
+      <h2>Get in touch</h2>
+      <p class="hint">Share a few details and we’ll reply within one business day.</p>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="row two">
+          <label>
+            <span>Full name</span>
+            <input type="text" formControlName="fullName" />
+            <em class="err" *ngIf="submitted && form.controls.fullName.invalid">Please enter your name.</em>
+          </label>
+
+          <label>
+            <span>Email</span>
+            <input type="email" formControlName="email" />
+            <em class="err" *ngIf="submitted && form.controls.email.invalid">Enter a valid email.</em>
+          </label>
+        </div>
+
+        <div class="row two">
+          <label>
+            <span>Company (optional)</span>
+            <input type="text" formControlName="company" />
+          </label>
+
+          <label class="select">
+            <span>Reason</span>
+            <select formControlName="reason">
+              <option>General</option>
+              <option>Sales / Pricing</option>
+              <option>Enterprise & SSO</option>
+              <option>API & Integrations</option>
+              <option>Partnerships</option>
+              <option>Support</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="row">
+          <span>How can we help?</span>
+          <textarea formControlName="message" rows="6" placeholder="Share details about your use case…"></textarea>
+          <em class="err" *ngIf="submitted && form.controls.message.invalid">Please add a short message.</em>
+        </label>
+
+        <label class="check">
+          <input type="checkbox" formControlName="consent" />
+          <span>I agree to be contacted about my inquiry.</span>
+        </label>
+
+        <div class="actions">
+          <button class="btn primary" type="submit" [disabled]="submitting">
+            {{ submitting ? 'Sending…' : 'Send message' }}
+          </button>
+          <span class="form-error" *ngIf="errorMsg">{{ errorMsg }}</span>
+        </div>
+      </form>
+    </article>
+
+    <!-- RIGHT: Quick contact + enterprise -->
+    <aside class="rail">
+      <section class="card quick">
+        <h3>Talk to sales</h3>
+        <p>Considering Pro, Business, or Enterprise? We’ll help you choose.</p>
+        <a class="btn ghost" href="mailto:sales@algo.example">sales@algo.com</a>
+      </section>
+
+      <section class="card quick">
+        <h3>Support</h3>
+        <p>Need help with your account? We’re here 24/5.</p>
+        <a class="btn ghost" href="mailto:support@algo.example">support@algo.com</a>
+      </section>
+
+      <section class="card quick">
+        <h3>Partner with us</h3>
+        <p>Integrators, marketplaces, and OEM partners welcome.</p>
+        <a class="btn ghost" href="mailto:partners@algo.example">partners@algo.com</a>
+      </section>
+
+      <section class="card stat">
+        <div class="big">99.9%</div>
+        <div class="caption">SLA uptime</div>
+      </section>
+      <section class="card stat">
+        <div class="big">200+</div>
+        <div class="caption">APIs & webhooks</div>
+      </section>
+    </aside>
+  </section>
+
+  <!-- LOCATIONS / TRUST -->
+  <section class="trust">
+    <div class="block">
+      <h3>Global coverage</h3>
+      <p>Secure, compliant infrastructure with regional data residency options.</p>
+      <ul class="tags">
+        <li>US</li><li>EU</li><li>UK</li><li>ME</li><li>APAC</li>
+      </ul>
+    </div>
+    <div class="block">
+      <h3>Security</h3>
+      <p>SSO (SAML/OIDC), role-based access, audit logs, and encryption at rest & in transit.</p>
+    </div>
+    <div class="block">
+      <h3>Migration help</h3>
+      <p>Hands-on onboarding for teams moving from legacy auction systems.</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq">
+    <h3>Frequently asked questions</h3>
+
+    <details>
+      <summary>How fast can we go live?</summary>
+      <p>Most teams launch in under a week; Enterprise timelines vary by SSO and data import scope.</p>
+    </details>
+    <details>
+      <summary>Do you support custom domains?</summary>
+      <p>Yes—Business & Enterprise include branded domains and white-label options.</p>
+    </details>
+    <details>
+      <summary>How does billing work?</summary>
+      <p>Monthly or Yearly. Business & Enterprise can request invoicing and POs.</p>
+    </details>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="cta-strip">
+    <div class="stack">
+      <h3>Ready to chat?</h3>
+      <p>Join teams running thousands of successful auctions every month.</p>
+    </div>
+    <div class="actions">
+      <a class="btn primary" routerLink="/bidder/pricing">See pricing</a>
+      <a class="btn ghost" href="mailto:sales@algo.com">Email sales</a>
+    </div>
+  </section>
+</div>

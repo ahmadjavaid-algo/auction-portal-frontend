@@ -1,27 +1,66 @@
-/* Minimal, international style; matches your bidder layout & dashboard buttons */
 :host{
-  --ink:#111; --muted:#6b6b6b; --line:#e9e9e9; --soft:#f7f7f7; --card:#fff;
-  --radius:16px; --shadow:0 12px 34px rgba(0,0,0,.10);
-  --primary:#000; --primary-hover:#fff; --ghost-border:#000;
+  /* === Algo brand palette (from Pricing page) === */
+  --algo-bg-0:#0d0716;   /* near-black plum */
+  --algo-bg-1:#1a0930;   /* deep purple */
+  --algo-bg-2:#2b0a4a;   /* indigo */
+  --algo-pink:#ff2fb0;   /* electric magenta */
+  --algo-purple:#8a1bd6; /* vibrant purple */
+
+  --ink:#0b0b0b;
+  --muted:#707174;
+  --line:#ececf0;
+  --soft:#f7f7f9;
+  --card:#fff;
+  --radius:16px;
+  --shadow:0 18px 60px rgba(0,0,0,.10);
+  --primary:#000;
+  --primary-hover:#fff;
+  --ghost-border:#000;
+
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  color: var(--ink);
+  color:var(--ink);
+  display:block;
+
+  /* Full-page brand gradient background */
+  background:
+    radial-gradient(1200px 600px at 85% 10%, rgba(255,47,176,.25), transparent 60%),
+    radial-gradient(900px 450px at 5% 0%, rgba(138,27,214,.18), transparent 65%),
+    linear-gradient(135deg, var(--algo-bg-0) 0%, var(--algo-bg-1) 38%, var(--algo-bg-2) 100%);
+  position: relative;
+}
+/* subtle vignette + ultra-faint grain */
+:host::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(1000px 600px at 80% 0%, rgba(255,47,176,.10), transparent 60%),
+    radial-gradient(900px 900px at 10% 10%, rgba(138,27,214,.10), transparent 70%),
+    radial-gradient(1200px 900px at 50% 120%, rgba(0,0,0,.35), transparent 60%);
+  mix-blend-mode: screen;
+}
+:host::after{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image: radial-gradient(rgba(255,255,255,.04) 1px, transparent 1px);
+  background-size: 3px 3px; opacity:.15; mix-blend-mode: overlay;
 }
 
 .auctions-page{
-  max-width: 1200px; margin: 0 auto; padding: 18px;
+  position: relative; z-index:1; /* above gradient layers */
+  max-width: 1180px; margin: 0 auto; padding: 42px 18px 72px;
 
   .crumbs{
-    display:flex; align-items:center; gap:8px; color:var(--muted);
-    font-size:13px; font-weight:600; letter-spacing:.01em; margin-bottom:12px;
-    .current{ color:var(--ink); }
-    .count{ color:var(--ink); opacity:.75; }
-    mat-icon{ font-size:18px; width:18px; height:18px; color:#9aa0a6; }
+    display:flex; align-items:center; gap:8px;
+    font-size:13px; font-weight:900; letter-spacing:.01em; margin-bottom:12px;
+    color:#fff;
+    a{ color:#fff; text-decoration:none; }
+    .current{ color:#fff; }
+    .count{ color:#fff; opacity:.85; }
+    mat-icon{ font-size:18px; width:18px; height:18px; color:#e5e7eb; }
   }
 
   .err{
     display:flex; align-items:center; gap:8px; margin:12px 0;
     padding:10px 12px; border:1px solid #ffe3e3; background:#fff6f6; color:#a40000;
-    border-radius:12px;
+    border-radius:12px; box-shadow: var(--shadow);
     mat-icon{ color:#a40000; }
   }
 
@@ -34,17 +73,18 @@
   .empty{
     grid-column: 1 / -1;
     display:flex; align-items:center; gap:8px; color:var(--muted);
-    padding:16px; border:1px dashed var(--line); border-radius:12px; background:#fafafa;
+    padding:16px; border:1px solid rgba(255,255,255,.16);
+    border-radius:12px; background:rgba(255,255,255,.96); box-shadow: var(--shadow);
   }
 }
 
-/* ===== Card ===== */
+/* ===== Card (clone of Pricing card chrome) ===== */
 .auction-card{
-  position: relative; overflow: hidden; border-radius: var(--radius);
+  position: relative; overflow: hidden; border-radius: 22px;
   background: var(--card); border:1px solid var(--line); box-shadow: var(--shadow);
   display:grid; grid-template-rows: 180px auto; transition: transform .08s, box-shadow .2s;
 
-  &:hover{ transform: translateY(-2px); box-shadow: 0 18px 48px rgba(0,0,0,.16); }
+  &:hover{ transform: translateY(-2px); box-shadow: 0 24px 72px rgba(0,0,0,.18); }
 
   .card-photo{
     background:
@@ -53,17 +93,22 @@
   }
 
   .card-body{
-    padding:14px;
+    padding:16px 16px 14px;
 
     .status{
-      display:inline-block; font-weight:700; font-size:11px; letter-spacing:.02em;
-      padding:4px 10px; border-radius:999px; border:1px solid #e7e7e7; background:#f7f7f7;
-      margin-bottom:6px; color:#1f2a37;
-      &.live{ background:#e8fff0; border-color:#b2f0c3; color:#146c2e; }
+      display:inline-block; font-weight:900; font-size:11.5px; letter-spacing:.02em;
+      padding:6px 12px; border-radius:999px; border:1px solid rgba(0,0,0,.08); background:#fff;
+      margin-bottom:8px; color:#1f2a37; box-shadow: var(--shadow);
+      &.live{
+        border:0;
+        background:linear-gradient(90deg, var(--algo-purple), var(--algo-pink));
+        color:#fff;
+        box-shadow:0 10px 22px rgba(255,47,176,.25);
+      }
     }
 
     .name{
-      margin:0 0 6px 0; font-size:18px; font-weight:900; letter-spacing:.3px;
+      margin:0 0 6px 0; font-size:20px; font-weight:900; letter-spacing:.2px; color:#111;
     }
 
     .meta{
@@ -79,23 +124,22 @@
       display:flex; gap:10px; flex-wrap:wrap;
 
       .btn{
-        height:36px; padding:0 14px; border-radius:10px; font-weight:800; font-size:13.5px;
+        height:40px; padding:0 16px; border-radius:12px; font-weight:900;
         display:inline-flex; align-items:center; gap:8px; cursor:pointer; text-decoration:none;
 
         &.primary{
-          background:var(--primary); color:#fff; border:1px solid rgba(255,255,255,.98);
-          box-shadow:0 10px 22px rgba(0,0,0,.16);
+          border:0;
+          background:linear-gradient(90deg, var(--algo-purple), var(--algo-pink));
+          color:#fff;
+          box-shadow:0 12px 26px rgba(255,47,176,.28);
           &:hover{
-            transform:translateY(-1px);
-            background:var(--primary-hover); color:#000;
-            border:1px solid rgba(0,0,0,.98);
-            box-shadow:0 16px 32px rgba(0,0,0,.18);
+            background:#fff; color:#000; border:1px solid var(--algo-pink);
           }
         }
 
         &.ghost{
-          background:#fff; color:#111; font-weight:700; border:1px solid var(--ghost-border);
-          &:hover{ transform: translateY(-1px); background:#000; color:#fff; }
+          background:#fff; color:#111; font-weight:900; border:1px solid var(--ghost-border);
+          &:hover{ background:#000; color:#fff; }
         }
       }
     }

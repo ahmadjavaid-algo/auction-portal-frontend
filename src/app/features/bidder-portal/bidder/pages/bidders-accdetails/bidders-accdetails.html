@@ -23,12 +23,11 @@
   <div class="hero">
     <div class="avatar">{{ initials }}</div>
     <div class="who">
-    <!-- in the hero header name line -->
-    <h2 class="name">
-      {{ user.firstName }} {{ user.lastName }}
-      <span class="verified" *ngIf="user.emailConfirmed">Verified</span>
-    </h2>
-
+      <!-- in the hero header name line -->
+      <h2 class="name">
+        {{ user.firstName }} {{ user.lastName }}
+        <span class="verified" *ngIf="user.emailConfirmed">Verified</span>
+      </h2>
       <div class="email">{{ user.email || '—' }}</div>
     </div>
 
@@ -67,7 +66,8 @@
         <div class="row"><div class="label">Account Created:</div><div class="val">{{ user.createdDate | date:'medium' }}</div></div>
         <div class="row"><div class="label">Last Login:</div><div class="val">{{ user.loginDate | date:'medium' }}</div></div>
         <div class="row"><div class="label">Identification #:</div><div class="val selectable">{{ user.identificationNumber || '—' }}</div></div>
-        <!-- in Account details: Account Verification row -->
+
+        <!-- Account Verification row -->
         <div class="row">
           <div class="label">Account Verification:</div>
           <div class="val">
@@ -76,7 +76,8 @@
           </div>
         </div>
 
-        <div class="row"><div class="label">Status:</div>
+        <div class="row">
+          <div class="label">Status:</div>
           <div class="val">
             <span class="dot" [class.on]="user.active"></span>
             <span>{{ user.active ? 'Active' : 'Inactive' }}</span>
@@ -88,7 +89,7 @@
     </mat-card>
   </div>
 
-  <!-- Lower cards (optional sections to mirror screenshot visual) -->
+  <!-- Lower cards -->
   <div class="cards two-col">
     <!-- Security Settings -->
     <mat-card class="panel">

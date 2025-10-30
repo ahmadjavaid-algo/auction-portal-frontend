@@ -1,4 +1,5 @@
 <div class="all-auctions">
+  <!-- breadcrumbs -->
   <div class="crumbs">
     <a routerLink="/bidder/dashboard">Home</a>
     <mat-icon>chevron_right</mat-icon>
@@ -6,6 +7,7 @@
     <span class="count" *ngIf="!loading">({{ results.length }} lots)</span>
   </div>
 
+  <!-- hero -->
   <section class="hero" [ngStyle]="{'--photo': 'url(' + heroUrl + ')'}">
     <div class="overlay">
       <h1>All Auctions</h1>
@@ -25,6 +27,7 @@
     <span>{{ error }}</span>
   </div>
 
+  <!-- toolbar -->
   <div class="toolbar" *ngIf="!loading && !error">
     <div class="searchbar">
       <mat-icon>search</mat-icon>
@@ -93,6 +96,7 @@
     </button>
   </div>
 
+  <!-- grid -->
   <div class="grid" *ngIf="!loading && !error">
     <article class="lot-card"
              *ngFor="let c of results; trackBy: trackById"

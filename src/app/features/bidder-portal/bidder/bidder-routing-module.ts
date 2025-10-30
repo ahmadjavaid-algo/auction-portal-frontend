@@ -12,7 +12,10 @@ import { AuctionsDetails } from './pages/auctions-details/auctions-details';
 import { AuctionsList } from './pages/auctions-list/auctions-list';
 import { ProductDetails } from './pages/product-details/product-details';
 import { AllauctionsDetails } from './pages/allauctions-details/allauctions-details';
-
+import { Pricing } from './pages/pricing/pricing';
+import { NewcarsList } from './pages/newcars-list/newcars-list';
+import { Info } from './pages/info/info';
+import { FavouritesList } from './pages/favourites-list/favourites-list';
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
 
@@ -34,6 +37,10 @@ const routes: Routes = [
         { path: 'auctions/:id', component: AuctionsDetails, title: 'Auction Details' },
         { path: 'auctions/:id/:id', component: ProductDetails, title: 'Product Details' },
         { path: 'allauctions', component: AllauctionsDetails, title: 'All Auctions' },
+        { path: 'pricing', component: Pricing, title: 'Pricing' },
+        { path: 'newcars-list', component: NewcarsList, title: 'New Cars' },
+        { path: 'info', component: Info, title: 'Reach Us' },
+        { path: 'favourites-list', component: FavouritesList, title: 'Favourites' },
       ]
     }
 ];

@@ -13,6 +13,10 @@ import { AuctionsDetails } from './pages/auctions-details/auctions-details';
 import { AuctionsList } from './pages/auctions-list/auctions-list';
 import { ProductDetails } from './pages/product-details/product-details';
 import { AllauctionsDetails } from './pages/allauctions-details/allauctions-details';
+import { Pricing } from './pages/pricing/pricing';
+import { NewcarsList } from './pages/newcars-list/newcars-list';
+import { Info } from './pages/info/info';
+import { FavouritesList } from './pages/favourites-list/favourites-list';
 
 @NgModule({
   declarations: [],
@@ -29,7 +33,11 @@ import { AllauctionsDetails } from './pages/allauctions-details/allauctions-deta
     AuctionsDetails,
     AuctionsList,
     ProductDetails,
-    AllauctionsDetails
+    AllauctionsDetails,
+    Pricing,
+    NewcarsList,
+    Info,
+    FavouritesList
   ]
 })
 export class BidderModule { }

@@ -1,61 +1,118 @@
-<div class="login-container">
+<div class="login">
   <div class="auth-card">
-    <!-- LEFT: visual with monochrome photo + subtle logo badge -->
-    <div class="visual">
-      <figure class="scene-wrap">
-        <img
-          class="scene"
-          src="https://images.unsplash.com/photo-1560611811-8a87a5239655?w=1600&auto=format&fit=crop&q=80"
-          alt="Premium car close-up"
-        />
-
-      </figure>
+    <!-- Brand -->
+    <div class="brand-head">
+      <img
+        class="logo"
+        src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8"
+        alt="Algo"
+      />
+      <div class="brand-text">
+        <div class="brand-name">Algo Auction Portal</div>
+        <div class="brand-tag">Trusted by 1M+ bidders worldwide</div>
+      </div>
     </div>
 
-    <!-- RIGHT: translucent form panel -->
-    <div class="panel">
-      <div class="panel-inner">
-        <!-- Brand row -->
-        <div class="brand-head">
-          <img
-            class="logo"
-            src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8"
-            alt="Algo"
-          />
-          <div class="brand-text">
-            <div class="brand-name">Algo Auction Portal</div>
-            <div class="brand-tag">Secure bidder access</div>
-          </div>
+    <header class="headline">
+      <h1>Sign in</h1>
+    </header>
+
+
+
+    <!-- Email form FIRST -->
+    <form (ngSubmit)="login()" novalidate>
+      <label class="field">
+        <div class="input-wrap">
+          <span class="i i-mail"></span>
+          <input type="email" [(ngModel)]="email" name="email" required autocomplete="email" />
         </div>
+      </label>
 
-        <h1>Sign in</h1>
-        <p class="hint">Welcome back. Use your credentials to continue.</p>
+      <label class="field">
 
-        <form (ngSubmit)="login()" novalidate>
-          <label class="field">
-            <span class="label">Username</span>
-            <input type="email" [(ngModel)]="email" name="email" required autocomplete="email"/>
-          </label>
+        <div class="input-wrap">
+          <span class="i i-lock"></span>
+          <input type="password" [(ngModel)]="password" name="password" required autocomplete="current-password" />
+        </div>
+        <div class="row-between">
+          <a class="tiny-link" routerLink="/bidder/forgot-password">Forgot Password?</a>
+        </div>
+      </label>
 
-          <label class="field">
-            <span class="label">Password</span>
-            <input type="password" [(ngModel)]="password" name="password" required autocomplete="current-password"/>
-          </label>
+      <label class="checkbox">
+        <input type="checkbox" />
+        <span>Remember me for 30 days</span>
+      </label>
 
-          <label class="checkbox">
-            <input type="checkbox" />
-            <span>Remember me for 30 days</span>
-          </label>
+      <button type="submit" class="btn primary">Sign in</button>
 
-          <button type="submit" class="btn-primary">Sign in</button>
-
-          <div class="foot">
-            <a routerLink="/bidder/forgot-password" class="muted">Forgot password</a>
-            <span class="spacer"></span>
-            New here? <a routerLink="/bidder/signup">Sign Up</a>
-          </div>
-        </form>
+      <div class="foot">
+        New here? <a routerLink="/bidder/signup">Create an account</a>
+        <span class="spacer"></span>
+        <span class="muted">By continuing you agree to our</span>
+        <a href="javascript:void(0)">Terms</a>
+        <span class="dotsep">•</span>
+        <a href="javascript:void(0)">Privacy</a>
       </div>
+    </form>
+
+    <div class="divider"><span>or continue with</span></div>
+
+    <!-- Providers moved BELOW -->
+    <div class="providers">
+      <button type="button" class="pbtn google">
+        <span class="picon g"></span> Continue with Google
+      </button>
+      <button type="button" class="pbtn microsoft">
+        <span class="picon ms"></span> Continue with Microsoft
+      </button>
+      <button type="button" class="pbtn apple">
+        <span class="picon apple"></span> Continue with Apple
+      </button>
+      <button type="button" class="pbtn outline sso">
+        <span class="dot"></span> Enterprise SSO (SAML/OIDC)
+      </button>
+    </div>
+
+    <!-- Meta / Trust -->
+    <div class="meta-grid">
+      <div class="meta">
+        <div class="icon lock"></div>
+        <div>
+          <div class="meta-title">Bank-grade security</div>
+          <div class="meta-sub">TLS 1.2+, encryption at rest, audit logs</div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="icon shield"></div>
+        <div>
+          <div class="meta-title">Compliance ready</div>
+          <div class="meta-sub">SOC 2 • GDPR • Data residency</div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="icon uptime"></div>
+        <div>
+          <div class="meta-title">Real-time status</div>
+          <div class="meta-sub">99.9% last 30 days</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Support / Language -->
+    <div class="below">
+      <div class="support">
+        Need help? <a href="mailto:support@algo.com">support@algo.com</a>
+      </div>
+      <label class="lang">
+        <span>Language</span>
+        <select>
+          <option selected>English (US)</option>
+          <option>English (UK)</option>
+          <option>Deutsch</option>
+          <option>العربية</option>
+        </select>
+      </label>
     </div>
   </div>
 </div>

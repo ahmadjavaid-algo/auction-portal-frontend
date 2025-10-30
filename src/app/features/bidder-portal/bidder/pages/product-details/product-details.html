@@ -3,7 +3,9 @@
   <div class="crumbs">
     <a routerLink="/bidder/auctions">Auctions</a>
     <mat-icon>chevron_right</mat-icon>
-    <a *ngIf="auctionId" [routerLink]="['/bidder/auctions', auctionId]">{{ auction?.auctionName || ('Auction #' + auctionId) }}</a>
+    <a *ngIf="auctionId" [routerLink]="['/bidder/auctions', auctionId]">
+      {{ auction?.auctionName || ('Auction #' + auctionId) }}
+    </a>
     <mat-icon>chevron_right</mat-icon>
     <span class="current">{{ title }}</span>
   </div>
@@ -68,7 +70,7 @@
       </div>
     </div>
 
-    <!-- RIGHT: new bulky rail -->
+    <!-- RIGHT rail -->
     <aside class="sidebar">
       <div class="rail">
         <!-- auction status / schedule -->

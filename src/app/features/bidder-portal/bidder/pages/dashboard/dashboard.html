@@ -1,46 +1,44 @@
 <div class="landing">
-  <section
-    class="hero-banner"
-    [ngStyle]="{'--photo': bgUrl}"
-  >
+  <!-- HERO -->
+  <section class="hero-banner" [ngStyle]="{'--photo': bgUrl}">
     <button class="arrow prev" aria-label="Previous slide" (click)="prev()"><span>&lsaquo;</span></button>
     <button class="arrow next" aria-label="Next slide" (click)="next()"><span>&rsaquo;</span></button>
 
     <div class="hero-shell">
       <div class="copy">
-        <div class="year">
-          {{ (current?.year || '—') }}
-        </div>
+        <div class="kicker">{{ (current?.year || '—') }}</div>
 
         <h1 class="title">
-          <span>{{ (current?.make || '—') }}</span>
+          <span>{{ (current?.make  || '—') }}</span>
           <span>{{ (current?.model || '—') }}</span>
         </h1>
 
         <p class="starting">
-          Starting Bid from
+          Starting bid from
           <a class="price" href="javascript:void(0)">
             {{ formatMoney(current?.auction?.reservePrice) }}
           </a>
         </p>
 
         <div class="actions">
-          <button class="btn btn-primary" [routerLink]="['/bidder/auctions', current?.auction?.inventoryAuctionId]" matTooltip="Place a bid">
+          <a class="btn primary"
+             [routerLink]="['/bidder/auctions', current?.auction?.auctionId]"
+             matTooltip="Place a bid">
             Place Bid
-          </button>
-          <button class="btn btn-ghost" [routerLink]="['/bidder/auctions', current?.auction?.inventoryAuctionId]" matTooltip="View car details">
+          </a>
+          <a class="btn ghost"
+             [routerLink]="['/bidder/auctions', current?.auction?.auctionId]"
+             matTooltip="View car details">
             Check Car
-          </button>
+          </a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Optional tiny loader/error to match your UI while hero hydrates -->
-  <section style="padding: 0 16px 16px;">
+  <!-- tiny loader / error -->
+  <section class="inline-status">
     <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
-    <div *ngIf="error && !loading" style="color:#b00020; font-weight:600; margin-top:8px;">
-      {{ error }}
-    </div>
+    <div *ngIf="error && !loading" class="err">{{ error }}</div>
   </section>
 </div>

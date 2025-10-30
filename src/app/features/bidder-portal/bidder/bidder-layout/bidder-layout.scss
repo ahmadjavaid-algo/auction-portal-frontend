@@ -1,88 +1,135 @@
-.site-layout {
-  --ink-1:#0f0f12; --ink-2:#6b6f76;
-  --accent:#ff3b30; --accent-hover:#e03229;
-  --link:#111; --link-hover:#000;
-  --header-bg:#fff; --header-edge:#eceff3;
+:host{
+  /* === Algo brand palette (from Pricing page) === */
+  --algo-bg-0:#0d0716;   /* near-black plum */
+  --algo-bg-1:#1a0930;   /* deep purple */
+  --algo-bg-2:#2b0a4a;   /* indigo */
+  --algo-pink:#ff2fb0;   /* electric magenta */
+  --algo-purple:#8a1bd6; /* vibrant purple */
+
+  --ink:#0b0b0b;
+  --muted:#707174;
+  --line:#ececf0;
+  --card:#fff;
+  --shadow:0 18px 60px rgba(0,0,0,.10);
 
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  color: var(--ink-1);
-  background:#fff;
+  color:var(--ink);
+  display:block;
 
-  /* Generic shell for pages (kept), but header overrides it to go full-bleed */
-  .shell { max-width: 1200px; margin: 0 auto; padding: 0 18px; }
+  /* Full-page brand gradient background (like Pricing) */
+  background:
+    radial-gradient(1200px 600px at 85% 10%, rgba(255,47,176,.25), transparent 60%),
+    radial-gradient(900px 450px at 5% 0%, rgba(138,27,214,.18), transparent 65%),
+    linear-gradient(135deg, var(--algo-bg-0) 0%, var(--algo-bg-1) 38%, var(--algo-bg-2) 100%);
+  position: relative;
+}
 
-  /* Top header */
+/* subtle vignette + ultra-faint grain */
+:host::before{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(1000px 600px at 80% 0%, rgba(255,47,176,.10), transparent 60%),
+    radial-gradient(900px 900px at 10% 10%, rgba(138,27,214,.10), transparent 70%),
+    radial-gradient(1200px 900px at 50% 120%, rgba(0,0,0,.35), transparent 60%);
+  mix-blend-mode: screen;
+}
+:host::after{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image: radial-gradient(rgba(255,255,255,.04) 1px, transparent 1px);
+  background-size: 3px 3px; opacity:.15; mix-blend-mode: overlay;
+}
+
+.site-layout{
+  position: relative; z-index:1; /* above gradient overlays */
+
+  /* Generic shell for header */
+  .shell { max-width: 1180px; margin: 0 auto; padding: 0 18px; }
+
+  /* Sticky, glossy header mirroring Pricing cards */
   .site-header{
-    position: sticky; top: 0; left: 0; right: 0; z-index: 40;
-    background: var(--header-bg);
-    border-bottom: 1px solid var(--header-edge);
+    position: sticky; top: 0; left: 0; right: 0; z-index: 50;
+    backdrop-filter: saturate(1.1) blur(6px);
+    background: rgba(255,255,255,.96);
+    border-bottom: 1px solid rgba(255,255,255,.16);
+    box-shadow: var(--shadow);
 
-    /* Full-bleed layout: three zones (left/center/right) */
     .shell{
-      max-width: none;   /* remove center constraint */
+      max-width: none;
       width: 100%;
-      padding-inline: 0; /* touch the extreme edges */
+      padding-inline: 0;
       display: grid;
       grid-template-columns: 1fr auto 1fr;
       align-items: center;
-      height: 64px;
-      gap: 0;
+      height: 70px;
     }
 
-    /* Left: brand (sticks to far left) */
+    /* Left: brand */
     .brand-link{
       justify-self: start;
       display:flex; align-items:center; gap:10px;
-      padding-left: 8px;           /* tiny breathing room from the edge */
-      text-decoration:none; color:#000; font-weight:800; letter-spacing:.2px;
+      padding-left: 8px;
+      text-decoration:none; color:#000; font-weight:900; letter-spacing:.2px;
       img{ width:34px; height:26px; border-radius:6px; display:block; }
       span{ white-space:nowrap; }
     }
 
-    /* Center: nav (perfectly centered in viewport) */
+    /* Center: nav */
     .main-nav{
       justify-self: center;
-      display:flex; align-items:center; gap:18px;
+      display:flex; align-items:center; gap:14px;
 
       > a{
-        text-decoration:none; color:var(--link); font-weight:600; font-size:14px;
-        padding: 10px 6px; border-radius:8px; transition: color .15s, background .15s;
-        &:hover{ color:var(--link-hover); background:#f6f7f9; }
-        &.active{ color:#000; }
+        position:relative;
+        text-decoration:none; color:#111; font-weight:800; font-size:14px;
+        padding:10px 10px; border-radius:12px;
+        transition: color .15s, background .15s, box-shadow .2s;
+
+        /* hover: soft white chip */
+        &:hover{
+          background:#fff;
+          box-shadow: var(--shadow);
+        }
+
+        /* active: branded gradient pill */
+        &.active{
+          color:#fff;
+          background: linear-gradient(90deg, var(--algo-purple), var(--algo-pink));
+          box-shadow:0 10px 22px rgba(255,47,176,.25);
+        }
       }
+
       > a.fav{ display:inline-flex; gap:6px; align-items:center; }
+
       .sell-btn{
-        margin-left: 8px;
-        background:#000000;
-        color:#fff; border:1px solid rgba(255, 255, 255, 0.977);  height:38px; padding: 0 16px; border-radius:8px;
-        font-weight:800; cursor:pointer;
-        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.25);
-        transition: background .15s, transform .08s, box-shadow .2s;
+        margin-left: 6px;
+        height:38px; padding:0 16px; border-radius:12px; font-weight:900; cursor:pointer;
+        border:0; color:#fff;
+        background:linear-gradient(90deg, var(--algo-purple), var(--algo-pink));
+        box-shadow:0 12px 26px rgba(255,47,176,.28);
+        transition: transform .08s, box-shadow .2s, background .15s, color .15s, border .15s;
         &:hover{
           transform: translateY(-1px);
-          border:1px solid rgba(0, 0, 0, 0.977);
-          background:#ffffff;color:#000000;
-          box-shadow: 0 16px 32px rgba(255, 255, 255, 0.32);
-          transform: translate(-1px);
+          background:#000; color:#fff;
+          box-shadow:0 18px 48px rgba(0,0,0,.22);
         }
       }
     }
 
-    /* Right: user cluster (sticks to far right) */
+    /* Right: notifications + user dropdown */
     .header-right{
       justify-self: end;
       display:flex; align-items:center; gap:10px;
-      padding-right: 8px;         /* tiny breathing room from the edge */
+      padding-right: 8px;
     }
 
     .icon-btn{
       position: relative;
       background: #fff;
-      border: 1px solid #edf0f4;
-      border-radius: 12px;
-      padding: 8px 10px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:8px 10px;
       cursor: pointer;
-      box-shadow: 0 10px 24px rgba(16,24,40,.10);
+      box-shadow: var(--shadow);
       transition: transform .15s, box-shadow .2s;
       display:inline-flex; align-items:center; justify-content:center;
 
@@ -92,47 +139,53 @@
       .dot{
         position: absolute; top: 4px; right: 4px;
         width: 8px; height: 8px; border-radius: 50%;
-        background: #ff3b5c; box-shadow: 0 0 0 2px #fff;
+        background: var(--algo-pink); box-shadow: 0 0 0 2px #fff;
       }
     }
 
     .user{
-      position: relative; z-index: 50; cursor: pointer;
+      position: relative; z-index: 60; cursor: pointer;
       display:inline-flex; align-items:center; gap:10px;
       padding: 6px 10px; border-radius: 14px;
-      background:#fff; border:1px solid #edf0f4;
-      box-shadow: 0 10px 24px rgba(16,24,40,.10);
+      background:#fff; border:1px solid var(--line);
+      box-shadow: var(--shadow);
       transition: box-shadow .2s, transform .15s;
 
       &:hover{ box-shadow: 0 18px 48px rgba(16,24,40,.16); transform: translateY(-1px); }
 
       .avatar{
         width: 32px; height: 32px; border-radius: 50%;
-        display:grid; place-items:center; color:#fff; font-weight:700;
-        background: linear-gradient(135deg, #0b3aa9, #06b6d4);
+        display:grid; place-items:center; color:#fff; font-weight:900;
+        background: linear-gradient(90deg, var(--algo-purple), var(--algo-pink));
+        box-shadow:0 10px 22px rgba(255,47,176,.25);
       }
-      .name{ font-weight:600; color:#111; white-space:nowrap; }
+      .name{ font-weight:800; color:#111; white-space:nowrap; }
       mat-icon{ color:#5b657a; }
 
-      /* ▼▼ remove bullets and default spacing on dropdown list ▼▼ */
-      ul,
-      ul li{ list-style:none; margin:0; padding:0; }
-      ul li::marker{ content:none; }
-      /* ▲▲ ----------------------------------------------------- ▲▲ */
-
+      /* dropdown */
+      ul, ul li{ list-style:none; margin:0; padding:0; }
       ul{
         display:none; position:absolute; right:0; top: calc(100% + 8px);
-        background:#fff; border:1px solid #edf0f4; border-radius:12px;
-        min-width: 200px; padding:8px; box-shadow: 0 18px 48px rgba(16,24,40,.16);
+        background:#fff; border:1px solid var(--line); border-radius:12px;
+        min-width: 220px; padding:8px; box-shadow: 0 18px 48px rgba(16,24,40,.16);
         li a{
           display:block; padding:10px 12px; border-radius:10px;
-          color:#0f172a; text-decoration:none; font-weight:500;
-          &:hover{ background:#f1f4ff; }
+          color:#0f172a; text-decoration:none; font-weight:800;
+          &:hover{
+            color:#fff;
+            background: linear-gradient(90deg, var(--algo-purple), var(--algo-pink));
+            box-shadow:0 10px 22px rgba(255,47,176,.25);
+          }
         }
       }
       &.open ul{ display:block; }
     }
   }
 
-  .site-body{ min-height: calc(100vh - 64px); }
+  /* Body simply inherits the background; children pages already themed */
+  .site-body{
+    min-height: calc(100vh - 70px);
+    /* optional: spacing baseline for all routed pages */
+    padding-bottom: 24px;
+  }
 }
