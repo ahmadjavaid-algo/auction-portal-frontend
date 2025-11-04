@@ -19,17 +19,20 @@
     <!-- LEFT -->
     <div class="main">
       <div class="media">
-        <div class="stage" [ngStyle]="{'--photo': 'url(' + (activeImage || images[0]) + ')'}"></div>
+        <div
+          class="stage"
+          [ngStyle]="{ '--photo': 'url(' + (activeImage || images[0]) + ')' }"
+        ></div>
 
         <div class="thumbs" *ngIf="images.length > 1">
           <button
             class="thumb"
             *ngFor="let img of images"
             [class.active]="img === activeImage"
-            [ngStyle]="{'--photo': 'url(' + img + ')'}"
+            [ngStyle]="{ '--photo': 'url(' + img + ')' }"
             (click)="selectImage(img)"
-            matTooltip="View">
-          </button>
+            matTooltip="View"
+          ></button>
         </div>
       </div>
 
@@ -38,18 +41,54 @@
         <div class="sub">{{ subtitle }}</div>
 
         <div class="meta">
-          <div class="chip"><span class="label">Reserve</span><span class="value">{{ money(lot?.reservePrice ?? null) }}</span></div>
-          <div class="chip"><span class="label">Buy Now</span><span class="value">{{ money(lot?.buyNowPrice ?? null) }}</span></div>
-          <div class="chip"><span class="label">Bid Increment</span><span class="value">{{ money(lot?.bidIncrement ?? null) }}</span></div>
-          <div class="chip"><span class="label">Auction Window</span><span class="value">{{ formatRange(auction?.startDateTime||null, auction?.endDateTime||null) }}</span></div>
+          <div class="chip">
+            <span class="label">Start Price</span>
+            <span class="value">
+              {{ money(lot?.auctionStartPrice ?? null) }}
+            </span>
+          </div>
+          <div class="chip">
+            <span class="label">Reserve</span>
+            <span class="value">
+              {{ money(lot?.reservePrice ?? null) }}
+            </span>
+          </div>
+          <div class="chip">
+            <span class="label">Buy Now</span>
+            <span class="value">
+              {{ money(lot?.buyNowPrice ?? null) }}
+            </span>
+          </div>
+          <div class="chip">
+            <span class="label">Bid Increment</span>
+            <span class="value">
+              {{ money(lot?.bidIncrement ?? null) }}
+            </span>
+          </div>
+          <div class="chip">
+            <span class="label">Auction Window</span>
+            <span class="value">
+              {{ formatRange(auction?.startDateTime || null, auction?.endDateTime || null) }}
+            </span>
+          </div>
         </div>
 
         <div class="cta-row">
-          <a class="btn primary" [routerLink]="['/bidder/auctions', auctionId, lotId]" matTooltip="Place your bid">
-            <mat-icon>gavel</mat-icon> Place Bid
+          <a
+            class="btn primary"
+            [routerLink]="['/bidder/auctions', auctionId, lotId]"
+            matTooltip="Place your bid"
+          >
+            <mat-icon>gavel</mat-icon>
+            Place Bid
           </a>
-          <a class="btn ghost" [routerLink]="['/bidder/auctions', auctionId, lotId]" matTooltip="See bidding activity">
-            <mat-icon>visibility</mat-icon> View Auction
+          <a
+            class="btn ghost"
+            [routerLink]="['/bidder/auctions', auctionId, lotId]"
+            matTooltip="See bidding activity"
+          >
+            <mat-icon>visibility</mat-icon>
+            View Auction
           </a>
         </div>
       </div>
@@ -76,26 +115,43 @@
         <!-- auction status / schedule -->
         <section class="status">
           <div class="status-top">
-            <div class="icon"><mat-icon>schedule</mat-icon></div>
+            <div class="icon">
+              <mat-icon>schedule</mat-icon>
+            </div>
             <div class="labels">
               <div class="kicker">Auction status</div>
-              <div class="state">{{ auction?.auctionStatusName || auction?.auctionStatusCode || '—' }}</div>
+              <div class="state">
+                {{ auction?.auctionStatusName || auction?.auctionStatusCode || '—' }}
+              </div>
             </div>
           </div>
 
           <div class="timegrid">
             <div class="tblock">
               <div class="tlabel">Starts</div>
-              <div class="tvalue">{{ auction?.startDateTime ? (auction?.startDateTime | date:'medium') : '—' }}</div>
+              <div class="tvalue">
+                {{
+                  auction?.startDateTime
+                    ? (auction?.startDateTime | date: 'medium')
+                    : '—'
+                }}
+              </div>
             </div>
             <div class="tblock">
               <div class="tlabel">Ends</div>
-              <div class="tvalue">{{ auction?.endDateTime ? (auction?.endDateTime | date:'medium') : '—' }}</div>
+              <div class="tvalue">
+                {{
+                  auction?.endDateTime
+                    ? (auction?.endDateTime | date: 'medium')
+                    : '—'
+                }}
+              </div>
             </div>
           </div>
 
           <a class="rail-cta" [routerLink]="['/bidder/auctions', auctionId, lotId]">
-            <mat-icon>gavel</mat-icon> Bid on this car
+            <mat-icon>gavel</mat-icon>
+            Bid on this car
           </a>
         </section>
 
@@ -107,18 +163,34 @@
 
           <div class="tiles">
             <a class="tile" *ngFor="let r of related" [routerLink]="r.link">
-              <div class="thumb" [ngStyle]="{'--photo': 'url(' + r.imageUrl + ')'}"></div>
+              <div
+                class="thumb"
+                [ngStyle]="{ '--photo': 'url(' + r.imageUrl + ')' }"
+              ></div>
               <div class="copy">
                 <div class="title">{{ r.title }}</div>
                 <div class="sub">{{ r.sub }}</div>
                 <div class="money">
-                  <span *ngIf="r.reserve != null">Reserve {{ money(r.reserve) }}</span>
-                  <span *ngIf="r.buyNow != null"> • Buy {{ money(r.buyNow) }}</span>
+                  <span *ngIf="r.auctionStartPrice != null">
+                    Start {{ money(r.auctionStartPrice) }}
+                  </span>
+                  <span *ngIf="r.reserve != null">
+                    <ng-container *ngIf="r.auctionStartPrice != null"> • </ng-container>
+                    Reserve {{ money(r.reserve) }}
+                  </span>
+                  <span *ngIf="r.buyNow != null">
+                    <ng-container *ngIf="r.reserve != null || r.auctionStartPrice != null">
+                      •
+                    </ng-container>
+                    Buy {{ money(r.buyNow) }}
+                  </span>
                 </div>
               </div>
             </a>
 
-            <div class="empty" *ngIf="related.length===0">No related listings found.</div>
+            <div class="empty" *ngIf="related.length === 0">
+              No related listings found.
+            </div>
           </div>
         </section>
       </div>

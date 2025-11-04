@@ -4,8 +4,8 @@
     <div class="title">
       <h2>{{ mode === 'edit' ? 'Edit inventory in auction' : 'Add inventory to auction' }}</h2>
       <p class="sub">
-        Select an Inventory and an Auction. Prices are optional. Bid Increment is snapshotted from the selected
-        auction by the server.
+        Select an Inventory and an Auction. Auction Start, Buy Now and Reserve are optional.
+        Bid Increment is snapshotted from the selected auction by the server.
       </p>
     </div>
   </div>
@@ -14,7 +14,6 @@
   <mat-dialog-content class="body">
     <div class="sheet">
       <div class="grid">
-
         <!-- Inventory -->
         <mat-form-field appearance="outline">
           <mat-label>Inventory *</mat-label>
@@ -50,6 +49,13 @@
           </mat-error>
         </mat-form-field>
 
+        <!-- Auction Start Price -->
+        <mat-form-field appearance="outline">
+          <mat-label>Auction Start Price</mat-label>
+          <input matInput type="number" formControlName="auctionStartPrice" min="0" />
+          <mat-hint align="end">Optional</mat-hint>
+        </mat-form-field>
+
         <!-- Buy Now -->
         <mat-form-field appearance="outline">
           <mat-label>Buy Now Price</mat-label>
@@ -65,13 +71,17 @@
         </mat-form-field>
 
         <!-- Info -->
-        <mat-form-field class="full" appearance="outline" floatLabel="always" subscriptSizing="dynamic">
+        <mat-form-field
+          class="full"
+          appearance="outline"
+          floatLabel="always"
+          subscriptSizing="dynamic"
+        >
           <mat-label>Note</mat-label>
           <textarea matInput rows="2" disabled>
 Bid Increment is automatically snapshotted from the selected Auction on save.
           </textarea>
         </mat-form-field>
-
       </div>
     </div>
   </mat-dialog-content>

@@ -39,7 +39,7 @@ import {
 })
 export class InventoryauctionsList implements OnChanges {
   private invAucSvc = inject(InventoryAuctionService);
-  private invSvc = inject(InventoryService);               // NEW (for names/chassis)
+  private invSvc = inject(InventoryService); // NEW (for names/chassis)
   private snack = inject(MatSnackBar);
   private auth = inject(AuthService);
   private dialog = inject(MatDialog);
@@ -47,7 +47,18 @@ export class InventoryauctionsList implements OnChanges {
   /** Parent provides the auction whose inventory we show */
   @Input() auctionId!: number;
 
-  displayedColumns: string[] = ['inventory', 'status', 'bid', 'buy', 'reserve', 'active', 'actions'];
+  // NEW: include auctionStart column
+  displayedColumns: string[] = [
+    'inventory',
+    'status',
+    'bid',
+    'auctionStart',
+    'buy',
+    'reserve',
+    'active',
+    'actions'
+  ];
+
   rows: InventoryAuction[] = [];
   loading = false;
 
@@ -103,27 +114,33 @@ export class InventoryauctionsList implements OnChanges {
 
   private safeParse(json?: string | null): any | null {
     if (!json) return null;
-    try { return JSON.parse(json); } catch { return null; }
+    try {
+      return JSON.parse(json);
+    } catch {
+      return null;
+    }
   }
 
   toggleActive(row: InventoryAuction): void {
     const newState = !(row.active ?? false);
-    this.invAucSvc.activate({
-      // service expects PascalCase keys
-      InventoryAuctionId: (row as any).inventoryAuctionId ?? (row as any).inventoryauctionId,
-      Active: newState,
-      ModifiedById: this.auth.currentUser?.userId ?? null
-    }).subscribe({
-      next: ok => {
-        if (ok) {
-          row.active = newState;
-          this.snack.open(`Item ${newState ? 'activated' : 'deactivated'}.`, 'OK', { duration: 2000 });
-        } else {
-          this.snack.open('Failed to change status.', 'Dismiss', { duration: 3000 });
-        }
-      },
-      error: () => this.snack.open('Failed to change status.', 'Dismiss', { duration: 3000 })
-    });
+    this.invAucSvc
+      .activate({
+        // service expects PascalCase keys
+        InventoryAuctionId: (row as any).inventoryAuctionId ?? (row as any).inventoryauctionId,
+        Active: newState,
+        ModifiedById: this.auth.currentUser?.userId ?? null
+      })
+      .subscribe({
+        next: ok => {
+          if (ok) {
+            row.active = newState;
+            this.snack.open(`Item ${newState ? 'activated' : 'deactivated'}.`, 'OK', { duration: 2000 });
+          } else {
+            this.snack.open('Failed to change status.', 'Dismiss', { duration: 3000 });
+          }
+        },
+        error: () => this.snack.open('Failed to change status.', 'Dismiss', { duration: 3000 })
+      });
   }
 
   /** Open create dialog, presetting auctionId */
@@ -185,7 +202,8 @@ export class InventoryauctionsList implements OnChanges {
               this.snack.open('Failed to update item.', 'Dismiss', { duration: 3000 });
             }
           },
-          error: e => this.snack.open(e?.error?.message || 'Failed to update item.', 'Dismiss', { duration: 3000 })
+          error: e =>
+            this.snack.open(e?.error?.message || 'Failed to update item.', 'Dismiss', { duration: 3000 })
         });
       }
     });

@@ -67,8 +67,9 @@ export class InventoryauctionsForm implements OnInit {
       inventoryId: [null, Validators.required],
       auctionId: [this.data?.presetAuctionId ?? null, Validators.required],
       inventoryAuctionStatusId: [1, [Validators.required, Validators.min(1)]],
+      auctionStartPrice: [null, [Validators.min(0)]],
       buyNowPrice: [null, [Validators.min(0)]],
-      reservePrice: [null, [Validators.min(0)]],
+      reservePrice: [null, [Validators.min(0)]]
     });
 
     // preload inventories
@@ -96,6 +97,7 @@ export class InventoryauctionsForm implements OnInit {
         auctionId: r.auctionId ?? null,
         inventoryAuctionStatusId:
           (r as any).inventoryAuctionStatusId ?? (r as any).inventoryauctionStatusId ?? 1,
+        auctionStartPrice: r.auctionStartPrice ?? null,
         buyNowPrice: r.buyNowPrice ?? null,
         reservePrice: r.reservePrice ?? null
       });
@@ -116,6 +118,7 @@ export class InventoryauctionsForm implements OnInit {
       inventoryAuctionStatusId: v.inventoryAuctionStatusId,
 
       // money fields (optional)
+      auctionStartPrice: v.auctionStartPrice ?? 0,
       buyNowPrice: v.buyNowPrice ?? 0,
       reservePrice: v.reservePrice ?? 0,
 

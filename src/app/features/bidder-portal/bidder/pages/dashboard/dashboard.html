@@ -1,34 +1,50 @@
 <div class="landing">
   <!-- HERO -->
-  <section class="hero-banner" [ngStyle]="{'--photo': bgUrl}">
-    <button class="arrow prev" aria-label="Previous slide" (click)="prev()"><span>&lsaquo;</span></button>
-    <button class="arrow next" aria-label="Next slide" (click)="next()"><span>&rsaquo;</span></button>
+  <section class="hero-banner" [ngStyle]="{ '--photo': bgUrl }">
+    <button
+      class="arrow prev"
+      aria-label="Previous slide"
+      (click)="prev()"
+    >
+      <span>&lsaquo;</span>
+    </button>
+    <button
+      class="arrow next"
+      aria-label="Next slide"
+      (click)="next()"
+    >
+      <span>&rsaquo;</span>
+    </button>
 
     <div class="hero-shell">
       <div class="copy">
-        <div class="kicker">{{ (current?.year || '—') }}</div>
+        <div class="kicker">{{ current?.year || '—' }}</div>
 
         <h1 class="title">
-          <span>{{ (current?.make  || '—') }}</span>
-          <span>{{ (current?.model || '—') }}</span>
+          <span>{{ current?.make || '—' }}</span>
+          <span>{{ current?.model || '—' }}</span>
         </h1>
 
         <p class="starting">
           Starting bid from
           <a class="price" href="javascript:void(0)">
-            {{ formatMoney(current?.auction?.reservePrice) }}
+            {{ formatMoney(current?.auction?.auctionStartPrice) }}
           </a>
         </p>
 
         <div class="actions">
-          <a class="btn primary"
-             [routerLink]="['/bidder/auctions', current?.auction?.auctionId]"
-             matTooltip="Place a bid">
+          <a
+            class="btn primary"
+            [routerLink]="['/bidder/auctions', current?.auction?.auctionId]"
+            matTooltip="Place a bid"
+          >
             Place Bid
           </a>
-          <a class="btn ghost"
-             [routerLink]="['/bidder/auctions', current?.auction?.auctionId]"
-             matTooltip="View car details">
+          <a
+            class="btn ghost"
+            [routerLink]="['/bidder/auctions', current?.auction?.auctionId]"
+            matTooltip="View car details"
+          >
             Check Car
           </a>
         </div>

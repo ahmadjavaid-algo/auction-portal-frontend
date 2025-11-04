@@ -17,12 +17,15 @@ import { InventoryDocumentFile } from '../../../../../models/inventorydocumentfi
 import { Inventory } from '../../../../../models/inventory.model';
 import { Product } from '../../../../../models/product.model';
 import { AuctionTimebox } from '../../../../../models/auction-timebox.model';
+import { Favourite } from '../../../../../models/favourite.model';
 
 import { AuctionService } from '../../../../../services/auctions.service';
 import { InventoryAuctionService } from '../../../../../services/inventoryauctions.service';
 import { InventoryDocumentFileService } from '../../../../../services/inventorydocumentfile.service';
 import { InventoryService } from '../../../../../services/inventory.service';
 import { ProductsService } from '../../../../../services/products.service';
+import { FavouriteService } from '../../../../../services/favourites.service';
+import { BidderAuthService } from '../../../../../services/bidderauth';
 
 type LotCard = {
   // identity
@@ -36,6 +39,7 @@ type LotCard = {
   imageUrl: string;
 
   // prices / meta
+  auctionStartPrice?: number | null;
   buyNow?: number | null;
   reserve?: number | null;
   bidIncrement?: number | null;
@@ -43,6 +47,10 @@ type LotCard = {
   makeName?: string | null;
   modelName?: string | null;
   categoryName?: string | null;
+
+  // favourites
+  isFavourite?: boolean;
+  favouriteId?: number | null;
 
   // countdown
   countdownText?: string;
@@ -71,6 +79,8 @@ export class AllauctionsDetails implements OnDestroy {
   private filesSvc    = inject(InventoryDocumentFileService);
   private invSvc      = inject(InventoryService);
   private productsSvc = inject(ProductsService);
+  private favSvc      = inject(FavouriteService);
+  private bidderAuth  = inject(BidderAuthService);
 
   // ui state
   loading = true;
@@ -91,7 +101,8 @@ export class AllauctionsDetails implements OnDestroy {
   };
 
   // hero
-  heroUrl = 'https://images.unsplash.com/photo-1517940310602-75e447f00b52?q=80&w=1400&auto=format&fit=crop';
+  heroUrl =
+    'https://images.unsplash.com/photo-1517940310602-75e447f00b52?q=80&w=1400&auto=format&fit=crop';
 
   // timing
   private tickHandle: any = null;
@@ -99,96 +110,161 @@ export class AllauctionsDetails implements OnDestroy {
   private clockSkewMs = 0; // serverNow - clientNow
   private timeboxes = new Map<number, AuctionTimebox>(); // auctionId -> timebox
 
+  // favourites cache: key = InventoryAuctionId
+  private favMap = new Map<number, Favourite>();
+
   ngOnInit(): void {
     this.loading = true;
+
+    const currentUserId = this.bidderAuth.currentUser?.userId ?? null;
 
     forkJoin({
       auctions: this.auctionsSvc.getList().pipe(catchError(() => of([] as Auction[]))),
       invAucs : this.invAucSvc.getList().pipe(catchError(() => of([] as InventoryAuction[]))),
       files   : this.filesSvc.getList().pipe(catchError(() => of([] as InventoryDocumentFile[]))),
       invs    : this.invSvc.getList().pipe(catchError(() => of([] as Inventory[]))),
-      products: this.productsSvc.getList().pipe(catchError(() => of([] as Product[])))
+      products: this.productsSvc.getList().pipe(catchError(() => of([] as Product[]))),
+      favs    : this.favSvc.getList().pipe(catchError(() => of([] as Favourite[])))
     })
-    .pipe(
-      map(({ auctions, invAucs, files, invs, products }) => {
-        const auctionMap = new Map<number, Auction>();
-        (auctions || []).forEach(a => auctionMap.set(a.auctionId, a));
+      .pipe(
+        map(({ auctions, invAucs, files, invs, products, favs }) => {
+          const auctionMap = new Map<number, Auction>();
+          (auctions || []).forEach(a => auctionMap.set(a.auctionId, a));
 
-        // images: inventoryId -> urls[]
-        const imageMap = this.buildImagesMap(files);
+          // ===== favourites for current user (active + inactive) =====
+          this.favMap.clear();
 
-        // lookup maps
-        const invMap = new Map<number, Inventory>();
-        (invs || []).forEach(i => invMap.set(i.inventoryId, i));
+          const favsForUserAll = (favs || []).filter(f => {
+            const uid =
+              (f as any).userId ??
+              (f as any).UserId ??
+              (f as any).userID ??
+              (f as any).userid;
+            return uid === currentUserId;
+          });
 
-        const prodMap = new Map<number, Product>();
-        (products || []).forEach(p => prodMap.set(p.productId, p));
+          console.log('[fav] ALL favourites for current user from API:', favsForUserAll);
 
-        // ALL inventory-auctions (no filtering by a specific auctionId)
-        const rows = (invAucs || []).filter(x => (x.active ?? true));
+          favsForUserAll.forEach(f => {
+            const invAucIdFromFav =
+              (f as any).inventoryAuctionId ??
+              (f as any).InventoryAuctionId ??
+              (f as any).inventoryauctionId;
+            if (invAucIdFromFav != null) {
+              this.favMap.set(Number(invAucIdFromFav), f);
+            }
+          });
 
-        const cards: LotCard[] = rows.map(r => {
-          const aid = (r as any).auctionId as number;
-          const inv = invMap.get(r.inventoryId) || null;
-          const prod = inv ? prodMap.get(inv.productId) || null : null;
-          const snap = this.safeParse(inv?.productJSON);
+          // images: inventoryId -> urls[]
+          const imageMap = this.buildImagesMap(files);
 
-          const yearName  = (prod?.yearName ?? snap?.Year ?? snap?.year) ?? null;
-          const makeName  = (prod?.makeName ?? snap?.Make ?? snap?.make) ?? null;
-          const modelName = (prod?.modelName ?? snap?.Model ?? snap?.model) ?? null;
-          const category  = (prod?.categoryName ?? snap?.Category ?? snap?.category) ?? null;
+          // lookup maps
+          const invMap = new Map<number, Inventory>();
+          (invs || []).forEach(i => invMap.set(i.inventoryId, i));
 
-          const titleFromMeta = [yearName, makeName, modelName].filter(Boolean).join(' ');
-          const title = titleFromMeta ||
-                        inv?.displayName ||
-                        snap?.DisplayName || snap?.displayName ||
-                        `Inventory #${r.inventoryId}`;
+          const prodMap = new Map<number, Product>();
+          (products || []).forEach(p => prodMap.set(p.productId, p));
 
-          const chassis = inv?.chassisNo || null;
-          const sub = chassis ? `Chassis ${chassis} • #${r.inventoryId}` : `#${r.inventoryId}`;
+          // ALL inventory-auctions (no filtering by a specific auctionId)
+          const rows = (invAucs || []).filter(x => (x.active ?? true));
 
-          const cover = this.pickRandom(imageMap.get(r.inventoryId)) || this.heroUrl;
-          const aucName = auctionMap.get(aid)?.auctionName ?? (auctionMap.has(aid) ? `Auction #${aid}` : null);
+          const cards: LotCard[] = rows.map(r => {
+            const aid = (r as any).auctionId as number;
+            const inv = invMap.get(r.inventoryId) || null;
+            const prod = inv ? prodMap.get(inv.productId) || null : null;
+            const snap = this.safeParse(inv?.productJSON);
 
-          return {
-            inventoryAuctionId: (r as any).inventoryAuctionId,
-            auctionId: aid,
-            auctionName: aucName,
-            title,
-            sub,
-            imageUrl: cover,
-            buyNow: r.buyNowPrice ?? null,
-            reserve: r.reservePrice ?? null,
-            bidIncrement: r.bidIncrement ?? null,
-            yearName, makeName, modelName, categoryName: category
-          };
-        });
+            const yearName  = (prod?.yearName ?? snap?.Year ?? snap?.year) ?? null;
+            const makeName  = (prod?.makeName ?? snap?.Make ?? snap?.make) ?? null;
+            const modelName = (prod?.modelName ?? snap?.Model ?? snap?.model) ?? null;
+            const category  = (prod?.categoryName ?? snap?.Category ?? snap?.category) ?? null;
 
-        const firstImg = cards.find(c => !!c.imageUrl)?.imageUrl;
-        if (firstImg) this.heroUrl = firstImg;
+            const titleFromMeta = [yearName, makeName, modelName].filter(Boolean).join(' ');
+            const title =
+              titleFromMeta ||
+              inv?.displayName ||
+              snap?.DisplayName ||
+              snap?.displayName ||
+              `Inventory #${r.inventoryId}`;
 
-        this.lots = cards; // sort is applied later via computed getter
+            const chassis = inv?.chassisNo || null;
+            const sub = chassis ? `Chassis ${chassis} • #${r.inventoryId}` : `#${r.inventoryId}`;
 
-        // build filter menus (incl. auction names)
-        this.buildFilterOptions();
+            const cover = this.pickRandom(imageMap.get(r.inventoryId)) || this.heroUrl;
+            const aucName =
+              auctionMap.get(aid)?.auctionName ??
+              (auctionMap.has(aid) ? `Auction #${aid}` : null);
 
-        // collect distinct auctionIds for timeboxes
-        const uniqAuctionIds = Array.from(new Set(this.lots.map(c => c.auctionId))).filter(Boolean) as number[];
-        return { uniqAuctionIds };
-      })
-    )
-    .subscribe({
-      next: ({ uniqAuctionIds }) => {
-        this.refreshTimeboxes(uniqAuctionIds, () => {
-          this.updateCountdowns();
-          this.startTicker();
-          this.startResync(uniqAuctionIds);
-          this.wireVisibility(uniqAuctionIds);
+            const invAucId =
+              (r as any).inventoryAuctionId ??
+              (r as any).InventoryAuctionId ??
+              (r as any).inventoryauctionId;
+
+            const favRecord = this.favMap.get(invAucId);
+
+            const isActive =
+              (favRecord as any)?.active ??
+              (favRecord as any)?.Active ??
+              favRecord?.active;
+
+            const isFav = !!favRecord && isActive !== false;
+
+            const favId =
+              (favRecord as any)?.BidderInventoryAuctionFavoriteId ??
+              (favRecord as any)?.bidderInventoryAuctionFavoriteId ??
+              null;
+
+            return {
+              inventoryAuctionId: invAucId,
+              auctionId: aid,
+              auctionName: aucName,
+              title,
+              sub,
+              imageUrl: cover,
+              auctionStartPrice: (r as any).auctionStartPrice ?? null,
+              buyNow: r.buyNowPrice ?? null,
+              reserve: r.reservePrice ?? null,
+              bidIncrement: r.bidIncrement ?? null,
+              yearName,
+              makeName,
+              modelName,
+              categoryName: category,
+              isFavourite: isFav,
+              favouriteId: favId
+            };
+          });
+
+          const firstImg = cards.find(c => !!c.imageUrl)?.imageUrl;
+          if (firstImg) this.heroUrl = firstImg;
+
+          this.lots = cards; // sort is applied later via computed getter
+
+          // build filter menus (incl. auction names)
+          this.buildFilterOptions();
+
+          // collect distinct auctionIds for timeboxes
+          const uniqAuctionIds = Array.from(
+            new Set(this.lots.map(c => c.auctionId))
+          ).filter(Boolean) as number[];
+
+          return { uniqAuctionIds };
+        })
+      )
+      .subscribe({
+        next: ({ uniqAuctionIds }) => {
+          this.refreshTimeboxes(uniqAuctionIds, () => {
+            this.updateCountdowns();
+            this.startTicker();
+            this.startResync(uniqAuctionIds);
+            this.wireVisibility(uniqAuctionIds);
+            this.loading = false;
+          });
+        },
+        error: () => {
+          this.error = 'Failed to load all auctions.';
           this.loading = false;
-        });
-      },
-      error: () => { this.error = 'Failed to load all auctions.'; this.loading = false; }
-    });
+        }
+      });
   }
 
   ngOnDestroy(): void {
@@ -197,18 +273,152 @@ export class AllauctionsDetails implements OnDestroy {
     document.removeEventListener('visibilitychange', this.onVisChange);
   }
 
+  /* ===== favourites toggle ===== */
+  toggleFavourite(card: LotCard): void {
+    const userId = this.bidderAuth.currentUser?.userId ?? null;
+    if (!userId) {
+      console.warn('[fav] No logged-in bidder, ignoring favourite click.');
+      return;
+    }
+
+    // ADD or RE-ACTIVATE favourite
+    if (!card.isFavourite) {
+      const existing = this.favMap.get(card.inventoryAuctionId);
+
+      // If an inactive row exists, just set Active = true
+      if (existing) {
+        const favId =
+          (existing as any).BidderInventoryAuctionFavoriteId ??
+          (existing as any).bidderInventoryAuctionFavoriteId ??
+          card.favouriteId;
+
+        if (!favId) {
+          console.warn('[fav] Existing favourite has no id, falling back to add().', existing);
+        } else {
+          console.log('[fav] REACTIVATE payload', {
+            FavouriteId: favId,
+            Active: true,
+            ModifiedById: userId
+          });
+
+          this.favSvc.activate({
+            FavouriteId: favId,
+            Active: true,
+            ModifiedById: userId
+          }).subscribe({
+            next: ok => {
+              console.log('[fav] REACTIVATE ok =', ok);
+              if (ok) {
+                card.isFavourite = true;
+                card.favouriteId = favId;
+
+                // keep local cache in sync
+                (existing as any).Active = true;
+                (existing as any).active = true;
+              }
+            },
+            error: e => {
+              console.error('[fav] REACTIVATE failed', e);
+              console.log('[fav] REACTIVATE server error body:', (e as any)?.error);
+            }
+          });
+
+          return;
+        }
+      }
+
+      // No existing row -> regular ADD
+      const nowIso = new Date().toISOString();
+
+      const payload: Favourite = {
+        bidderInventoryAuctionFavoriteId: 0,
+        userId: userId,
+        inventoryAuctionId: card.inventoryAuctionId,
+        createdById: userId,
+        createdDate: nowIso,
+        modifiedById: 0,
+        modifiedDate: nowIso,
+        active: true
+      };
+
+      console.log('[fav] ADD payload', payload);
+
+      this.favSvc.add(payload).subscribe({
+        next: id => {
+          console.log('[fav] ADD success, new id =', id);
+          card.isFavourite = true;
+          card.favouriteId = id;
+
+          // create/update local cache entry
+          const favStub: any = {
+            ...payload,
+            BidderInventoryAuctionFavoriteId: id,
+            bidderInventoryAuctionFavoriteId: id,
+            UserId: userId,
+            InventoryAuctionId: card.inventoryAuctionId,
+            Active: true
+          };
+          this.favMap.set(card.inventoryAuctionId, favStub as Favourite);
+        },
+        error: e => {
+          console.error('[fav] ADD failed', e);
+          console.log('[fav] ADD server error body:', (e as any)?.error);
+        }
+      });
+
+      return;
+    }
+
+    // REMOVE (deactivate) favourite
+    if (card.isFavourite && card.favouriteId != null) {
+      const payload = {
+        FavouriteId: card.favouriteId,
+        Active: false,
+        ModifiedById: userId
+      };
+
+      console.log('[fav] DEACTIVATE payload', payload);
+
+      this.favSvc.activate(payload).subscribe({
+        next: ok => {
+          console.log('[fav] DEACTIVATE response ok =', ok);
+          if (ok) {
+            card.isFavourite = false;
+            // keep the id in the cache; just mark inactive
+            const existing = this.favMap.get(card.inventoryAuctionId);
+            if (existing) {
+              (existing as any).Active = false;
+              (existing as any).active = false;
+            }
+          }
+        },
+        error: e => {
+          console.error('[fav] DEACTIVATE failed', e);
+          console.log('[fav] DEACTIVATE server error body:', (e as any)?.error);
+        }
+      });
+    }
+  }
+
   /* ===== filters/sort ===== */
   get filteredLots(): LotCard[] {
     const q = this.q.trim().toLowerCase();
     return this.lots.filter(c => {
-      const hay = `${c.title} ${c.sub} ${c.auctionName ?? ''} ${c.makeName ?? ''} ${c.modelName ?? ''} ${c.yearName ?? ''} ${c.categoryName ?? ''}`.toLowerCase();
+      const hay = `${c.title} ${c.sub} ${c.auctionName ?? ''} ${c.makeName ?? ''} ${
+        c.modelName ?? ''
+      } ${c.yearName ?? ''} ${c.categoryName ?? ''}`.toLowerCase();
       if (q && !hay.includes(q)) return false;
 
-      if (this.filters.auction && (c.auctionName ?? `Auction #${c.auctionId}`) !== this.filters.auction) return false;
+      if (
+        this.filters.auction &&
+        (c.auctionName ?? `Auction #${c.auctionId}`) !== this.filters.auction
+      )
+        return false;
       if (this.filters.make && (c.makeName ?? '') !== this.filters.make) return false;
       if (this.filters.model && (c.modelName ?? '') !== this.filters.model) return false;
       if (this.filters.year && String(c.yearName ?? '') !== this.filters.year) return false;
-      if (this.filters.category && (c.categoryName ?? '') !== this.filters.category) return false;
+      if (this.filters.category && (c.categoryName ?? '') !== this.filters.category)
+        return false;
 
       return true;
     });
@@ -217,18 +427,36 @@ export class AllauctionsDetails implements OnDestroy {
   get results(): LotCard[] {
     const list = [...this.filteredLots];
     const priceOf = (c: LotCard) =>
-      (c.buyNow ?? undefined) ?? (c.reserve ?? undefined) ?? Number.POSITIVE_INFINITY;
+      (c.auctionStartPrice ?? undefined) ??
+      (c.buyNow ?? undefined) ??
+      (c.reserve ?? undefined) ??
+      Number.POSITIVE_INFINITY;
 
     switch (this.sortBy) {
-      case 'price_low' : return list.sort((a, b) => (priceOf(a) - priceOf(b)));
-      case 'price_high': return list.sort((a, b) => (priceOf(b) - priceOf(a)));
-      case 'year_new'  : return list.sort((a, b) => (parseInt(String(b.yearName||0)) - parseInt(String(a.yearName||0))));
-      case 'year_old'  : return list.sort((a, b) => (parseInt(String(a.yearName||0)) - parseInt(String(b.yearName||0))));
+      case 'price_low':
+        return list.sort((a, b) => priceOf(a) - priceOf(b));
+      case 'price_high':
+        return list.sort((a, b) => priceOf(b) - priceOf(a));
+      case 'year_new':
+        return list.sort(
+          (a, b) =>
+            parseInt(String(b.yearName || 0)) -
+            parseInt(String(a.yearName || 0))
+        );
+      case 'year_old':
+        return list.sort(
+          (a, b) =>
+            parseInt(String(a.yearName || 0)) -
+            parseInt(String(b.yearName || 0))
+        );
       case 'start_time': {
-        const start = (c: LotCard) => this.timeboxes.get(c.auctionId)?.startEpochMsUtc ?? Number.MAX_SAFE_INTEGER;
-        return list.sort((a, b) => (start(a) - start(b)));
+        const start = (c: LotCard) =>
+          this.timeboxes.get(c.auctionId)?.startEpochMsUtc ??
+          Number.MAX_SAFE_INTEGER;
+        return list.sort((a, b) => start(a) - start(b));
       }
-      default: return list; // keep original insertion order for “newest” (or add createdDate-based sort if you prefer)
+      default:
+        return list; // “newest” = initial order
     }
   }
 
@@ -237,16 +465,24 @@ export class AllauctionsDetails implements OnDestroy {
     this.filters = { auction: '', make: '', model: '', year: '', category: '' };
     this.sortBy = 'newest';
   }
-  clearOne(key: keyof typeof this.filters): void { this.filters[key] = ''; }
+  clearOne(key: keyof typeof this.filters): void {
+    this.filters[key] = '';
+  }
 
   private buildFilterOptions(): void {
     const uniq = (arr: (string | null | undefined)[]) =>
-      Array.from(new Set(arr.filter(Boolean) as string[])).sort((a, b) => a.localeCompare(b));
+      Array.from(new Set(arr.filter(Boolean) as string[])).sort((a, b) =>
+        a.localeCompare(b)
+      );
 
-    this.options.auctions   = uniq(this.lots.map(l => l.auctionName ?? `Auction #${l.auctionId}`));
-    this.options.makes      = uniq(this.lots.map(l => l.makeName));
-    this.options.models     = uniq(this.lots.map(l => l.modelName));
-    this.options.years      = uniq(this.lots.map(l => (l.yearName ?? null) as any));
+    this.options.auctions = uniq(
+      this.lots.map(l => l.auctionName ?? `Auction #${l.auctionId}`)
+    );
+    this.options.makes = uniq(this.lots.map(l => l.makeName));
+    this.options.models = uniq(this.lots.map(l => l.modelName));
+    this.options.years = uniq(
+      this.lots.map(l => (l.yearName ?? null) as any)
+    );
     this.options.categories = uniq(this.lots.map(l => l.categoryName));
   }
 
@@ -273,46 +509,49 @@ export class AllauctionsDetails implements OnDestroy {
     document.addEventListener('visibilitychange', this.onVisChange);
   }
 
- private refreshTimeboxes(auctionIds: number[], done?: () => void) {
-  if (!auctionIds.length) { done?.(); return; }
-
-  // Build an array of observables that each return { id, tb }
-  const lookups$ = auctionIds.map(id =>
-    this.auctionsSvc.getTimebox(id).pipe(
-      catchError(() => of(null as AuctionTimebox | null)),
-      map(tb => ({ id, tb }))
-    )
-  );
-
-  forkJoin(lookups$).subscribe({
-    next: (pairs) => {
-      // use the first non-null timebox to compute skew
-      const first = pairs.find(p => !!p.tb)?.tb as AuctionTimebox | undefined;
-      if (first && Number.isFinite(first.nowEpochMsUtc as any)) {
-        this.clockSkewMs = Number(first.nowEpochMsUtc) - Date.now();
-      }
-
-      // stash all returned timeboxes by auctionId
-      for (const { id, tb } of pairs) {
-        if (tb) this.timeboxes.set(id, tb);
-      }
-
+  private refreshTimeboxes(auctionIds: number[], done?: () => void) {
+    if (!auctionIds.length) {
       done?.();
-    },
-    error: () => done?.()
-  });
-}
+      return;
+    }
 
+    const lookups$ = auctionIds.map(id =>
+      this.auctionsSvc.getTimebox(id).pipe(
+        catchError(() => of(null as AuctionTimebox | null)),
+        map(tb => ({ id, tb }))
+      )
+    );
+
+    forkJoin(lookups$).subscribe({
+      next: pairs => {
+        const first = pairs.find(p => !!p.tb)?.tb as AuctionTimebox | undefined;
+        if (first && Number.isFinite(first.nowEpochMsUtc as any)) {
+          this.clockSkewMs = Number(first.nowEpochMsUtc) - Date.now();
+        }
+
+        for (const { id, tb } of pairs) {
+          if (tb) this.timeboxes.set(id, tb);
+        }
+
+        done?.();
+      },
+      error: () => done?.()
+    });
+  }
 
   private updateCountdowns(): void {
     const now = Date.now() + this.clockSkewMs;
 
     for (const c of this.lots) {
       const tb = this.timeboxes.get(c.auctionId);
-      if (!tb) { c.countdownState = 'scheduled'; c.countdownText = '—'; continue; }
+      if (!tb) {
+        c.countdownState = 'scheduled';
+        c.countdownText = '—';
+        continue;
+      }
 
       const start = Number(tb.startEpochMsUtc);
-      const end   = Number(tb.endEpochMsUtc);
+      const end = Number(tb.endEpochMsUtc);
 
       if (now < start) {
         c.countdownState = 'scheduled';
@@ -334,8 +573,10 @@ export class AllauctionsDetails implements OnDestroy {
       return `${d} Day${d > 1 ? 's' : ''}`;
     }
     let s = Math.max(0, Math.floor(ms / 1000));
-    const hh = Math.floor(s / 3600); s -= hh * 3600;
-    const mm = Math.floor(s / 60);   s -= mm * 60;
+    const hh = Math.floor(s / 3600);
+    s -= hh * 3600;
+    const mm = Math.floor(s / 60);
+    s -= mm * 60;
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${hh}:${pad(mm)}:${pad(s)}`;
   }
@@ -345,10 +586,18 @@ export class AllauctionsDetails implements OnDestroy {
     const m = new Map<number, string[]>();
     const isImg = (u?: string | null, n?: string | null) => {
       const s = (u || n || '').toLowerCase();
-      return ['.jpg', '.jpeg', '.png', 'jpg', 'jpeg', 'png'].some(x => s.endsWith(x));
+      return ['.jpg', '.jpeg', '.png', 'jpg', 'jpeg', 'png'].some(x =>
+        s.endsWith(x)
+      );
     };
     (files || [])
-      .filter(f => (f.active ?? true) && !!f.inventoryId && !!f.documentUrl && isImg(f.documentUrl!, f.documentName))
+      .filter(
+        f =>
+          (f.active ?? true) &&
+          !!f.inventoryId &&
+          !!f.documentUrl &&
+          isImg(f.documentUrl!, f.documentName)
+      )
       .forEach(f => {
         const list = m.get(f.inventoryId) || [];
         list.push(f.documentUrl!);
@@ -365,7 +614,11 @@ export class AllauctionsDetails implements OnDestroy {
 
   private safeParse(json?: string | null): any | null {
     if (!json) return null;
-    try { return JSON.parse(json); } catch { return null; }
+    try {
+      return JSON.parse(json);
+    } catch {
+      return null;
+    }
   }
 
   trackById = (_: number, c: LotCard) => c.inventoryAuctionId ?? c.sub;

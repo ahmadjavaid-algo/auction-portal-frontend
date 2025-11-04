@@ -1,4 +1,3 @@
-
 <div class="ia-wrapper">
   <div class="ia-header">
     <div class="title">
@@ -7,7 +6,12 @@
       <span class="count">({{ rows.length }})</span>
     </div>
 
-    <button mat-stroked-button class="add" (click)="addItem()" matTooltip="Add inventory to auction">
+    <button
+      mat-stroked-button
+      class="add"
+      (click)="addItem()"
+      matTooltip="Add inventory to auction"
+    >
       <mat-icon>add</mat-icon>
       Add
     </button>
@@ -43,29 +47,45 @@
         <!-- Bid Increment (snapshot) -->
         <ng-container matColumnDef="bid">
           <th mat-header-cell *matHeaderCellDef>Bid Increment</th>
-          <td mat-cell *matCellDef="let r">{{ r.bidIncrement ?? '—' }}</td>
+          <td mat-cell *matCellDef="let r">
+            {{ r.bidIncrement ?? '—' }}
+          </td>
+        </ng-container>
+
+        <!-- NEW: Auction Start Price -->
+        <ng-container matColumnDef="auctionStart">
+          <th mat-header-cell *matHeaderCellDef>Auction Start Price</th>
+          <td mat-cell *matCellDef="let r">
+            {{ r.auctionStartPrice ?? '—' }}
+          </td>
         </ng-container>
 
         <!-- Buy Now -->
         <ng-container matColumnDef="buy">
           <th mat-header-cell *matHeaderCellDef>Buy Now</th>
-          <td mat-cell *matCellDef="let r">{{ r.buyNowPrice ?? '—' }}</td>
+          <td mat-cell *matCellDef="let r">
+            {{ r.buyNowPrice ?? '—' }}
+          </td>
         </ng-container>
 
         <!-- Reserve -->
         <ng-container matColumnDef="reserve">
           <th mat-header-cell *matHeaderCellDef>Reserve</th>
-          <td mat-cell *matCellDef="let r">{{ r.reservePrice ?? '—' }}</td>
+          <td mat-cell *matCellDef="let r">
+            {{ r.reservePrice ?? '—' }}
+          </td>
         </ng-container>
 
         <!-- Active -->
         <ng-container matColumnDef="active">
           <th mat-header-cell *matHeaderCellDef>Active</th>
           <td mat-cell *matCellDef="let r">
-            <button mat-stroked-button
-                    [class.is-active]="r.active"
-                    [class.is-inactive]="r.active === false"
-                    (click)="toggleActive(r)">
+            <button
+              mat-stroked-button
+              [class.is-active]="r.active"
+              [class.is-inactive]="r.active === false"
+              (click)="toggleActive(r)"
+            >
               {{ r.active ? 'Active' : 'Inactive' }}
             </button>
           </td>
@@ -75,14 +95,19 @@
         <ng-container matColumnDef="actions">
           <th mat-header-cell *matHeaderCellDef>Actions</th>
           <td mat-cell *matCellDef="let r">
-            <button mat-icon-button class="edit" (click)="editItem(r)" matTooltip="Edit">
+            <button
+              mat-icon-button
+              class="edit"
+              (click)="editItem(r)"
+              matTooltip="Edit"
+            >
               <mat-icon>edit</mat-icon>
             </button>
           </td>
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
       </table>
 
       <div class="empty" *ngIf="rows.length === 0">

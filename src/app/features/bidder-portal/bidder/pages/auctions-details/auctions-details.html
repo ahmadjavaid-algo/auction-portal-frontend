@@ -3,26 +3,42 @@
   <div class="crumbs">
     <a routerLink="/bidder/auctions">Auctions</a>
     <mat-icon>chevron_right</mat-icon>
-    <span class="current">{{ auction?.auctionName || ('Auction #' + auctionId) }}</span>
+    <span class="current">
+      {{ auction?.auctionName || ('Auction #' + auctionId) }}
+    </span>
     <span class="count" *ngIf="!loading">({{ results.length }} lots)</span>
   </div>
 
   <!-- hero -->
-  <section class="hero" [ngStyle]="{'--photo': 'url(' + heroUrl + ')'}">
+  <section class="hero" [ngStyle]="{ '--photo': 'url(' + heroUrl + ')' }">
     <div class="overlay">
       <h1>{{ auction?.auctionName || ('Auction #' + auctionId) }}</h1>
       <div class="meta">
         <div class="when">
           <mat-icon>schedule</mat-icon>
-          <span>{{ formatRange(auction?.startDateTime || null, auction?.endDateTime || null) }}</span>
+          <span>
+            {{
+              formatRange(
+                auction?.startDateTime || null,
+                auction?.endDateTime || null
+              )
+            }}
+          </span>
         </div>
         <div class="lots">
           <mat-icon>inventory_2</mat-icon>
           <span>{{ results.length }} lots</span>
         </div>
-        <div class="status" *ngIf="auction?.auctionStatusName || auction?.auctionStatusCode">
+        <div
+          class="status"
+          *ngIf="auction?.auctionStatusName || auction?.auctionStatusCode"
+        >
           <mat-icon>verified</mat-icon>
-          <span>{{ auction?.auctionStatusName || auction?.auctionStatusCode }}</span>
+          <span>
+            {{
+              auction?.auctionStatusName || auction?.auctionStatusCode
+            }}
+          </span>
         </div>
       </div>
     </div>
@@ -39,8 +55,17 @@
   <div class="toolbar" *ngIf="!loading && !error">
     <div class="searchbar">
       <mat-icon>search</mat-icon>
-      <input type="text" placeholder="Search car, chassis, make, model…" [(ngModel)]="q" />
-      <button *ngIf="q" class="clear" (click)="q = ''" matTooltip="Clear">
+      <input
+        type="text"
+        placeholder="Search car, chassis, make, model…"
+        [(ngModel)]="q"
+      />
+      <button
+        *ngIf="q"
+        class="clear"
+        (click)="q = ''"
+        matTooltip="Clear"
+      >
         <mat-icon>close</mat-icon>
       </button>
     </div>
@@ -49,7 +74,9 @@
       <label>Make</label>
       <select [(ngModel)]="filters.make">
         <option value="">All</option>
-        <option *ngFor="let m of options.makes" [value]="m">{{ m }}</option>
+        <option *ngFor="let m of options.makes" [value]="m">
+          {{ m }}
+        </option>
       </select>
     </div>
 
@@ -57,7 +84,9 @@
       <label>Model</label>
       <select [(ngModel)]="filters.model">
         <option value="">All</option>
-        <option *ngFor="let m of options.models" [value]="m">{{ m }}</option>
+        <option *ngFor="let m of options.models" [value]="m">
+          {{ m }}
+        </option>
       </select>
     </div>
 
@@ -65,7 +94,9 @@
       <label>Year</label>
       <select [(ngModel)]="filters.year">
         <option value="">All</option>
-        <option *ngFor="let y of options.years" [value]="y">{{ y }}</option>
+        <option *ngFor="let y of options.years" [value]="y">
+          {{ y }}
+        </option>
       </select>
     </div>
 
@@ -73,7 +104,9 @@
       <label>Category</label>
       <select [(ngModel)]="filters.category">
         <option value="">All</option>
-        <option *ngFor="let c of options.categories" [value]="c">{{ c }}</option>
+        <option *ngFor="let c of options.categories" [value]="c">
+          {{ c }}
+        </option>
       </select>
     </div>
 
@@ -88,23 +121,36 @@
       </select>
     </div>
 
-    <button class="link clear-all"
-            (click)="clearAll()"
-            *ngIf="q || filters.make || filters.model || filters.year || filters.category || sortBy!=='newest'">
+    <button
+      class="link clear-all"
+      (click)="clearAll()"
+      *ngIf="
+        q ||
+        filters.make ||
+        filters.model ||
+        filters.year ||
+        filters.category ||
+        sortBy !== 'newest'
+      "
+    >
       Clear all
     </button>
   </div>
 
   <!-- grid of lots -->
   <div class="grid" *ngIf="!loading && !error">
-    <article class="lot-card"
-             *ngFor="let c of results; trackBy: trackById"
-             [ngStyle]="{'--photo': 'url(' + c.imageUrl + ')'}">
+    <article
+      class="lot-card"
+      *ngFor="let c of results; trackBy: trackById"
+      [ngStyle]="{ '--photo': 'url(' + c.imageUrl + ')' }"
+    >
       <div class="photo">
         <!-- countdown pill -->
-        <div class="timer-pill"
-             [class.live]="c.countdownState==='live'"
-             [class.ended]="c.countdownState==='ended'">
+        <div
+          class="timer-pill"
+          [class.live]="c.countdownState === 'live'"
+          [class.ended]="c.countdownState === 'ended'"
+        >
           <mat-icon inline>schedule</mat-icon>
           <span>{{ c.countdownText || '—' }}</span>
         </div>
@@ -115,6 +161,10 @@
         <div class="sub">{{ c.sub }}</div>
 
         <div class="numbers">
+          <div class="num" *ngIf="c.auctionStartPrice != null">
+            <div class="label">Start Price</div>
+            <div class="value">{{ money(c.auctionStartPrice) }}</div>
+          </div>
           <div class="num" *ngIf="c.reserve != null">
             <div class="label">Reserve</div>
             <div class="value">{{ money(c.reserve) }}</div>
@@ -130,21 +180,33 @@
         </div>
 
         <div class="actions">
-          <a class="btn primary"
-             [routerLink]="['/bidder/auctions', auctionId, c.invAuc.inventoryAuctionId]"
-             matTooltip="Bid on this car">
+          <a
+            class="btn primary"
+            [routerLink]="[
+              '/bidder/auctions',
+              auctionId,
+              c.invAuc.inventoryAuctionId
+            ]"
+            matTooltip="Bid on this car"
+          >
             Place Bid
           </a>
-          <a class="btn ghost"
-             [routerLink]="['/bidder/auctions', auctionId, c.invAuc.inventoryAuctionId]"
-             matTooltip="View details">
+          <a
+            class="btn ghost"
+            [routerLink]="[
+              '/bidder/auctions',
+              auctionId,
+              c.invAuc.inventoryAuctionId
+            ]"
+            matTooltip="View details"
+          >
             View Details
           </a>
         </div>
       </div>
     </article>
 
-    <div class="empty" *ngIf="results.length===0">
+    <div class="empty" *ngIf="results.length === 0">
       <mat-icon>info</mat-icon>
       No results match your filters.
     </div>

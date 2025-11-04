@@ -35,10 +35,10 @@ type Slide = {
     MatIconModule,
     MatButtonModule,
     MatTooltipModule,
-    MatProgressBarModule,
+    MatProgressBarModule
   ],
   templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.scss'],
+  styleUrls: ['./dashboard.scss']
 })
 export class Dashboard {
   readonly Math = Math;
@@ -69,32 +69,35 @@ export class Dashboard {
     this.loading = true;
 
     forkJoin({
-      auctions: this.auctionSvc.getList().pipe(
-        catchError(() => of([] as InventoryAuction[]))
-      ),
-      files: this.fileSvc.getList().pipe(
-        catchError(() => of([] as InventoryDocumentFile[]))
-      ),
+      auctions: this.auctionSvc
+        .getList()
+        .pipe(catchError(() => of([] as InventoryAuction[]))),
+      files: this.fileSvc
+        .getList()
+        .pipe(catchError(() => of([] as InventoryDocumentFile[])))
     })
       .pipe(
         switchMap(({ auctions, files }) => {
-          const active = (auctions || []).filter((a) => a.active ?? true);
+          const active = (auctions || []).filter(a => a.active ?? true);
 
           // newest 10
           const recent = [...active]
             .sort((a, b) =>
-              this.dateDesc(a.createdDate || a.modifiedDate, b.createdDate || b.modifiedDate)
+              this.dateDesc(
+                a.createdDate || a.modifiedDate,
+                b.createdDate || b.modifiedDate
+              )
             )
             .slice(0, 10);
 
           const imagesMap = this.buildImagesMap(files);
 
-          const baseSlides: Slide[] = recent.map((a) => ({
+          const baseSlides: Slide[] = recent.map(a => ({
             auction: a,
-            imageUrl: this.pickRandom(imagesMap.get(a.inventoryId)) ?? null,
+            imageUrl: this.pickRandom(imagesMap.get(a.inventoryId)) ?? null
           }));
 
-          const calls = baseSlides.map((s) =>
+          const calls = baseSlides.map(s =>
             this.inventorySvc
               .getById(s.auction.inventoryId)
               .pipe(catchError(() => of(null as Inventory | null)))
@@ -116,7 +119,7 @@ export class Dashboard {
         })
       )
       .subscribe({
-        next: (slides) => {
+        next: slides => {
           this.slides = slides ?? [];
           this.index = 0;
           this.loading = false;
@@ -124,33 +127,37 @@ export class Dashboard {
         error: () => {
           this.error = 'Failed to load dashboard.';
           this.loading = false;
-        },
+        }
       });
   }
 
   /* ===== helpers ===== */
 
-  // Robust “is image” check using url, extension, or name.
   private isImageFile(f: InventoryDocumentFile): boolean {
     const url = (f.documentUrl || '').toLowerCase();
     const name = (f.documentName || '').toLowerCase();
 
-    // If your API later adds `documentExtension` (e.g., 'jpg' without dot), read it too:
     const extFromUrl = url.match(/\.(\w+)(?:\?|#|$)/)?.[1] || '';
     const extFromName = name.match(/\.(\w+)(?:\?|#|$)/)?.[1] || '';
 
     const ext = (extFromUrl || extFromName).replace(/[^a-z0-9]/g, '');
     const ok = ['jpg', 'jpeg', 'png', 'webp'];
 
-    return !!url && (ok.includes(ext) || ok.some((e) => url.endsWith('.' + e)));
+    return !!url && (ok.includes(ext) || ok.some(e => url.endsWith('.' + e)));
   }
 
   private buildImagesMap(files: InventoryDocumentFile[]): Map<number, string[]> {
     const map = new Map<number, string[]>();
 
     (files || [])
-      .filter((f) => (f.active ?? true) && !!f.inventoryId && !!f.documentUrl && this.isImageFile(f))
-      .forEach((f) => {
+      .filter(
+        f =>
+          (f.active ?? true) &&
+          !!f.inventoryId &&
+          !!f.documentUrl &&
+          this.isImageFile(f)
+      )
+      .forEach(f => {
         const list = map.get(f.inventoryId) || [];
         list.push(f.documentUrl!);
         map.set(f.inventoryId, list);
@@ -186,7 +193,6 @@ export class Dashboard {
 
   get bgUrl(): string {
     const url = this.current?.imageUrl || this.fallbackHero;
-    // IMPORTANT: must be 'url(...)' for the CSS var
     return `url('${url}')`;
   }
 
@@ -205,7 +211,7 @@ export class Dashboard {
     return n.toLocaleString(undefined, {
       style: 'currency',
       currency: 'USD',
-      maximumFractionDigits: 0,
+      maximumFractionDigits: 0
     });
   }
 }

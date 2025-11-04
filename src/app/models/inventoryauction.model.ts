@@ -7,7 +7,7 @@ export interface InventoryAuction {
   buyNowPrice: number;
   reservePrice: number;
   bidIncrement: number;
-
+  auctionStartPrice: number;
   inventoryAuctionStatusCode?: string | null;
   inventoryAuctionStatusName?: string | null;
 
