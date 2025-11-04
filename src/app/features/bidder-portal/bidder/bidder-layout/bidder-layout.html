@@ -28,11 +28,52 @@
 
       <!-- Right: notifications + user dropdown -->
       <div class="header-right">
-        <button class="icon-btn" aria-label="Notifications">
-          <mat-icon>notifications</mat-icon>
-          <span class="dot"></span>
-        </button>
+        <!-- Notifications -->
+        <div #notifHost class="notif-wrapper">
+          <button class="icon-btn" aria-label="Notifications" (click)="toggleNotifications()">
+            <mat-icon>notifications</mat-icon>
+            <span class="dot" *ngIf="unreadCount > 0"></span>
+          </button>
 
+          <div class="notif-panel" *ngIf="notifOpen">
+            <div class="notif-header">
+              <span>Notifications</span>
+              <div class="right">
+                <span class="badge" *ngIf="unreadCount > 0">{{ unreadCount }} new</span>
+                <button
+                  type="button"
+                  class="clear-btn"
+                  *ngIf="notifications.length"
+                  (click)="clearNotifications($event)"
+                >
+                  Clear all
+                </button>
+              </div>
+            </div>
+
+            <div class="notif-list" *ngIf="notifications.length; else noNotif">
+              <button class="notif-item" *ngFor="let n of notifications">
+                <div class="notif-main">
+                  <div class="title">
+                    {{ n.title }}
+                    <span class="pill" *ngIf="!n.read">NEW</span>
+                  </div>
+                  <div class="msg">{{ n.message }}</div>
+                </div>
+                <div class="time">{{ n.createdAt | date: 'shortTime' }}</div>
+              </button>
+            </div>
+
+            <ng-template #noNotif>
+              <div class="notif-empty">
+                <mat-icon>notifications_none</mat-icon>
+                <span>No notifications yet.</span>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+
+        <!-- User dropdown -->
         <div #dropdown class="user" [class.open]="dropdownOpen" (click)="toggleDropdown()">
           <div class="avatar">{{ (displayName || 'U') | slice:0:1 }}</div>
           <span class="name">{{ displayName }}</span>
