@@ -25,7 +25,7 @@ type ProductSnapshot = {
   model?: string;
   year?: string | number;
   category?: string;
-  // tolerate PascalCase too
+  
   ProductId?: number;
   DisplayName?: string;
   Make?: string;
@@ -72,7 +72,7 @@ export class InventoryDetails {
 
   product: ProductSnapshot = null;
 
-  // files for this inventory
+  
   filesLoading = false;
   docs: InvDoc[] = [];
 
@@ -142,7 +142,7 @@ export class InventoryDetails {
     try { return JSON.parse(json); } catch { return null; }
   }
 
-  // ===== Files UI helpers =====
+  
   displayName(d: InvDoc): string {
     return d.documentDisplayName || d.documentName || `#${d.documentFileId}`;
   }
@@ -159,7 +159,7 @@ export class InventoryDetails {
   }
 
   remove(d: InvDoc): void {
-    // if (!confirm(`Remove "${this.displayName(d)}"?`)) return;
+    
 
     const payload = {
       inventoryDocumentFileId: d.inventoryDocumentFileId,

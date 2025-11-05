@@ -15,7 +15,7 @@ import { InventoryAuctionService } from '../../../../services/inventoryauctions.
 import { InventoryService } from '../../../../services/inventory.service';
 import { AuthService } from '../../../../services/auth';
 
-// NEW: dialog form
+
 import {
   InventoryauctionsForm,
   InventoryAuctionsFormResult
@@ -39,15 +39,15 @@ import {
 })
 export class InventoryauctionsList implements OnChanges {
   private invAucSvc = inject(InventoryAuctionService);
-  private invSvc = inject(InventoryService); // NEW (for names/chassis)
+  private invSvc = inject(InventoryService); 
   private snack = inject(MatSnackBar);
   private auth = inject(AuthService);
   private dialog = inject(MatDialog);
 
-  /** Parent provides the auction whose inventory we show */
+  
   @Input() auctionId!: number;
 
-  // NEW: include auctionStart column
+  
   displayedColumns: string[] = [
     'inventory',
     'status',
@@ -62,7 +62,7 @@ export class InventoryauctionsList implements OnChanges {
   rows: InventoryAuction[] = [];
   loading = false;
 
-  /** cache inventory for name/chassis lookups */
+  
   private invMap = new Map<number, Inventory>();
   private invLoaded = false;
 
@@ -73,12 +73,12 @@ export class InventoryauctionsList implements OnChanges {
   private load(): void {
     this.loading = true;
 
-    // ensure inventory cache (for display name & chassis)
+    
     this.ensureInventoryCache();
 
     this.invAucSvc.getList().subscribe({
       next: list => {
-        // filter by this auction
+        
         this.rows = (list ?? []).filter(x => (x as any).auctionId === this.auctionId);
       },
       error: () =>
@@ -87,7 +87,7 @@ export class InventoryauctionsList implements OnChanges {
     });
   }
 
-  /** Load inventory list once; used to display DisplayName + Chassis No */
+  
   private ensureInventoryCache(): void {
     if (this.invLoaded) return;
     this.invLoaded = true;
@@ -98,7 +98,7 @@ export class InventoryauctionsList implements OnChanges {
     });
   }
 
-  // ===== helper getters (match inventory-list behavior) =====
+  
   getInvName(id: number): string {
     const i = this.invMap.get(id);
     if (!i) return `Inventory #${id}`;
@@ -125,7 +125,7 @@ export class InventoryauctionsList implements OnChanges {
     const newState = !(row.active ?? false);
     this.invAucSvc
       .activate({
-        // service expects PascalCase keys
+        
         InventoryAuctionId: (row as any).inventoryAuctionId ?? (row as any).inventoryauctionId,
         Active: newState,
         ModifiedById: this.auth.currentUser?.userId ?? null
@@ -143,7 +143,7 @@ export class InventoryauctionsList implements OnChanges {
       });
   }
 
-  /** Open create dialog, presetting auctionId */
+  
   addItem(): void {
     const ref = this.dialog.open<
       InventoryauctionsForm,
@@ -172,7 +172,7 @@ export class InventoryauctionsList implements OnChanges {
     });
   }
 
-  /** Open edit dialog */
+  
   editItem(row: InventoryAuction): void {
     const ref = this.dialog.open<
       InventoryauctionsForm,
@@ -210,6 +210,6 @@ export class InventoryauctionsList implements OnChanges {
   }
 
   viewItem(_row: InventoryAuction): void {
-    // Placeholder (route to a details page when available)
+    
   }
 }

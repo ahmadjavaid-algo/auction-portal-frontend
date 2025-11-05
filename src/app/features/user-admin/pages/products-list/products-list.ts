@@ -22,11 +22,11 @@ import { ProductsService } from '../../../../services/products.service';
 import { Product } from '../../../../models/product.model';
 import { AuthService } from '../../../../services/auth';
 
-// Inventory bits
+
 import { InventoryService } from '../../../../services/inventory.service';
 import { Inventory } from '../../../../models/inventory.model';
 
-// Dialog component (standalone)
+
 import { ProductsForm, ProductFormResult } from '../products-form/products-form';
 
 @Component({
@@ -58,7 +58,7 @@ export class ProductsList {
   private snack = inject(MatSnackBar);
   private auth = inject(AuthService);
 
-  /** order must match template columns */
+  
   displayedColumns: string[] = ['select', 'name', 'make', 'model', 'year', 'category', 'status', 'actions'];
   products = new MatTableDataSource<Product>([]);
   totalItems = 0;
@@ -67,24 +67,24 @@ export class ProductsList {
   pageIndex = 0;
   searchTerm = '';
 
-  // dashboard counters
+  
   stats = { total: 0, active: 0, inactive: 0, categories: 0 };
 
-  // loading flag (for initial and refresh)
+  
   loading = false;
 
-  /** Set of productIds that already exist in inventory */
+  
   private inventoryProductIds = new Set<number>();
 
-  /** Table row selection (only for items NOT already in inventory) */
+  
   selection = new SelectionModel<Product>(true, []);
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
   ngOnInit(): void {
-    this.loadData(); // load products + inventory together
+    this.loadData(); 
 
-    // search across name + related names (using any because model omits the *_Name fields)
+    
     this.products.filterPredicate = (p: Product, filter: string) => {
       const anyp = p as any;
       const haystack = [
@@ -102,7 +102,7 @@ export class ProductsList {
     this.products.paginator = this.paginator;
   }
 
-  /** Load products and inventory in parallel so we can flip the plus/check icon & checkboxes */
+  
   private loadData(): void {
     this.loading = true;
     forkJoin({
@@ -113,7 +113,7 @@ export class ProductsList {
         this.products.data = products ?? [];
         this.inventoryProductIds = new Set((inventory ?? []).map((i: Inventory) => i.productId));
 
-        // Clear previous selection when data changes
+        
         this.selection.clear();
 
         if (this.paginator) this.products.paginator = this.paginator;
@@ -133,7 +133,7 @@ export class ProductsList {
     const active = all.filter(x => x.active === true).length;
     const inactive = all.length - active;
 
-    // distinct categories
+    
     const catSet = new Set(all.map(p => p.categoryId));
     this.stats = {
       total: all.length,
@@ -143,17 +143,17 @@ export class ProductsList {
     };
   }
 
-  // ---- Display helpers ----
+  
   getCreatedAt(p: Product): Date | null {
     return p.createdDate ? new Date(p.createdDate) : null;
   }
 
-  /** Is this product already in inventory? */
+  
   isInInventory(productId: number): boolean {
     return this.inventoryProductIds.has(productId);
   }
 
-  // ---- Selection helpers ----
+  
   canSelect(p: Product): boolean {
     return !this.isInInventory(p.productId);
   }
@@ -163,13 +163,13 @@ export class ProductsList {
     this.selection.toggle(p);
   }
 
-  /** rows available to select (respecting current filter) */
+  
   private selectableRows(): Product[] {
     const list = this.products.filter ? this.products.filteredData : this.products.data;
     return list.filter(p => this.canSelect(p));
   }
 
-  /** master checkbox state & handlers */
+  
   get allSelectableSelected(): boolean {
     const rows = this.selectableRows();
     return rows.length > 0 && rows.every(r => this.selection.isSelected(r));
@@ -191,7 +191,7 @@ export class ProductsList {
     return this.selection.selected.length;
   }
 
-  // ---- Search / Paging ----
+  
   onSearch(): void {
     this.products.filter = this.searchTerm.trim().toLowerCase();
     this.totalItems = this.products.filteredData.length;
@@ -211,7 +211,7 @@ export class ProductsList {
     this.totalItems = this.products.filter ? this.products.filteredData.length : this.products.data.length;
   }
 
-  /** Range helpers for the right-bottom label */
+  
   get rangeStart(): number {
     if (!this.totalItems) return 0;
     return this.pageIndex * this.pageSize + 1;
@@ -220,9 +220,9 @@ export class ProductsList {
     return Math.min(this.totalItems, (this.pageIndex + 1) * this.pageSize);
   }
 
-  // ===== Dialogs =====
+  
 
-  /** Create Product */
+  
   openCreateProduct(): void {
     const ref = this.dialog.open<ProductsForm, { mode: 'create' }, ProductFormResult>(ProductsForm, {
       width: '720px',
@@ -243,7 +243,7 @@ export class ProductsList {
     });
   }
 
-  /** Edit Product */
+  
   editProduct(row: Product): void {
     const ref = this.dialog.open<ProductsForm, { mode: 'edit'; initialData: Product }, ProductFormResult>(ProductsForm, {
       width: '720px',
@@ -268,7 +268,7 @@ export class ProductsList {
     });
   }
 
-  /** Toggle Active/Inactive */
+  
   toggleActive(p: Product): void {
     const newState = !(p.active ?? false);
     const payload = {
@@ -290,7 +290,7 @@ export class ProductsList {
     });
   }
 
-  // ===== Inventory quick-add single =====
+  
   addToInventory(p: Product): void {
     if (this.isInInventory(p.productId)) {
       this.snack.open('This product is already in inventory.', 'OK', { duration: 2000 });
@@ -300,7 +300,7 @@ export class ProductsList {
     const payload = {
       inventoryId: 0,
       productId: p.productId,
-      productJSON: '', // server builds this
+      productJSON: '', 
       description: '',
       createdById: this.auth.currentUser?.userId ?? null,
       createdDate: null,
@@ -311,9 +311,9 @@ export class ProductsList {
 
     this.invSvc.add(payload).subscribe({
       next: (newId: number) => {
-        // mark as present so the icon/checkbox flips immediately
+        
         this.inventoryProductIds.add(p.productId);
-        // also deselect if it was selected
+        
         this.selection.deselect(p);
 
         this.snack.open(`Added to inventory (ID ${newId}).`, 'View', { duration: 3000 })
@@ -326,7 +326,7 @@ export class ProductsList {
     });
   }
 
-  // ===== Inventory bulk-add =====
+  
   addSelectedToInventory(): void {
     const items = this.selection.selected.filter(p => !this.isInInventory(p.productId));
     if (items.length === 0) return;
@@ -349,7 +349,7 @@ export class ProductsList {
 
     forkJoin(calls).subscribe({
       next: (ids: number[]) => {
-        // update local state
+        
         items.forEach(p => this.inventoryProductIds.add(p.productId));
         this.selection.clear();
 
@@ -362,7 +362,7 @@ export class ProductsList {
     });
   }
 
-  // Optional details route
+  
   viewProduct(productId: number): void {
     this.router.navigate(['/admin/products', productId]);
   }

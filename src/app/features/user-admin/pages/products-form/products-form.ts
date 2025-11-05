@@ -46,14 +46,14 @@ export class ProductsForm implements OnInit {
   form!: FormGroup;
   mode: Mode;
 
-  // dropdown data
+  
   makes: Make[] = [];
   modelsAll: Model[] = [];
   modelsFiltered: Model[] = [];
   years: Year[] = [];
   categories: Category[] = [];
 
-  // spinners
+  
   loadingMakes = false;
   loadingModels = false;
   loadingYears = false;
@@ -73,7 +73,7 @@ export class ProductsForm implements OnInit {
   }
 
   ngOnInit(): void {
-    // build form
+    
     this.form = this.fb.group({
       productId: [0],
       displayName: ['', [Validators.required, Validators.maxLength(150)]],
@@ -83,23 +83,23 @@ export class ProductsForm implements OnInit {
       categoryId: [null, Validators.required]
     });
 
-    // preload dropdowns
+    
     this.loadMakes();
     this.loadModels();
     this.loadYears();
     this.loadCategories();
 
-    // when make changes, filter models
+    
     this.form.get('makeId')!.valueChanges.subscribe((makeId: number | null) => {
       this.filterModels(makeId);
-      // if the chosen model doesn't belong to the new make, reset modelId
+      
       const currentModelId = this.form.get('modelId')!.value;
       if (currentModelId && !this.modelsFiltered.some(m => (m as any).modelId === currentModelId)) {
         this.form.get('modelId')!.setValue(null);
       }
     });
 
-    // patch on edit
+    
     if (this.mode === 'edit' && this.data.initialData) {
       const r = this.data.initialData;
       this.form.patchValue({
@@ -110,7 +110,7 @@ export class ProductsForm implements OnInit {
         yearId: r.yearId ?? null,
         categoryId: r.categoryId ?? null
       });
-      // ensure models are filtered for the existing make
+      
       this.filterModels(r.makeId ?? null);
     }
   }
@@ -129,7 +129,7 @@ export class ProductsForm implements OnInit {
     this.modelsSvc.getList().subscribe({
       next: (list) => {
         this.modelsAll = list ?? [];
-        // initial filter if make already selected
+        
         const makeId = this.form?.get('makeId')?.value ?? null;
         this.filterModels(makeId);
       },
@@ -164,7 +164,7 @@ export class ProductsForm implements OnInit {
       this.modelsFiltered = this.modelsAll.slice();
       return;
     }
-    // assume Model has makeId; if not, remove this filter
+    
     this.modelsFiltered = this.modelsAll.filter((m: any) => m.makeId === makeId);
   }
 
@@ -182,12 +182,12 @@ export class ProductsForm implements OnInit {
       yearId: v.yearId,
       categoryId: v.categoryId,
 
-      // audit
+      
       createdById: this.mode === 'create' ? currentUserId : null,
       createdDate: null,
       modifiedById: currentUserId ?? null,
       modifiedDate: null,
-      // active handled by separate activate endpoint
+      
     } as Product;
 
     this.dialogRef.close(

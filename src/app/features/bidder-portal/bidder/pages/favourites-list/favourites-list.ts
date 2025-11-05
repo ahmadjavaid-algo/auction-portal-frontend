@@ -28,17 +28,17 @@ import { FavouriteService } from '../../../../../services/favourites.service';
 import { BidderAuthService } from '../../../../../services/bidderauth';
 
 type LotCard = {
-  // identity
+  
   inventoryAuctionId: number;
   auctionId: number;
   auctionName: string | null;
 
-  // visuals
+  
   title: string;
   sub: string;
   imageUrl: string;
 
-  // prices / meta
+  
   auctionStartPrice?: number | null;
   buyNow?: number | null;
   reserve?: number | null;
@@ -48,11 +48,11 @@ type LotCard = {
   modelName?: string | null;
   categoryName?: string | null;
 
-  // favourites
+  
   isFavourite?: boolean;
   favouriteId?: number | null;
 
-  // countdown
+  
   countdownText?: string;
   countdownState?: 'scheduled' | 'live' | 'ended';
 };
@@ -73,7 +73,7 @@ type LotCard = {
   styleUrl: './favourites-list.scss'
 })
 export class FavouritesList implements OnDestroy {
-  // services
+  
   private auctionsSvc = inject(AuctionService);
   private invAucSvc   = inject(InventoryAuctionService);
   private filesSvc    = inject(InventoryDocumentFileService);
@@ -82,7 +82,7 @@ export class FavouritesList implements OnDestroy {
   private favSvc      = inject(FavouriteService);
   private bidderAuth  = inject(BidderAuthService);
 
-  // ui state
+  
   loading = true;
   error: string | null = null;
 
@@ -100,15 +100,15 @@ export class FavouritesList implements OnDestroy {
     categories: [] as string[]
   };
 
-  // hero
+  
   heroUrl =
     'https://images.unsplash.com/photo-1517940310602-75e447f00b52?q=80&w=1400&auto=format&fit=crop';
 
-  // timing
+  
   private tickHandle: any = null;
   private resyncSub?: Subscription;
-  private clockSkewMs = 0; // serverNow - clientNow
-  private timeboxes = new Map<number, AuctionTimebox>(); // auctionId -> timebox
+  private clockSkewMs = 0; 
+  private timeboxes = new Map<number, AuctionTimebox>(); 
 
   ngOnInit(): void {
     const currentUserId = this.bidderAuth.currentUser?.userId ?? null;
@@ -143,17 +143,17 @@ export class FavouritesList implements OnDestroy {
             currentFavs.map(f => f.inventoryAuctionId ?? (f as any).inventoryAuctionId)
           );
 
-          // images: inventoryId -> urls[]
+          
           const imageMap = this.buildImagesMap(files);
 
-          // lookup maps
+          
           const invMap = new Map<number, Inventory>();
           (invs || []).forEach(i => invMap.set(i.inventoryId, i));
 
           const prodMap = new Map<number, Product>();
           (products || []).forEach(p => prodMap.set(p.productId, p));
 
-          // only rows that are favourited
+          
           const rows = (invAucs || []).filter(x =>
             favIds.has((x as any).inventoryAuctionId ?? (x as any).inventoryauctionId)
           );
@@ -250,7 +250,7 @@ export class FavouritesList implements OnDestroy {
     document.removeEventListener('visibilitychange', this.onVisChange);
   }
 
-  /* ===== favourites toggle ===== */
+  
   toggleFavourite(card: LotCard): void {
     const userId = this.bidderAuth.currentUser?.userId ?? null;
     if (!userId) {
@@ -258,7 +258,7 @@ export class FavouritesList implements OnDestroy {
       return;
     }
 
-    // ADD favourite (from this page user probably won't add, but support it anyway)
+    
     if (!card.isFavourite) {
       const nowIso = new Date().toISOString();
       const payload: Favourite = {
@@ -289,7 +289,7 @@ export class FavouritesList implements OnDestroy {
       return;
     }
 
-    // REMOVE (deactivate)
+    
     if (card.isFavourite && card.favouriteId != null) {
       console.log('[fav] REMOVE payload', {
         FavouriteId: card.favouriteId,
@@ -305,7 +305,7 @@ export class FavouritesList implements OnDestroy {
         next: (ok) => {
           console.log('[fav] REMOVE response ok =', ok);
           if (ok) {
-            // remove from UI list as well
+            
             this.lots = this.lots.filter(l => l !== card);
           }
         },
@@ -317,7 +317,7 @@ export class FavouritesList implements OnDestroy {
     }
   }
 
-  /* ===== filters/sort ===== */
+  
   get filteredLots(): LotCard[] {
     const q = this.q.trim().toLowerCase();
     return this.lots.filter(c => {
@@ -373,7 +373,7 @@ export class FavouritesList implements OnDestroy {
         return list.sort((a, b) => start(a) - start(b));
       }
       default:
-        return list; // “newest” = initial order
+        return list; 
     }
   }
 
@@ -403,7 +403,7 @@ export class FavouritesList implements OnDestroy {
     this.options.categories = uniq(this.lots.map(l => l.categoryName));
   }
 
-  /* ===== countdown & resync ===== */
+  
   private startTicker(): void {
     if (this.tickHandle) clearInterval(this.tickHandle);
     this.tickHandle = setInterval(() => this.updateCountdowns(), 1000);
@@ -498,7 +498,7 @@ export class FavouritesList implements OnDestroy {
     return `${hh}:${pad(mm)}:${pad(s)}`;
   }
 
-  /* ===== helpers ===== */
+  
   private buildImagesMap(files: InventoryDocumentFile[]): Map<number, string[]> {
     const m = new Map<number, string[]>();
     const isImg = (u?: string | null, n?: string | null) => {

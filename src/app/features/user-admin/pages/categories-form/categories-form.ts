@@ -39,7 +39,7 @@ export class CategoriesForm implements OnInit {
   form!: FormGroup;
   mode: Mode;
 
-  /** Dropdown source */
+  
   years: Year[] = [];
 
   constructor(
@@ -74,7 +74,7 @@ export class CategoriesForm implements OnInit {
   private loadYears(): void {
     this.yearsSvc.getList().subscribe({
       next: (list) => this.years = list ?? [],
-      error: () => { /* keep quiet; dropdown will be empty if it fails */ }
+      error: () => {  }
     });
   }
 
@@ -93,7 +93,7 @@ export class CategoriesForm implements OnInit {
       createdDate: null,
       modifiedById: currentUserId ?? null,
       modifiedDate: null
-      // active handled via separate Activate endpoint
+      
     };
 
     this.dialogRef.close(

@@ -65,7 +65,7 @@ export class InventoryImagesform {
   uploading = false;
   files: UploadItem[] = [];
 
-  // Only two options, as requested
+  
   documentTypes = [
     { id: 1, name: 'Inventory' },
     { id: 2, name: 'Auction' }
@@ -116,13 +116,13 @@ export class InventoryImagesform {
       for (const item of this.files) {
         item.status = 'uploading';
 
-        // 1) Upload file (multipart) → returns DocumentFileId
+        
         let docFileId: number | undefined;
         try {
           docFileId = await this.docSvc
             .upload(item.file, {
               documentTypeId: documentTypeId!,
-              documentName: this.baseNameOf(item.file),   // server “DocumentName”
+              documentName: this.baseNameOf(item.file),   
               createdById
             })
             .toPromise();
@@ -142,7 +142,7 @@ export class InventoryImagesform {
           continue;
         }
 
-        // 2) Link file to Inventory — auto DisplayName = base filename
+        
         try {
           const linkId = await this.invDocSvc
             .add({
@@ -171,7 +171,7 @@ export class InventoryImagesform {
       const summary = `${uploaded} uploaded, ${linked} linked` + (failed ? `, ${failed} failed` : '');
       this.snack.open(summary, 'OK', { duration: 3500 });
 
-      // Close dialog, signal caller to refresh if anything linked
+      
       this.dialogRef.close({ uploaded, linked, failed, refresh: linked > 0 });
     } finally {
       this.uploading = false;

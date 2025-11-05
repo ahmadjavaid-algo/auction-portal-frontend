@@ -52,7 +52,12 @@
             </div>
 
             <div class="notif-list" *ngIf="notifications.length; else noNotif">
-              <button class="notif-item" *ngFor="let n of notifications">
+              <button
+                type="button"
+                class="notif-item"
+                *ngFor="let n of notifications"
+                (click)="onNotificationClick(n)"
+              >
                 <div class="notif-main">
                   <div class="title">
                     {{ n.title }}

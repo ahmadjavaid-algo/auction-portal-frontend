@@ -27,7 +27,7 @@ import { InventoryAuctionService } from '../../../../services/inventoryauctions.
 import { InventoryForm, InventoryFormResult } from '../inventory-form/inventory-form';
 import { AddToAuctionDialog, AddToAuctionResult } from '../add-to-auction.dialog/add-to-auction.dialog';
 
-// NEW: dialog uploader
+
 import {
   InventoryImagesform,
   InventoryImagesDialogResult
@@ -62,7 +62,7 @@ export class InventoryList {
   private snack = inject(MatSnackBar);
   private auth = inject(AuthService);
 
-  /** order must match template columns */
+  
   displayedColumns: string[] = [
     'select',
     'name',
@@ -80,13 +80,13 @@ export class InventoryList {
   pageIndex = 0;
   searchTerm = '';
 
-  // dashboard counters
+  
   stats = { total: 0, active: 0, inactive: 0, products: 0 };
 
-  // loading indicator
+  
   loading = false;
 
-  // row selection (multi)
+  
   selection = new SelectionModel<Inventory>(true, []);
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -94,7 +94,7 @@ export class InventoryList {
   ngOnInit(): void {
     this.loadInventory();
 
-    // Search across display name, category fields in JSON, chassis/registration, etc.
+    
     this.inventory.filterPredicate = (i: Inventory, filter: string) => {
       const pj = this.safeParseProductJSON(i.productJSON);
       const haystack = [
@@ -126,7 +126,7 @@ export class InventoryList {
         if (this.paginator) this.inventory.paginator = this.paginator;
         this.applyPagingTotals();
         this.computeStats();
-        this.selection.clear(); // reset selections on reload
+        this.selection.clear(); 
       },
       error: (e) => {
         console.error('Failed to load inventory', e);
@@ -193,7 +193,7 @@ export class InventoryList {
     return Math.min(this.totalItems, (this.pageIndex + 1) * this.pageSize);
   }
 
-  // ===== Selection helpers =====
+  
   private get visibleRows(): Inventory[] {
     return this.inventory.filter ? this.inventory.filteredData : this.inventory.data;
   }
@@ -232,7 +232,7 @@ export class InventoryList {
     return this.selection.selected.map(r => r.inventoryId);
   }
 
-  // ===== Add to Auction (batch) =====
+  
   addSelectedToAuction(): void {
     if (!this.selection.selected.length) return;
 
@@ -276,7 +276,7 @@ export class InventoryList {
     });
   }
 
-  // ===== NEW: open upload/images dialog for a row (no route nav) =====
+  
   openUploadFor(row: Inventory): void {
     const ref = this.dialog.open<InventoryImagesform, { inventoryId: number }, InventoryImagesDialogResult>(
       InventoryImagesform,
@@ -287,13 +287,13 @@ export class InventoryList {
       if (!result) return;
       if (result.refresh) {
         this.snack.open('Images uploaded.', 'OK', { duration: 2000 });
-        // If you want to refresh counters/table, uncomment:
-        // this.loadInventory();
+        
+        
       }
     });
   }
 
-  // ===== CRUD actions (unchanged) =====
+  
   openCreateInventory(): void {
     const ref = this.dialog.open<InventoryForm, { mode: 'create' }, InventoryFormResult>(InventoryForm, {
       width: '720px',

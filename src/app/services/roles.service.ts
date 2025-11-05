@@ -5,7 +5,7 @@ import { Role } from '../models/role.model';
 import { AuthService } from '../services/auth';
 import { RoleClaim } from '../models/role-claim.model';
 import { RoleStats } from '../models/role.model';
-// Use '/api' if you run the Angular proxy; otherwise swap to 'http://localhost:5070/api'
+
 const API_BASE = 'http://localhost:5070/api';
 
 @Injectable({ providedIn: 'root' })
@@ -46,7 +46,7 @@ export class RolesService {
     );
   }
 
-  /** Claims currently associated with a role */
+  
   getRoleClaimsByRole(roleId: number): Observable<RoleClaim[]> {
     const params = new HttpParams().set('RoleId', roleId);
     return this.http.get<RoleClaim[]>(
@@ -55,7 +55,7 @@ export class RolesService {
     );
   }
 
-  /** Replace full set for a role (atomic add/remove) */
+  
   setRoleClaims(roleId: number, claimIds: number[]): Observable<boolean> {
     const payload = { roleId, claimIds };
     return this.http.post<boolean>(`${this.rcBase}/set`, payload, { headers: this.authHeaders() });

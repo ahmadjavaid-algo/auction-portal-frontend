@@ -54,7 +54,7 @@ export class Dashboard {
   slides: Slide[] = [];
   index = 0;
 
-  // fallback if no image is found
+  
   private fallbackHero =
     'https://carwow-uk-wp-3.imgix.net/GT-R-driving-front.jpg';
 
@@ -80,7 +80,7 @@ export class Dashboard {
         switchMap(({ auctions, files }) => {
           const active = (auctions || []).filter(a => a.active ?? true);
 
-          // newest 10
+          
           const recent = [...active]
             .sort((a, b) =>
               this.dateDesc(
@@ -131,7 +131,7 @@ export class Dashboard {
       });
   }
 
-  /* ===== helpers ===== */
+  
 
   private isImageFile(f: InventoryDocumentFile): boolean {
     const url = (f.documentUrl || '').toLowerCase();

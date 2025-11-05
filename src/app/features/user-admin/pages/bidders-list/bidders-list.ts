@@ -42,7 +42,7 @@ export class BiddersList {
   private snack = inject(MatSnackBar);
   private auth = inject(AuthService);
 
-  // order matches template: name/id • email/verified • last login • status • actions
+  
   displayedColumns: string[] = ['user', 'email', 'verified', 'lastLogin', 'status', 'actions'];
   users = new MatTableDataSource<Bidder>([]);
   totalItems = 0;
@@ -87,7 +87,7 @@ export class BiddersList {
       error: () => this.snack.open('Failed to load user stats.', 'Dismiss', { duration: 3000 })
     });
   }
-  // ---- Display helpers (used by template & filtering) ----
+  
   getFullName(u: Bidder): string {
     const f = (u.firstName ?? '').trim();
     const l = (u.lastName ?? '').trim();
@@ -104,7 +104,7 @@ export class BiddersList {
   }
 
 
-  // ---- Search / Paging ----
+  
   onSearch(): void {
     this.users.filter = this.searchTerm.trim().toLowerCase();
     this.totalItems = this.users.filteredData.length;
@@ -124,7 +124,7 @@ export class BiddersList {
     this.totalItems = this.users.filter ? this.users.filteredData.length : this.users.data.length;
   }
 
-  /** Range helpers for the right-bottom label (template look) */
+  
   get rangeStart(): number {
     if (!this.totalItems) return 0;
     return this.pageIndex * this.pageSize + 1;
@@ -133,7 +133,7 @@ export class BiddersList {
     return Math.min(this.totalItems, (this.pageIndex + 1) * this.pageSize);
   }
 
-  // ----- Create -----
+  
   openCreateUser(): void {
     const ref = this.dialog.open<BiddersForm, { mode: 'create' }, BidderFormResult>(BiddersForm, {
       width: '820px',
@@ -152,7 +152,7 @@ export class BiddersList {
     });
   }
 
-  // ----- Edit -----
+  
   editUser(row: Bidder): void {
     this.usersSvc.getById(row.userId).subscribe({
       next: (full) => {
@@ -175,7 +175,7 @@ export class BiddersList {
     });
   }
 
-  /** Toggle Active/Inactive with backend call */
+  
   toggleActive(u: Bidder): void {
     const newState = !(u.active ?? false);
     const payload: Partial<Bidder> = {
@@ -196,9 +196,9 @@ export class BiddersList {
     });
   }
 
-  openChangePassword(_u: Bidder): void { /* hook if needed later */ }
+  openChangePassword(_u: Bidder): void {  }
 
-  // Navigate to details page
+  
   viewUser(userId: number): void {
     this.router.navigate(['/admin/bidders', userId]);
   }

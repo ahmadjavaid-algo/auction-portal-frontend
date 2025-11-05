@@ -3,7 +3,7 @@ export interface Year {
   modelId: number;
   yearName: string;
 
-  // audit (optional on the wire)
+  
   createdById?: number | null;
   createdDate?: string | null;
   modifiedById?: number | null;

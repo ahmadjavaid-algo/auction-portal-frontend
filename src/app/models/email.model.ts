@@ -1,13 +1,13 @@
-// src/app/models/email.model.ts
+
 export interface Email {
-  // Audit
+  
   createdById?: number | null;
-  createdDate?: string | null;   // ISO string from server
+  createdDate?: string | null;   
   modifiedById?: number | null;
-  modifiedDate?: string | null;  // ISO string from server
+  modifiedDate?: string | null;  
   active?: boolean;
 
-  // Columns
+  
   emailId: number;
   emailCode?: string | null;
   emailSubject?: string | null;

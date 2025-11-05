@@ -38,7 +38,7 @@ export class BiddersSignup {
         address1: [''],
         postalCode: [''],
 
-        // keep the name "passwordHash" to match your backend contract
+        
         passwordHash: ['', [Validators.required, Validators.minLength(6)]],
         confirm: ['', [Validators.required]],
 

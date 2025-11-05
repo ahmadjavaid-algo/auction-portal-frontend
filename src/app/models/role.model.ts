@@ -4,7 +4,7 @@ export interface Role {
   roleCode: string;
   description?: string | null;
 
-  // audit (optional on the wire)
+  
   createdById?: number | null;
   createdDate?: string | null;
   modifiedById?: number | null;

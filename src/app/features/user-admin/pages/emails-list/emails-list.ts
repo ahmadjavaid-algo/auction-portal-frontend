@@ -42,7 +42,7 @@ export class EmailsList {
   private snack = inject(MatSnackBar);
   private auth = inject(AuthService);
 
-  // order matches template: code • subject • to • from • status • actions
+  
   displayedColumns: string[] = ['code', 'subject', 'to', 'from', 'status', 'actions'];
   emails = new MatTableDataSource<Email>([]);
   totalItems = 0;
@@ -51,7 +51,7 @@ export class EmailsList {
   pageIndex = 0;
   searchTerm = '';
 
-  // simple counters (computed from list)
+  
   stats = { totalEmails: 0, activeEmails: 0, inactiveEmails: 0, queued: 0 };
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -93,15 +93,15 @@ export class EmailsList {
     this.stats.totalEmails = all.length;
     this.stats.activeEmails = active;
     this.stats.inactiveEmails = inactive;
-    this.stats.queued = 0; // adjust if you later track queue/outbox
+    this.stats.queued = 0; 
   }
 
-  // ---- Display helpers ----
+  
   getCreatedAt(e: Email): Date | null {
     return e.createdDate ? new Date(e.createdDate) : null;
   }
 
-  // ---- Search / Paging ----
+  
   onSearch(): void {
     this.emails.filter = this.searchTerm.trim().toLowerCase();
     this.totalItems = this.emails.filteredData.length;
@@ -121,7 +121,7 @@ export class EmailsList {
     this.totalItems = this.emails.filter ? this.emails.filteredData.length : this.emails.data.length;
   }
 
-  /** Range helpers for the right-bottom label */
+  
   get rangeStart(): number {
     if (!this.totalItems) return 0;
     return this.pageIndex * this.pageSize + 1;
@@ -130,7 +130,7 @@ export class EmailsList {
     return Math.min(this.totalItems, (this.pageIndex + 1) * this.pageSize);
   }
 
-  // ----- Create -----
+  
   openCreateEmail(): void {
     const ref = this.dialog.open<EmailsForm, { mode: 'create' }, EmailFormResult>(EmailsForm, {
       width: '820px',
@@ -149,7 +149,7 @@ export class EmailsList {
     });
   }
 
-  // ----- Edit -----
+  
   editEmail(row: Email): void {
     this.emailsSvc.getById(row.emailId).subscribe({
       next: (full) => {
@@ -172,7 +172,7 @@ export class EmailsList {
     });
   }
 
-  /** Toggle Active/Inactive with backend call */
+  
   toggleActive(e: Email): void {
     const newState = !(e.active ?? false);
     const payload: Partial<Email> = {
@@ -194,7 +194,7 @@ export class EmailsList {
     });
   }
 
-  // Navigate to details page (optional)
+  
   viewEmail(emailId: number): void {
     this.router.navigate(['/admin/emails', emailId]);
   }

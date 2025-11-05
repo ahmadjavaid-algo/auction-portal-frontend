@@ -50,7 +50,7 @@ export class RolesList {
 
   displayedColumns: string[] = ['expand', 'role', 'code', 'description', 'status', 'actions'];
 
-  // Use the canonical model directly
+  
   roles = new MatTableDataSource<Role>([]);
   totalItems = 0;
 
@@ -77,7 +77,7 @@ export class RolesList {
   private loadRoles(): void {
     this.rolesSvc.getList().subscribe({
       next: (list: Role[]) => {
-        this.roles.data = list;            // no mapping
+        this.roles.data = list;            
         this.totalItems = list.length;
         if (this.paginator) this.roles.paginator = this.paginator;
         this.applyPagingTotals();

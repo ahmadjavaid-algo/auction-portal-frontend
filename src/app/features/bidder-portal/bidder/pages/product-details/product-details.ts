@@ -124,7 +124,7 @@ export class ProductDetails {
     })
       .pipe(
         map(({ auctions, invAucs, files, invs, products }) => {
-          // find this lot
+          
           this.lot =
             (invAucs || []).find(
               a =>
@@ -133,19 +133,19 @@ export class ProductDetails {
             ) || null;
           if (!this.lot) throw new Error('Listing not found');
 
-          // determine auction
+          
           const currentAuctionId = (this.lot as any).auctionId ?? this.auctionId;
           this.auctionId = currentAuctionId;
           this.auction = (auctions || []).find(a => a.auctionId === currentAuctionId) || null;
 
-          // inventory & product
+          
           this.inventory =
             (invs || []).find(i => i.inventoryId === this.lot!.inventoryId) || null;
           this.product = this.inventory
             ? (products || []).find(p => p.productId === this.inventory!.productId) || null
             : null;
 
-          // title/subtitle
+          
           const snap = this.safeParse(this.inventory?.productJSON);
           const year = this.product?.yearName ?? snap?.Year ?? snap?.year;
           const make = this.product?.makeName ?? snap?.Make ?? snap?.make;
@@ -161,7 +161,7 @@ export class ProductDetails {
               }`
             : `Lot #${(this.lot as any).inventoryAuctionId ?? ''}`;
 
-          // images
+          
           const isImg = (u?: string | null, n?: string | null) => {
             const s = (u || n || '').toLowerCase();
             return ['.jpg', '.jpeg', '.png', '.webp'].some(x => s.endsWith(x));
@@ -178,7 +178,7 @@ export class ProductDetails {
             .slice(0, 32);
           if (this.images.length) this.activeImage = this.images[0];
 
-          // specs
+          
           const colorExterior = snap?.ExteriorColor ?? snap?.exteriorColor ?? null;
           const colorInterior = snap?.InteriorColor ?? snap?.interiorColor ?? null;
           const drivetrain = snap?.Drivetrain ?? snap?.drivetrain ?? null;
@@ -211,7 +211,7 @@ export class ProductDetails {
           ];
           this.specs = rows;
 
-          // related cards
+          
           const allLots = (invAucs || []).filter(x => x.active ?? true);
           const makeName = this.product?.makeName ?? make ?? '';
           const catName = categoryName ?? '';

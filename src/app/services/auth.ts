@@ -22,7 +22,7 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${this.base}/login`, body).pipe(
       tap(resp => {
         if (resp?.success && resp.token) {
-          // persist session
+          
           localStorage.setItem(TOKEN_KEY, resp.token);
           localStorage.setItem(USER_KEY, JSON.stringify({
             userId: resp.userId,
@@ -73,12 +73,12 @@ export class AuthService {
     return this.http.post<boolean>(`${this.base}/forgotpassword`, body);
   }
 
-  /** POST /ApplicationUserOperations/resetpassword */
+  
   resetPassword(email: string, newPassword: string, code: string): Observable<boolean> {
     const body: ResetPasswordRequest = {
       email,
-      newPasswordHash: newPassword, // server expects NewPasswordHash
-      resetCode: code               // server expects ResetCode (plain token)
+      newPasswordHash: newPassword, 
+      resetCode: code               
     };
     return this.http.post<boolean>(`${this.base}/resetpassword`, body);
   }

@@ -40,7 +40,7 @@ export class YearsForm implements OnInit {
   form!: FormGroup;
   mode: Mode;
 
-  models: Model[] = [];        // dropdown source
+  models: Model[] = [];        
   loadingModels = false;
 
   constructor(
@@ -54,22 +54,22 @@ export class YearsForm implements OnInit {
   }
 
   ngOnInit(): void {
-    // lowerCamel controls (keep template in sync!)
+    
     this.form = this.fb.group({
       yearId:   [0],
       modelId:  [null, Validators.required],
       yearName: ['', [Validators.required, Validators.maxLength(50)]],
     });
 
-    // preload dropdown
+    
     this.fetchModels();
 
-    // edit case: seed values
+    
     if (this.mode === 'edit' && this.data.initialData) {
       const r = this.data.initialData;
       this.form.patchValue({
         yearId:   r.yearId,
-        modelId:  (r as any).modelId ?? r['modelId'], // tolerate different casings
+        modelId:  (r as any).modelId ?? r['modelId'], 
         yearName: r.yearName ?? '',
       });
     }
@@ -97,7 +97,7 @@ export class YearsForm implements OnInit {
       createdDate: null,
       modifiedById: currentUserId ?? null,
       modifiedDate: null,
-      // active handled by separate Activate endpoint
+      
     };
 
     this.dialogRef.close(

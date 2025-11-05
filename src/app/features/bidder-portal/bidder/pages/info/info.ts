@@ -32,10 +32,10 @@ export class Info {
 
     this.submitting = true;
     try {
-      // TODO: replace with real API call
+      
       await new Promise(r => setTimeout(r, 900));
       this.form.reset({ reason: 'General', consent: true });
-      // show thank-you state
+      
       alert('Thanks! Our team will get back to you shortly.');
     } catch (e) {
       this.errorMsg = 'Something went wrong. Please try again.';

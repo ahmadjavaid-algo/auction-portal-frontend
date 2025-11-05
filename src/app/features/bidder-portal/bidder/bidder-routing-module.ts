@@ -19,12 +19,12 @@ import { FavouritesList } from './pages/favourites-list/favourites-list';
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
 
-  // Public/auth screens
+  
   { path: 'login', component: BiddersLogin, title: 'Bidder Login' },
-  { path: 'forgot-password', component: BiddersForgotpassword, title: 'Forgot Password' }, // public
-  { path: 'auth/reset-password', component: BiddersResetpassword, title: 'Reset Password' }, // public (matches emailed path, final URL will be /admin/auth/reset-password)
+  { path: 'forgot-password', component: BiddersForgotpassword, title: 'Forgot Password' }, 
+  { path: 'auth/reset-password', component: BiddersResetpassword, title: 'Reset Password' }, 
   { path: 'signup', component: BiddersSignup, title: 'Sign Up' },  
-  // Protected area
+  
     {
       path: '',
       component: BidderLayout,

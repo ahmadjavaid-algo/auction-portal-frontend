@@ -44,7 +44,7 @@ export class AdminLayout {
   }
 
   changePassword(): void {
-    // Hook up to your Password dialog later; friendly placeholder for now.
+    
     this.snack.open('Change password coming soon.', 'OK', { duration: 2500 });
   }
 

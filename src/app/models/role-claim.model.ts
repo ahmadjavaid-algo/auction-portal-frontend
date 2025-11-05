@@ -1,6 +1,6 @@
-/** One claim row (from /api/RoleClaims/list or /byrole) */
+
 export interface RoleClaim {
-  roleId?: number;                // present in byrole results (optional)
+  roleId?: number;                
   claimId: number;
   claimCode: string;
   endpoint: string;
@@ -8,7 +8,7 @@ export interface RoleClaim {
   claimGroupId?: number | null;
 }
 
-/** UI view-model with selection state */
+
 export interface RoleClaimSelection extends RoleClaim {
   selected: boolean;
 }

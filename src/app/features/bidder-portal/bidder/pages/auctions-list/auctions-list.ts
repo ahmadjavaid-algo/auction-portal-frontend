@@ -20,8 +20,8 @@ import { catchError, map } from 'rxjs/operators';
 
 type AuctionCard = {
   auction: Auction;
-  coverUrl: string;              // background image
-  lots: number;                  // how many inventory items in this auction
+  coverUrl: string;              
+  lots: number;                  
   start?: Date | null;
   end?: Date | null;
   status?: string | null;
@@ -51,7 +51,7 @@ export class AuctionsList {
 
   cards: AuctionCard[] = [];
 
-  // a nice neutral fallback
+  
   private fallback =
     'https://images.unsplash.com/photo-1517940310602-75e447f00b52?q=80&w=1200&auto=format&fit=crop';
 
@@ -67,7 +67,7 @@ export class AuctionsList {
       map(({ auctions, invAucs, files }) => {
         const activeAuctions = (auctions || []).filter(a => a.active ?? true);
 
-        // Map: auctionId -> inventoryIds[]
+        
         const byAuction = new Map<number, number[]>();
         (invAucs || []).forEach(ia => {
           const aid = (ia as any).auctionId as number;
@@ -77,10 +77,10 @@ export class AuctionsList {
           byAuction.set(aid, list);
         });
 
-        // Map: inventoryId -> imageUrls[]
+        
         const imageMap = this.buildImagesMap(files);
 
-        // Build display cards
+        
         const cards: AuctionCard[] = activeAuctions
           .sort((a, b) => this.dateDesc(a.createdDate || a.modifiedDate, b.createdDate || b.modifiedDate))
           .map(a => {
@@ -107,7 +107,7 @@ export class AuctionsList {
     });
   }
 
-  /* ===== helpers ===== */
+  
 
   private buildImagesMap(files: InventoryDocumentFile[]): Map<number, string[]> {
     const m = new Map<number, string[]>();

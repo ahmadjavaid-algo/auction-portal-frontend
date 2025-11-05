@@ -3,7 +3,7 @@ export interface Model {
   modelId: number;
   modelName: string;
 
-  // audit (optional on the wire)
+  
   createdById?: number | null;
   createdDate?: string | null;
   modifiedById?: number | null;

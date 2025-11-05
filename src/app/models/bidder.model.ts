@@ -1,6 +1,6 @@
 
 export interface Bidder {
-  // Columns
+  
   userId: number;
   userName: string;
   firstName: string;
@@ -16,7 +16,7 @@ export interface Bidder {
   loginDate?: string | null;   
   code?: string | null;
 
-  // Audit
+  
   createdById?: number | null;
   createdDate?: string | null;
   modifiedById?: number | null;

@@ -42,7 +42,7 @@ export class UsersList {
   private snack = inject(MatSnackBar);
   private auth = inject(AuthService);
 
-  // order matches template: name/id • email/verified • last login • status • actions
+  
   displayedColumns: string[] = ['user', 'email', 'verified', 'lastLogin', 'status', 'actions'];
   users = new MatTableDataSource<User>([]);
   totalItems = 0;
@@ -87,7 +87,7 @@ export class UsersList {
       error: () => this.snack.open('Failed to load user stats.', 'Dismiss', { duration: 3000 })
     });
   }
-  // ---- Display helpers (used by template & filtering) ----
+  
   getFullName(u: User): string {
     const f = (u.firstName ?? '').trim();
     const l = (u.lastName ?? '').trim();
@@ -104,11 +104,11 @@ export class UsersList {
   }
 
   getRoleLabel(u: User): string {
-    // You can plug real role names here once you have them
+    
     return Array.isArray(u.roleId) && u.roleId.length ? `${u.roleId.length} role(s)` : '—';
   }
 
-  // ---- Search / Paging ----
+  
   onSearch(): void {
     this.users.filter = this.searchTerm.trim().toLowerCase();
     this.totalItems = this.users.filteredData.length;
@@ -128,7 +128,7 @@ export class UsersList {
     this.totalItems = this.users.filter ? this.users.filteredData.length : this.users.data.length;
   }
 
-  /** Range helpers for the right-bottom label (template look) */
+  
   get rangeStart(): number {
     if (!this.totalItems) return 0;
     return this.pageIndex * this.pageSize + 1;
@@ -137,7 +137,7 @@ export class UsersList {
     return Math.min(this.totalItems, (this.pageIndex + 1) * this.pageSize);
   }
 
-  // ----- Create -----
+  
   openCreateUser(): void {
     const ref = this.dialog.open<UsersForm, { mode: 'create' }, UserFormResult>(UsersForm, {
       width: '820px',
@@ -156,7 +156,7 @@ export class UsersList {
     });
   }
 
-  // ----- Edit -----
+  
   editUser(row: User): void {
     this.usersSvc.getById(row.userId).subscribe({
       next: (full) => {
@@ -179,7 +179,7 @@ export class UsersList {
     });
   }
 
-  /** Toggle Active/Inactive with backend call */
+  
   toggleActive(u: User): void {
     const newState = !(u.active ?? false);
     const payload: Partial<User> = {
@@ -200,9 +200,9 @@ export class UsersList {
     });
   }
 
-  openChangePassword(_u: User): void { /* hook if needed later */ }
+  openChangePassword(_u: User): void {  }
 
-  // Navigate to details page
+  
   viewUser(userId: number): void {
     this.router.navigate(['/admin/users', userId]);
   }

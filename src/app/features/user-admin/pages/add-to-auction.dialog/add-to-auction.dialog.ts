@@ -38,14 +38,14 @@ export class AddToAuctionDialog implements OnInit {
   auctions: Auction[] = [];
   loadingAuctions = false;
 
-  // simple status set — match your server
+  
   statuses: StatusVm[] = [
     { id: 1, name: 'Scheduled', code: 'schedule' },
     { id: 2, name: 'Live',      code: 'live' },
     { id: 3, name: 'Stop',      code: 'stop' }
   ];
 
-  // init in ngOnInit to avoid "used before initialization"
+  
   form!: FormGroup;
 
   constructor(
@@ -56,7 +56,7 @@ export class AddToAuctionDialog implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // build the form here (fb is now initialized)
+    
     this.form = this.fb.group({
       auctionId: [null as number | null, Validators.required],
       inventoryAuctionStatusId: [1, Validators.required],
@@ -64,7 +64,7 @@ export class AddToAuctionDialog implements OnInit {
       reservePrice: [0, [Validators.min(0)]],
     });
 
-    // load auctions
+    
     this.loadingAuctions = true;
     this.aucSvc.getList().subscribe({
       next: (list) => {

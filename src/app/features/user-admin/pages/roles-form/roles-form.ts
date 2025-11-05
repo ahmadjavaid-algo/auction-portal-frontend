@@ -75,12 +75,12 @@ export class RolesForm implements OnInit {
       roleCode: v.roleCode?.trim(),
       description: v.description?.trim() || null,
 
-      // audit fields (align with your BaseModel usage in UsersForm)
+      
       createdById: this.mode === 'create' ? currentUserId : null,
       createdDate: null,
       modifiedById: currentUserId ?? null,
       modifiedDate: null
-      // active is handled via separate Activate endpoint, so omit here
+      
     };
 
     this.dialogRef.close(

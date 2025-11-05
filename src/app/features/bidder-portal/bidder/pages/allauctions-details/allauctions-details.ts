@@ -28,17 +28,17 @@ import { FavouriteService } from '../../../../../services/favourites.service';
 import { BidderAuthService } from '../../../../../services/bidderauth';
 
 type LotCard = {
-  // identity
+  
   inventoryAuctionId: number;
   auctionId: number;
   auctionName: string | null;
 
-  // visuals
+  
   title: string;
   sub: string;
   imageUrl: string;
 
-  // prices / meta
+  
   auctionStartPrice?: number | null;
   buyNow?: number | null;
   reserve?: number | null;
@@ -48,11 +48,11 @@ type LotCard = {
   modelName?: string | null;
   categoryName?: string | null;
 
-  // favourites
+  
   isFavourite?: boolean;
   favouriteId?: number | null;
 
-  // countdown
+  
   countdownText?: string;
   countdownState?: 'scheduled' | 'live' | 'ended';
 };
@@ -73,7 +73,7 @@ type LotCard = {
   styleUrls: ['./allauctions-details.scss']
 })
 export class AllauctionsDetails implements OnDestroy {
-  // services
+  
   private auctionsSvc = inject(AuctionService);
   private invAucSvc   = inject(InventoryAuctionService);
   private filesSvc    = inject(InventoryDocumentFileService);
@@ -82,7 +82,7 @@ export class AllauctionsDetails implements OnDestroy {
   private favSvc      = inject(FavouriteService);
   private bidderAuth  = inject(BidderAuthService);
 
-  // ui state
+  
   loading = true;
   error: string | null = null;
 
@@ -100,17 +100,17 @@ export class AllauctionsDetails implements OnDestroy {
     categories: [] as string[]
   };
 
-  // hero
+  
   heroUrl =
     'https://images.unsplash.com/photo-1517940310602-75e447f00b52?q=80&w=1400&auto=format&fit=crop';
 
-  // timing
+  
   private tickHandle: any = null;
   private resyncSub?: Subscription;
-  private clockSkewMs = 0; // serverNow - clientNow
-  private timeboxes = new Map<number, AuctionTimebox>(); // auctionId -> timebox
+  private clockSkewMs = 0; 
+  private timeboxes = new Map<number, AuctionTimebox>(); 
 
-  // favourites cache: key = InventoryAuctionId
+  
   private favMap = new Map<number, Favourite>();
 
   ngOnInit(): void {
@@ -131,7 +131,7 @@ export class AllauctionsDetails implements OnDestroy {
           const auctionMap = new Map<number, Auction>();
           (auctions || []).forEach(a => auctionMap.set(a.auctionId, a));
 
-          // ===== favourites for current user (active + inactive) =====
+          
           this.favMap.clear();
 
           const favsForUserAll = (favs || []).filter(f => {
@@ -155,17 +155,17 @@ export class AllauctionsDetails implements OnDestroy {
             }
           });
 
-          // images: inventoryId -> urls[]
+          
           const imageMap = this.buildImagesMap(files);
 
-          // lookup maps
+          
           const invMap = new Map<number, Inventory>();
           (invs || []).forEach(i => invMap.set(i.inventoryId, i));
 
           const prodMap = new Map<number, Product>();
           (products || []).forEach(p => prodMap.set(p.productId, p));
 
-          // ALL inventory-auctions (no filtering by a specific auctionId)
+          
           const rows = (invAucs || []).filter(x => (x.active ?? true));
 
           const cards: LotCard[] = rows.map(r => {
@@ -237,12 +237,12 @@ export class AllauctionsDetails implements OnDestroy {
           const firstImg = cards.find(c => !!c.imageUrl)?.imageUrl;
           if (firstImg) this.heroUrl = firstImg;
 
-          this.lots = cards; // sort is applied later via computed getter
+          this.lots = cards; 
 
-          // build filter menus (incl. auction names)
+          
           this.buildFilterOptions();
 
-          // collect distinct auctionIds for timeboxes
+          
           const uniqAuctionIds = Array.from(
             new Set(this.lots.map(c => c.auctionId))
           ).filter(Boolean) as number[];
@@ -273,7 +273,7 @@ export class AllauctionsDetails implements OnDestroy {
     document.removeEventListener('visibilitychange', this.onVisChange);
   }
 
-  /* ===== favourites toggle ===== */
+  
   toggleFavourite(card: LotCard): void {
     const userId = this.bidderAuth.currentUser?.userId ?? null;
     if (!userId) {
@@ -281,11 +281,11 @@ export class AllauctionsDetails implements OnDestroy {
       return;
     }
 
-    // ADD or RE-ACTIVATE favourite
+    
     if (!card.isFavourite) {
       const existing = this.favMap.get(card.inventoryAuctionId);
 
-      // If an inactive row exists, just set Active = true
+      
       if (existing) {
         const favId =
           (existing as any).BidderInventoryAuctionFavoriteId ??
@@ -312,7 +312,7 @@ export class AllauctionsDetails implements OnDestroy {
                 card.isFavourite = true;
                 card.favouriteId = favId;
 
-                // keep local cache in sync
+                
                 (existing as any).Active = true;
                 (existing as any).active = true;
               }
@@ -327,7 +327,7 @@ export class AllauctionsDetails implements OnDestroy {
         }
       }
 
-      // No existing row -> regular ADD
+      
       const nowIso = new Date().toISOString();
 
       const payload: Favourite = {
@@ -349,7 +349,7 @@ export class AllauctionsDetails implements OnDestroy {
           card.isFavourite = true;
           card.favouriteId = id;
 
-          // create/update local cache entry
+          
           const favStub: any = {
             ...payload,
             BidderInventoryAuctionFavoriteId: id,
@@ -369,7 +369,7 @@ export class AllauctionsDetails implements OnDestroy {
       return;
     }
 
-    // REMOVE (deactivate) favourite
+    
     if (card.isFavourite && card.favouriteId != null) {
       const payload = {
         FavouriteId: card.favouriteId,
@@ -384,7 +384,7 @@ export class AllauctionsDetails implements OnDestroy {
           console.log('[fav] DEACTIVATE response ok =', ok);
           if (ok) {
             card.isFavourite = false;
-            // keep the id in the cache; just mark inactive
+            
             const existing = this.favMap.get(card.inventoryAuctionId);
             if (existing) {
               (existing as any).Active = false;
@@ -400,7 +400,7 @@ export class AllauctionsDetails implements OnDestroy {
     }
   }
 
-  /* ===== filters/sort ===== */
+  
   get filteredLots(): LotCard[] {
     const q = this.q.trim().toLowerCase();
     return this.lots.filter(c => {
@@ -456,7 +456,7 @@ export class AllauctionsDetails implements OnDestroy {
         return list.sort((a, b) => start(a) - start(b));
       }
       default:
-        return list; // “newest” = initial order
+        return list; 
     }
   }
 
@@ -486,7 +486,7 @@ export class AllauctionsDetails implements OnDestroy {
     this.options.categories = uniq(this.lots.map(l => l.categoryName));
   }
 
-  /* ===== countdown & resync ===== */
+  
   private startTicker(): void {
     if (this.tickHandle) clearInterval(this.tickHandle);
     this.tickHandle = setInterval(() => this.updateCountdowns(), 1000);
@@ -581,7 +581,7 @@ export class AllauctionsDetails implements OnDestroy {
     return `${hh}:${pad(mm)}:${pad(s)}`;
   }
 
-  /* ===== helpers ===== */
+  
   private buildImagesMap(files: InventoryDocumentFile[]): Map<number, string[]> {
     const m = new Map<number, string[]>();
     const isImg = (u?: string | null, n?: string | null) => {

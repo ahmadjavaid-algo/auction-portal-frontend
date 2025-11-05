@@ -26,12 +26,12 @@ import { InventoryImagesform } from './pages/inventory-imagesform/inventory-imag
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
 
-  // Public/auth screens
+  
   { path: 'login', component: UsersLogin, title: 'Admin Login' },
-  { path: 'forgot-password', component: UsersForgotpassword, title: 'Forgot Password' }, // public
-  { path: 'auth/reset-password', component: UsersResetpassword, title: 'Reset Password' }, // public (matches emailed path, final URL will be /admin/auth/reset-password)
+  { path: 'forgot-password', component: UsersForgotpassword, title: 'Forgot Password' }, 
+  { path: 'auth/reset-password', component: UsersResetpassword, title: 'Reset Password' }, 
 
-  // Protected area
+  
   {
     path: '',
     component: AdminLayout,

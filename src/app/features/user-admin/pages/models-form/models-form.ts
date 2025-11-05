@@ -39,7 +39,7 @@ export class ModelsForm implements OnInit {
   form!: FormGroup;
   mode: Mode;
 
-  // for dropdown
+  
   makes: Make[] = [];
   loadingMakes = false;
 
@@ -54,14 +54,14 @@ export class ModelsForm implements OnInit {
   }
 
   ngOnInit(): void {
-    // build form (use camelCase keys that match template controls)
+    
     this.form = this.fb.group({
       modelId: [0],
       makeId: [null, Validators.required],
       modelName: ['', [Validators.required, Validators.maxLength(100)]]
     });
 
-    // preload makes for dropdown
+    
     this.loadingMakes = true;
     this.makesSvc.getList().subscribe({
       next: (list) => (this.makes = list ?? []),
@@ -69,13 +69,13 @@ export class ModelsForm implements OnInit {
       complete: () => (this.loadingMakes = false)
     });
 
-    // if editing, populate fields
+    
     if (this.mode === 'edit' && this.data.initialData) {
       const r = this.data.initialData;
       this.form.patchValue({
         modelId: r.modelId,
         modelName: r.modelName ?? '',
-        makeId: (r as any).makeId ?? null // handle if your Model has makeId
+        makeId: (r as any).makeId ?? null 
       });
     }
   }
@@ -91,12 +91,12 @@ export class ModelsForm implements OnInit {
       modelName: (v.modelName ?? '').trim(),
       makeId: v.makeId,
 
-      // audit fields
+      
       createdById: this.mode === 'create' ? currentUserId : null,
       createdDate: null,
       modifiedById: currentUserId ?? null,
       modifiedDate: null,
-      // active handled by Activate endpoint
+      
     } as Model;
 
     this.dialogRef.close(

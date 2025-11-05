@@ -23,7 +23,7 @@ import { Model } from '../../../../models/model.model';
 import { Year } from '../../../../models/year.model';
 import { Category } from '../../../../models/category.model';
 
-/* Forms (standalone dialogs) */
+
 import { MakesForm, MakeFormResult } from '../makes-form/makes-form';
 import { ModelsForm, ModelFormResult } from '../models-form/models-form';
 import { YearsForm, YearFormResult } from '../years-form/years-form';
@@ -62,25 +62,25 @@ export class MakesModelsYearsCategoriesList {
 
   section: Section = 'make';
 
-  // Data sources for each table
+  
   makes  = new MatTableDataSource<Make>([]);
   models = new MatTableDataSource<Model>([]);
   years  = new MatTableDataSource<Year>([]);
   cats   = new MatTableDataSource<Category>([]);
 
-  // Columns per table
+  
   colsMake     = ['name', 'status', 'actions'];
   colsModel    = ['make', 'name', 'status', 'actions'];
   colsYear     = ['model', 'name', 'status', 'actions'];
   colsCategory = ['year', 'name', 'status', 'actions'];
 
-  // Search + pagination
+  
   searchTerm = '';
   pageSize = 10;
   pageIndex = 0;
   totalItems = 0;
 
-  // Stats strip (recomputed whenever data/filters/section change)
+  
   stats = { total: 0, active: 0, inactive: 0, parentsDistinct: 0 };
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -95,7 +95,7 @@ export class MakesModelsYearsCategoriesList {
     this.updateTotalsAndStats();
   }
 
-  // ---- Loaders ----
+  
   private loadAll(): void {
     this.reloadMakes();
     this.reloadModels();
@@ -147,7 +147,7 @@ export class MakesModelsYearsCategoriesList {
     };
   }
 
-  // ---- UI helpers ----
+  
   onSectionChange(value: Section): void {
     this.section = value;
     this.applyPaginatorToActive();
@@ -248,7 +248,7 @@ export class MakesModelsYearsCategoriesList {
     return Math.min(this.totalItems, (this.pageIndex + 1) * this.pageSize);
   }
 
-  // ---- Actions ----
+  
   openCreate(): void {
     if (this.section === 'make') {
       const ref = this.dialog.open<MakesForm, { mode: 'create'; initialData?: Make | null }, MakeFormResult>(

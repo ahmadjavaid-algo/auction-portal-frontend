@@ -31,7 +31,7 @@ export class FavouriteService {
     return this.http.put<boolean>(`${this.base}/update`, Favourite, { headers: this.authHeaders() });
   }
 
-// favourites.service.ts
+
 activate(payload: { FavouriteId: number; Active: boolean; ModifiedById?: number | null }): Observable<boolean> {
   const body = {
     bidderInventoryAuctionFavoriteId: payload.FavouriteId, 

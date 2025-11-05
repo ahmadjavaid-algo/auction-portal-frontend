@@ -39,7 +39,7 @@ export class InventoryForm implements OnInit {
   form!: FormGroup;
   mode: Mode;
 
-  // dropdown data
+  
   products: Product[] = [];
   loadingProducts = false;
 
@@ -54,18 +54,18 @@ export class InventoryForm implements OnInit {
   }
 
   ngOnInit(): void {
-    // build form
+    
     this.form = this.fb.group({
       inventoryId: [0],
       productId: [null, Validators.required],
       description: ['', [Validators.maxLength(4000)]],
 
-      // NEW
+      
       chassisNo: ['', [Validators.maxLength(64)]],
       registrationNo: ['', [Validators.maxLength(64)]],
     });
 
-    // preload products for dropdown
+    
     this.loadingProducts = true;
     this.productsSvc.getList().subscribe({
       next: (list) => (this.products = list ?? []),
@@ -73,7 +73,7 @@ export class InventoryForm implements OnInit {
       complete: () => (this.loadingProducts = false)
     });
 
-    // if editing, populate fields
+    
     if (this.mode === 'edit' && this.data.initialData) {
       const r = this.data.initialData;
       this.form.patchValue({
@@ -95,19 +95,19 @@ export class InventoryForm implements OnInit {
     const payload: Inventory = {
       inventoryId: v.inventoryId,
       productId: v.productId,
-      productJSON: '', // generated/rebuilt by SPs
+      productJSON: '', 
       description: (v.description ?? '').trim(),
 
-      // NEW
+      
       chassisNo: (v.chassisNo ?? '').trim() || null,
       registrationNo: (v.registrationNo ?? '').trim() || null,
 
-      // audit
+      
       createdById: this.mode === 'create' ? currentUserId : null,
       createdDate: null,
       modifiedById: currentUserId ?? null,
       modifiedDate: null,
-      // active handled elsewhere
+      
     } as Inventory;
 
     this.dialogRef.close(
@@ -121,7 +121,7 @@ export class InventoryForm implements OnInit {
     this.dialogRef.close();
   }
 
-  // convenience to display product label (DisplayName + Category)
+  
   productLabel(p: any): string {
     const name = p?.displayName ?? '';
     const cat  = p?.categoryName ?? p?.categoryId ?? '';

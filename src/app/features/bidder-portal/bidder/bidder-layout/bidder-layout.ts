@@ -54,7 +54,7 @@ export class BidderLayout implements OnInit, OnDestroy {
   ngOnInit(): void {
     const uid = this.auth.currentUser?.userId ?? null;
 
-    // Initialize per-user notifications (load from localStorage + start SignalR)
+
     this.notifHub.initForUser(uid);
 
     this.notifSub = this.notifHub.notifications$.subscribe(list => {
@@ -89,6 +89,30 @@ export class BidderLayout implements OnInit, OnDestroy {
     this.notifHub.clearAll();
   }
 
+  
+  onNotificationClick(n: NotificationItem): void {
+    this.notifOpen = false;
+
+
+    if (n.auctionId && n.inventoryAuctionId) {
+      this.router.navigate([
+        '/bidder/auctions',
+        n.auctionId,
+        n.inventoryAuctionId
+      ]);
+      return;
+    }
+
+
+    if (n.type === 'favourite-added' || n.type === 'favourite-deactivated') {
+      this.router.navigate(['/bidder/favourites-list']);
+      return;
+    }
+
+
+    this.router.navigate(['/bidder/allauctions']);
+  }
+
   @HostListener('document:click', ['$event'])
   onDocClick(ev: MouseEvent): void {
     const target = ev.target as HTMLElement;
@@ -104,7 +128,7 @@ export class BidderLayout implements OnInit, OnDestroy {
     }
   }
 
-  /** Open current bidder's account details page */
+  
   goAccount(ev?: Event): void {
     ev?.preventDefault();
     ev?.stopPropagation();
@@ -127,7 +151,7 @@ export class BidderLayout implements OnInit, OnDestroy {
     this.dropdownOpen = false;
     this.notifOpen = false;
 
-    // Stop SignalR for this user; notifications stay persisted in localStorage.
+
     await this.notifHub.stop();
 
     this.auth.logout();

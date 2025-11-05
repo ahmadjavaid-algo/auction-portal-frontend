@@ -1,4 +1,4 @@
-// favourite-notification.model.ts
+
 export interface FavouriteNotification {
   favouriteId: number;
   userId: number;

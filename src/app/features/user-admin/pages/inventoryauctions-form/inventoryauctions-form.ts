@@ -42,7 +42,7 @@ export class InventoryauctionsForm implements OnInit {
   form!: FormGroup;
   mode: Mode;
 
-  // dropdown data
+  
   inventories: Inventory[] = [];
   auctions: Auction[] = [];
   loadingInventories = false;
@@ -61,7 +61,7 @@ export class InventoryauctionsForm implements OnInit {
   }
 
   ngOnInit(): void {
-    // build form
+    
     this.form = this.fb.group({
       inventoryAuctionId: [0],
       inventoryId: [null, Validators.required],
@@ -72,7 +72,7 @@ export class InventoryauctionsForm implements OnInit {
       reservePrice: [null, [Validators.min(0)]]
     });
 
-    // preload inventories
+    
     this.loadingInventories = true;
     this.inventorySvc.getList().subscribe({
       next: (list) => (this.inventories = list ?? []),
@@ -80,7 +80,7 @@ export class InventoryauctionsForm implements OnInit {
       complete: () => (this.loadingInventories = false)
     });
 
-    // preload auctions
+    
     this.loadingAuctions = true;
     this.auctionSvc.getList().subscribe({
       next: (list) => (this.auctions = list ?? []),
@@ -88,7 +88,7 @@ export class InventoryauctionsForm implements OnInit {
       complete: () => (this.loadingAuctions = false)
     });
 
-    // if editing, populate fields
+    
     if (this.mode === 'edit' && this.data.initialData) {
       const r = this.data.initialData;
       this.form.patchValue({
@@ -111,21 +111,21 @@ export class InventoryauctionsForm implements OnInit {
     const currentUserId = this.auth.currentUser?.userId ?? null;
 
     const payload: InventoryAuction = {
-      // ids
+      
       inventoryAuctionId: v.inventoryAuctionId,
       inventoryId: v.inventoryId,
       auctionId: v.auctionId,
       inventoryAuctionStatusId: v.inventoryAuctionStatusId,
 
-      // money fields (optional)
+      
       auctionStartPrice: v.auctionStartPrice ?? 0,
       buyNowPrice: v.buyNowPrice ?? 0,
       reservePrice: v.reservePrice ?? 0,
 
-      // snapshot field comes from SP
+      
       bidIncrement: 0,
 
-      // audit
+      
       createdById: this.mode === 'create' ? currentUserId : null,
       createdDate: null,
       modifiedById: currentUserId ?? null,
@@ -144,9 +144,9 @@ export class InventoryauctionsForm implements OnInit {
     this.dialogRef.close();
   }
 
-  // labels
+  
   inventoryLabel(i: any): string {
-    // Prefer displayName; fallback to id
+    
     return i?.displayName ? `${i.displayName} (#${i.inventoryId})` : `Inventory #${i?.inventoryId}`;
   }
   auctionLabel(a: any): string {

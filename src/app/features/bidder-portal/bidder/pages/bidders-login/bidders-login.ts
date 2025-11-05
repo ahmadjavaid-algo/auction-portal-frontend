@@ -15,7 +15,7 @@ export class BiddersLogin {
   private auth = inject(BidderAuthService);
   private router = inject(Router);
   currentYear = new Date().getFullYear();
-  // bound to your template
+  
   email = '';
   password = '';
   loading = false;

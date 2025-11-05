@@ -3,14 +3,14 @@ export interface Auction {
   auctionStatusId: number;
   auctionName: string;
 
-  startDateTime: string | null;   // was startDate
-  endDateTime: string | null;     // was endDate
-  bidIncrement: number;           // was bidincrement
+  startDateTime: string | null;   
+  endDateTime: string | null;     
+  bidIncrement: number;           
 
-  auctionStatusCode?: string | null; // was auctionstatuscode
-  auctionStatusName?: string | null; // was auctionstatusname
+  auctionStatusCode?: string | null; 
+  auctionStatusName?: string | null; 
 
-  // audit
+  
   createdById?: number | null;
   createdDate?: string | null;
   modifiedById?: number | null;

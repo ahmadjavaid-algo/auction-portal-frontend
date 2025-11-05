@@ -43,7 +43,7 @@ export class MakesForm implements OnInit {
   }
 
   ngOnInit(): void {
-    // use camelCase keys to match template bindings
+    
     this.form = this.fb.group({
       makeId: [0],
       makeName: ['', [Validators.required, Validators.maxLength(100)]]
@@ -71,7 +71,7 @@ export class MakesForm implements OnInit {
       createdDate: null,
       modifiedById: currentUserId ?? null,
       modifiedDate: null
-      // active handled by Activate endpoint
+      
     };
 
     this.dialogRef.close(

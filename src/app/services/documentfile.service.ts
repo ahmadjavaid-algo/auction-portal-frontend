@@ -1,4 +1,4 @@
-// services/documentfile.service.ts
+
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -14,7 +14,7 @@ export class DocumentFileService {
 
   private authHeaders(): HttpHeaders {
     const token = this.auth.token;
-    // IMPORTANT: DO NOT set Content-Type here; let the browser set multipart/form-data boundaries
+    
     return new HttpHeaders(token ? { Authorization: `Bearer ${token}` } : {});
   }
 

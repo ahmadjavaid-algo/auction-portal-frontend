@@ -39,9 +39,9 @@ export class BiddersAccdetails {
   user: Bidder | null = null;
 
   ngOnInit(): void {
-    // Ensure the bidder is authenticated
+    
     if (!this.auth.isAuthenticated || !this.auth.currentUser?.userId) {
-      // redirect to bidder login, preserve returnUrl
+      
       this.router.navigate(['/bidder/login'], { queryParams: { returnUrl: this.router.url } });
       return;
     }

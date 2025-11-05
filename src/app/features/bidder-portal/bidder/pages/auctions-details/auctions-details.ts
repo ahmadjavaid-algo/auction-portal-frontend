@@ -238,7 +238,7 @@ export class AuctionsDetails implements OnDestroy {
     document.removeEventListener('visibilitychange', this.onVisChange);
   }
 
-  /* ===== filters/sort ===== */
+  
   get filteredLots(): LotCard[] {
     const q = this.q.trim().toLowerCase();
     return this.lots.filter(c => {
@@ -324,14 +324,14 @@ export class AuctionsDetails implements OnDestroy {
     this.options.categories = uniq(this.lots.map(l => l.categoryName));
   }
 
-  /* ===== Countdown & Resync ===== */
+  
   private startTicker(): void {
     if (this.tickHandle) clearInterval(this.tickHandle);
     this.tickHandle = setInterval(() => this.updateCountdowns(), 1000);
   }
 
   private startResync(): void {
-    // Re-sync every 2 minutes
+    
     this.resyncSub = interval(120000).subscribe(() => {
       this.auctionsSvc.getTimebox(this.auctionId).subscribe({
         next: tb => {
@@ -406,7 +406,7 @@ export class AuctionsDetails implements OnDestroy {
     return `${hh}:${pad(mm)}:${pad(s)}`;
   }
 
-  /* ===== helpers ===== */
+  
   private buildImagesMap(
     files: InventoryDocumentFile[]
   ): Map<number, string[]> {

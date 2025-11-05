@@ -15,7 +15,7 @@ export class UsersLogin {
   private auth = inject(AuthService);
   private router = inject(Router);
   currentYear = new Date().getFullYear();
-  // bound to your template
+  
   email = '';
   password = '';
   loading = false;

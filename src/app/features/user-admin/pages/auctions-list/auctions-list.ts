@@ -49,7 +49,7 @@ export class AuctionsList {
   private auth = inject(AuthService);
   private dialog = inject(MatDialog);
 
-  /** order must match template columns */
+  
   displayedColumns: string[] = ['expand', 'name', 'schedule', 'bid', 'status', 'actions'];
   detailRow: string[] = ['expandedDetail'];
 
@@ -63,11 +63,11 @@ export class AuctionsList {
   stats = { total: 0, active: 0, inactive: 0, statuses: 0 };
   loading = false;
 
-  /** track expanded auctions */
+  
   expanded = new Set<number>();
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
-  @ViewChild(MatTable) table!: MatTable<Auction>; // ensure we can re-render rows
+  @ViewChild(MatTable) table!: MatTable<Auction>; 
 
   ngOnInit(): void {
     this.loadAuctions();
@@ -115,21 +115,21 @@ export class AuctionsList {
     this.stats = { total: all.length, active, inactive, statuses: statusSet.size };
   }
 
-  // ---- Display helpers ----
+  
   getStart(a: Auction): Date | null { return a.startDateTime ? new Date(a.startDateTime) : null; }
   getEnd(a: Auction): Date | null { return a.endDateTime ? new Date(a.endDateTime) : null; }
 
-  // ---- Expand helpers ----
+  
   toggleExpand(id: number): void {
     if (this.expanded.has(id)) this.expanded.delete(id);
     else this.expanded.add(id);
-    // force Material table to compute the `when:` predicate again
+    
     queueMicrotask(() => this.table?.renderRows());
   }
   isExpanded = (id: number) => this.expanded.has(id);
   isDetailRow = (_index: number, row: Auction) => this.isExpanded(row.auctionId);
 
-  // ---- Search / Paging ----
+  
   onSearch(): void {
     this.auctions.filter = this.searchTerm.trim().toLowerCase();
     this.totalItems = this.auctions.filteredData.length;
@@ -149,7 +149,7 @@ export class AuctionsList {
   get rangeStart(): number { return !this.totalItems ? 0 : this.pageIndex * this.pageSize + 1; }
   get rangeEnd(): number { return Math.min(this.totalItems, (this.pageIndex + 1) * this.pageSize); }
 
-  // ===== Actions =====
+  
   openCreateAuction(): void {
     const ref = this.dialog.open<AuctionsForm, { mode: 'create' }, AuctionsFormResult>(AuctionsForm, {
       width: '720px',
