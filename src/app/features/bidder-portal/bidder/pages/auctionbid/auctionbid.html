@@ -1,0 +1,278 @@
+<div class="auction-bid-page" *ngIf="!loading; else busy">
+  <!-- breadcrumbs -->
+  <div class="crumbs">
+    <a routerLink="/bidder/auctions">Auctions</a>
+    <mat-icon>chevron_right</mat-icon>
+    <a *ngIf="auctionId" [routerLink]="['/bidder/auctions', auctionId]">
+      {{ auction?.auctionName || ('Auction #' + auctionId) }}
+    </a>
+    <mat-icon>chevron_right</mat-icon>
+    <span class="current">{{ title }}</span>
+  </div>
+
+  <div class="err" *ngIf="error">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ error }}</span>
+  </div>
+
+  <section class="page" *ngIf="!error">
+    <!-- LEFT: vehicle -->
+    <div class="main">
+      <section class="media">
+        <div
+          class="stage"
+          [ngStyle]="{ '--photo': 'url(' + (activeImage || images[0] || heroUrl) + ')' }"
+        ></div>
+
+        <div class="thumbs" *ngIf="images.length > 1">
+          <button
+            class="thumb"
+            *ngFor="let img of images"
+            [class.active]="img === activeImage"
+            [ngStyle]="{ '--photo': 'url(' + img + ')' }"
+            (click)="selectImage(img)"
+            matTooltip="View"
+          ></button>
+        </div>
+      </section>
+
+      <section class="title-block">
+        <div class="topline">
+          <span class="lot-pill">
+            Lot #{{ lotId }}
+          </span>
+          <span class="status-pill" [class.live]="isLive" [class.ended]="auctionState === 'ended'">
+            <mat-icon>schedule</mat-icon>
+            <span>{{ auctionCountdown }}</span>
+          </span>
+        </div>
+
+        <h1>{{ title }}</h1>
+        <div class="sub">{{ subtitle }}</div>
+
+        <div class="meta">
+          <div class="chip">
+            <div class="label">Start Price</div>
+            <div class="value">{{ money(lotStartPrice) }}</div>
+          </div>
+          <div class="chip">
+            <div class="label">Reserve</div>
+            <div class="value">{{ money(lotReservePrice) }}</div>
+          </div>
+          <div class="chip">
+            <div class="label">Buy Now</div>
+            <div class="value">{{ money(lotBuyNowPrice) }}</div>
+          </div>
+          <div class="chip">
+            <div class="label">Bid Increment</div>
+            <div class="value">{{ money(lotBidIncrement) }}</div>
+          </div>
+          <div class="chip">
+            <div class="label">Auction Window</div>
+            <div class="value">
+              {{
+                formatRange(
+                  auction?.startDateTime || null,
+                  auction?.endDateTime || null
+                )
+              }}
+            </div>
+          </div>
+        </div>
+
+        <div class="your-status">
+          <div class="label">Your status</div>
+          <div class="pill" [ngClass]="yourStatus.toLowerCase().replace(' ', '-')">
+            <mat-icon *ngIf="yourStatus === 'Winning' || yourStatus === 'Won'">
+              emoji_events
+            </mat-icon>
+            <mat-icon *ngIf="yourStatus === 'Outbid' || yourStatus === 'Lost'">
+              warning
+            </mat-icon>
+            <mat-icon *ngIf="yourStatus === 'No Bids'">person</mat-icon>
+            <span>{{ yourStatus }}</span>
+          </div>
+          <div class="details">
+            <span *ngIf="currentPrice != null">
+              Current price: <strong>{{ money(currentPrice) }}</strong>
+            </span>
+            <span *ngIf="yourMaxBid != null">
+              • Your top bid: <strong>{{ money(yourMaxBid) }}</strong>
+            </span>
+            <span *ngIf="yourMaxBid == null">
+              • You haven't placed a bid yet.
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel specs">
+        <h3>Vehicle details</h3>
+        <div class="grid">
+          <div class="row" *ngFor="let s of specs">
+            <div class="label">{{ s.label }}</div>
+            <div class="value">{{ s.value || '—' }}</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel history">
+        <div class="head">
+          <h3>Bid history</h3>
+          <span class="badge" *ngIf="bids.length">{{ bids.length }} bids</span>
+        </div>
+
+        <div class="empty" *ngIf="bids.length === 0">
+          <mat-icon>info</mat-icon>
+          No bids yet. Be the first to bid.
+        </div>
+
+        <div class="timeline" *ngIf="bids.length > 0">
+          <div class="item" *ngFor="let b of bids; let i = index">
+            <div class="dot" [class.top]="i === 0"></div>
+            <div class="line" *ngIf="i < bids.length - 1"></div>
+            <div class="card">
+              <div class="row1">
+                <span class="who" [class.me]="b.isMine">
+                  {{ b.isMine ? 'You' : 'Bidder #' + (b.createdById ?? '—') }}
+                </span>
+                <span class="amount">{{ money(b.amount) }}</span>
+              </div>
+              <div class="row2">
+                <span class="when">{{ formatDate(b.createdDate) }}</span>
+                <span class="status" *ngIf="b.statusName">
+                  {{ b.statusName }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- RIGHT: bidding panel -->
+    <aside class="sidebar">
+      <div class="rail">
+        <section class="bid-panel">
+          <div class="head">
+            <div class="title">
+              <mat-icon>gavel</mat-icon>
+              <span>Live bidding</span>
+            </div>
+            <div class="pill" [ngClass]="auctionState">
+              <span *ngIf="auctionState === 'scheduled'">Scheduled</span>
+              <span *ngIf="auctionState === 'live'">Live</span>
+              <span *ngIf="auctionState === 'ended'">Ended</span>
+              <span *ngIf="auctionState === 'unknown'">—</span>
+            </div>
+          </div>
+
+          <div class="current">
+            <div class="label">Current price</div>
+            <div class="value">
+              {{ money(currentPrice ?? lotStartPrice) }}
+            </div>
+          </div>
+
+          <div class="input-row">
+            <label for="bidInput">Your bid</label>
+            <div class="input-wrap">
+              <span class="prefix">$</span>
+              <input
+                id="bidInput"
+                type="number"
+                [(ngModel)]="newBidAmount"
+                [disabled]="!isLive || placingBid"
+              />
+            </div>
+            <div class="hint">
+              <span *ngIf="lotBidIncrement">
+                Min increment: {{ money(lotBidIncrement) }}
+              </span>
+              <span *ngIf="!lotBidIncrement">
+                Enter an amount higher than current price.
+              </span>
+            </div>
+          </div>
+
+          <div class="quick-row">
+            <button
+              type="button"
+              class="quick"
+              mat-button
+              (click)="adjustBid((lotBidIncrement || 100) * 1)"
+              [disabled]="!isLive || placingBid"
+            >
+              + 1x Increment
+            </button>
+            <button
+              type="button"
+              class="quick"
+              mat-button
+              (click)="adjustBid((lotBidIncrement || 100) * 2)"
+              [disabled]="!isLive || placingBid"
+            >
+              + 2x Increment
+            </button>
+            <button
+              type="button"
+              class="quick"
+              mat-button
+              (click)="adjustBid((lotBidIncrement || 100) * 5)"
+              [disabled]="!isLive || placingBid"
+            >
+              + 5x Increment
+            </button>
+          </div>
+
+          <button
+            type="button"
+            class="primary-btn"
+            (click)="placeBid()"
+            [disabled]="!isLive || placingBid"
+          >
+            <mat-icon>gavel</mat-icon>
+            <span *ngIf="isLive && !placingBid">Place bid</span>
+            <span *ngIf="placingBid">Placing…</span>
+            <span *ngIf="!isLive && !placingBid">Bidding closed</span>
+          </button>
+
+          <div class="footnote">
+            Your bids are binding. Make sure you’ve reviewed the listing details before
+            placing a bid.
+          </div>
+        </section>
+
+        <section class="meta-panel">
+          <div class="row">
+            <div class="label">Auction</div>
+            <div class="value">
+              {{ auction?.auctionName || ('Auction #' + auctionId) }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="label">Schedule</div>
+            <div class="value">
+              {{
+                formatRange(
+                  auction?.startDateTime || null,
+                  auction?.endDateTime || null
+                )
+              }}
+            </div>
+          </div>
+          <div class="row">
+            <div class="label">Status</div>
+            <div class="value">
+              {{ auction?.auctionStatusName || auction?.auctionStatusCode || '—' }}
+            </div>
+          </div>
+        </section>
+      </div>
+    </aside>
+  </section>
+</div>
+
+<ng-template #busy>
+  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+</ng-template>
