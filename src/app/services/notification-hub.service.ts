@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import * as signalR from '@microsoft/signalr';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 
 import { BidderAuthService } from './bidderauth';
 import { FavouriteNotification } from '../models/favourite-notification.model';
@@ -13,7 +13,11 @@ export type NotificationType =
   | 'auction-starting-soon'
   | 'auction-started'
   | 'auction-ending-soon'
-  | 'auction-ended';
+  | 'auction-ended'
+  | 'bid-winning'
+  | 'bid-outbid'
+  | 'auction-won'
+  | 'auction-lost';
 
 export interface NotificationItem {
   id: string;
@@ -23,7 +27,6 @@ export interface NotificationItem {
   createdAt: Date;
   read: boolean;
 
-  
   auctionId?: number | null;
   inventoryAuctionId?: number | null;
 }
@@ -44,11 +47,15 @@ export class NotificationHubService {
   private _notifications$ = new BehaviorSubject<NotificationItem[]>([]);
   notifications$ = this._notifications$.asObservable();
 
+  // 🔥 per-notification stream so pages can react to single new items
+  private _stream$ = new Subject<NotificationItem>();
+  stream$ = this._stream$.asObservable();
+
   /** Initialize hub + notification list for the given userId.
    *  Pass null when there is no logged-in bidder.
    */
   initForUser(userId: number | null): void {
-    
+    // stop previous connection (if any)
     this.stop();
 
     if (!userId) {
@@ -56,12 +63,13 @@ export class NotificationHubService {
       return;
     }
 
-    
+    // load existing notifications for this user
     this.api.getForCurrentUser().subscribe({
       next: dtos => {
         const items = (dtos || []).map(dto => this.mapDtoToItem(dto));
-        
-        const sorted = items.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        const sorted = items.sort(
+          (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
+        );
         this._notifications$.next(sorted);
       },
       error: err => {
@@ -70,11 +78,10 @@ export class NotificationHubService {
       }
     });
 
-    
+    // start SignalR connection
     this.start();
   }
 
-  
   private start(): void {
     if (this.hub || this.starting) return;
     this.starting = true;
@@ -117,14 +124,13 @@ export class NotificationHubService {
     }
   }
 
-  
   markAllAsRead(): void {
     const updated = this._notifications$.value.map(n => ({ ...n, read: true }));
     this._notifications$.next(updated);
 
     this.api.markAllRead().subscribe({
       next: _dtos => {
-        
+        // server state updated; nothing else to do here
       },
       error: err => {
         console.error('[notif] markAllRead failed', err);
@@ -132,13 +138,12 @@ export class NotificationHubService {
     });
   }
 
-  
   clearAll(): void {
     this._notifications$.next([]);
 
     this.api.clearAll().subscribe({
       next: _dtos => {
-        
+        // server state updated; nothing else to do here
       },
       error: err => {
         console.error('[notif] clearAll failed', err);
@@ -146,17 +151,15 @@ export class NotificationHubService {
     });
   }
 
-  
-
   private registerHandlers(hub: signalR.HubConnection): void {
-    
+    // Favourite added
     hub.on('FavouriteAdded', (payload: FavouriteNotification) => {
       console.log('[notif] FavouriteAdded', payload);
       const note = this.buildFavouriteAddedNotification(payload);
       this.addNotification(note);
     });
 
-    
+    // Favourite deactivated
     hub.on('FavouriteDeactivated', (payload: FavouriteNotification) => {
       console.log('[notif] FavouriteDeactivated', payload);
 
@@ -179,7 +182,7 @@ export class NotificationHubService {
       this.addNotification(note);
     });
 
-    
+    // Generic notifications (including bids / results)
     hub.on('NotificationCreated', (payload: NotificationDto) => {
       console.log('[notif] NotificationCreated', payload);
       const note = this.mapDtoToItem(payload);
@@ -231,15 +234,14 @@ export class NotificationHubService {
 
   private addNotification(note: NotificationItem): void {
     const current = this._notifications$.value;
-    
+
     this._notifications$.next([note, ...current].slice(0, 50));
+
+    // 🔥 emit this new notification to listeners (e.g. AuctionBid page)
+    this._stream$.next(note);
   }
 
-  
-
-  
   private mapDtoToItem(dto: NotificationDto): NotificationItem {
-    
     const createdRaw =
       (dto as any).createdDate ??
       (dto as any).CreatedDate ??
@@ -283,14 +285,18 @@ export class NotificationHubService {
       null;
 
     return {
-      id: idNumber != null ? String(idNumber) : `notif-${Date.now()}-${Math.random()}`,
+      id:
+        idNumber != null
+          ? String(idNumber)
+          : `notif-${Date.now()}-${Math.random()}`,
       type: (typeRaw as NotificationType) || 'favourite-added',
       title,
       message,
       createdAt,
       read: !!isRead,
       auctionId: auctionId != null ? Number(auctionId) : null,
-      inventoryAuctionId: inventoryAuctionId != null ? Number(inventoryAuctionId) : null
+      inventoryAuctionId:
+        inventoryAuctionId != null ? Number(inventoryAuctionId) : null
     };
   }
 }

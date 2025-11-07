@@ -1,5 +1,5 @@
 // auctionbid.ts
-import { Component, inject, OnDestroy } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -28,6 +28,10 @@ import { InventoryService } from '../../../../../services/inventory.service';
 import { ProductsService } from '../../../../../services/products.service';
 import { AuctionBidService } from '../../../../../services/auctionbids.service';
 import { BidderAuthService } from '../../../../../services/bidderauth';
+import {
+  NotificationHubService,
+  NotificationItem
+} from '../../../../../services/notification-hub.service';
 
 type SpecRow = { label: string; value: string | number | null | undefined };
 
@@ -56,7 +60,7 @@ type BidView = {
   templateUrl: './auctionbid.html',
   styleUrls: ['./auctionbid.scss']
 })
-export class Auctionbid implements OnDestroy {
+export class Auctionbid implements OnInit, OnDestroy {
   // route + services
   private route = inject(ActivatedRoute);
   private snack = inject(MatSnackBar);
@@ -68,6 +72,7 @@ export class Auctionbid implements OnDestroy {
   private productsSvc = inject(ProductsService);
   private bidsSvc = inject(AuctionBidService);
   private bidderAuth = inject(BidderAuthService);
+  private notifHub = inject(NotificationHubService);
 
   // ids from route
   auctionId!: number;
@@ -96,6 +101,7 @@ export class Auctionbid implements OnDestroy {
   private clockSkewMs = 0;
   private tickHandle: any = null;
   private resyncSub?: Subscription;
+  private notifStreamSub?: Subscription;
 
   auctionState: 'scheduled' | 'live' | 'ended' | 'unknown' = 'unknown';
   auctionCountdown = '—';
@@ -165,12 +171,20 @@ export class Auctionbid implements OnDestroy {
       }
 
       this.loadAll();
+
+      // subscribe once to notif stream for live bid / result updates
+      if (!this.notifStreamSub) {
+        this.notifStreamSub = this.notifHub.stream$.subscribe(n =>
+          this.handleNotification(n)
+        );
+      }
     });
   }
 
   ngOnDestroy(): void {
     if (this.tickHandle) clearInterval(this.tickHandle);
     this.resyncSub?.unsubscribe();
+    this.notifStreamSub?.unsubscribe();
     document.removeEventListener('visibilitychange', this.onVisChange);
   }
 
@@ -543,9 +557,13 @@ export class Auctionbid implements OnDestroy {
     }
 
     if (!this.isLive) {
-      this.snack.open('Bidding is only available while the auction is live.', 'OK', {
-        duration: 3000
-      });
+      this.snack.open(
+        'Bidding is only available while the auction is live.',
+        'OK',
+        {
+          duration: 3000
+        }
+      );
       return;
     }
 
@@ -558,9 +576,13 @@ export class Auctionbid implements OnDestroy {
     }
 
     if (this.currentPrice != null && amount <= this.currentPrice) {
-      this.snack.open('Your bid must be higher than the current price.', 'OK', {
-        duration: 3000
-      });
+      this.snack.open(
+        'Your bid must be higher than the current price.',
+        'OK',
+        {
+          duration: 3000
+        }
+      );
       return;
     }
 
@@ -662,6 +684,64 @@ export class Auctionbid implements OnDestroy {
           console.error('[bid] refreshBids() failed', err);
         }
       });
+  }
+
+  /* ========= live notification handling ========= */
+
+  private handleNotification(n: NotificationItem): void {
+    // Only care about notifications for THIS auction + lot
+    if (!n.auctionId || !n.inventoryAuctionId) return;
+    if (n.auctionId !== this.auctionId || n.inventoryAuctionId !== this.lotId) {
+      return;
+    }
+
+    // Only care about bid / result types
+    if (
+      n.type !== 'bid-outbid' &&
+      n.type !== 'bid-winning' &&
+      n.type !== 'auction-won' &&
+      n.type !== 'auction-lost'
+    ) {
+      return;
+    }
+
+    // toast per type
+    switch (n.type) {
+      case 'bid-outbid':
+        this.snack.open(
+          'You have been outbid on this lot. Refreshing bid history…',
+          'OK',
+          { duration: 5000 }
+        );
+        break;
+
+      case 'bid-winning':
+        this.snack.open(
+          'Your bid is currently winning for this lot.',
+          'OK',
+          { duration: 4000 }
+        );
+        break;
+
+      case 'auction-won':
+        this.snack.open(
+          'Congratulations! You have won this lot.',
+          'View',
+          { duration: 6000 }
+        );
+        break;
+
+      case 'auction-lost':
+        this.snack.open(
+          'The auction has ended and your bid was not the winning bid.',
+          'OK',
+          { duration: 6000 }
+        );
+        break;
+    }
+
+    // Refresh bids so UI reflects latest state/status
+    this.refreshBids();
   }
 
   /* ========= helpers / pipes ========= */
