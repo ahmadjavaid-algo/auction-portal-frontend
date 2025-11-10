@@ -23,6 +23,7 @@ import { InventoryList } from './pages/inventory-list/inventory-list';
 import { AuctionsList } from './pages/auctions-list/auctions-list';
 import { AuctionsDetails } from './pages/auctions-details/auctions-details';
 import { InventoryImagesform } from './pages/inventory-imagesform/inventory-imagesform';
+import { AdminChangePassword } from './pages/admin-change-password/admin-change-password';
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
 
@@ -53,6 +54,7 @@ const routes: Routes = [
       { path: 'inventory/:id', component: InventoryDetails, title: 'Inventory Details' },
       { path: 'auctions', component: AuctionsList, title: 'Auctions' },
       { path: 'auctions/:id', component: AuctionsDetails, title: 'Auction Details' },
+      { path: 'change-password', component: AdminChangePassword, title: 'Change Password' },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' }
     ]
   }

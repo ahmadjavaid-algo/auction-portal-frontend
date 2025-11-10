@@ -142,10 +142,20 @@ export class BidderLayout implements OnInit, OnDestroy {
     this.router.navigate(['/bidder/accdetails']);
   }
 
+// bidder-layout.ts (only the changePassword method changed)
   changePassword(): void {
     this.dropdownOpen = false;
-    this.snack.open('Change password coming soon.', 'OK', { duration: 2500 });
+
+    if (!this.auth.isAuthenticated || !this.auth.currentUser?.userId) {
+      this.router.navigate(['/bidder/login'], {
+        queryParams: { returnUrl: '/bidder/change-password' }
+      });
+      return;
+    }
+
+    this.router.navigate(['/bidder/change-password']);
   }
+
 
   async logout(): Promise<void> {
     this.dropdownOpen = false;

@@ -43,10 +43,20 @@ export class AdminLayout {
     }
   }
 
+// admin-layout.ts (only method changed)
   changePassword(): void {
-    
-    this.snack.open('Change password coming soon.', 'OK', { duration: 2500 });
+    this.dropdownOpen = false;
+
+    if (!this.auth.isAuthenticated || !this.auth.currentUser?.userId) {
+      this.router.navigate(['/admin/login'], {
+        queryParams: { returnUrl: '/admin/change-password' }
+      });
+      return;
+    }
+
+    this.router.navigate(['/admin/change-password']);
   }
+
 
   logout(): void {
     this.auth.logout();

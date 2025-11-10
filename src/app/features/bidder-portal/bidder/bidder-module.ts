@@ -18,6 +18,7 @@ import { NewcarsList } from './pages/newcars-list/newcars-list';
 import { Info } from './pages/info/info';
 import { FavouritesList } from './pages/favourites-list/favourites-list';
 import { Auctionbid } from './pages/auctionbid/auctionbid';
+import { BidderChangePassword } from './pages/bidder-change-password/bidder-change-password';
 
 @NgModule({
   declarations: [],
@@ -39,7 +40,8 @@ import { Auctionbid } from './pages/auctionbid/auctionbid';
     NewcarsList,
     Info,
     FavouritesList,
-    Auctionbid
+    Auctionbid,
+    BidderChangePassword
   ]
 })
 export class BidderModule { }

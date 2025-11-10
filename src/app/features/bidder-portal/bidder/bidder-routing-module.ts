@@ -17,6 +17,7 @@ import { NewcarsList } from './pages/newcars-list/newcars-list';
 import { Info } from './pages/info/info';
 import { FavouritesList } from './pages/favourites-list/favourites-list';
 import { Auctionbid } from './pages/auctionbid/auctionbid';
+import { BidderChangePassword } from './pages/bidder-change-password/bidder-change-password';
 
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -59,7 +60,8 @@ const routes: Routes = [
       { path: 'pricing', component: Pricing, title: 'Pricing' },
       { path: 'newcars-list', component: NewcarsList, title: 'New Cars' },
       { path: 'info', component: Info, title: 'Reach Us' },
-      { path: 'favourites-list', component: FavouritesList, title: 'Favourites' }
+      { path: 'favourites-list', component: FavouritesList, title: 'Favourites' },
+      { path: 'change-password', component: BidderChangePassword , title: 'Change Password'}
     ]
   }
 ];
