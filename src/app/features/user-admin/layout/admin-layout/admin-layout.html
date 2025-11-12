@@ -2,10 +2,14 @@
   <!-- Sidebar -->
   <aside [class.collapsed]="sidebarCollapsed" class="sidebar">
     <div class="logo">
-      <a routerLink="dashboard" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:white">
+      <a
+        routerLink="dashboard"
+        style="display:flex;align-items:center;gap:10px;text-decoration:none;color:white"
+      >
         <img
           src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8"
-          alt="Logo" />
+          alt="Logo"
+        />
         <span *ngIf="!sidebarCollapsed">Auction Portal</span>
       </a>
     </div>
@@ -15,9 +19,11 @@
     </button>
 
     <nav>
-      <a routerLink="dashboard"
+      <a
+        routerLink="dashboard"
         routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }">
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
         <mat-icon>space_dashboard</mat-icon>
         <span class="label" *ngIf="!sidebarCollapsed">Dashboard</span>
       </a>
@@ -55,22 +61,78 @@
         <mat-icon>price_change</mat-icon>
         <span class="label" *ngIf="!sidebarCollapsed">Auctions</span>
       </a>
-
-
     </nav>
-
   </aside>
 
   <!-- Main -->
   <main class="main-content">
     <header class="topbar">
-      <button class="icon-btn" aria-label="Notifications">
-        <mat-icon>notifications</mat-icon>
-        <span class="dot"></span>
-      </button>
+      <!-- Notifications -->
+      <div #notifHost class="notif-wrapper">
+        <button
+          class="icon-btn"
+          aria-label="Notifications"
+          (click)="toggleNotifications()"
+        >
+          <mat-icon>notifications</mat-icon>
+          <span class="dot" *ngIf="unreadCount > 0"></span>
+        </button>
 
-      <div #dropdown class="user" [class.open]="dropdownOpen" (click)="toggleDropdown()">
-        <div class="avatar">{{ (displayName || 'U') | slice:0:1 }}</div>
+        <div class="notif-panel" *ngIf="notifOpen">
+          <div class="notif-header">
+            <span>Notifications</span>
+            <div class="right">
+              <span class="badge" *ngIf="unreadCount > 0">
+                {{ unreadCount }} new
+              </span>
+              <button
+                type="button"
+                class="clear-btn"
+                *ngIf="notifications.length"
+                (click)="clearNotifications($event)"
+              >
+                Clear all
+              </button>
+            </div>
+          </div>
+
+          <div class="notif-list" *ngIf="notifications.length; else noAdminNotif">
+            <button
+              type="button"
+              class="notif-item"
+              *ngFor="let n of notifications"
+              (click)="onNotificationClick(n)"
+            >
+              <div class="notif-main">
+                <div class="title">
+                  {{ n.title }}
+                  <span class="pill" *ngIf="!n.read">NEW</span>
+                </div>
+                <div class="msg">{{ n.message }}</div>
+              </div>
+              <div class="time">
+                {{ n.createdAt | date: 'shortTime' }}
+              </div>
+            </button>
+          </div>
+
+          <ng-template #noAdminNotif>
+            <div class="notif-empty">
+              <mat-icon>notifications_none</mat-icon>
+              <span>No notifications yet.</span>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+
+      <!-- User dropdown -->
+      <div
+        #dropdown
+        class="user"
+        [class.open]="dropdownOpen"
+        (click)="toggleDropdown()"
+      >
+        <div class="avatar">{{ (displayName || 'U') | slice: 0:1 }}</div>
         <span class="name">{{ displayName }}</span>
         <mat-icon>expand_more</mat-icon>
         <ul>

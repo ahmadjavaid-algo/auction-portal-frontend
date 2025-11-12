@@ -1,5 +1,12 @@
+// admin-layout.ts
 import {
-  Component, ElementRef, HostListener, ViewChild, inject
+  Component,
+  ElementRef,
+  HostListener,
+  ViewChild,
+  inject,
+  OnInit,
+  OnDestroy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
@@ -8,6 +15,10 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { AuthService } from '../../../../services/auth';
+import {
+  AdminNotificationHubService,
+  AdminNotificationItem
+} from '../../../../services/admin-notification-hub.service';
 
 @Component({
   selector: 'app-admin-layout',
@@ -16,15 +27,23 @@ import { AuthService } from '../../../../services/auth';
   templateUrl: './admin-layout.html',
   styleUrls: ['./admin-layout.scss']
 })
-export class AdminLayout {
+export class AdminLayout implements OnInit, OnDestroy {
   private auth = inject(AuthService);
   private snack = inject(MatSnackBar);
   private router = inject(Router);
+  private adminNotifHub = inject(AdminNotificationHubService);
 
   dropdownOpen = false;
   sidebarCollapsed = false;
 
+  notifOpen = false;
+  notifications: AdminNotificationItem[] = [];
+  unreadCount = 0;
+
   @ViewChild('dropdown') dropdownRef!: ElementRef;
+  @ViewChild('notifHost') notifHostRef!: ElementRef;
+
+  private notifSub?: any;
 
   get displayName(): string {
     const u = this.auth.currentUser;
@@ -33,17 +52,73 @@ export class AdminLayout {
     return name || u.userName || 'Admin';
   }
 
-  toggleDropdown(): void { this.dropdownOpen = !this.dropdownOpen; }
-  toggleSidebar(): void { this.sidebarCollapsed = !this.sidebarCollapsed; }
-
-  @HostListener('document:click', ['$event'])
-  onDocClick(ev: MouseEvent): void {
-    if (this.dropdownOpen && this.dropdownRef && !this.dropdownRef.nativeElement.contains(ev.target)) {
-      this.dropdownOpen = false;
+  ngOnInit(): void {
+    if (this.auth.isAuthenticated) {
+      this.adminNotifHub.init();
+      this.notifSub = this.adminNotifHub.notifications$.subscribe(list => {
+        this.notifications = list;
+        this.unreadCount = list.filter(n => !n.read).length;
+      });
     }
   }
 
-// admin-layout.ts (only method changed)
+  ngOnDestroy(): void {
+    this.notifSub?.unsubscribe();
+  }
+
+  toggleDropdown(): void {
+    this.dropdownOpen = !this.dropdownOpen;
+    if (this.dropdownOpen) this.notifOpen = false;
+  }
+
+  toggleSidebar(): void { this.sidebarCollapsed = !this.sidebarCollapsed; }
+
+  toggleNotifications(): void {
+    this.notifOpen = !this.notifOpen;
+    if (this.notifOpen) {
+      this.dropdownOpen = false;
+      this.adminNotifHub.markAllAsRead();
+    }
+  }
+
+  clearNotifications(ev?: MouseEvent): void {
+    ev?.stopPropagation();
+    this.adminNotifHub.clearAll();
+  }
+
+  // Optional: if you want click behaviour for admin notifications
+  onNotificationClick(n: AdminNotificationItem): void {
+    this.notifOpen = false;
+
+    // Example routing – tweak to whatever makes sense for you:
+    if (n.auctionId && n.inventoryAuctionId) {
+      this.router.navigate(['/admin/auctions', n.auctionId]);
+      return;
+    }
+
+    if (n.affectedUserId) {
+      this.router.navigate(['/admin/bidders', n.affectedUserId]);
+      return;
+    }
+
+    this.router.navigate(['/admin/dashboard']);
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocClick(ev: MouseEvent): void {
+    const target = ev.target as HTMLElement;
+
+    if (this.dropdownOpen && this.dropdownRef &&
+        !this.dropdownRef.nativeElement.contains(target)) {
+      this.dropdownOpen = false;
+    }
+
+    if (this.notifOpen && this.notifHostRef &&
+        !this.notifHostRef.nativeElement.contains(target)) {
+      this.notifOpen = false;
+    }
+  }
+
   changePassword(): void {
     this.dropdownOpen = false;
 
@@ -57,8 +132,11 @@ export class AdminLayout {
     this.router.navigate(['/admin/change-password']);
   }
 
-
   logout(): void {
+    this.dropdownOpen = false;
+    this.notifOpen = false;
+
+    this.adminNotifHub.stop();
     this.auth.logout();
     this.router.navigate(['/admin/login']);
   }
