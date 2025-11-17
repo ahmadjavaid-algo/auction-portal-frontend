@@ -38,7 +38,6 @@
         <span>{{ s.delta }}</span>
       </div>
 
-      <!-- subtle sparkline -->
       <svg class="spark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
         <defs>
           <linearGradient id="g" x1="0" y1="0" x2="1" y2="0">
@@ -54,53 +53,75 @@
 
   <!-- Main Grid -->
   <section class="main-grid">
-    <!-- Left column -->
+    <!-- Left column: Auctions at a Glance -->
     <div class="panel live-auctions">
       <div class="panel-h">
         <h3><mat-icon>local_fire_department</mat-icon> Auctions at a Glance</h3>
-        <button mat-stroked-button class="mini"><mat-icon>visibility</mat-icon> View all</button>
+        <button mat-stroked-button class="mini">
+          <mat-icon>visibility</mat-icon> View all
+        </button>
       </div>
 
-      <ul class="auction-list">
+      <div class="busy" *ngIf="glanceLoading">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      </div>
+
+      <ul class="auction-list" *ngIf="!glanceLoading && liveAuctions.length; else noGlance">
         <li *ngFor="let a of liveAuctions">
           <div class="id mono">{{ a.lot }}</div>
           <div class="car">{{ a.car }}</div>
 
           <div class="time">
             <div class="clock">
-              <span class="ring" [style.--pct]="100 - Math.min(99, (a.endsInMin/120)*100)"></span>
+              <span
+                class="ring"
+                [style.--pct]="
+                  a.endsInMin === null
+                    ? 0
+                    : 100 - Math.min(99, (a.endsInMin / 120) * 100)
+                "
+              ></span>
               <mat-icon>schedule</mat-icon>
             </div>
-            <div class="muted">{{ a.endsInMin }}m left</div>
+            <div class="muted">
+              {{ a.endsInMin === null ? '—' : (a.endsInMin + 'm left') }}
+            </div>
           </div>
 
           <div class="bids">
             <mat-icon>gavel</mat-icon>
-            <span>{{ a.bids }}</span>
+            <span>{{ a.bids ?? '—' }}</span>
           </div>
 
-
-
-          <div class="status" [class.live]="a.status === 'Live'" [class.scheduled]="a.status==='Scheduled'">
+          <div
+            class="status"
+            [class.live]="a.status === 'Live'"
+            [class.scheduled]="a.status === 'Scheduled'"
+          >
             {{ a.status }}
           </div>
         </li>
       </ul>
+
+      <ng-template #noGlance>
+        <div class="notif-empty" style="padding:16px;">
+          <mat-icon>notifications_none</mat-icon>
+          <span>No auctions to show yet.</span>
+        </div>
+      </ng-template>
     </div>
 
+    <!-- Performance -->
     <div class="panel performance">
       <div class="panel-h">
         <h3><mat-icon>insights</mat-icon> Performance (7 days)</h3>
       </div>
-
       <div class="perf-grid">
         <div class="big-number">
           <div class="caption">Revenue</div>
           <div class="num">$126,400</div>
           <div class="chip up"><mat-icon>north_east</mat-icon> +12%</div>
         </div>
-
-        <!-- simple sparkline -->
         <svg class="big-spark" viewBox="0 0 220 80" preserveAspectRatio="none">
           <defs>
             <linearGradient id="gg" x1="0" y1="0" x2="1" y2="0">
@@ -111,7 +132,6 @@
           <path d="M0,60 L24,56 L44,62 L64,40 L84,46 L110,30 L136,42 L168,28 L220,36"
                 stroke="url(#gg)" fill="none" stroke-width="3" />
         </svg>
-
         <div class="mini-kpis">
           <div class="mini">
             <div class="label">Avg. Bid</div>
@@ -129,33 +149,48 @@
       </div>
     </div>
 
-    <!-- Right column -->
+    <!-- Right column: Verification Queue (lists ALL unverified bidders) -->
     <div class="panel kyc">
       <div class="panel-h">
         <h3><mat-icon>pending_actions</mat-icon> Verification Queue</h3>
-        <button mat-stroked-button class="mini"><mat-icon>bolt</mat-icon> Review</button>
+        <button mat-stroked-button class="mini" (click)="loadUnverifiedBidders()" matTooltip="Refresh">
+          <mat-icon>refresh</mat-icon> Refresh
+        </button>
       </div>
 
-      <ul class="queue">
-        <li *ngFor="let k of kycQueue">
-          <div class="avatar" [style.background]=" 'linear-gradient(135deg, var(--brand-500), var(--teal-500))' ">
-            {{ k.name | slice:0:1 }}
+      <div class="busy" *ngIf="kycLoading">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      </div>
+
+      <ul class="queue" *ngIf="!kycLoading && unverifiedBidders.length; else emptyQueue">
+        <li *ngFor="let u of unverifiedBidders">
+          <div class="avatar" [style.background]="'linear-gradient(135deg, var(--brand-500), var(--teal-500))'">
+            {{ getFullName(u) | slice:0:1 }}
           </div>
           <div class="who">
-            <div class="name">{{ k.name }}</div>
-            <div class="sub">{{ k.handle }}</div>
+            <div class="name">{{ getFullName(u) }}</div>
+            <div class="sub">{{ u.email || u.userName }}</div>
           </div>
-          <div class="doc chip">{{ k.doc }}</div>
-          <div class="age muted">{{ k.age }}</div>
+
+          <div class="age muted" [title]="u.createdDate ? (u.createdDate | date:'yyyy-MM-dd HH:mm') : ''">
+            {{ u.createdDate ? toRelative(u.createdDate) : '—' }}
+          </div>
         </li>
       </ul>
+
+      <ng-template #emptyQueue>
+        <div class="notif-empty" style="padding:16px;">
+          <mat-icon>verified_user</mat-icon>
+          <span>Great! No unverified bidders.</span>
+        </div>
+      </ng-template>
     </div>
 
+    <!-- Right column: Top Bidders -->
     <div class="panel bidders">
       <div class="panel-h">
         <h3><mat-icon>leaderboard</mat-icon> Top Bidders Today</h3>
       </div>
-
       <ul class="tops">
         <li *ngFor="let b of topBidders; let i = index">
           <div class="rank">#{{ i + 1 }}</div>
@@ -169,20 +204,42 @@
       </ul>
     </div>
 
+    <!-- Recent Activity (limit 3, toggle full) -->
     <div class="panel activity">
       <div class="panel-h">
         <h3><mat-icon>history</mat-icon> Recent Activity</h3>
+        <button
+          mat-stroked-button
+          class="mini"
+          (click)="toggleRecentActivity()"
+          [attr.aria-expanded]="!activityCollapsed"
+        >
+          <mat-icon>{{ activityCollapsed ? 'unfold_more' : 'unfold_less' }}</mat-icon>
+          {{ activityCollapsed ? 'Show all' : 'Show less' }}
+        </button>
       </div>
 
-      <ul class="timeline">
-        <li *ngFor="let a of activity">
+      <div class="busy" *ngIf="activityLoading">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      </div>
+
+      <ul class="timeline" *ngIf="!activityLoading && activity.length; else noActivity">
+        <li *ngFor="let a of (activityCollapsed ? activity.slice(0,3) : activity)">
           <div class="bullet"><mat-icon>{{ a.icon }}</mat-icon></div>
           <div class="text">{{ a.text }}</div>
           <div class="time muted">{{ a.time }}</div>
         </li>
       </ul>
+
+      <ng-template #noActivity>
+        <div class="notif-empty" style="padding:16px;">
+          <mat-icon>history</mat-icon>
+          <span>No recent activity yet.</span>
+        </div>
+      </ng-template>
     </div>
 
+    <!-- System Health -->
     <div class="panel health">
       <div class="panel-h"><h3><mat-icon>shield</mat-icon> System Health</h3></div>
       <div class="health-grid">

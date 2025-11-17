@@ -1,4 +1,3 @@
-// admin-notifications.service.ts
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -21,11 +20,19 @@ export class AdminNotificationsService {
     return new HttpHeaders(token ? { Authorization: `Bearer ${token}` } : {});
   }
 
-  /** Get admin notifications (current API returns global list). */
+  /** Get admin notifications (global list; respects unread/active server rules). */
   getAll(): Observable<AdminNotificationDto[]> {
     return this.http.get<AdminNotificationDto[]>(`${this.base}/list`, {
       headers: this.authHeaders()
     });
+  }
+
+  /** NEW: Get full admin notification history (even if cleared/read). */
+  getHistory(top = 200): Observable<AdminNotificationDto[]> {
+    return this.http.get<AdminNotificationDto[]>(
+      `${this.base}/history?top=${encodeURIComponent(top)}`,
+      { headers: this.authHeaders() }
+    );
   }
 
   /** Mark all admin notifications as read. */
