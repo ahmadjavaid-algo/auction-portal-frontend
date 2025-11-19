@@ -1,6 +1,6 @@
 :host { display: block; }
 
-/* ===== Page wrapper with soft background ===== */
+
 .page.details-theme {
   --brand: var(--primary-500, #3461ff);
   --brand-2: var(--teal-500, #06b6d4);
@@ -19,20 +19,20 @@
     #f7f7fb;
 }
 
-/* Back link */
+
 .back {
   margin-bottom: 12px;
   color: var(--brand);
   font-weight: 600;
 }
 
-/* Loading */
+
 .busy {
   display: flex; align-items: center; gap: 12px;
   padding: 32px 0; color: #555;
 }
 
-/* ===== Main card ===== */
+
 .profile-card {
   border-radius: 18px;
   overflow: hidden;
@@ -41,7 +41,7 @@
   box-shadow: var(--shadow-1, 0 10px 24px rgba(16,24,40,.10));
 }
 
-/* ===== Hero (gradient strip) ===== */
+
 .hero {
   display: flex; justify-content: space-between; gap: 16px;
   padding: 24px;
@@ -84,7 +84,7 @@
   }
 }
 
-/* ===== Status pills ===== */
+
 .pill {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;
@@ -100,7 +100,7 @@
   .pill-icn { font-size: 16px; height: 16px; width: 16px; }
 }
 
-/* ===== Sections ===== */
+
 .sections {
   padding: 16px 24px 6px;
 
@@ -141,7 +141,7 @@
   }
 }
 
-/* ===== Footer / audit ===== */
+
 .footer {
   margin-top: 6px; padding: 12px 24px 16px;
   display: flex; align-items: center; justify-content: space-between;
@@ -151,7 +151,7 @@
   .buttons button mat-icon { margin-right: 4px; }
 }
 
-/* Responsive */
+
 @media (max-width: 900px) {
   .hero { flex-direction: column; align-items: stretch;
     .meta { grid-template-columns: 1fr 1fr; min-width: 0; }

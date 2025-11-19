@@ -1,10 +1,10 @@
 :host{
-  /* === Algo brand palette (from Pricing page) === */
-  --algo-bg-0:#0d0716;   /* near-black plum */
-  --algo-bg-1:#1a0930;   /* deep purple */
-  --algo-bg-2:#2b0a4a;   /* indigo */
-  --algo-pink:#ff2fb0;   /* electric magenta */
-  --algo-purple:#8a1bd6; /* vibrant purple */
+  
+  --algo-bg-0:#0d0716;   
+  --algo-bg-1:#1a0930;   
+  --algo-bg-2:#2b0a4a;   
+  --algo-pink:#ff2fb0;   
+  --algo-purple:#8a1bd6; 
 
   --ink:#0b0b0b;
   --muted:#707174;
@@ -16,7 +16,7 @@
   color:var(--ink);
   display:block;
 
-  /* Full-page brand gradient background (like Pricing) */
+  
   background:
     radial-gradient(1200px 600px at 85% 10%, rgba(255,47,176,.25), transparent 60%),
     radial-gradient(900px 450px at 5% 0%, rgba(138,27,214,.18), transparent 65%),
@@ -24,7 +24,7 @@
   position: relative;
 }
 
-/* subtle vignette + ultra-faint grain */
+
 :host::before{
   content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
   background:
@@ -40,12 +40,12 @@
 }
 
 .site-layout{
-  position: relative; z-index:1; /* above gradient overlays */
+  position: relative; z-index:1; 
 
-  /* Generic shell for header */
+  
   .shell { max-width: 1180px; margin: 0 auto; padding: 0 18px; }
 
-  /* Sticky, glossy header mirroring Pricing cards */
+  
   .site-header{
     position: sticky; top: 0; left: 0; right: 0; z-index: 50;
     backdrop-filter: saturate(1.1) blur(6px);
@@ -63,7 +63,7 @@
       height: 70px;
     }
 
-    /* Left: brand */
+    
     .brand-link{
       justify-self: start;
       display:flex; align-items:center; gap:10px;
@@ -73,7 +73,7 @@
       span{ white-space:nowrap; }
     }
 
-    /* Center: nav */
+    
     .main-nav{
       justify-self: center;
       display:flex; align-items:center; gap:14px;
@@ -84,13 +84,13 @@
         padding:10px 10px; border-radius:12px;
         transition: color .15s, background .15s, box-shadow .2s;
 
-        /* hover: soft white chip */
+        
         &:hover{
           background:#fff;
           box-shadow: var(--shadow);
         }
 
-        /* active: branded gradient pill */
+        
         &.active{
           color:#fff;
           background: linear-gradient(90deg, var(--algo-purple), var(--algo-pink));
@@ -115,7 +115,7 @@
       }
     }
 
-    /* Right: notifications + user dropdown */
+    
     .header-right{
       justify-self: end;
       display:flex; align-items:center; gap:10px;
@@ -153,7 +153,7 @@
       }
     }
 
-    /* === Notification dropdown === */
+    
     .notif-panel{
       position: absolute;
       top: calc(100% + 10px);
@@ -161,7 +161,7 @@
       width: 320px;
       max-height: 420px;
       border-radius: 16px;
-      padding: 1px; /* for gradient border */
+      padding: 1px; 
       z-index: 70;
 
       background:
@@ -171,7 +171,7 @@
       display: flex;
       flex-direction: column;
 
-      /* inner card */
+      
       &::before{
         content:"";
         position:absolute;
@@ -336,7 +336,7 @@
       .name{ font-weight:800; color:#111; white-space:nowrap; }
       mat-icon{ color:#5b657a; }
 
-      /* dropdown */
+      
       ul, ul li{ list-style:none; margin:0; padding:0; }
       ul{
         display:none; position:absolute; right:0; top: calc(100% + 8px);
@@ -356,10 +356,10 @@
     }
   }
 
-  /* Body simply inherits the background; children pages already themed */
+  
   .site-body{
     min-height: calc(100vh - 70px);
-    /* optional: spacing baseline for all routed pages */
+    
     padding-bottom: 24px;
   }
 }

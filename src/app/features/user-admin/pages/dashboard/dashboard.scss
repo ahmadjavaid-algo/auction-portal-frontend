@@ -1,6 +1,6 @@
 :host { display:block; }
 
-/* ===== Theme tokens aligned to your brand ===== */
+
 .dashboard-page{
   --brand-700: #19306f;
   --brand-600: #3461ff;
@@ -19,10 +19,10 @@
   --shadow-1: 0 10px 24px rgba(16,24,40,.10);
   --shadow-2: 0 18px 48px rgba(16,24,40,.16);
 
-  /* canvas */
+  
   padding: 18px 22px 24px;
   width: 100%;
-  max-width: 1280px;              /* prevent horizontal scrolling */
+  max-width: 1280px;              
   margin-inline: auto;
   overflow-x: hidden;
 
@@ -34,10 +34,10 @@
 
 @keyframes pageIn { from{opacity:0; transform: translateY(8px)} to{opacity:1; transform:none} }
 
-/* ===== Hero ===== */
+
 .hero{
   display:flex; align-items:center; justify-content:space-between; gap:16px;
-  flex-wrap: wrap; /* allow buttons to wrap on smaller widths */
+  flex-wrap: wrap; 
   padding: 16px 18px; border-radius: 16px;
   background: linear-gradient(135deg, rgba(77,106,255,.12), rgba(6,182,212,.14));
   border: 1px solid var(--edge);
@@ -73,10 +73,10 @@
   .hero-actions .mat-icon{ margin-right:6px }
 }
 
-/* ===== KPI Tiles ===== */
+
 .stats-grid{
   display:grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); /* auto-fit prevents overflow */
+  grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); 
   gap: 16px; margin: 16px 0 18px;
 
   .stat-card{
@@ -105,12 +105,12 @@
   }
 }
 
-/* ===== Panels (cards) ===== */
+
 .panel{
   background:#fff; border:1px solid var(--edge); border-radius:16px; box-shadow: var(--shadow-1);
   padding: 12px 12px 10px;
   display:flex; flex-direction:column;
-  overflow: hidden; /* safety net against any accidental overflow */
+  overflow: hidden; 
   .panel-h{ display:flex; align-items:center; justify-content:space-between; padding: 2px 4px 10px;
     h3{ margin:0; font-size:15px; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:6px;
       mat-icon{ color: var(--brand-600); }
@@ -119,19 +119,19 @@
   }
 }
 
-/* ===== Main grid (wider left column so rows never spill) ===== */
+
 .main-grid{
   display:grid;
-  grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr) minmax(0, 1fr); /* was 1.15fr ... */
+  grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr) minmax(0, 1fr); 
   gap: 16px;
 }
 
-/* ===== Auctions list ===== */
+
 .auction-list{
   list-style:none; padding:0; margin:0;
   li{
     display:grid;
-    /* trimmed fixed columns to fit comfortably */
+    
     grid-template-columns: 100px 1fr 120px 72px 110px 116px;
     gap: 10px;
     padding:10px; border-radius:12px;
@@ -150,20 +150,20 @@
     .bids{ display:flex; align-items:center; gap:6px; font-weight:700; }
     .price{
       font-weight:800; color:#0f172a;
-      text-align:right;                 /* keep value tight to the edge */
+      text-align:right;                 
       white-space:nowrap;
       overflow:hidden;
       text-overflow:ellipsis;
     }
 
-    /* status pill */
+    
     .status{
       justify-self:end; align-self:center;
       font-size:12px; font-weight:800;
       padding:4px 12px;
       border-radius:999px; border:1px solid var(--edge);
       background:#f1f5ff; color:#0f172a;
-      white-space: nowrap;              /* prevent breaking "Scheduled" */
+      white-space: nowrap;              
       line-height: 1;
     }
     .status.live{
@@ -179,7 +179,7 @@
   }
 }
 
-/* ===== Performance ===== */
+
 .performance .perf-grid{
   display:grid; grid-template-columns: 1fr; gap: 10px; padding: 2px 6px 8px;
   .big-number{ display:flex; align-items:center; gap:12px; }
@@ -196,7 +196,7 @@
   }
 }
 
-/* ===== Queue ===== */
+
 .queue{
   list-style:none; margin:0; padding:0;
   li{ display:grid; grid-template-columns: 40px 1fr auto auto; gap:10px; align-items:center; padding:8px 8px; border-radius:12px;
@@ -210,7 +210,7 @@
   }
 }
 
-/* ===== Top bidders ===== */
+
 .tops{
   list-style:none; margin:0; padding:0;
   li{ display:grid; grid-template-columns: 28px 12px 1fr auto; gap:10px; align-items:center; padding:8px; border-radius:12px;
@@ -223,7 +223,7 @@
   }
 }
 
-/* ===== Activity timeline ===== */
+
 .timeline{
   list-style:none; margin:0; padding:0;
   li{ display:grid; grid-template-columns: 30px 1fr auto; gap:10px; align-items:center; padding:8px 6px; border-radius:12px;
@@ -237,10 +237,10 @@
   }
 }
 
-/* ===== Health (radials) ===== */
+
 .health-grid{ display:grid; grid-template-columns: repeat(3,1fr); gap:12px; padding: 6px 4px 8px; }
 .radial{
-  --val: 75; /* 0-100 */
+  --val: 75; 
   position:relative; display:grid; place-items:center; gap:6px;
   width:110px; height:110px; margin:auto; border-radius:50%;
   background:
@@ -252,7 +252,7 @@
   strong{ font-size:18px; }
 }
 
-/* ===== Responsive ===== */
+
 @media (max-width: 1200px){
   .main-grid{ grid-template-columns: 1fr 1fr; }
 }

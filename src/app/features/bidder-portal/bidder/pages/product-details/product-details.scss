@@ -1,10 +1,10 @@
 :host{
-  /* === Algo brand palette (exactly like Pricing) === */
-  --algo-bg-0:#0d0716;   /* near-black plum */
-  --algo-bg-1:#1a0930;   /* deep purple */
-  --algo-bg-2:#2b0a4a;   /* indigo */
-  --algo-pink:#ff2fb0;   /* electric magenta */
-  --algo-purple:#8a1bd6; /* vibrant purple */
+  
+  --algo-bg-0:#0d0716;   
+  --algo-bg-1:#1a0930;   
+  --algo-bg-2:#2b0a4a;   
+  --algo-pink:#ff2fb0;   
+  --algo-purple:#8a1bd6; 
 
   --ink:#0b0b0b;
   --muted:#707174;
@@ -21,14 +21,14 @@
   color: var(--ink);
   display:block;
 
-  /* full-page branded gradient */
+  
   background:
     radial-gradient(1200px 600px at 85% 10%, rgba(255,47,176,.25), transparent 60%),
     radial-gradient(900px 450px at 5% 0%, rgba(138,27,214,.18), transparent 65%),
     linear-gradient(135deg, var(--algo-bg-0) 0%, var(--algo-bg-1) 38%, var(--algo-bg-2) 100%);
   position: relative;
 }
-/* vignette + ultra-faint grain for depth */
+
 :host::before{
   content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
   background:
@@ -44,7 +44,7 @@
 }
 
 .product-details{
-  position:relative; z-index:1; /* above gradient layers */
+  position:relative; z-index:1; 
   max-width:1280px; margin:0 auto; padding:42px 18px 72px;
 
   .crumbs{
@@ -62,7 +62,7 @@
     mat-icon{ color:#a40000; }
   }
 
-  /* layout */
+  
   .page{
     display:grid;
     grid-template-columns: minmax(0, 1fr) clamp(380px, 32vw, 520px);
@@ -70,7 +70,7 @@
     @media (max-width: 1060px){ grid-template-columns: 1fr; }
   }
 
-  /* LEFT */
+  
   .main{ min-width:0; }
 
   .media{
@@ -149,7 +149,7 @@
     }
   }
 
-  /* RIGHT rail */
+  
   .sidebar{ min-width:0; }
   .rail{
     position: sticky; top: 84px;

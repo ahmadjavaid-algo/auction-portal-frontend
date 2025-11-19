@@ -22,7 +22,7 @@ import { BidderChangePassword } from './pages/bidder-change-password/bidder-chan
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
 
-  // public
+  
   { path: 'login', component: BiddersLogin, title: 'Bidder Login' },
   { path: 'forgot-password', component: BiddersForgotpassword, title: 'Forgot Password' },
   { path: 'auth/reset-password', component: BiddersResetpassword, title: 'Reset Password' },
@@ -38,18 +38,18 @@ const routes: Routes = [
 
       { path: 'accdetails', component: BiddersAccdetails, title: 'Account Details' },
 
-      // auction list + summary
+      
       { path: 'auctions', component: AuctionsList, title: 'Auctions' },
       { path: 'auctions/:auctionId', component: AuctionsDetails, title: 'Auction Details' },
 
-      // 🚀 live bidding page (what you want to open)
+      
       { 
         path: 'auctions/:auctionId/:inventoryAuctionId',
         component: Auctionbid,
         title: 'Live Auction'
       },
 
-      // 🔍 detailed vehicle page (kept separate)
+      
       {
         path: 'auctions/:auctionId/:inventoryAuctionId/details',
         component: ProductDetails,

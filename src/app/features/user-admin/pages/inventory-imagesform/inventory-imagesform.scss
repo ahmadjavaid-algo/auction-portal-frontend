@@ -1,16 +1,16 @@
-/* Make the Material dialog match app theme and improve contrast */
+
 :host {
   display: block;
 }
 
-/* Dialog container polish */
+
 :host ::ng-deep .mdc-dialog__surface,
 :host ::ng-deep .mat-mdc-dialog-surface {
   border-radius: 24px !important;
   background: var(--surface, #fff) !important;
 }
 
-/* Shell inside dialog */
+
 .dialog-shell {
   padding: 20px 22px;
   background: var(--surface);
@@ -55,7 +55,7 @@
   }
 }
 
-/* Button styles aligned with your gradient theme */
+
 .btn {
   display: inline-flex; align-items: center; gap: 8px; font-weight: 800; border-radius: 12px;
 
@@ -90,7 +90,7 @@
 
 mat-progress-bar { margin-top: 12px; border-radius: 8px; }
 
-/* Optional: give the file chooser the same gradient look */
+
 .file-btn {
   @extend .btn;
   @extend .gradient;

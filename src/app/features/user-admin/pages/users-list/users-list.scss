@@ -1,7 +1,7 @@
-/* ===== Page shell ===== */
+
 :host { display:block; }
 
-/* Soft counter cards (like the template) */
+
 .stats-strip {
   display: grid;
   grid-template-columns: repeat(4, minmax(220px, 1fr));
@@ -38,7 +38,7 @@
   }
 }
 
-/* Toolbar */
+
 .user-header {
   display: flex; align-items: center; justify-content: space-between;
   gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
@@ -57,7 +57,7 @@
   }
 }
 
-/* Data panel */
+
 .panel {
   background: var(--surface);
   border: 1px solid #eef1ff;
@@ -66,7 +66,7 @@
   overflow: hidden;
 }
 
-/* Table look (Material table) */
+
 .full-width-table { width: 100%; }
 
 :host ::ng-deep .mat-mdc-table {
@@ -97,7 +97,7 @@ td, th { padding: 14px 12px !important; text-align: left; }
   color: #111827;
 }
 
-/* Badges */
+
 .badge {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;
@@ -106,11 +106,11 @@ td, th { padding: 14px 12px !important; text-align: left; }
 .badge-no { background: rgba(239,68,68,.14); color: #b42318; }
 .badge-icon { font-size: 18px; height: 18px; width: 18px; }
 
-/* Actions */
+
 .edit-btn { color: var(--blue-500); }
 .delete-btn { color: var(--red-500); }
 
-/* Status pill button */
+
 :host ::ng-deep .mat-mdc-stroked-button {
   border-radius: 999px !important;
   padding: 2px 14px !important;
@@ -120,7 +120,7 @@ td, th { padding: 14px 12px !important; text-align: left; }
 button.is-active   { border-color: #22c55e !important; color: #1f8a43 !important; background: rgba(34,197,94,.10); }
 button.is-inactive { border-color: #ef4444 !important; color: #6b7280 !important; background: rgba(239,68,68,.06); }
 
-/* Footer */
+
 .list-footer {
   display:flex; align-items:center; justify-content:space-between;
   margin-top: 10px; padding: 8px 2px;

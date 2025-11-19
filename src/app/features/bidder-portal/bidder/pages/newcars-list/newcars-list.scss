@@ -1,5 +1,5 @@
 :host{
-  /* Pricing theme */
+  
   --algo-bg-0:#0d0716;
   --algo-bg-1:#1a0930;
   --algo-bg-2:#2b0a4a;
@@ -19,7 +19,7 @@
   position:relative;
 }
 
-/* vignette + grain */
+
 :host::before{
   content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
   background:
@@ -34,21 +34,21 @@
   background-size: 3px 3px; opacity:.15; mix-blend-mode: overlay;
 }
 
-/* canvas */
+
 .info-page{
   position:relative; z-index:1;
-  max-width:1240px;              /* wider canvas */
-  margin:0 auto; padding:56px 22px 84px;  /* more breathing room */
+  max-width:1240px;              
+  margin:0 auto; padding:56px 22px 84px;  
 }
 
-/* HERO */
+
 .hero{
-  text-align:center; color:#fff; margin:8px 0 28px;  /* bigger gap below */
+  text-align:center; color:#fff; margin:8px 0 28px;  
   .stack h1{ font-size:42px; font-weight:900; letter-spacing:.2px; margin:0 0 8px; }
   .stack .sub{ margin:0; opacity:.95; font-weight:700; }
   .chips{
     margin:22px auto 0; display:grid; grid-template-columns:repeat(4,1fr);
-    gap:16px; max-width:1000px;                 /* wider and looser */
+    gap:16px; max-width:1000px;                 
     @media (max-width: 1000px){ grid-template-columns:repeat(2,1fr); }
     @media (max-width: 560px){ grid-template-columns:1fr; }
     .chip{
@@ -59,29 +59,29 @@
   }
 }
 
-/* GRID */
+
 .grid{
   display:grid; align-items:start;
-  grid-template-columns: minmax(0, 1fr) clamp(380px, 32vw, 460px); /* slightly wider rail */
-  gap:22px;                                        /* larger gutter */
+  grid-template-columns: minmax(0, 1fr) clamp(380px, 32vw, 460px); 
+  gap:22px;                                        
   @media (max-width: 1100px){ grid-template-columns: 1fr; }
 }
 
-/* PANELS */
+
 .panel{
   background:#fff; border:1px solid var(--line); border-radius:22px; box-shadow:var(--shadow);
 }
 
 .contact{
-  padding:24px 24px 22px;       /* more inner padding */
+  padding:24px 24px 22px;       
 }
 .contact h2{ margin:0 0 6px; font-weight:900; }
 .contact .hint{ color:var(--muted); margin:0 0 14px; }
 
-/* FORM */
+
 form{
   display:block;
-  .row{ display:flex; gap:16px; margin-bottom:14px; }  /* roomier rows */
+  .row{ display:flex; gap:16px; margin-bottom:14px; }  
   .row.two > *{ flex:1; }
 
   label{ display:flex; flex-direction:column; gap:8px; font-weight:800; color:#111; }
@@ -89,7 +89,7 @@ form{
     height:48px; padding:12px 14px; border-radius:12px; border:1px solid var(--line);
     background:#fff; font-weight:700; outline:none;
   }
-  textarea{ height:auto; resize:vertical; min-height:160px; } /* taller text area */
+  textarea{ height:auto; resize:vertical; min-height:160px; } 
 
   .select select{ appearance:auto; }
   .check{ display:flex; align-items:center; gap:10px; margin:4px 0 10px; font-weight:800; }
@@ -99,7 +99,7 @@ form{
   .actions{ display:flex; align-items:center; gap:14px; margin-top:10px; }
 }
 
-/* CTA buttons */
+
 .btn{
   height:46px; padding:0 18px; border-radius:12px; font-weight:900; display:inline-flex; align-items:center; text-decoration:none;
   &.primary{
@@ -111,22 +111,22 @@ form{
   &.ghost:hover{ background:#000; color:#fff; }
 }
 
-/* RIGHT RAIL */
-.rail{ display:flex; flex-direction:column; gap:16px; } /* more vertical spacing */
+
+.rail{ display:flex; flex-direction:column; gap:16px; } 
 .card{
   background:#fff; border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow); padding:18px;
 }
 .quick h3{ margin:0 0 6px; font-weight:900; }
 .quick p{ margin:0 0 12px; color:var(--muted); }
 
-/* STAT CARDS */
+
 .stat{
   display:grid; place-items:center; text-align:center; padding:22px 18px;
   .big{ font-size:34px; font-weight:900; line-height:1; }
   .caption{ color:#6b6b6b; font-weight:800; }
 }
 
-/* TRUST STRIP */
+
 .trust{
   margin:22px 0 30px; display:grid; grid-template-columns:repeat(3,1fr); gap:16px;
   @media (max-width: 1000px){ grid-template-columns:1fr; }
@@ -143,7 +143,7 @@ form{
   }
 }
 
-/* FAQ */
+
 .faq{
   margin:12px 0 28px;
   h3{ font-size:18px; font-weight:900; margin:0 0 12px; color:#fff; }
@@ -158,7 +158,7 @@ form{
   }
 }
 
-/* FINAL CTA */
+
 .cta-strip{
   border:1px solid rgba(255,255,255,.16);
   background:rgba(255,255,255,.96);

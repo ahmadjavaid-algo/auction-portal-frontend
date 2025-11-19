@@ -1,4 +1,4 @@
-/* Brand + neutrals */
+
 :host {
   --brand-500: #5562f2;
   --brand-600: #4653e6;
@@ -13,26 +13,26 @@
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
-/* Make the Material dialog itself borderless/clean */
+
 :host ::ng-deep .mat-mdc-dialog-container .mdc-dialog__surface {
   border-radius: 16px;
   box-shadow: 0 28px 80px rgba(17, 24, 39, 0.22);
-  background: transparent; /* we’ll render our own sheet */
+  background: transparent; 
 }
 
-/* Header */
+
 .header { padding: 8px 12px 0 12px; }
 .title h2 { margin: 0; font-weight: 700; color: var(--ink-900); }
 .title .sub { margin: 4px 0 0 0; color: var(--ink-500); font-size: 13px; }
 
-/* Scrollable body area */
+
 .body {
   padding: 12px;
-  max-height: 70vh;      /* vertical scroll when needed */
+  max-height: 70vh;      
   overflow: auto;
 }
 
-/* The sheet (borderless card) */
+
 .sheet {
   background: var(--sheet);
   border-radius: 16px;
@@ -40,7 +40,7 @@
   padding: 18px 18px 8px;
 }
 
-/* Grid with tidy spacing */
+
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -49,7 +49,7 @@
 .full { grid-column: span 2; }
 .toggles { display: flex; align-items: center; gap: 16px; }
 
-/* Field styling */
+
 mat-form-field { width: 100%; }
 :host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field-appearance-outline {
   --mdc-outlined-text-field-container-shape: 12px;
@@ -63,7 +63,7 @@ mat-form-field { width: 100%; }
 :host ::ng-deep .mat-mdc-form-field .mdc-notched-outline__notch { padding-inline: 6px; }
 :host ::ng-deep .mat-mdc-form-field .mdc-floating-label { background: transparent; padding: 0 4px; }
 
-/* Actions */
+
 .actions {
   padding: 10px 12px 14px;
   display: flex;
@@ -76,7 +76,7 @@ mat-form-field { width: 100%; }
   border-bottom-right-radius: 16px;
 }
 
-/* Buttons */
+
 .btn-cancel { color: var(--ink-700); border-color: #e5e9f2; }
 .btn-primary {
   background: linear-gradient(180deg, var(--brand-500), var(--brand-600)) !important;
@@ -87,12 +87,12 @@ mat-form-field { width: 100%; }
 }
 .btn-primary[disabled] { background: #c8d1ff !important; box-shadow: none; }
 
-/* Responsiveness */
+
 @media (max-width: 920px) {
   .grid { grid-template-columns: 1fr; }
   .full { grid-column: span 1; }
 }
 
-/* Optional: smoother body scrollbar */
+
 .body::-webkit-scrollbar { width: 10px; }
 .body::-webkit-scrollbar-thumb { background: rgba(15, 23, 42, 0.15); border-radius: 8px; }

@@ -27,7 +27,7 @@
   background-size: 3px 3px; opacity:.15; mix-blend-mode: overlay;
 }
 
-/* ===== Layout ===== */
+
 .login{
   min-height: calc(100vh - 64px);
   display:grid; place-items:center;
@@ -37,7 +37,7 @@
 
 .auth-card{
   width:min(900px, 96vw);
-  /* colored card with subtle brand gradient */
+  
   background:
     radial-gradient(900px 400px at 85% 0%, rgba(255,47,176,.10), transparent 60%),
     radial-gradient(900px 520px at 0% 0%, rgba(138,27,214,.12), transparent 70%),
@@ -59,7 +59,7 @@
   }
 }
 
-/* Brand */
+
 .brand-head{ display:flex; align-items:center; gap:12px; margin-bottom: 4px; }
 .logo{ width:42px; height:32px; border-radius:8px; border:1px solid rgba(15,23,42,.08); box-shadow: 0 6px 14px rgba(12,19,32,.12); }
 .brand-name{ font-weight:900; letter-spacing:.2px; color:#0f172a; }
@@ -71,12 +71,12 @@
   i{ width:8px; height:8px; border-radius:999px; background:#16a34a; box-shadow:0 0 0 2px #fff; display:inline-block; }
 }
 
-/* Titles */
+
 .headline{ margin: 4px 0 8px; }
 .headline h1{ margin:6px 0 22px; font-weight:900; font-size: clamp(30px, 3vw, 38px); color:#0f172a; letter-spacing:.2px; }
 .headline p{ margin:0; color:#6b7280; }
 
-/* Trust chips */
+
 .chips{
   display:grid; grid-template-columns: repeat(4,1fr); gap:12px;
   margin: 12px 0 18px;
@@ -89,14 +89,14 @@
   }
 }
 
-/* Divider */
+
 .divider{
   display:flex; align-items:center; gap:10px; margin: 14px 0 14px;
   &::before, &::after{ content:""; height:1px; flex:1; background:var(--line); border-radius:999px; }
   span{ font-size:12px; font-weight:800; color:#6b7280; }
 }
 
-/* Form */
+
 form{ display:grid; gap:14px; }
 .field{ display:grid; gap:8px; }
 .field .label{ font-size:13px; color:#6b7280; }
@@ -104,7 +104,7 @@ form{ display:grid; gap:14px; }
 .tiny-link{ font-size:12px; font-weight:800; color:#6b7280; text-decoration:none; }
 .tiny-link:hover{ text-decoration:underline; text-underline-offset:3px; }
 
-/* Inputs with icons */
+
 .input-wrap{
   position:relative;
   input{
@@ -130,7 +130,7 @@ form{ display:grid; gap:14px; }
 .checkbox input{ width:16px; height:16px; accent-color:#8a1bd6; }
 .checkbox span{ font-size:14px; color:#6b7280; }
 
-/* Primary button */
+
 .btn{
   height:52px; padding:0 16px; border-radius:12px; font-weight:900;
   display:inline-flex; align-items:center; justify-content:center;
@@ -144,14 +144,14 @@ form{ display:grid; gap:14px; }
 }
 .btn.primary:hover{ background:#000; color:#fff; }
 
-/* Foot */
+
 .foot{ margin-top:12px; font-size:14px; color:#6b7280; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .foot a{ color:var(--algo-purple); font-weight:800; text-decoration:none; }
 .foot a:hover{ text-decoration:underline; text-underline-offset:3px; }
 .foot .spacer{ flex:1 1 auto; }
 .dotsep{ opacity:.5; }
 
-/* Providers (brand colors) */
+
 .providers{ display:grid; gap:12px; grid-template-columns:1fr; margin-top: 2px; }
 .pbtn{
   height:48px; border-radius:12px; font-weight:800; font-size:14px;
@@ -160,7 +160,7 @@ form{ display:grid; gap:14px; }
   transition:transform .08s, box-shadow .22s, filter .12s, background .12s, border-color .12s;
   box-shadow:0 12px 26px rgba(0,0,0,.08);
 
-  .picon{ width:18px; height:18px; display:inline-block; background:#fff; } /* white icons on colored btns */
+  .picon{ width:18px; height:18px; display:inline-block; background:#fff; } 
   &:hover{ transform: translateY(-1px); filter: brightness(1.03); }
 }
 .pbtn.google{
@@ -185,13 +185,13 @@ form{ display:grid; gap:14px; }
   }
 }
 
-/* Enterprise SSO (kept neutral) */
+
 .pbtn.outline.sso{
   background:#fff; color:#111; border:1px solid var(--line);
   .dot{ width:10px; height:10px; border-radius:999px; background:#16a34a; display:inline-block; box-shadow:0 0 0 2px #fff; }
 }
 
-/* Meta / Trust area */
+
 .meta-grid{
   margin-top:16px; display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px;
   @media (max-width: 760px){ grid-template-columns: 1fr; }
@@ -219,7 +219,7 @@ form{ display:grid; gap:14px; }
   background:#111;
 }
 
-/* Below strip */
+
 .below{ margin-top:14px; display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
 .support{ font-size:13px; color:#6b7280; }
 .support a{ color:#111; font-weight:800; text-decoration:none; }

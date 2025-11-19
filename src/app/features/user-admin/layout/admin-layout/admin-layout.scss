@@ -1,6 +1,6 @@
-/* ===== Theme tokens (Atrina-style) ===== */
+
 .layout-container {
-  /* THEME TOKENS (now scoped to the admin area and inherited by children) */
+  
   --brand-900: #0b1437;
   --brand-800: #122154;
   --brand-700: #19306f;
@@ -34,7 +34,7 @@
     linear-gradient(180deg, var(--bg-1), var(--bg-2));
 }
 
-/* ===== Sidebar ===== */
+
 .sidebar {
   width: 260px;
   background: linear-gradient(
@@ -161,14 +161,14 @@
   }
 }
 
-/* ===== Main ===== */
+
 .main-content {
   flex: 1;
   padding: 28px;
   position: relative;
 }
 
-/* ===== Topbar ===== */
+
 .topbar {
   display: flex;
   align-items: center;
@@ -219,7 +219,7 @@
     }
   }
 
-  /* Notification dropdown */
+  
   .notif-panel {
     position: absolute;
     top: calc(100% + 10px);
@@ -227,7 +227,7 @@
     width: 320px;
     max-height: 420px;
     border-radius: 16px;
-    padding: 1px; /* gradient border */
+    padding: 1px; 
     z-index: 70;
 
     background: linear-gradient(

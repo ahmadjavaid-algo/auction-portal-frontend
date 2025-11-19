@@ -142,7 +142,7 @@ export class BidderLayout implements OnInit, OnDestroy {
     this.router.navigate(['/bidder/accdetails']);
   }
 
-// bidder-layout.ts (only the changePassword method changed)
+
   changePassword(): void {
     this.dropdownOpen = false;
 

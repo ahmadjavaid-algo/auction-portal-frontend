@@ -1,4 +1,4 @@
-// admin-layout.ts
+
 import {
   Component,
   ElementRef,
@@ -86,11 +86,11 @@ export class AdminLayout implements OnInit, OnDestroy {
     this.adminNotifHub.clearAll();
   }
 
-  // Optional: if you want click behaviour for admin notifications
+  
   onNotificationClick(n: AdminNotificationItem): void {
     this.notifOpen = false;
 
-    // Example routing – tweak to whatever makes sense for you:
+    
     if (n.auctionId && n.inventoryAuctionId) {
       this.router.navigate(['/admin/auctions', n.auctionId]);
       return;

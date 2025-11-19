@@ -1,4 +1,4 @@
-// auctionbid.ts
+
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -61,7 +61,7 @@ type BidView = {
   styleUrls: ['./auctionbid.scss']
 })
 export class Auctionbid implements OnInit, OnDestroy {
-  // route + services
+  
   private route = inject(ActivatedRoute);
   private snack = inject(MatSnackBar);
 
@@ -74,17 +74,17 @@ export class Auctionbid implements OnInit, OnDestroy {
   private bidderAuth = inject(BidderAuthService);
   private notifHub = inject(NotificationHubService);
 
-  // ids from route
+  
   auctionId!: number;
   inventoryAuctionId!: number;
 
-  // core entities
+  
   auction: Auction | null = null;
   lot: InventoryAuction | null = null;
   inventory: Inventory | null = null;
   product: Product | null = null;
 
-  // UI state
+  
   loading = true;
   error: string | null = null;
 
@@ -95,7 +95,7 @@ export class Auctionbid implements OnInit, OnDestroy {
 
   specs: SpecRow[] = [];
 
-  // auction timing
+  
   private auctionStartUtcMs: number | null = null;
   private auctionEndUtcMs: number | null = null;
   private clockSkewMs = 0;
@@ -106,7 +106,7 @@ export class Auctionbid implements OnInit, OnDestroy {
   auctionState: 'scheduled' | 'live' | 'ended' | 'unknown' = 'unknown';
   auctionCountdown = '—';
 
-  // bidding
+  
   bids: BidView[] = [];
   currentPrice: number | null = null;
   yourMaxBid: number | null = null;
@@ -115,7 +115,7 @@ export class Auctionbid implements OnInit, OnDestroy {
   newBidAmount: number | null = null;
   placingBid = false;
 
-  // hero image fallback
+  
   heroUrl =
     'https://images.unsplash.com/photo-1517940310602-75e447f00b52?q=80&w=1400&auto=format&fit=crop';
 
@@ -128,7 +128,7 @@ export class Auctionbid implements OnInit, OnDestroy {
           maximumFractionDigits: 0
         });
 
-  /* ====== handy getters for template (avoid `(lot as any)` there) ====== */
+  
 
   get lotId(): number | null {
     const l: any = this.lot;
@@ -155,7 +155,7 @@ export class Auctionbid implements OnInit, OnDestroy {
     return (l?.bidIncrement ?? l?.BidIncrement) ?? null;
   }
 
-  /* ================== lifecycle ================== */
+  
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(pm => {
@@ -172,7 +172,7 @@ export class Auctionbid implements OnInit, OnDestroy {
 
       this.loadAll();
 
-      // subscribe once to notif stream for live bid / result updates
+      
       if (!this.notifStreamSub) {
         this.notifStreamSub = this.notifHub.stream$.subscribe(n =>
           this.handleNotification(n)
@@ -188,7 +188,7 @@ export class Auctionbid implements OnInit, OnDestroy {
     document.removeEventListener('visibilitychange', this.onVisChange);
   }
 
-  /* ========= load ========= */
+  
 
   private loadAll(): void {
     this.loading = true;
@@ -225,7 +225,7 @@ export class Auctionbid implements OnInit, OnDestroy {
     })
       .pipe(
         map(({ timebox, auctions, invAucs, files, invs, products, bids }) => {
-          // timebox / clock
+          
           if (timebox) {
             this.auctionStartUtcMs = Number(timebox.startEpochMsUtc);
             this.auctionEndUtcMs = Number(timebox.endEpochMsUtc);
@@ -240,11 +240,11 @@ export class Auctionbid implements OnInit, OnDestroy {
             this.clockSkewMs = 0;
           }
 
-          // auction
+          
           this.auction =
             (auctions || []).find(a => a.auctionId === this.auctionId) || null;
 
-          // lot
+          
           this.lot =
             (invAucs || []).find(
               a =>
@@ -255,7 +255,7 @@ export class Auctionbid implements OnInit, OnDestroy {
             throw new Error('Listing not found');
           }
 
-          // inventory + product
+          
           this.inventory =
             (invs || []).find(i => i.inventoryId === this.lot!.inventoryId) ||
             null;
@@ -265,7 +265,7 @@ export class Auctionbid implements OnInit, OnDestroy {
               ) || null
             : null;
 
-          // title / subtitle
+          
           const snap = this.safeParse(this.inventory?.productJSON);
           const year = this.product?.yearName ?? snap?.Year ?? snap?.year;
           const make = this.product?.makeName ?? snap?.Make ?? snap?.make;
@@ -280,7 +280,7 @@ export class Auctionbid implements OnInit, OnDestroy {
             ? `Chassis ${chassis} • Lot #${this.lotId ?? ''}`
             : `Lot #${this.lotId ?? ''}`;
 
-          // images
+          
           const isImg = (u?: string | null, n?: string | null) => {
             const s = (u || n || '').toLowerCase();
             return ['.jpg', '.jpeg', '.png', '.webp'].some(x => s.endsWith(x));
@@ -301,7 +301,7 @@ export class Auctionbid implements OnInit, OnDestroy {
             this.activeImage = this.heroUrl;
           }
 
-          // specs
+          
           const colorExterior =
             snap?.ExteriorColor ?? snap?.exteriorColor ?? null;
           const colorInterior =
@@ -339,7 +339,7 @@ export class Auctionbid implements OnInit, OnDestroy {
             { label: 'Seller Type', value: sellerType || '—' }
           ];
 
-          // bids
+          
           const currentUserId = this.bidderAuth.currentUser?.userId ?? null;
 
           const bidsForLot = (bids || []).filter(b => {
@@ -380,12 +380,12 @@ export class Auctionbid implements OnInit, OnDestroy {
             .sort((a, b) => {
               const ta = a.createdDate ? Date.parse(a.createdDate) : 0;
               const tb = b.createdDate ? Date.parse(b.createdDate) : 0;
-              return tb - ta; // newest first
+              return tb - ta; 
             });
 
           this.recomputeBidMetrics();
 
-          // timer
+          
           this.updateCountdown();
           this.startTicker();
           this.startResync();
@@ -416,7 +416,7 @@ export class Auctionbid implements OnInit, OnDestroy {
     }
   }
 
-  /* ========= timing / countdown ========= */
+  
 
   private startTicker(): void {
     if (this.tickHandle) clearInterval(this.tickHandle);
@@ -476,7 +476,7 @@ export class Auctionbid implements OnInit, OnDestroy {
       this.auctionCountdown = 'Auction ended';
     }
 
-    this.recomputeBidMetrics(); // status like Won/Lost once ended
+    this.recomputeBidMetrics(); 
   }
 
   private fmtCountdown(ms: number): string {
@@ -494,7 +494,7 @@ export class Auctionbid implements OnInit, OnDestroy {
     return `${hh}:${pad(mm)}:${pad(s)}`;
   }
 
-  /* ========= bidding logic ========= */
+  
 
   get isLive(): boolean {
     return this.auctionState === 'live';
@@ -518,7 +518,7 @@ export class Auctionbid implements OnInit, OnDestroy {
     this.currentPrice = highestBid != null ? highestBid : startPrice ?? null;
     this.yourMaxBid = yourHighest;
 
-    // derive status
+    
     if (!yourHighest) {
       this.yourStatus = 'No Bids';
     } else if (this.auctionState === 'ended') {
@@ -530,7 +530,7 @@ export class Auctionbid implements OnInit, OnDestroy {
       this.yourStatus = 'Outbid';
     }
 
-    // default next bid: current + increment
+    
     if (this.currentPrice != null) {
       const inc = this.lotBidIncrement ?? 0;
       const base = this.currentPrice || 0;
@@ -588,7 +588,7 @@ export class Auctionbid implements OnInit, OnDestroy {
 
     this.placingBid = true;
 
-    // Shape payload exactly like Swagger example
+    
     const payload: any = {
       createdById: userId,
       active: true,
@@ -686,16 +686,16 @@ export class Auctionbid implements OnInit, OnDestroy {
       });
   }
 
-  /* ========= live notification handling ========= */
+  
 
   private handleNotification(n: NotificationItem): void {
-    // Only care about notifications for THIS auction + lot
+    
     if (!n.auctionId || !n.inventoryAuctionId) return;
     if (n.auctionId !== this.auctionId || n.inventoryAuctionId !== this.lotId) {
       return;
     }
 
-    // Only care about bid / result types
+    
     if (
       n.type !== 'bid-outbid' &&
       n.type !== 'bid-winning' &&
@@ -705,7 +705,7 @@ export class Auctionbid implements OnInit, OnDestroy {
       return;
     }
 
-    // toast per type
+    
     switch (n.type) {
       case 'bid-outbid':
         this.snack.open(
@@ -740,11 +740,11 @@ export class Auctionbid implements OnInit, OnDestroy {
         break;
     }
 
-    // Refresh bids so UI reflects latest state/status
+    
     this.refreshBids();
   }
 
-  /* ========= helpers / pipes ========= */
+  
 
   selectImage(url: string): void {
     this.activeImage = url;

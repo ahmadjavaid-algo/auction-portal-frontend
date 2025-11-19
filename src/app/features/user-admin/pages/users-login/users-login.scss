@@ -1,5 +1,5 @@
 .login-container {
-  /* brand tokens */
+  
   --brand-900: #0b1437;
   --brand-800: #122154;
   --brand-700: #19306f;
@@ -28,7 +28,7 @@
   min-height: 100vh;
   font-family: 'Inter', 'Segoe UI', sans-serif;
 
-  /* ============ LEFT: form ============ */
+  
   .login-form {
     flex: 1;
     padding: 80px;
@@ -37,28 +37,28 @@
     flex-direction: column;
     justify-content: center;
 
-    /* ▶ Brand row (logo + name) */
+    
     .brand-head{
       display: flex;
-      align-items: center;        /* vertical alignment */
+      align-items: center;        
       gap: 12px;
-      margin: -6px 0 18px;        /* pull closer to top, add breathing room below */
+      margin: -6px 0 18px;        
     }
     .brand-head .logo{
-      width: 48px;                /* bigger logo */
+      width: 48px;                
       height: 36px;
       border-radius: 10px;
       flex: 0 0 auto;
       box-shadow: 0 6px 16px rgba(15,23,42,.12);
     }
     .brand-head .brand-name{
-      font-size: 20px;            /* larger title text */
-      line-height: 1;             /* tight baseline */
+      font-size: 20px;            
+      line-height: 1;             
       font-weight: 800;
       letter-spacing: .25px;
-      color: var(--brand-700);    /* matches sidebar tone */
-      transform: translateY(1px); /* subtle baseline nudge for perfect optical center */
-      white-space: nowrap;        /* keep in one line */
+      color: var(--brand-700);    
+      transform: translateY(1px); 
+      white-space: nowrap;        
     }
 
     h2 {
@@ -140,14 +140,14 @@
       font-size: 14px;
 
       a {
-        color: var(--primary-500); /* fixed: was an invalid gradient value */
+        color: var(--primary-500); 
         text-decoration: none;
         font-weight: 600;
       }
     }
   }
 
-  /* ============ RIGHT: illustration ============ */
+  
   .login-illustration{
     flex: 1;
     background: linear-gradient(180deg, var(--brand-900) 0%, var(--brand-800) 60%, var(--brand-700) 100%);
@@ -166,7 +166,7 @@
     }
   }
 
-  /* Responsive polish for small screens */
+  
   @media (max-width: 960px){
     .login-form{ padding: 48px 28px; }
     .brand-head .logo{ width: 40px; height: 30px; }

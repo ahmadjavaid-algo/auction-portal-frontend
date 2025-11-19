@@ -1,10 +1,10 @@
 :host{
-  /* === Algo brand palette (Pricing theme) === */
-  --algo-bg-0:#0d0716;   /* near-black plum */
-  --algo-bg-1:#1a0930;   /* deep purple */
-  --algo-bg-2:#2b0a4a;   /* indigo */
-  --algo-pink:#ff2fb0;   /* electric magenta */
-  --algo-purple:#8a1bd6; /* vibrant purple */
+  
+  --algo-bg-0:#0d0716;   
+  --algo-bg-1:#1a0930;   
+  --algo-bg-2:#2b0a4a;   
+  --algo-pink:#ff2fb0;   
+  --algo-purple:#8a1bd6; 
 
   --ink:#0b0b0b;
   --muted:#707174;
@@ -18,14 +18,14 @@
   color:var(--ink);
   display:block;
 
-  /* Full-page brand gradient w/ accent blooms */
+  
   background:
     radial-gradient(1200px 600px at 85% 10%, rgba(255,47,176,.25), transparent 60%),
     radial-gradient(900px 450px at 5% 0%, rgba(138,27,214,.18), transparent 65%),
     linear-gradient(135deg, var(--algo-bg-0) 0%, var(--algo-bg-1) 38%, var(--algo-bg-2) 100%);
   position: relative;
 }
-/* soft vignette and ultra-faint grain to match Pricing */
+
 :host::before{
   content:""; position:fixed; inset:0; pointer-events:none; z-index:0;
   background:
@@ -40,7 +40,7 @@
   background-size: 3px 3px; opacity:.15; mix-blend-mode: overlay;
 }
 
-/* Loading/Error shells */
+
 .center{ display:grid; place-items:center; height:50vh; }
 .error{
   max-width:940px; margin:20px auto; padding:12px 16px;
@@ -50,11 +50,11 @@
 }
 
 .account{
-  position: relative; z-index:1; /* sit above gradient overlays */
+  position: relative; z-index:1; 
   max-width:1180px; margin:0 auto; padding:42px 18px 72px; color:#fff;
 }
 
-/* breadcrumbs over dark bg */
+
 .page-crumbs{
   display:flex; align-items:center; gap:8px; margin:2px 4px 14px;
   font-size:13px; font-weight:900; color:#fff;
@@ -62,7 +62,7 @@
   mat-icon{ font-size:18px; height:18px; width:18px; color:#e5e7eb; }
 }
 
-/* hero */
+
 .hero{
   background:#fff; color:#111;
   border:1px solid var(--line); border-radius:22px; box-shadow:var(--shadow);
@@ -85,7 +85,7 @@
   .hero-actions{ display:flex; gap:10px; flex-wrap:wrap; justify-self:end; }
 }
 
-/* brand verified pill */
+
 .verified,
 .badge.verified{
   display:inline-flex; align-items:center; gap:8px; height:22px;
@@ -101,7 +101,7 @@
           mask:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23000" d="M20.285 6.709a1 1 0 0 1 0 1.414l-9.193 9.193a1 1 0 0 1-1.414 0L3.715 11.35a1 1 0 1 1 1.414-1.414l5.25 5.25 8.486-8.477a1 1 0 0 1 1.42-.001Z"/></svg>') center/contain no-repeat;
 }
 
-/* buttons (Pricing CTAs) */
+
 .btn{
   height:40px; padding:0 16px; border-radius:12px; font-weight:900; font-size:14px;
   display:inline-flex; align-items:center; gap:8px; cursor:pointer; text-decoration:none;
@@ -132,13 +132,13 @@
   &.warn{ color:#b42318; border-color:#efc7c2; background:#fff; }
 }
 
-/* cards grid */
+
 .cards.two-col{
   margin-top:16px; display:grid; grid-template-columns:1fr 1fr; gap:16px;
   @media (max-width:950px){ grid-template-columns:1fr; }
 }
 
-/* information panels (glossy white like Pricing) */
+
 .panel{
   background:#fff; border:1px solid var(--line); border-radius:22px; box-shadow:var(--shadow);
   .panel-title{ padding:14px 16px; font-weight:900; font-size:14px; color:#111; }

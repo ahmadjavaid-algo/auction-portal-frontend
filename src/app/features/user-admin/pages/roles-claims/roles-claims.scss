@@ -16,13 +16,13 @@
 
     .right {
       display: flex; align-items: center; gap: 8px;
-      margin-right: 16px; /* ← nudge buttons left so Save stays on-page */
-      flex-wrap: wrap;    /* if space gets tight, wrap nicely */
+      margin-right: 16px; 
+      flex-wrap: wrap;    
 
-      /* Slim, responsive search */
+      
       .search { width: clamp(240px, 28vw, 360px); }
 
-      /* ↓ Compact the material field to ~36px */
+      
       ::ng-deep .search .mat-mdc-text-field-wrapper { height: 36px; }
       ::ng-deep .search .mat-mdc-form-field-flex    { min-height: 36px; }
       ::ng-deep .search .mat-mdc-form-field-infix   { padding-block: 2px; }
@@ -33,7 +33,7 @@
       ::ng-deep .search .mat-mdc-input-element { text-align: left; }
 
 
-      /* Make the action buttons a bit denser too */
+      
       .mat-mdc-button-base { min-height: 36px; padding: 0 12px; }
       .save-btn { font-weight: 700; }
     }

@@ -1,10 +1,10 @@
 :host{
-  /* === Algo brand palette === */
-  --algo-bg-0:#0d0716;   /* near-black plum */
-  --algo-bg-1:#1a0930;   /* deep purple */
-  --algo-bg-2:#2b0a4a;   /* indigo */
-  --algo-pink:#ff2fb0;   /* electric magenta (logo) */
-  --algo-purple:#8a1bd6; /* vibrant purple */
+  
+  --algo-bg-0:#0d0716;   
+  --algo-bg-1:#1a0930;   
+  --algo-bg-2:#2b0a4a;   
+  --algo-pink:#ff2fb0;   
+  --algo-purple:#8a1bd6; 
 
   --ink:#0b0b0b;
   --muted:#707174;
@@ -21,7 +21,7 @@
   color:var(--ink);
   display:block;
 
-  /* Full-page brand gradient background */
+  
   background:
     radial-gradient(1200px 600px at 85% 10%, rgba(255,47,176,.25), transparent 60%),
     radial-gradient(900px 450px at 5% 0%, rgba(138,27,214,.18), transparent 65%),
@@ -29,7 +29,7 @@
   position: relative;
 }
 
-/* subtle vignette + ultra-faint grain */
+
 :host::before{
   content:"";
   position:fixed; inset:0; pointer-events:none;
@@ -46,19 +46,19 @@
   background-image:
     radial-gradient(rgba(255,255,255,.04) 1px, transparent 1px);
   background-size: 3px 3px;
-  opacity:.15; /* tiny, just to lift the gradient */
+  opacity:.15; 
   mix-blend-mode: overlay;
 }
 
 .pricing{
-  position: relative; z-index:1; /* above gradient layers */
+  position: relative; z-index:1; 
   max-width:1180px; margin:0 auto; padding:42px 18px 72px;
 }
 
-/* HERO */
+
 .hero{
   text-align:center; margin-top:6px; margin-bottom:26px;
-  color:#fff; /* headline pops on dark theming behind it */
+  color:#fff; 
 
   h1{ font-size:40px; letter-spacing:.2px; margin:14px 0 6px; font-weight:900; }
 
@@ -89,7 +89,7 @@
   }
 }
 
-/* PLANS */
+
 .plans{
   display:grid; grid-template-columns: repeat(3, 1fr); gap:16px; margin:10px 0 28px;
   align-items:stretch;
@@ -137,7 +137,7 @@
       &:hover{ background:#fff; color:#000; }
     }
 
-    /* Make the Popular plan CTA branded */
+    
     &.popular .cta{
       border:0;
       background:linear-gradient(90deg, var(--algo-purple), var(--algo-pink));
@@ -157,7 +157,7 @@
   }
 }
 
-/* COMPARISON */
+
 .compare{
   margin:10px 0 26px;
 
@@ -186,7 +186,7 @@
   }
 }
 
-/* FAQ */
+
 .faq{
   margin:8px 0 36px;
 
@@ -205,7 +205,7 @@
   }
 }
 
-/* CTA STRIP */
+
 .cta-strip{
   margin-top:4px;
   border:1px solid rgba(255,255,255,.16);

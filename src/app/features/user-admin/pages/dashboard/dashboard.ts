@@ -24,7 +24,7 @@ import { Auction } from '../../../../models/auction.model';
 import { InventoryAuction } from '../../../../models/inventoryauction.model';
 import { Inventory } from '../../../../models/inventory.model';
 
-// NEW: pull bidders for verification queue
+
 import { BiddersService } from '../../../../services/bidders.service';
 import { Bidder } from '../../../../models/bidder.model';
 
@@ -44,7 +44,7 @@ interface GlanceItem {
 interface ActivityRow {
   icon: string;
   text: string;
-  time: string; // relative like "2m", "5h", "1d"
+  time: string; 
   type?: string;
 }
 
@@ -74,7 +74,7 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
   private adminNotifHub = inject(AdminNotificationHubService);
   private adminNotifApi = inject(AdminNotificationsService);
 
-  // NEW: bidders service
+  
   private biddersSvc = inject(BiddersService);
 
   private counterTimer?: any;
@@ -87,7 +87,7 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     return name || u.userName || 'Admin';
   }
 
-  // KPI tiles (still static)
+  
   stats = [
     { icon: 'local_fire_department', label: 'Live Auctions', value: 18,  delta: '+3',  up: true  },
     { icon: 'directions_car',        label: 'Vehicles Listed', value: 742, delta: '+56', up: true },
@@ -97,20 +97,20 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     { icon: 'pending_actions',       label: 'KYC Pending', value: 7,   delta: '–',   up: true  },
   ];
 
-  // === Dynamic: Auctions at a Glance ===
+  
   glanceLoading = false;
   liveAuctions: GlanceItem[] = [];
 
-  // Recent Activity (admin notifications history)
+  
   activityLoading = false;
   activity: ActivityRow[] = [];
-  activityCollapsed = true; // show only top 3 by default
+  activityCollapsed = true; 
 
-  // === Verification Queue (unverified bidders) ===
+  
   kycLoading = false;
-  unverifiedBidders: Bidder[] = []; // will list ALL with emailConfirmed=false
+  unverifiedBidders: Bidder[] = []; 
 
-  // (kept) Top Bidders placeholders
+  
   topBidders = [
     { name: 'Zain R.',   handle: '@zain',   bids: 188, color: '#6ee7b7' },
     { name: 'Ayesha S.', handle: '@ayesha', bids: 163, color: '#93c5fd' },
@@ -121,7 +121,7 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     if (this.auth.isAuthenticated) {
       this.adminNotifHub.init();
       this.refreshActivityFromHistory();
-      this.loadUnverifiedBidders(); // NEW: populate verification queue
+      this.loadUnverifiedBidders(); 
 
       this.notifSub = this.adminNotifHub.notifications$.subscribe({
         next: () => this.refreshActivityFromHistory(),
@@ -153,8 +153,8 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     this.notifSub?.unsubscribe();
   }
 
-  /** ---- Verification Queue: load all bidders with emailConfirmed=false ---- */
-// AFTER
+  
+
 loadUnverifiedBidders(): void {
   this.kycLoading = true;
   this.biddersSvc.getList().pipe(
@@ -174,7 +174,7 @@ loadUnverifiedBidders(): void {
   });
 }
 
-  /** ---- Activity: load history from API ---- */
+  
   private refreshActivityFromHistory(): void {
     this.activityLoading = true;
     this.adminNotifApi.getHistory(200).subscribe({
@@ -207,7 +207,7 @@ loadUnverifiedBidders(): void {
           } as ActivityRow;
         });
 
-        // assuming server returns DESC; keep order
+        
         this.activity = rows;
         this.activityLoading = false;
       },
@@ -222,7 +222,7 @@ loadUnverifiedBidders(): void {
     this.activityCollapsed = !this.activityCollapsed;
   }
 
-  /** ---- Auctions-at-a-Glance data load ---- */
+  
   private loadGlance(): void {
     this.glanceLoading = true;
 
@@ -286,7 +286,7 @@ loadUnverifiedBidders(): void {
     });
   }
 
-  /** ===== Distinct icon mapping per type with fallbacks ===== */
+  
   private iconFor(n: AdminNotificationItem): string {
     const t = (n?.type || '').toLowerCase();
     const text = `${n?.title ?? ''} ${n?.message ?? ''}`.toLowerCase();
@@ -344,7 +344,7 @@ loadUnverifiedBidders(): void {
     return 'notifications';
   }
 
-  /** ===== Shared helpers ===== */
+  
 toRelative(dateLike?: string | Date | null): string {
   if (!dateLike) return '—';
   const ts = typeof dateLike === 'string' ? new Date(dateLike).getTime() : new Date(dateLike).getTime();
@@ -375,7 +375,7 @@ toRelative(dateLike?: string | Date | null): string {
     return n >= 1000 ? n.toLocaleString() : String(n);
   }
 
-  // convenience for template
+  
   getFullName(u: Bidder): string {
     const f = (u.firstName ?? '').trim();
     const l = (u.lastName ?? '').trim();
