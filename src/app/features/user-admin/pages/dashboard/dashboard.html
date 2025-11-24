@@ -7,16 +7,26 @@
       </div>
       <div class="title">
         <h1>Welcome back, {{ adminName }}</h1>
-        <p class="sub">Your car auctions at a glance — live traffic, bids and verifications.</p>
+        <p class="sub">
+          Your car auctions at a glance — live traffic, bids and verifications.
+        </p>
       </div>
     </div>
 
     <div class="hero-actions">
-      <button mat-stroked-button class="ghost" matTooltip="Schedule a new auction">
+      <button
+        mat-stroked-button
+        class="ghost"
+        matTooltip="Schedule a new auction"
+      >
         <mat-icon>calendar_month</mat-icon>
         Schedule Auction
       </button>
-      <button mat-flat-button class="cta" matTooltip="List a new vehicle">
+      <button
+        mat-flat-button
+        class="cta"
+        matTooltip="List a new vehicle"
+      >
         <mat-icon>add_circle</mat-icon>
         Add Vehicle
       </button>
@@ -25,11 +35,17 @@
 
   <!-- KPI Tiles -->
   <section class="stats-grid">
-    <div class="stat-card" *ngFor="let s of stats; let i = index" [style.--i]="i">
+    <div
+      class="stat-card"
+      *ngFor="let s of stats; let i = index"
+      [style.--i]="i"
+    >
       <div class="icon-wrap"><mat-icon>{{ s.icon }}</mat-icon></div>
       <div class="meta">
         <div class="value">
-          <span class="count-up" [attr.data-value]="s.value">0</span>
+          <span class="count-up" [attr.data-value]="s.value || 0">
+            {{ s.value || 0 }}
+          </span>
         </div>
         <div class="label">{{ s.label }}</div>
       </div>
@@ -38,15 +54,24 @@
         <span>{{ s.delta }}</span>
       </div>
 
-      <svg class="spark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+      <svg
+        class="spark"
+        viewBox="0 0 100 32"
+        preserveAspectRatio="none"
+        aria-hidden="true"
+      >
         <defs>
           <linearGradient id="g" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stop-color="var(--brand-500)"/>
-            <stop offset="1" stop-color="var(--teal-500)"/>
+            <stop offset="0" stop-color="var(--brand-500)" />
+            <stop offset="1" stop-color="var(--teal-500)" />
           </linearGradient>
         </defs>
-        <path d="M0,22 L12,18 L22,24 L32,12 L42,16 L55,10 L68,14 L82,8 L100,12"
-              stroke="url(#g)" fill="none" stroke-width="2" />
+        <path
+          d="M0,22 L12,18 L22,24 L32,12 L42,16 L55,10 L68,14 L82,8 L100,12"
+          stroke="url(#g)"
+          fill="none"
+          stroke-width="2"
+        />
       </svg>
     </div>
   </section>
@@ -56,9 +81,20 @@
     <!-- Left column: Auctions at a Glance -->
     <div class="panel live-auctions">
       <div class="panel-h">
-        <h3><mat-icon>local_fire_department</mat-icon> Auctions at a Glance</h3>
-        <button mat-stroked-button class="mini">
-          <mat-icon>visibility</mat-icon> View all
+        <h3>
+          <mat-icon>local_fire_department</mat-icon>
+          Auctions at a Glance
+        </h3>
+
+        <!-- Only show toggle if there are more than 5 rows -->
+        <button
+          mat-stroked-button
+          class="mini"
+          *ngIf="liveAuctions.length > 5"
+          (click)="toggleGlance()"
+        >
+          <mat-icon>visibility</mat-icon>
+          {{ glanceExpanded ? 'Collapse' : 'View all' }}
         </button>
       </div>
 
@@ -66,33 +102,25 @@
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       </div>
 
-      <ul class="auction-list" *ngIf="!glanceLoading && liveAuctions.length; else noGlance">
-        <li *ngFor="let a of liveAuctions">
+      <!-- rows: AU-xx | Make+Count | Live/Scheduled -->
+      <ul
+        class="auction-list"
+        *ngIf="!glanceLoading && liveAuctions.length; else noGlance"
+      >
+        <li *ngFor="let a of visibleGlanceAuctions">
+          <!-- Auction number -->
           <div class="id mono">{{ a.lot }}</div>
-          <div class="car">{{ a.car }}</div>
 
-          <div class="time">
-            <div class="clock">
-              <span
-                class="ring"
-                [style.--pct]="
-                  a.endsInMin === null
-                    ? 0
-                    : 100 - Math.min(99, (a.endsInMin / 120) * 100)
-                "
-              ></span>
-              <mat-icon>schedule</mat-icon>
-            </div>
-            <div class="muted">
-              {{ a.endsInMin === null ? '—' : (a.endsInMin + 'm left') }}
-            </div>
+          <!-- Make + car icon + count (single line) -->
+          <div class="make-col">
+            <span class="car">{{ a.make }}</span>
+            <span class="bids">
+              <mat-icon>directions_car</mat-icon>
+              <span>{{ a.count }}</span>
+            </span>
           </div>
 
-          <div class="bids">
-            <mat-icon>gavel</mat-icon>
-            <span>{{ a.bids ?? '—' }}</span>
-          </div>
-
+          <!-- Status pill: Live / Scheduled (single line) -->
           <div
             class="status"
             [class.live]="a.status === 'Live'"
@@ -104,7 +132,7 @@
       </ul>
 
       <ng-template #noGlance>
-        <div class="notif-empty" style="padding:16px;">
+        <div class="notif-empty" style="padding: 16px">
           <mat-icon>notifications_none</mat-icon>
           <span>No auctions to show yet.</span>
         </div>
@@ -114,47 +142,78 @@
     <!-- Performance -->
     <div class="panel performance">
       <div class="panel-h">
-        <h3><mat-icon>insights</mat-icon> Performance (7 days)</h3>
+        <h3><mat-icon>insights</mat-icon> Revenue Performance</h3>
       </div>
       <div class="perf-grid">
         <div class="big-number">
-          <div class="caption">Revenue</div>
-          <div class="num">$126,400</div>
-          <div class="chip up"><mat-icon>north_east</mat-icon> +12%</div>
+          <div class="caption">Total Revenue</div>
+          <div class="num">
+            {{ totalRevenue | number : '1.0-0' }}
+          </div>
+
+          <div class="chip" [class.up]="revenueTodaySharePercent > 0">
+            <mat-icon>
+              {{ revenueTodaySharePercent > 0 ? 'north_east' : 'horizontal_rule' }}
+            </mat-icon>
+            <ng-container
+              *ngIf="totalRevenue > 0 && revenueToday > 0; else noRevChip"
+            >
+              {{ revenueTodaySharePercent }}% of total today
+            </ng-container>
+            <ng-template #noRevChip>
+              No revenue yet today
+            </ng-template>
+          </div>
         </div>
-        <svg class="big-spark" viewBox="0 0 220 80" preserveAspectRatio="none">
+
+        <svg
+          class="big-spark"
+          viewBox="0 0 220 80"
+          preserveAspectRatio="none"
+        >
           <defs>
             <linearGradient id="gg" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0" stop-color="var(--brand-500)"/>
-              <stop offset="1" stop-color="var(--teal-500)"/>
+              <stop offset="0" stop-color="var(--brand-500)" />
+              <stop offset="1" stop-color="var(--teal-500)" />
             </linearGradient>
           </defs>
-          <path d="M0,60 L24,56 L44,62 L64,40 L84,46 L110,30 L136,42 L168,28 L220,36"
-                stroke="url(#gg)" fill="none" stroke-width="3" />
+          <path
+            d="M0,60 L24,56 L44,62 L64,40 L84,46 L110,30 L136,42 L168,28 L220,36"
+            stroke="url(#gg)"
+            fill="none"
+            stroke-width="3"
+          />
         </svg>
+
         <div class="mini-kpis">
           <div class="mini">
-            <div class="label">Avg. Bid</div>
-            <div class="val">$1,240</div>
+            <div class="label">Revenue Today</div>
+            <div class="val">{{ revenueToday | number : '1.0-0' }}</div>
           </div>
           <div class="mini">
-            <div class="label">Conversion</div>
-            <div class="val">38%</div>
+            <div class="label">Bids Today (1d) </div>
+            <div class="val">{{ bidsToday | number : '1.0-0' }}</div>
           </div>
           <div class="mini">
-            <div class="label">Sell-through</div>
-            <div class="val">74%</div>
+            <div class="label">Live Auctions</div>
+            <div class="val">{{ liveAuctionCount | number : '1.0-0' }}</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Right column: Verification Queue (lists ALL unverified bidders) -->
+    <!-- Right column: Verification Queue -->
     <div class="panel kyc">
       <div class="panel-h">
         <h3><mat-icon>pending_actions</mat-icon> Verification Queue</h3>
-        <button mat-stroked-button class="mini" (click)="loadUnverifiedBidders()" matTooltip="Refresh">
-          <mat-icon>refresh</mat-icon> Refresh
+        <button
+          mat-stroked-button
+          class="mini"
+          (click)="loadUnverifiedBidders()"
+          matTooltip="Refresh"
+        >
+          <mat-icon>refresh</mat-icon>
+          Refresh
         </button>
       </div>
 
@@ -162,31 +221,42 @@
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       </div>
 
-      <ul class="queue" *ngIf="!kycLoading && unverifiedBidders.length; else emptyQueue">
+      <ul
+        class="queue"
+        *ngIf="!kycLoading && unverifiedBidders.length; else emptyQueue"
+      >
         <li *ngFor="let u of unverifiedBidders">
-          <div class="avatar" [style.background]="'linear-gradient(135deg, var(--brand-500), var(--teal-500))'">
-            {{ getFullName(u) | slice:0:1 }}
+          <div
+            class="avatar"
+            [style.background]="
+              'linear-gradient(135deg, var(--brand-500), var(--teal-500))'
+            "
+          >
+            {{ getFullName(u) | slice : 0 : 1 }}
           </div>
           <div class="who">
             <div class="name">{{ getFullName(u) }}</div>
             <div class="sub">{{ u.email || u.userName }}</div>
           </div>
 
-          <div class="age muted" [title]="u.createdDate ? (u.createdDate | date:'yyyy-MM-dd HH:mm') : ''">
+          <div
+            class="age muted"
+            [title]="u.createdDate ? (u.createdDate | date: 'yyyy-MM-dd HH:mm') : ''"
+          >
             {{ u.createdDate ? toRelative(u.createdDate) : '—' }}
           </div>
         </li>
       </ul>
 
       <ng-template #emptyQueue>
-        <div class="notif-empty" style="padding:16px;">
+        <div class="notif-empty" style="padding: 16px">
           <mat-icon>verified_user</mat-icon>
           <span>Great! No unverified bidders.</span>
         </div>
       </ng-template>
     </div>
 
-    <!-- Right column: Top Bidders -->
+    <!-- Top Bidders -->
     <div class="panel bidders">
       <div class="panel-h">
         <h3><mat-icon>leaderboard</mat-icon> Top Bidders Today</h3>
@@ -199,12 +269,15 @@
             <div class="name">{{ b.name }}</div>
             <div class="sub">{{ b.handle }}</div>
           </div>
-          <div class="bcount chip"><mat-icon>gavel</mat-icon> {{ b.bids }}</div>
+          <div class="bcount chip">
+            <mat-icon>gavel</mat-icon>
+            {{ b.bids }}
+          </div>
         </li>
       </ul>
     </div>
 
-    <!-- Recent Activity (limit 3, toggle full) -->
+    <!-- Recent Activity -->
     <div class="panel activity">
       <div class="panel-h">
         <h3><mat-icon>history</mat-icon> Recent Activity</h3>
@@ -214,7 +287,9 @@
           (click)="toggleRecentActivity()"
           [attr.aria-expanded]="!activityCollapsed"
         >
-          <mat-icon>{{ activityCollapsed ? 'unfold_more' : 'unfold_less' }}</mat-icon>
+          <mat-icon>
+            {{ activityCollapsed ? 'unfold_more' : 'unfold_less' }}
+          </mat-icon>
           {{ activityCollapsed ? 'Show all' : 'Show less' }}
         </button>
       </div>
@@ -223,8 +298,11 @@
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       </div>
 
-      <ul class="timeline" *ngIf="!activityLoading && activity.length; else noActivity">
-        <li *ngFor="let a of (activityCollapsed ? activity.slice(0,3) : activity)">
+      <ul
+        class="timeline"
+        *ngIf="!activityLoading && activity.length; else noActivity"
+      >
+        <li *ngFor="let a of (activityCollapsed ? activity.slice(0, 3) : activity)">
           <div class="bullet"><mat-icon>{{ a.icon }}</mat-icon></div>
           <div class="text">{{ a.text }}</div>
           <div class="time muted">{{ a.time }}</div>
@@ -232,7 +310,7 @@
       </ul>
 
       <ng-template #noActivity>
-        <div class="notif-empty" style="padding:16px;">
+        <div class="notif-empty" style="padding: 16px">
           <mat-icon>history</mat-icon>
           <span>No recent activity yet.</span>
         </div>
@@ -241,7 +319,9 @@
 
     <!-- System Health -->
     <div class="panel health">
-      <div class="panel-h"><h3><mat-icon>shield</mat-icon> System Health</h3></div>
+      <div class="panel-h">
+        <h3><mat-icon>shield</mat-icon> System Health</h3>
+      </div>
       <div class="health-grid">
         <div class="radial" style="--val: 97">
           <span>Uptime</span>

@@ -1,0 +1,89 @@
+:host {
+  display: block;
+}
+
+/* Header */
+.header {
+  padding: 8px 12px 0;
+}
+.header h2 {
+  margin: 0;
+  font-weight: 700;
+}
+.header .sub {
+  margin: 4px 0 0;
+  opacity: 0.8;
+  font-size: 13px;
+}
+
+/* Body */
+.body {
+  padding: 12px;
+  max-height: 70vh;
+  overflow: auto;
+}
+
+/* Card / sheet */
+.sheet {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+  padding: 16px 18px 14px;
+}
+
+/* Product summary */
+.product-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.product-summary .avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #eef2ff;
+  color: #4f46e5;
+}
+
+.product-summary .avatar mat-icon {
+  font-size: 22px;
+  width: 22px;
+  height: 22px;
+}
+
+.product-summary .info .name {
+  font-weight: 600;
+  color: #0f172a;
+}
+.product-summary .info .meta {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* Form grid */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+}
+
+mat-form-field {
+  width: 100%;
+}
+
+/* Actions */
+.actions {
+  padding: 10px 12px 14px;
+  display: flex;
+  gap: 10px;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,58 @@
+<form class="dialog-form" [formGroup]="form" (ngSubmit)="submit()">
+  <!-- Header -->
+  <div class="header">
+    <h2>Add to inventory</h2>
+    <p class="sub">
+      Enter chassis and registration details for this product.
+    </p>
+  </div>
+
+  <!-- Body -->
+  <mat-dialog-content class="body">
+    <div class="sheet">
+      <!-- Product summary -->
+      <div class="product-summary">
+        <div class="avatar">
+          <mat-icon>directions_car</mat-icon>
+        </div>
+        <div class="info">
+          <div class="name">
+            {{ data.product.displayName || ('Product #' + data.product.productId) }}
+          </div>
+          <div class="meta">
+            {{ data.product.yearName || '—' }} •
+            {{ data.product.makeName || '—' }} •
+            {{ data.product.modelName || '—' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Form grid -->
+      <div class="grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Chassis No</mat-label>
+          <input matInput formControlName="chassisNo" maxlength="64" />
+          <mat-hint align="end">
+            {{ (form.get('chassisNo')?.value?.length || 0) }}/64
+          </mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Registration No</mat-label>
+          <input matInput formControlName="registrationNo" maxlength="64" />
+          <mat-hint align="end">
+            {{ (form.get('registrationNo')?.value?.length || 0) }}/64
+          </mat-hint>
+        </mat-form-field>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <!-- Actions -->
+  <mat-dialog-actions align="end" class="actions">
+    <button mat-stroked-button type="button" (click)="cancel()">Cancel</button>
+    <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">
+      Add
+    </button>
+  </mat-dialog-actions>
+</form>

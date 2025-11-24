@@ -13,7 +13,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 import { UsersService } from '../../../../services/users.service';
-import { User,UserStats } from '../../../../models/user.model';
+import { User, UserStats } from '../../../../models/user.model';
 import { UsersForm, UserFormResult } from '../users-form/users-form';
 import { AuthService } from '../../../../services/auth';
 
@@ -42,8 +42,8 @@ export class UsersList {
   private snack = inject(MatSnackBar);
   private auth = inject(AuthService);
 
-  
-  displayedColumns: string[] = ['user', 'email', 'verified', 'lastLogin', 'status', 'actions'];
+  // Added "phone" column
+  displayedColumns: string[] = ['user', 'email', 'phone', 'verified', 'lastLogin', 'status', 'actions'];
   users = new MatTableDataSource<User>([]);
   totalItems = 0;
 
@@ -51,17 +51,23 @@ export class UsersList {
   pageIndex = 0;
   searchTerm = '';
   stats: UserStats = { totalUsers: 0, activeUsers: 0, inactiveUsers: 0 };
+
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
   ngOnInit(): void {
     this.loadUsers();
     this.loadStats();
+
     this.users.filterPredicate = (u, f) => {
       const haystack = [
         this.getFullName(u),
         u.email ?? '',
-        u.userName ?? ''
-      ].join(' ').toLowerCase();
+        u.userName ?? '',
+        u.phoneNumber ?? '' // include phone in search
+      ]
+        .join(' ')
+        .toLowerCase();
+
       return haystack.includes(f);
     };
   }
@@ -78,16 +84,20 @@ export class UsersList {
         if (this.paginator) this.users.paginator = this.paginator;
         this.applyPagingTotals();
       },
-      error: (e) => console.error('Failed to load users', e)
+      error: e => console.error('Failed to load users', e)
     });
   }
+
   private loadStats(): void {
     this.usersSvc.getStats().subscribe({
-      next: (s) => (this.stats = s),
-      error: () => this.snack.open('Failed to load user stats.', 'Dismiss', { duration: 3000 })
+      next: s => (this.stats = s),
+      error: () =>
+        this.snack.open('Failed to load user stats.', 'Dismiss', {
+          duration: 3000
+        })
     });
   }
-  
+
   getFullName(u: User): string {
     const f = (u.firstName ?? '').trim();
     const l = (u.lastName ?? '').trim();
@@ -104,11 +114,11 @@ export class UsersList {
   }
 
   getRoleLabel(u: User): string {
-    
-    return Array.isArray(u.roleId) && u.roleId.length ? `${u.roleId.length} role(s)` : '—';
+    return Array.isArray(u.roleId) && u.roleId.length
+      ? `${u.roleId.length} role(s)`
+      : '—';
   }
 
-  
   onSearch(): void {
     this.users.filter = this.searchTerm.trim().toLowerCase();
     this.totalItems = this.users.filteredData.length;
@@ -125,21 +135,26 @@ export class UsersList {
   }
 
   private applyPagingTotals(): void {
-    this.totalItems = this.users.filter ? this.users.filteredData.length : this.users.data.length;
+    this.totalItems = this.users.filter
+      ? this.users.filteredData.length
+      : this.users.data.length;
   }
 
-  
   get rangeStart(): number {
     if (!this.totalItems) return 0;
     return this.pageIndex * this.pageSize + 1;
-    }
+  }
+
   get rangeEnd(): number {
     return Math.min(this.totalItems, (this.pageIndex + 1) * this.pageSize);
   }
 
-  
   openCreateUser(): void {
-    const ref = this.dialog.open<UsersForm, { mode: 'create' }, UserFormResult>(UsersForm, {
+    const ref = this.dialog.open<
+      UsersForm,
+      { mode: 'create' },
+      UserFormResult
+    >(UsersForm, {
       width: '820px',
       data: { mode: 'create' }
     });
@@ -147,39 +162,56 @@ export class UsersList {
     ref.afterClosed().subscribe(res => {
       if (!res || res.action !== 'create') return;
       this.usersSvc.addUser(res.payload).subscribe({
-        next: (newId) => {
-          this.snack.open(`User created (ID ${newId}).`, 'OK', { duration: 2500 });
+        next: newId => {
+          this.snack.open(`User created (ID ${newId}).`, 'OK', {
+            duration: 2500
+          });
           this.loadUsers();
         },
-        error: () => this.snack.open('Failed to create user.', 'Dismiss', { duration: 3000 })
+        error: () =>
+          this.snack.open('Failed to create user.', 'Dismiss', {
+            duration: 3000
+          })
       });
     });
   }
 
-  
   editUser(row: User): void {
     this.usersSvc.getById(row.userId).subscribe({
-      next: (full) => {
-        const ref = this.dialog.open<UsersForm, { mode: 'edit'; initialData: User }, UserFormResult>(UsersForm, {
+      next: full => {
+        const ref = this.dialog.open<
+          UsersForm,
+          { mode: 'edit'; initialData: User },
+          UserFormResult
+        >(UsersForm, {
           width: '820px',
           data: { mode: 'edit', initialData: full }
         });
         ref.afterClosed().subscribe(res => {
           if (!res || res.action !== 'edit') return;
           this.usersSvc.updateUser(res.payload).subscribe({
-            next: (ok) => {
-              this.snack.open(ok ? 'User updated.' : 'Update failed.', 'OK', { duration: 2500 });
+            next: ok => {
+              this.snack.open(
+                ok ? 'User updated.' : 'Update failed.',
+                'OK',
+                { duration: 2500 }
+              );
               if (ok) this.loadUsers();
             },
-            error: () => this.snack.open('Failed to update user.', 'Dismiss', { duration: 3000 })
+            error: () =>
+              this.snack.open('Failed to update user.', 'Dismiss', {
+                duration: 3000
+              })
           });
         });
       },
-      error: () => this.snack.open('Failed to load user for edit.', 'Dismiss', { duration: 3000 })
+      error: () =>
+        this.snack.open('Failed to load user for edit.', 'Dismiss', {
+          duration: 3000
+        })
     });
   }
 
-  
   toggleActive(u: User): void {
     const newState = !(u.active ?? false);
     const payload: Partial<User> = {
@@ -188,21 +220,29 @@ export class UsersList {
       modifiedById: this.auth.currentUser?.userId ?? null
     };
     this.usersSvc.activateUser(payload as User).subscribe({
-      next: (ok) => {
+      next: ok => {
         if (ok) {
           u.active = newState;
-          this.snack.open(`User ${newState ? 'activated' : 'deactivated'}.`, 'OK', { duration: 2000 });
+          this.snack.open(
+            `User ${newState ? 'activated' : 'deactivated'}.`,
+            'OK',
+            { duration: 2000 }
+          );
         } else {
-          this.snack.open('Failed to change status.', 'Dismiss', { duration: 3000 });
+          this.snack.open('Failed to change status.', 'Dismiss', {
+            duration: 3000
+          });
         }
       },
-      error: () => this.snack.open('Failed to change status.', 'Dismiss', { duration: 3000 })
+      error: () =>
+        this.snack.open('Failed to change status.', 'Dismiss', {
+          duration: 3000
+        })
     });
   }
 
-  openChangePassword(_u: User): void {  }
+  openChangePassword(_u: User): void {}
 
-  
   viewUser(userId: number): void {
     this.router.navigate(['/admin/users', userId]);
   }

@@ -38,7 +38,12 @@
   <mat-form-field appearance="outline" class="search-field">
     <mat-label>Search user</mat-label>
     <input matInput [(ngModel)]="searchTerm" (input)="onSearch()" />
-    <button mat-icon-button *ngIf="searchTerm" matSuffix (click)="searchTerm=''; onSearch()">
+    <button
+      mat-icon-button
+      *ngIf="searchTerm"
+      matSuffix
+      (click)="searchTerm=''; onSearch()"
+    >
       <mat-icon>close</mat-icon>
     </button>
   </mat-form-field>
@@ -57,9 +62,11 @@
       <th mat-header-cell *matHeaderCellDef>User</th>
       <td mat-cell *matCellDef="let u">
         <div class="user-cell">
-          <!-- CHANGED: u.fullName -> getFullName(u) -->
           <div class="name">{{ getFullName(u) }}</div>
-          <div class="sub">ID {{ u.userId }} <span *ngIf="u.userName">• {{ u.userName }}</span></div>
+          <div class="sub">
+            ID {{ u.userId }}
+            <span *ngIf="u.userName">• {{ u.userName }}</span>
+          </div>
         </div>
       </td>
     </ng-container>
@@ -72,12 +79,28 @@
       </td>
     </ng-container>
 
+    <!-- Phone (NEW) -->
+    <ng-container matColumnDef="phone">
+      <th mat-header-cell *matHeaderCellDef>Phone</th>
+      <td mat-cell *matCellDef="let u">
+        <span class="phone-cell">
+          {{ u.phoneNumber || '—' }}
+        </span>
+      </td>
+    </ng-container>
+
     <!-- Verified -->
     <ng-container matColumnDef="verified">
       <th mat-header-cell *matHeaderCellDef>Verified Status</th>
       <td mat-cell *matCellDef="let u">
-        <span class="badge" [class.badge-ok]="u.emailConfirmed" [class.badge-no]="!u.emailConfirmed">
-          <mat-icon class="badge-icon">{{ u.emailConfirmed ? 'check_circle' : 'cancel' }}</mat-icon>
+        <span
+          class="badge"
+          [class.badge-ok]="u.emailConfirmed"
+          [class.badge-no]="!u.emailConfirmed"
+        >
+          <mat-icon class="badge-icon">{{
+            u.emailConfirmed ? 'check_circle' : 'cancel'
+          }}</mat-icon>
           <span>{{ u.emailConfirmed ? 'Verified' : 'Unverified' }}</span>
         </span>
       </td>
@@ -87,8 +110,13 @@
     <ng-container matColumnDef="lastLogin">
       <th mat-header-cell *matHeaderCellDef>Last Login</th>
       <td mat-cell *matCellDef="let u">
-        <!-- CHANGED: u.lastLogin -> getLastLogin(u) -->
-        <span class="muted">{{ getLastLogin(u) ? (getLastLogin(u) | date:'yyyy-MM-dd HH:mm') : '—' }}</span>
+        <span class="muted">
+          {{
+            getLastLogin(u)
+              ? (getLastLogin(u) | date: 'yyyy-MM-dd HH:mm')
+              : '—'
+          }}
+        </span>
       </td>
     </ng-container>
 
@@ -96,10 +124,12 @@
     <ng-container matColumnDef="status">
       <th mat-header-cell *matHeaderCellDef>Status</th>
       <td mat-cell *matCellDef="let u">
-        <button mat-stroked-button
-                [class.is-active]="u.active"
-                [class.is-inactive]="u.active === false"
-                (click)="toggleActive(u)">
+        <button
+          mat-stroked-button
+          [class.is-active]="u.active"
+          [class.is-inactive]="u.active === false"
+          (click)="toggleActive(u)"
+        >
           {{ u.active ? 'Active' : 'Inactive' }}
         </button>
       </td>
@@ -109,20 +139,34 @@
     <ng-container matColumnDef="actions">
       <th mat-header-cell *matHeaderCellDef>Actions</th>
       <td mat-cell *matCellDef="let u">
-        <button mat-icon-button class="edit-btn" (click)="editUser(u)" matTooltip="Edit">
+        <button
+          mat-icon-button
+          class="edit-btn"
+          (click)="editUser(u)"
+          matTooltip="Edit"
+        >
           <mat-icon>edit</mat-icon>
         </button>
-        <button mat-icon-button (click)="openChangePassword(u)" matTooltip="Change password">
+        <button
+          mat-icon-button
+          (click)="openChangePassword(u)"
+          matTooltip="Change password"
+        >
           <mat-icon>lock</mat-icon>
         </button>
-        <button mat-icon-button (click)="viewUser(u.userId)" aria-label="View details" matTooltip="View details">
+        <button
+          mat-icon-button
+          (click)="viewUser(u.userId)"
+          aria-label="View details"
+          matTooltip="View details"
+        >
           <mat-icon>visibility</mat-icon>
         </button>
       </td>
     </ng-container>
 
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
   </table>
 </div>
 
@@ -131,9 +175,10 @@
   <mat-paginator
     [length]="totalItems"
     [pageSize]="pageSize"
-    [pageSizeOptions]="[5,10,20]"
+    [pageSizeOptions]="[5, 10, 20]"
     [pageIndex]="pageIndex"
-    (page)="onPageChange($event)">
+    (page)="onPageChange($event)"
+  >
   </mat-paginator>
 
   <div class="count">
