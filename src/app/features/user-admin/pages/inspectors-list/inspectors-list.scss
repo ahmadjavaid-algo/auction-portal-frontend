@@ -1,4 +1,6 @@
+
 :host { display:block; }
+
 
 .stats-strip {
   display: grid;
@@ -27,7 +29,7 @@
     mat-icon { font-size: 24px; width: 24px; height: 24px; color: var(--brand-700); }
 
     .value { font-size: 22px; font-weight: 800; line-height: 1.1; color: var(--text-1); }
-    .label { font-size: 12px; color: #6b7280; margin-top: 2px; }
+    .label { font-size: 12px; color: var(--text-2); margin-top: 2px; }
 
     &.online   .icon-wrap { background: rgba(34,197,94,.12);  box-shadow: inset 0 0 0 1px rgba(34,197,94,.25); }
     &.total    .icon-wrap { background: rgba(37,99,235,.10);  box-shadow: inset 0 0 0 1px rgba(37,99,235,.25); }
@@ -36,68 +38,13 @@
   }
 }
 
-.inventory-header {
+
+.user-header {
   display: flex; align-items: center; justify-content: space-between;
   gap: 12px; margin-bottom: 16px; flex-wrap: wrap;
 
-  .search-field { flex: 1 1 420px; min-width: 260px; max-width: 560px; }
+  .search-field { flex: 1; max-width: 420px; min-width: 260px; }
   ::ng-deep .mat-mdc-form-field-infix { padding-top: 10px; padding-bottom: 10px; }
-
-  .selection-toolbar {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    flex: 0 0 auto;
-  }
-
-  .selection-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px 8px 10px;
-    border-radius: 999px;
-    background: #eef2ff;
-    color: #3730a3;
-    border: 1px solid #e0e7ff;
-    line-height: 1;
-
-    mat-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
-    }
-
-    .selection-clear {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0;
-      margin-left: 2px;
-      line-height: 0;
-
-      &.mat-mdc-icon-button {
-        width: 28px;
-        height: 28px;
-        min-width: 28px;
-      }
-      .mat-mdc-button-touch-target { width: 28px; height: 28px; }
-      mat-icon { font-size: 18px; width: 18px; height: 18px; }
-    }
-  }
-
-  .chip-action {
-    background: linear-gradient(135deg, var(--primary-500), var(--teal-500));
-    color: #fff !important;
-    font-weight: 700;
-    padding: 8px 12px;
-    border-radius: 12px;
-    box-shadow: var(--shadow-1);
-    display: inline-flex; align-items: center; gap: 8px;
-    transition: transform .15s ease, box-shadow .2s ease, filter .2s ease;
-
-    &:hover { transform: translateY(-1px); filter: brightness(1.05); box-shadow: var(--shadow-2); }
-    mat-icon { color: #fff; }
-  }
 
   .add-btn {
     background: linear-gradient(135deg, var(--primary-500), var(--teal-500));
@@ -110,6 +57,7 @@
   }
 }
 
+
 .panel {
   background: var(--surface);
   border: 1px solid #eef1ff;
@@ -118,10 +66,16 @@
   overflow: hidden;
 }
 
+
 .full-width-table { width: 100%; }
 
-:host ::ng-deep .mat-mdc-table { background: transparent; }
-:host ::ng-deep .mat-mdc-header-row { background: #f3f6ff; }
+:host ::ng-deep .mat-mdc-table {
+  background: transparent;
+}
+
+:host ::ng-deep .mat-mdc-header-row {
+  background: #f3f6ff;
+}
 
 :host ::ng-deep .mat-mdc-header-cell {
   font-weight: 800;
@@ -129,22 +83,33 @@
   letter-spacing: .2px;
 }
 
-:host ::ng-deep .mat-mdc-row:hover { background: #f8faff; }
+:host ::ng-deep .mat-mdc-row:hover {
+  background: #f8faff;
+}
 
 td, th { padding: 14px 12px !important; text-align: left; }
 
 .user-cell .name { font-weight: 700; color: #0f172a; }
 .user-cell .sub  { color: #6b7280; font-size: 12px; margin-top: 2px; }
 
-.subject-cell { color:#111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 520px; }
+.email-cell {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  color: #111827;
+}
+
+
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;
+}
+.badge-ok { background: rgba(34,197,94,.14); color: #1f8a43; }
+.badge-no { background: rgba(239,68,68,.14); color: #b42318; }
+.badge-icon { font-size: 18px; height: 18px; width: 18px; }
+
 
 .edit-btn { color: var(--blue-500); }
-.upload-btn { color: var(--teal-600); }
+.delete-btn { color: var(--red-500); }
 
-/* NEW: inspection report icon styling */
-.inspection-btn {
-  color: var(--amber-600, #d97706);
-}
 
 :host ::ng-deep .mat-mdc-stroked-button {
   border-radius: 999px !important;
@@ -155,6 +120,7 @@ td, th { padding: 14px 12px !important; text-align: left; }
 button.is-active   { border-color: #22c55e !important; color: #1f8a43 !important; background: rgba(34,197,94,.10); }
 button.is-inactive { border-color: #ef4444 !important; color: #6b7280 !important; background: rgba(239,68,68,.06); }
 
+
 .list-footer {
   display:flex; align-items:center; justify-content:space-between;
   margin-top: 10px; padding: 8px 2px;
@@ -162,5 +128,3 @@ button.is-inactive { border-color: #ef4444 !important; color: #6b7280 !important
   .count { color:#5f6368; font-size: 13px; }
   ::ng-deep .mat-mdc-paginator .mat-mdc-paginator-container { justify-content:flex-start; }
 }
-
-.sel-badge { display: none !important; }

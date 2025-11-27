@@ -36,13 +36,18 @@
         <mat-icon>admin_panel_settings</mat-icon>
         <span class="label" *ngIf="!sidebarCollapsed">Roles</span>
       </a>
-      <a routerLink="emails" routerLinkActive="active">
-        <mat-icon>mail</mat-icon>
-        <span class="label" *ngIf="!sidebarCollapsed">Emails</span>
+
+      <a routerLink="inspectors" routerLinkActive="active">
+        <mat-icon>verified_user</mat-icon>
+        <span class="label" *ngIf="!sidebarCollapsed">Inspectors</span>
       </a>
       <a routerLink="bidders" routerLinkActive="active">
         <mat-icon>gavel</mat-icon>
         <span class="label" *ngIf="!sidebarCollapsed">Bidders</span>
+      </a>
+      <a routerLink="emails" routerLinkActive="active">
+        <mat-icon>mail</mat-icon>
+        <span class="label" *ngIf="!sidebarCollapsed">Emails</span>
       </a>
       <a routerLink="make" routerLinkActive="active">
         <mat-icon>directions_car</mat-icon>
@@ -60,6 +65,10 @@
       <a routerLink="auctions" routerLinkActive="active">
         <mat-icon>price_change</mat-icon>
         <span class="label" *ngIf="!sidebarCollapsed">Auctions</span>
+      </a>
+      <a routerLink="inspection" routerLinkActive="active">
+        <mat-icon>fact_check</mat-icon>
+        <span class="label" *ngIf="!sidebarCollapsed">Inspection</span>
       </a>
     </nav>
   </aside>

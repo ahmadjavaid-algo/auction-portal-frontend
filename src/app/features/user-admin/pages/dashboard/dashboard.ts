@@ -37,6 +37,10 @@ import { Bidder } from '../../../../models/bidder.model';
 import { DashboardsService } from '../../../../services/dashboards.service';
 import { Dashboard as DashboardStat } from '../../../../models/dashboard.model';
 
+// NEW: for dynamic “Top Bidders Today”
+import { AuctionBidService } from '../../../../services/auctionbids.service';
+import { AuctionBid } from '../../../../models/auctionbid.model';
+
 type GlanceItemStatus = 'Live' | 'Scheduled' | 'Closed' | '—';
 
 interface GlanceItem {
@@ -68,6 +72,15 @@ interface MakeSummaryRow {
   count: number;
 }
 
+// NEW: Top bidder row type
+interface TopBidderRow {
+  userId: number;
+  name: string;
+  handle: string;
+  bids: number;
+  color: string;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -96,6 +109,9 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
 
   private biddersSvc = inject(BiddersService);
   private dashboardsSvc = inject(DashboardsService);
+
+  // NEW: bids service
+  private bidsSvc = inject(AuctionBidService);
 
   private counterTimer?: any;
   private notifSub?: Subscription;
@@ -174,11 +190,10 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
 
   // --- Auctions at a glance ---
   glanceLoading = false;
-  liveAuctions: GlanceItem[] = [];          // all grouped rows
-  auctionMakeSummary: MakeSummaryRow[] = []; // (kept for future use / if you show below card)
-  glanceExpanded = false;                   // controls "View all" expansion
+  liveAuctions: GlanceItem[] = [];           // all grouped rows
+  auctionMakeSummary: MakeSummaryRow[] = []; // kept for future use
+  glanceExpanded = false;                    // controls "View all" expansion
 
-  // visible rows for the card (top 5 when collapsed)
   get visibleGlanceAuctions(): GlanceItem[] {
     if (!this.liveAuctions?.length) return [];
     if (this.glanceExpanded) return this.liveAuctions;
@@ -194,12 +209,19 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
   kycLoading = false;
   unverifiedBidders: Bidder[] = [];
 
-  // --- Top bidders (still static) ---
-  topBidders = [
-    { name: 'Zain R.', handle: '@zain', bids: 188, color: '#6ee7b7' },
-    { name: 'Ayesha S.', handle: '@ayesha', bids: 163, color: '#93c5fd' },
-    { name: 'Junaid I.', handle: '@junaid', bids: 151, color: '#fca5a5' },
-  ];
+  // --- Bidder Funnel (new card) ---
+  totalBidders = 0;
+  verifiedBidders = 0;
+  recentSignups7d = 0;
+
+  get verificationRate(): number {
+    if (!this.totalBidders) return 0;
+    return Math.round((this.verifiedBidders / this.totalBidders) * 100);
+  }
+
+  // --- Top Bidders Today (dynamic) ---
+  topBiddersLoading = false;
+  topBidders: TopBidderRow[] = [];
 
   get adminName(): string {
     const u = this.auth.currentUser;
@@ -224,6 +246,9 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
         error: () => this.refreshActivityFromHistory(),
       });
     }
+
+    // NEW: top bidders card
+    this.loadTopBiddersToday();
   }
 
   ngAfterViewInit(): void {
@@ -307,7 +332,7 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
   }
 
   // ----------------------------------------------------
-  // VERIFICATION QUEUE
+  // VERIFICATION QUEUE + BIDDER FUNNEL
   // ----------------------------------------------------
   loadUnverifiedBidders(): void {
     this.kycLoading = true;
@@ -316,15 +341,45 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
       .pipe(catchError(() => of([] as Bidder[])))
       .subscribe({
         next: (list) => {
-          this.unverifiedBidders = (list || []).filter(
+          const all = list || [];
+
+          // total bidders
+          this.totalBidders = all.length;
+
+          // unverified list for queue
+          const unverified = all.filter(
             (b) =>
               (b as any).emailConfirmed === false ||
               (b as any).emailConfirmed === 0
           );
+          this.unverifiedBidders = unverified;
+
+          // verified bidders
+          this.verifiedBidders = this.totalBidders - unverified.length;
+
+          // new signups in last 7 days
+          const now = new Date();
+          const weekAgo = new Date(
+            now.getTime() - 7 * 24 * 60 * 60 * 1000
+          );
+          this.recentSignups7d = all.filter((b) => {
+            const raw =
+              (b as any).createdDate ??
+              (b as any).CreatedDate ??
+              null;
+            if (!raw) return false;
+            const d = new Date(raw);
+            if (isNaN(d.getTime())) return false;
+            return d >= weekAgo && d <= now;
+          }).length;
+
           this.kycLoading = false;
         },
         error: () => {
           this.unverifiedBidders = [];
+          this.totalBidders = 0;
+          this.verifiedBidders = 0;
+          this.recentSignups7d = 0;
           this.kycLoading = false;
           this.snack.open('Failed to load verification queue.', 'Dismiss', {
             duration: 3000,
@@ -385,9 +440,6 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
 
   // ----------------------------------------------------
   // AUCTIONS AT A GLANCE
-  //   - only Live or Scheduled auctions
-  //   - grouped by (AuctionId + Make) with a count
-  //   - sorted Live -> Scheduled
   // ----------------------------------------------------
   private loadGlance(): void {
     this.glanceLoading = true;
@@ -465,9 +517,8 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
         });
 
         this.liveAuctions = items;
-        this.glanceExpanded = false; // reset when reloaded
+        this.glanceExpanded = false;
 
-        // optional summary by make (if you want to show somewhere)
         const makeMap = new Map<string, number>();
         items.forEach((item) => {
           makeMap.set(item.make, (makeMap.get(item.make) || 0) + item.count);
@@ -491,6 +542,82 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
   toggleGlance(): void {
     if (this.liveAuctions.length <= 5) return;
     this.glanceExpanded = !this.glanceExpanded;
+  }
+
+  // ----------------------------------------------------
+  // TOP BIDDERS TODAY
+  // ----------------------------------------------------
+  private loadTopBiddersToday(): void {
+    this.topBiddersLoading = true;
+
+    forkJoin({
+      bidders: this.biddersSvc
+        .getList()
+        .pipe(catchError(() => of([] as Bidder[]))),
+      bids: this.bidsSvc
+        .getList()
+        .pipe(catchError(() => of([] as AuctionBid[]))),
+    }).subscribe({
+      next: ({ bidders, bids }) => {
+        const today = new Date();
+        const isToday = (raw: any): boolean => {
+          if (!raw) return false;
+          const d = new Date(raw);
+          if (isNaN(d.getTime())) return false;
+          return (
+            d.getFullYear() === today.getFullYear() &&
+            d.getMonth() === today.getMonth() &&
+            d.getDate() === today.getDate()
+          );
+        };
+
+        const counts = new Map<number, number>();
+
+        (bids || []).forEach((b) => {
+          const createdRaw =
+            (b as any).createdDate ?? (b as any).CreatedDate ?? null;
+          if (!isToday(createdRaw)) return;
+
+          const createdBy =
+            (b as any).createdById ?? (b as any).CreatedById ?? null;
+          if (!createdBy || typeof createdBy !== 'number') return;
+
+          counts.set(createdBy, (counts.get(createdBy) || 0) + 1);
+        });
+
+        const palette = ['#6ee7b7', '#93c5fd', '#fca5a5', '#f97316', '#a855f7'];
+
+        const rows: TopBidderRow[] = Array.from(counts.entries())
+          .map(([userId, count], index) => {
+            const bidder = (bidders || []).find((b) => b.userId === userId);
+            const name = bidder ? this.getFullName(bidder) : `User #${userId}`;
+            const handle = bidder?.userName
+              ? '@' + bidder.userName
+              : bidder?.email || `User #${userId}`;
+
+            return {
+              userId,
+              name,
+              handle,
+              bids: count,
+              color: palette[index % palette.length],
+            };
+          })
+          .sort((a, b) => b.bids - a.bids)
+          .slice(0, 5);
+
+        this.topBidders = rows;
+        this.topBiddersLoading = false;
+      },
+      error: (err) => {
+        console.error('Failed to load top bidders today', err);
+        this.topBidders = [];
+        this.topBiddersLoading = false;
+        this.snack.open('Failed to load top bidders today.', 'Dismiss', {
+          duration: 3000,
+        });
+      },
+    });
   }
 
   // ----------------------------------------------------
@@ -580,7 +707,6 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     return pj?.DisplayName || pj?.displayName || `Inventory #${id}`;
   }
 
-  // derive "make" for grouping
   private resolveInventoryMake(inv?: Inventory): string {
     if (!inv) return 'Unknown';
     const pj = this.safeParse(inv.productJSON);

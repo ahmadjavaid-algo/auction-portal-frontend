@@ -261,7 +261,17 @@
       <div class="panel-h">
         <h3><mat-icon>leaderboard</mat-icon> Top Bidders Today</h3>
       </div>
-      <ul class="tops">
+
+      <!-- loading state -->
+      <div class="busy" *ngIf="topBiddersLoading">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+      </div>
+
+      <!-- list -->
+      <ul
+        class="tops"
+        *ngIf="!topBiddersLoading && topBidders.length; else noTopBidders"
+      >
         <li *ngFor="let b of topBidders; let i = index">
           <div class="rank">#{{ i + 1 }}</div>
           <div class="dot" [style.background]="b.color"></div>
@@ -275,6 +285,13 @@
           </div>
         </li>
       </ul>
+
+      <ng-template #noTopBidders>
+        <div class="notif-empty" style="padding: 16px">
+          <mat-icon>gavel</mat-icon>
+          <span>No bids placed today yet.</span>
+        </div>
+      </ng-template>
     </div>
 
     <!-- Recent Activity -->
@@ -317,21 +334,57 @@
       </ng-template>
     </div>
 
-    <!-- System Health -->
-    <div class="panel health">
+    <!-- Bidder Funnel (replaces System Health) -->
+    <div class="panel bidder-funnel">
       <div class="panel-h">
-        <h3><mat-icon>shield</mat-icon> System Health</h3>
+        <h3><mat-icon>groups</mat-icon> Bidder Funnel</h3>
       </div>
-      <div class="health-grid">
-        <div class="radial" style="--val: 97">
-          <span>Uptime</span>
-          <strong>99.7%</strong>
+
+      <div class="funnel-grid" *ngIf="totalBidders > 0; else noBiddersState">
+        <div class="funnel-main">
+          <div class="funnel-number">
+            <div class="caption">Verified Bidders</div>
+            <div class="num">
+              {{ verifiedBidders | number : '1.0-0' }}
+            </div>
+          </div>
+
+          <div class="funnel-meter">
+            <div class="meter-bg">
+              <div
+                class="meter-fill"
+                [style.width.%]="verificationRate"
+              ></div>
+            </div>
+            <div class="meter-label">
+              {{ verificationRate }}% verified of
+              {{ totalBidders | number : '1.0-0' }}
+            </div>
+          </div>
         </div>
-        <div class="radial" style="--val: 64">
-          <span>Queue</span>
-          <strong>64%</strong>
+
+        <div class="funnel-side">
+          <div class="mini">
+            <div class="label">Pending KYC</div>
+            <div class="value">
+              {{ unverifiedBidders.length | number : '1.0-0' }}
+            </div>
+          </div>
+          <div class="mini">
+            <div class="label">New Signups (7d)</div>
+            <div class="value">
+              {{ recentSignups7d | number : '1.0-0' }}
+            </div>
+          </div>
         </div>
       </div>
+
+      <ng-template #noBiddersState>
+        <div class="notif-empty small">
+          <mat-icon>person_add</mat-icon>
+          <span>No bidders registered yet.</span>
+        </div>
+      </ng-template>
     </div>
   </section>
 </div>

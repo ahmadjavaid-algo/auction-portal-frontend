@@ -1,0 +1,195 @@
+<div class="page details-theme">
+  <!-- Back -->
+  <button mat-button class="back" (click)="back()">
+    <mat-icon>arrow_back</mat-icon>
+    Back to Inventory
+  </button>
+
+  <!-- Loading -->
+  <ng-container *ngIf="loading">
+    <div class="busy">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Loading inspection data…</span>
+    </div>
+  </ng-container>
+
+  <!-- Error -->
+  <ng-container *ngIf="!loading && error">
+    <mat-card class="error-card">
+      <mat-card-title>Error</mat-card-title>
+      <mat-card-content>{{ error }}</mat-card-content>
+      <mat-card-actions align="end">
+        <button mat-stroked-button color="primary" (click)="back()">OK</button>
+      </mat-card-actions>
+    </mat-card>
+  </ng-container>
+
+  <!-- Main content -->
+  <ng-container *ngIf="!loading && !error && inventory">
+    <section class="profile-card mat-elevation-z2">
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-left">
+          <div class="avatar">
+            <mat-icon>assignment_turned_in</mat-icon>
+          </div>
+          <div class="title">
+            <h1>{{ inventoryTitle }}</h1>
+            <div class="subtitle">
+              Inventory #{{ inventory.inventoryId }}
+              <span *ngIf="inventorySubtitle">• {{ inventorySubtitle }}</span>
+            </div>
+
+            <div class="pills">
+              <span
+                class="pill"
+                [class.ok]="inventory.active"
+                [class.no]="inventory.active === false"
+              >
+                <mat-icon class="pill-icn">
+                  {{ inventory.active ? 'check_circle' : 'pause_circle' }}
+                </mat-icon>
+                {{ inventory.active ? 'Active' : 'Inactive' }}
+              </span>
+
+              <span class="pill muted">
+                <mat-icon class="pill-icn">badge</mat-icon>
+                {{ hasAssignment ? 'Assigned to ' + currentInspectorName : 'Not assigned' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <ul class="meta">
+          <li>
+            <div class="meta-label">Product Id</div>
+            <div class="meta-value">{{ inventory.productId || '—' }}</div>
+          </li>
+          <li>
+            <div class="meta-label">Chassis</div>
+            <div class="meta-value">{{ inventory.chassisNo || '—' }}</div>
+          </li>
+          <li>
+            <div class="meta-label">Registration</div>
+            <div class="meta-value">{{ inventory.registrationNo || '—' }}</div>
+          </li>
+          <li>
+            <div class="meta-label">Created</div>
+            <div class="meta-value">
+              {{ inventory.createdDate ? (inventory.createdDate | date: 'medium') : '—' }}
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Sections -->
+      <div class="sections">
+        <!-- Assignment panel -->
+        <div class="section">
+          <h3>
+            <mat-icon>assignment_ind</mat-icon>
+            Inspector Assignment
+          </h3>
+          <div class="grid two-col">
+            <div class="item full">
+              <div class="label">Current inspector</div>
+              <div class="value">
+                {{ currentInspectorName }}
+              </div>
+            </div>
+
+            <div class="item">
+              <div class="label">Assign / change inspector</div>
+              <mat-form-field appearance="outline" class="field-full">
+                <mat-label>Inspector</mat-label>
+                <mat-select
+                  [(ngModel)]="selectedInspectorId"
+                  [disabled]="saving || !inspectors.length"
+                >
+                  <mat-option [value]="null">Unassigned</mat-option>
+                  <mat-option
+                    *ngFor="let ins of inspectors"
+                    [value]="ins.userId"
+                    [disabled]="ins.active === false"
+                  >
+                    {{ getInspectorDisplay(ins) }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <div class="item actions-row">
+              <button
+                mat-flat-button
+                color="primary"
+                class="btn-primary"
+                (click)="saveAssignment()"
+                [disabled]="saving"
+              >
+                <mat-icon>save</mat-icon>
+                Save Assignment
+              </button>
+
+              <button
+                mat-stroked-button
+                color="warn"
+                class="btn-clear"
+                *ngIf="hasAssignment"
+                (click)="clearAssignment()"
+                [disabled]="saving"
+              >
+                <mat-icon>backspace</mat-icon>
+                Unassign
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inspection report panel (placeholder for future detailed checkpoints) -->
+        <div class="section">
+          <h3>
+            <mat-icon>fact_check</mat-icon>
+            Inspection Report
+          </h3>
+          <div class="report-body">
+            <p class="muted">
+              This section will show the detailed inspection report for this inventory,
+              including checkpoints, comments, and images captured by the assigned inspector.
+            </p>
+
+            <mat-divider></mat-divider>
+
+            <div class="report-placeholder">
+              <mat-icon>content_paste_search</mat-icon>
+              <div>
+                <h4>No inspection report linked yet</h4>
+                <p>
+                  Once the inspector completes the inspection and submits a report,
+                  you’ll see the full breakdown here.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        <div class="audit">
+          <div>
+            Created by <strong>{{ inventory.createdById ?? '—' }}</strong>
+          </div>
+          <div>
+            Modified by <strong>{{ inventory.modifiedById ?? '—' }}</strong>
+          </div>
+        </div>
+        <div class="buttons">
+          <button mat-stroked-button color="primary" (click)="back()">
+            <mat-icon>arrow_back</mat-icon>
+            Back
+          </button>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</div>

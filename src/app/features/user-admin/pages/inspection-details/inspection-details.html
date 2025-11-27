@@ -1,0 +1,178 @@
+<div class="page details-theme">
+  <!-- Back -->
+  <button mat-button class="back" (click)="back()">
+    <mat-icon>arrow_back</mat-icon>
+    Back to Inspection Types
+  </button>
+
+  <!-- Loading -->
+  <ng-container *ngIf="loading">
+    <div class="busy">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span>Loading inspection type…</span>
+    </div>
+  </ng-container>
+
+  <!-- Error -->
+  <ng-container *ngIf="!loading && error">
+    <mat-card class="error-card">
+      <mat-card-title>Error</mat-card-title>
+      <mat-card-content>{{ error }}</mat-card-content>
+      <mat-card-actions align="end">
+        <button mat-stroked-button color="primary" (click)="back()">OK</button>
+      </mat-card-actions>
+    </mat-card>
+  </ng-container>
+
+  <!-- Details -->
+  <ng-container *ngIf="!loading && inspectionType">
+    <section class="profile-card mat-elevation-z2">
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-left">
+          <div class="avatar">{{ initials }}</div>
+          <div class="title">
+            <h1>
+              {{ inspectionType.inspectionTypeName || '(No inspection type name)' }}
+            </h1>
+            <div class="subtitle">
+              Inspection Type #{{ inspectionType.inspectionTypeId }}
+            </div>
+
+            <div class="pills">
+              <span
+                class="pill"
+                [class.ok]="inspectionType.active"
+                [class.no]="!inspectionType.active"
+              >
+                <mat-icon class="pill-icn">
+                  {{ inspectionType.active ? 'check_circle' : 'pause_circle' }}
+                </mat-icon>
+                {{ inspectionType.active ? 'Active' : 'Inactive' }}
+              </span>
+
+              <span class="pill">
+                <mat-icon class="pill-icn">percent</mat-icon>
+                Weightage: {{ weightageLabel }}
+              </span>
+
+              <span class="pill muted">
+                <mat-icon class="pill-icn">fingerprint</mat-icon>
+                ID {{ inspectionType.inspectionTypeId }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <ul class="meta">
+          <li>
+            <div class="meta-label">Weightage</div>
+            <div class="meta-value">{{ weightageLabel }}</div>
+          </li>
+          <li>
+            <div class="meta-label">Status</div>
+            <div class="meta-value">
+              {{ inspectionType.active ? 'Active' : 'Inactive' }}
+            </div>
+          </li>
+          <li>
+            <div class="meta-label">Created</div>
+            <div class="meta-value">
+              {{
+                inspectionType.createdDate
+                  ? (inspectionType.createdDate | date: 'medium')
+                  : '—'
+              }}
+            </div>
+          </li>
+          <li>
+            <div class="meta-label">Modified</div>
+            <div class="meta-value">
+              {{
+                inspectionType.modifiedDate
+                  ? (inspectionType.modifiedDate | date: 'medium')
+                  : '—'
+              }}
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Sections -->
+      <div class="sections">
+        <div class="section">
+          <h3><mat-icon>assignment_turned_in</mat-icon> Inspection Type</h3>
+          <div class="grid">
+            <div class="item">
+              <div class="label">Inspection Type ID</div>
+              <div class="value">
+                {{ inspectionType.inspectionTypeId }}
+              </div>
+            </div>
+            <div class="item">
+              <div class="label">Name</div>
+              <div class="value">
+                {{ inspectionType.inspectionTypeName || '—' }}
+              </div>
+            </div>
+            <div class="item">
+              <div class="label">Weightage</div>
+              <div class="value">{{ weightageLabel }}</div>
+            </div>
+            <div class="item">
+              <div class="label">Active</div>
+              <div class="value">
+                {{ inspectionType.active ? 'Yes' : 'No' }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3><mat-icon>description</mat-icon> Audit</h3>
+          <div class="grid">
+            <div class="item">
+              <div class="label">Created Date</div>
+              <div class="value">
+                {{
+                  inspectionType.createdDate
+                    ? (inspectionType.createdDate | date: 'medium')
+                    : '—'
+                }}
+              </div>
+            </div>
+            <div class="item">
+              <div class="label">Modified Date</div>
+              <div class="value">
+                {{
+                  inspectionType.modifiedDate
+                    ? (inspectionType.modifiedDate | date: 'medium')
+                    : '—'
+                }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer / Audit -->
+      <div class="footer">
+        <div class="audit">
+          <div>
+            Created by <strong>{{ inspectionType.createdById ?? '—' }}</strong>
+          </div>
+          <div>
+            Modified by
+            <strong>{{ inspectionType.modifiedById ?? '—' }}</strong>
+          </div>
+        </div>
+        <div class="buttons">
+          <button mat-stroked-button color="primary" (click)="back()">
+            <mat-icon>arrow_back</mat-icon>
+            Back
+          </button>
+        </div>
+      </div>
+    </section>
+  </ng-container>
+</div>

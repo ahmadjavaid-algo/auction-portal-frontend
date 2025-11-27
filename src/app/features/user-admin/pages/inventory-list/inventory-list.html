@@ -105,11 +105,17 @@
       </td>
     </ng-container>
 
-    <!-- Product -->
-    <ng-container matColumnDef="product">
-      <th mat-header-cell *matHeaderCellDef>Product</th>
+    <!-- NEW: Inspection Report column (replaces old Product column) -->
+    <ng-container matColumnDef="inspectionReport">
+      <th mat-header-cell *matHeaderCellDef>Inspection</th>
       <td mat-cell *matCellDef="let i">
-        {{ i.productId }}
+        <button
+          mat-icon-button
+          class="inspection-btn"
+          (click)="openInspectionReport(i)"
+          matTooltip="Open inspection report">
+          <mat-icon>assignment_turned_in</mat-icon>
+        </button>
       </td>
     </ng-container>
 
@@ -154,7 +160,7 @@
     <ng-container matColumnDef="actions">
       <th mat-header-cell *matHeaderCellDef>Actions</th>
       <td mat-cell *matCellDef="let i">
-        <!-- NEW: Upload images/files for this inventory -->
+        <!-- Upload images/files for this inventory -->
         <button
           mat-icon-button
           class="upload-btn"

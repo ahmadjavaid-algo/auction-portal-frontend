@@ -1,0 +1,81 @@
+<form class="dialog-form" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
+  <!-- Header -->
+  <div class="header">
+    <div class="title">
+      <h2>
+        {{ mode === 'edit' ? 'Edit inspection checkpoint' : 'Add inspection checkpoint' }}
+      </h2>
+      <p class="sub">
+        Link this checkpoint to an inspection type and define its name and input type.
+      </p>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <mat-dialog-content class="body">
+    <div class="sheet">
+      <div class="grid">
+        <!-- Inspection Type -->
+        <mat-form-field appearance="outline">
+          <mat-label>Inspection Type *</mat-label>
+          <mat-select formControlName="inspectionTypeId" [disabled]="loadingInspectionTypes">
+            <mat-option *ngFor="let t of inspectionTypes" [value]="t.inspectionTypeId">
+              {{ inspectionTypeLabel($any(t)) }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('inspectionTypeId')?.hasError('required')">
+            Inspection type is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Checkpoint Name -->
+        <mat-form-field appearance="outline">
+          <mat-label>Checkpoint name *</mat-label>
+          <input matInput formControlName="inspectionCheckpointName" maxlength="200" />
+          <mat-hint align="end">
+            {{ (form.get('inspectionCheckpointName')?.value?.length || 0) }}/200
+          </mat-hint>
+          <mat-error *ngIf="form.get('inspectionCheckpointName')?.hasError('required')">
+            Name is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Input Type (Dropdown) -->
+        <mat-form-field appearance="outline">
+          <mat-label>Input type *</mat-label>
+          <mat-select formControlName="inputType">
+            <mat-option *ngFor="let opt of inputTypeOptions" [value]="opt">
+              {{ opt }}
+            </mat-option>
+          </mat-select>
+          <mat-error *ngIf="form.get('inputType')?.hasError('required')">
+            Input type is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Note -->
+        <mat-form-field
+          class="full"
+          appearance="outline"
+          floatLabel="always"
+          subscriptSizing="dynamic"
+        >
+          <mat-label>Note</mat-label>
+          <textarea matInput rows="2" disabled>
+Checkpoints are used when filling inspection reports for a given inspection type.
+          </textarea>
+        </mat-form-field>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <!-- Actions -->
+  <mat-dialog-actions align="end" class="actions">
+    <button mat-stroked-button type="button" class="btn-cancel" (click)="onCancel()">
+      Cancel
+    </button>
+    <button mat-flat-button type="submit" class="btn-primary" [disabled]="form.invalid">
+      {{ mode === 'edit' ? 'Update' : 'Create' }}
+    </button>
+  </mat-dialog-actions>
+</form>

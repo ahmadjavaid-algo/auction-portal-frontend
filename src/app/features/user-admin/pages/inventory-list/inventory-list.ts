@@ -27,7 +27,6 @@ import { InventoryAuctionService } from '../../../../services/inventoryauctions.
 import { InventoryForm, InventoryFormResult } from '../inventory-form/inventory-form';
 import { AddToAuctionDialog, AddToAuctionResult } from '../add-to-auction.dialog/add-to-auction.dialog';
 
-
 import {
   InventoryImagesform,
   InventoryImagesDialogResult
@@ -62,17 +61,18 @@ export class InventoryList {
   private snack = inject(MatSnackBar);
   private auth = inject(AuthService);
 
-  
+  // NOTE: replaced 'product' with 'inspectionReport'
   displayedColumns: string[] = [
     'select',
     'name',
-    'product',
+    'inspectionReport',
     'chassis',
     'registration',
     'description',
     'status',
     'actions'
   ];
+
   inventory = new MatTableDataSource<Inventory>([]);
   totalItems = 0;
 
@@ -80,13 +80,10 @@ export class InventoryList {
   pageIndex = 0;
   searchTerm = '';
 
-  
   stats = { total: 0, active: 0, inactive: 0, products: 0 };
 
-  
   loading = false;
 
-  
   selection = new SelectionModel<Inventory>(true, []);
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -94,7 +91,6 @@ export class InventoryList {
   ngOnInit(): void {
     this.loadInventory();
 
-    
     this.inventory.filterPredicate = (i: Inventory, filter: string) => {
       const pj = this.safeParseProductJSON(i.productJSON);
       const haystack = [
@@ -126,7 +122,7 @@ export class InventoryList {
         if (this.paginator) this.inventory.paginator = this.paginator;
         this.applyPagingTotals();
         this.computeStats();
-        this.selection.clear(); 
+        this.selection.clear();
       },
       error: (e) => {
         console.error('Failed to load inventory', e);
@@ -193,7 +189,6 @@ export class InventoryList {
     return Math.min(this.totalItems, (this.pageIndex + 1) * this.pageSize);
   }
 
-  
   private get visibleRows(): Inventory[] {
     return this.inventory.filter ? this.inventory.filteredData : this.inventory.data;
   }
@@ -232,7 +227,6 @@ export class InventoryList {
     return this.selection.selected.map(r => r.inventoryId);
   }
 
-  
   addSelectedToAuction(): void {
     if (!this.selection.selected.length) return;
 
@@ -276,7 +270,6 @@ export class InventoryList {
     });
   }
 
-  
   openUploadFor(row: Inventory): void {
     const ref = this.dialog.open<InventoryImagesform, { inventoryId: number }, InventoryImagesDialogResult>(
       InventoryImagesform,
@@ -287,13 +280,10 @@ export class InventoryList {
       if (!result) return;
       if (result.refresh) {
         this.snack.open('Images uploaded.', 'OK', { duration: 2000 });
-        
-        
       }
     });
   }
 
-  
   openCreateInventory(): void {
     const ref = this.dialog.open<InventoryForm, { mode: 'create' }, InventoryFormResult>(InventoryForm, {
       width: '720px',
@@ -361,5 +351,11 @@ export class InventoryList {
 
   viewInventory(inventoryId: number): void {
     this.router.navigate(['/admin/inventory', inventoryId]);
+  }
+
+  // NEW: open inspection report screen for this inventory
+  openInspectionReport(row: Inventory): void {
+    // adjust route if you wire it differently
+    this.router.navigate(['/admin/inventory-inspectionreport', row.inventoryId]);
   }
 }

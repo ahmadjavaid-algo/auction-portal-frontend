@@ -1,0 +1,94 @@
+<div class="ia-wrapper">
+  <div class="ia-header">
+    <div class="title">
+      <mat-icon>playlist_add_check</mat-icon>
+      <span>Checkpoints for this inspection type</span>
+      <span class="count">({{ rows.length }})</span>
+    </div>
+
+    <button
+      mat-stroked-button
+      class="add"
+      (click)="addItem()"
+      matTooltip="Add inspection checkpoint"
+    >
+      <mat-icon>add</mat-icon>
+      Add
+    </button>
+  </div>
+
+  <div class="inner-panel">
+    <ng-container *ngIf="!loading; else busy">
+      <table mat-table [dataSource]="rows" class="inner-table">
+        <!-- Name -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Checkpoint</th>
+          <td mat-cell *matCellDef="let r">
+            <div class="user-cell">
+              <div class="name">
+                {{ r.inspectionCheckpointName || '—' }}
+              </div>
+              <div class="sub">
+                #{{ r.inspectionCheckpointId }} • Type #
+                {{ r.inspectionTypeId }}
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Input Type -->
+        <ng-container matColumnDef="inputType">
+          <th mat-header-cell *matHeaderCellDef>Input Type</th>
+          <td mat-cell *matCellDef="let r">
+            {{ r.inputType || '—' }}
+          </td>
+        </ng-container>
+
+        <!-- Active -->
+        <ng-container matColumnDef="active">
+          <th mat-header-cell *matHeaderCellDef>Active</th>
+          <td mat-cell *matCellDef="let r">
+            <button
+              mat-stroked-button
+              [class.is-active]="r.active"
+              [class.is-inactive]="r.active === false"
+              (click)="toggleActive(r)"
+            >
+              {{ r.active ? 'Active' : 'Inactive' }}
+            </button>
+          </td>
+        </ng-container>
+
+        <!-- Actions -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let r">
+            <button
+              mat-icon-button
+              class="edit"
+              (click)="editItem(r)"
+              matTooltip="Edit"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+
+      <div class="empty" *ngIf="rows.length === 0">
+        <mat-icon>info</mat-icon>
+        No checkpoints defined for this inspection type yet.
+      </div>
+    </ng-container>
+
+    <ng-template #busy>
+      <div class="busy">
+        <mat-spinner diameter="28"></mat-spinner>
+        <span>Loading…</span>
+      </div>
+    </ng-template>
+  </div>
+</div>

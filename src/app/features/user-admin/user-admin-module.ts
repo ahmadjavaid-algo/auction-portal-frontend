@@ -32,6 +32,16 @@ import { InventoryauctionsForm } from './pages/inventoryauctions-form/inventorya
 import { AddToAuctionDialog } from './pages/add-to-auction.dialog/add-to-auction.dialog';
 import { InventoryImagesform } from './pages/inventory-imagesform/inventory-imagesform';
 import { AdminChangePassword } from './pages/admin-change-password/admin-change-password';
+import { InspectorsList } from './pages/inspectors-list/inspectors-list';
+import { InspectorsDetails } from './pages/inspectors-details/inspectors-details';
+import { InspectorsForm } from './pages/inspectors-form/inspectors-form';
+import { InspectionDetails } from './pages/inspection-details/inspection-details';
+import { InspectionForm } from './pages/inspection-form/inspection-form';
+import { InspectionList } from './pages/inspection-list/inspection-list';
+import { InspectioncheckpointsList } from './pages/inspectioncheckpoints-list/inspectioncheckpoints-list';
+import { InspectioncheckpointsForm } from './pages/inspectioncheckpoints-form/inspectioncheckpoints-form';
+import { InspectioncheckpointsDetails } from './pages/inspectioncheckpoints-details/inspectioncheckpoints-details';
+import { InventoryInspectionreport } from './pages/inventory-inspectionreport/inventory-inspectionreport';
 @NgModule({
   imports: [
     CommonModule,
@@ -61,7 +71,17 @@ import { AdminChangePassword } from './pages/admin-change-password/admin-change-
     AuctionsDetails,
     AddToAuctionDialog,
     InventoryImagesform,
-    AdminChangePassword
+    AdminChangePassword,
+    InspectorsList,
+    InspectorsDetails,
+    InspectorsForm,
+    InspectionDetails,
+    InspectionForm,
+    InspectionList,
+    InspectioncheckpointsList,
+    InspectioncheckpointsForm,
+    InspectioncheckpointsDetails,
+    InventoryInspectionreport
   ]
 })
 export class UserAdminModule {}

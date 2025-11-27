@@ -1,0 +1,142 @@
+<!-- Stats strip -->
+<section class="stats-strip">
+  <div class="stat-card online">
+    <div class="icon-wrap"><mat-icon>online_prediction</mat-icon></div>
+    <div>
+      <div class="value">1</div>
+      <div class="label">Online Inspectors</div>
+    </div>
+  </div>
+
+  <div class="stat-card total">
+    <div class="icon-wrap"><mat-icon>group</mat-icon></div>
+    <div>
+      <div class="value">{{ stats?.totalUsers ?? 0 }}</div>
+      <div class="label">Total Inspectors</div>
+    </div>
+  </div>
+
+  <div class="stat-card active">
+    <div class="icon-wrap"><mat-icon>verified_user</mat-icon></div>
+    <div>
+      <div class="value">{{ stats?.activeUsers ?? 0 }}</div>
+      <div class="label">Active Inspectors</div>
+    </div>
+  </div>
+
+  <div class="stat-card inactive">
+    <div class="icon-wrap"><mat-icon>person_off</mat-icon></div>
+    <div>
+      <div class="value">{{ stats?.inactiveUsers ?? 0 }}</div>
+      <div class="label">Inactive Inspectors</div>
+    </div>
+  </div>
+</section>
+
+<!-- Toolbar -->
+<div class="user-header">
+  <mat-form-field appearance="outline" class="search-field">
+    <mat-label>Search Inspector</mat-label>
+    <input matInput [(ngModel)]="searchTerm" (input)="onSearch()" />
+    <button mat-icon-button *ngIf="searchTerm" matSuffix (click)="searchTerm=''; onSearch()">
+      <mat-icon>close</mat-icon>
+    </button>
+  </mat-form-field>
+
+  <button mat-flat-button class="add-btn" (click)="openCreateUser()">
+    <mat-icon>person_add</mat-icon>
+    Add Inspector
+  </button>
+</div>
+
+<!-- Data panel + table -->
+<div class="panel">
+  <table mat-table [dataSource]="users" class="full-width-table">
+    <!-- User -->
+    <ng-container matColumnDef="user">
+      <th mat-header-cell *matHeaderCellDef>User</th>
+      <td mat-cell *matCellDef="let u">
+        <div class="user-cell">
+          <!-- CHANGED: u.fullName -> getFullName(u) -->
+          <div class="name">{{ getFullName(u) }}</div>
+          <div class="sub">ID {{ u.userId }} <span *ngIf="u.userName">• {{ u.userName }}</span></div>
+        </div>
+      </td>
+    </ng-container>
+
+    <!-- Email -->
+    <ng-container matColumnDef="email">
+      <th mat-header-cell *matHeaderCellDef>Email</th>
+      <td mat-cell *matCellDef="let u">
+        <div class="email-cell">{{ u.email }}</div>
+      </td>
+    </ng-container>
+
+    <!-- Verified -->
+    <ng-container matColumnDef="verified">
+      <th mat-header-cell *matHeaderCellDef>Verified Status</th>
+      <td mat-cell *matCellDef="let u">
+        <span class="badge" [class.badge-ok]="u.emailConfirmed" [class.badge-no]="!u.emailConfirmed">
+          <mat-icon class="badge-icon">{{ u.emailConfirmed ? 'check_circle' : 'cancel' }}</mat-icon>
+          <span>{{ u.emailConfirmed ? 'Verified' : 'Unverified' }}</span>
+        </span>
+      </td>
+    </ng-container>
+
+    <!-- Last Login -->
+    <ng-container matColumnDef="lastLogin">
+      <th mat-header-cell *matHeaderCellDef>Last Login</th>
+      <td mat-cell *matCellDef="let u">
+        <!-- CHANGED: u.lastLogin -> getLastLogin(u) -->
+        <span class="muted">{{ getLastLogin(u) ? (getLastLogin(u) | date:'yyyy-MM-dd HH:mm') : '—' }}</span>
+      </td>
+    </ng-container>
+
+    <!-- Status -->
+    <ng-container matColumnDef="status">
+      <th mat-header-cell *matHeaderCellDef>Status</th>
+      <td mat-cell *matCellDef="let u">
+        <button mat-stroked-button
+                [class.is-active]="u.active"
+                [class.is-inactive]="u.active === false"
+                (click)="toggleActive(u)">
+          {{ u.active ? 'Active' : 'Inactive' }}
+        </button>
+      </td>
+    </ng-container>
+
+    <!-- Actions -->
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef>Actions</th>
+      <td mat-cell *matCellDef="let u">
+        <button mat-icon-button class="edit-btn" (click)="editUser(u)" matTooltip="Edit">
+          <mat-icon>edit</mat-icon>
+        </button>
+        <button mat-icon-button (click)="openChangePassword(u)" matTooltip="Change password">
+          <mat-icon>lock</mat-icon>
+        </button>
+        <button mat-icon-button (click)="viewUser(u.userId)" aria-label="View details" matTooltip="View details">
+          <mat-icon>visibility</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+  </table>
+</div>
+
+<!-- Footer -->
+<div class="list-footer">
+  <mat-paginator
+    [length]="totalItems"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[5,10,20]"
+    [pageIndex]="pageIndex"
+    (page)="onPageChange($event)">
+  </mat-paginator>
+
+  <div class="count">
+    {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }}
+  </div>
+</div>

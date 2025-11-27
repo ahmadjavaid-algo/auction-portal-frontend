@@ -1,0 +1,83 @@
+<form
+  class="dialog-form"
+  [formGroup]="form"
+  (ngSubmit)="onSubmit()"
+  autocomplete="off"
+>
+  <!-- Header -->
+  <div class="header">
+    <div class="title">
+      <h2>{{ mode === 'edit' ? 'Edit inspection type' : 'Create inspection type' }}</h2>
+      <p class="sub">
+        Define inspection type name and its weightage. These are used when building inspection templates.
+      </p>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <mat-dialog-content class="body">
+    <div class="sheet">
+      <div class="grid">
+        <!-- Name -->
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Inspection type name *</mat-label>
+          <input
+            matInput
+            formControlName="inspectionTypeName"
+            maxlength="200"
+          />
+          <mat-hint align="end">
+            {{ (form.get('inspectionTypeName')?.value?.length || 0) }}/200
+          </mat-hint>
+          <mat-error *ngIf="form.get('inspectionTypeName')?.hasError('required')">
+            Name is required
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Weightage -->
+        <mat-form-field appearance="outline">
+          <mat-label>Weightage *</mat-label>
+          <input
+            matInput
+            type="number"
+            formControlName="weightage"
+            min="0"
+          />
+          <mat-error *ngIf="form.get('weightage')?.hasError('required')">
+            Weightage is required
+          </mat-error>
+          <mat-error *ngIf="form.get('weightage')?.hasError('min')">
+            Must be ≥ 0
+          </mat-error>
+        </mat-form-field>
+
+        <!-- Info note -->
+        <div class="tz-note">
+          <mat-icon>info</mat-icon>
+          You can use weightage to control how much this inspection type contributes
+          to the overall inspection score.
+        </div>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <!-- Actions -->
+  <mat-dialog-actions align="end" class="actions">
+    <button
+      mat-stroked-button
+      type="button"
+      class="btn-cancel"
+      (click)="onCancel()"
+    >
+      Cancel
+    </button>
+    <button
+      mat-flat-button
+      type="submit"
+      class="btn-primary"
+      [disabled]="form.invalid"
+    >
+      {{ mode === 'edit' ? 'Update' : 'Create' }}
+    </button>
+  </mat-dialog-actions>
+</form>

@@ -12,7 +12,7 @@ import { AdminLayout } from './layout/admin-layout/admin-layout';
 import { EmailsList } from './pages/emails-list/emails-list';
 import { EmailsDetails } from './pages/emails-details/emails-details';
 import { UsersForgotpassword } from './pages/users-forgotpassword/users-forgotpassword';
-import { UsersResetpassword } from './pages/users-resetpassword/users-resetpassword'; 
+import { UsersResetpassword } from './pages/users-resetpassword/users-resetpassword';
 import { BiddersList } from './pages/bidders-list/bidders-list';
 import { BiddersDetails } from './pages/bidders-details/bidders-details';
 import { MakesModelsYearsCategoriesList } from './pages/makes-models-years-categories-list/makes-models-years-categories-list';
@@ -24,37 +24,63 @@ import { AuctionsList } from './pages/auctions-list/auctions-list';
 import { AuctionsDetails } from './pages/auctions-details/auctions-details';
 import { InventoryImagesform } from './pages/inventory-imagesform/inventory-imagesform';
 import { AdminChangePassword } from './pages/admin-change-password/admin-change-password';
+import { InspectorsList } from './pages/inspectors-list/inspectors-list';
+import { InspectorsDetails } from './pages/inspectors-details/inspectors-details';
+import { InspectionList } from './pages/inspection-list/inspection-list';
+import { InspectionDetails } from './pages/inspection-details/inspection-details';
+
+// NEW: inventory inspection report page
+import { InventoryInspectionreport } from './pages/inventory-inspectionreport/inventory-inspectionreport';
+
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
 
-  
+  // Auth
   { path: 'login', component: UsersLogin, title: 'Admin Login' },
-  { path: 'forgot-password', component: UsersForgotpassword, title: 'Forgot Password' }, 
-  { path: 'auth/reset-password', component: UsersResetpassword, title: 'Reset Password' }, 
+  { path: 'forgot-password', component: UsersForgotpassword, title: 'Forgot Password' },
+  { path: 'auth/reset-password', component: UsersResetpassword, title: 'Reset Password' },
 
-  
   {
     path: '',
     component: AdminLayout,
     canActivate: [authGuard],
     children: [
       { path: 'dashboard', component: Dashboard, title: 'Dashboard' },
+
       { path: 'users', component: UsersList, title: 'Users' },
       { path: 'users/:id', component: UsersDetails, title: 'User Details' },
+
       { path: 'roles', component: RolesList, title: 'Roles' },
       { path: 'roles/:id', component: RolesDetails, title: 'Role Details' },
+
       { path: 'emails', component: EmailsList, title: 'Emails' },
       { path: 'emails/:id', component: EmailsDetails, title: 'Email Details' },
+
       { path: 'bidders', component: BiddersList, title: 'Bidders' },
       { path: 'bidders/:id', component: BiddersDetails, title: 'Bidder Details' },
+
       { path: 'make', component: MakesModelsYearsCategoriesList, title: 'Make' },
+
       { path: 'products', component: ProductsList, title: 'Products' },
       { path: 'products/:id', component: ProductsDetails, title: 'Product Details' },
+
       { path: 'inventory', component: InventoryList, title: 'Inventory' },
       { path: 'inventory/:id', component: InventoryDetails, title: 'Inventory Details' },
+
+      
+      {path: 'inventory-inspectionreport/:id',component: InventoryInspectionreport,title: 'Inventory Inspection Report'},
+
       { path: 'auctions', component: AuctionsList, title: 'Auctions' },
       { path: 'auctions/:id', component: AuctionsDetails, title: 'Auction Details' },
+
       { path: 'change-password', component: AdminChangePassword, title: 'Change Password' },
+
+      { path: 'inspectors', component: InspectorsList, title: 'Inspectors' },
+      { path: 'inspectors/:id', component: InspectorsDetails, title: 'Inspector Details' },
+
+      { path: 'inspection', component: InspectionList, title: 'Inspection' },
+      { path: 'inspection/:id', component: InspectionDetails, title: 'Inspection Details' },
+
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' }
     ]
   }
