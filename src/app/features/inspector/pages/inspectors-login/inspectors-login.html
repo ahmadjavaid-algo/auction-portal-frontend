@@ -1,0 +1,41 @@
+<div class="inspector-login-frame">
+  <div class="login-card">
+
+    <!-- Logo + name -->
+    <div class="brand">
+      <img
+        src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8"
+        alt="Algo Logo"
+        class="brand-logo"
+      />
+      <span class="brand-title">Auction Portal</span>
+    </div>
+
+    <h2>Inspector Login</h2>
+    <p class="subtitle">Sign in to continue</p>
+
+    <form (ngSubmit)="login()">
+      <label>Email</label>
+      <input type="email" [(ngModel)]="email" name="email" required />
+
+      <label>Password</label>
+      <input type="password" [(ngModel)]="password" name="password" required />
+
+      <div class="options">
+        <label class="remember">
+          <input type="checkbox" />
+          <span>Remember me</span>
+        </label>
+
+        <a routerLink="/inspector/forgot-password">Forgot password?</a>
+      </div>
+
+      <button type="submit" class="primary-btn">Sign in</button>
+    </form>
+
+    <div class="request-access">
+      Need access? <a href="#">Request Inspector Access</a>
+    </div>
+
+  </div>
+</div>

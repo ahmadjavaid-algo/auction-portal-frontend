@@ -1,0 +1,107 @@
+<div class="inspector-frame">
+  <!-- LEFT: Neon-inspired vertical rail -->
+  <aside class="rail" [class.collapsed]="railCollapsed">
+    <div class="rail-header">
+      <div class="logo">
+        <a routerLink="/inspector/dashboard">
+          <img
+            src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8"
+            alt="Algo logo"
+          />
+          <span class="logo-text" *ngIf="!railCollapsed">Auction Portal</span>
+        </a>
+      </div>
+
+      <button
+        type="button"
+        class="rail-toggle"
+        (click)="toggleRail()"
+        mat-icon-button
+      >
+        <mat-icon>{{ railCollapsed ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+      </button>
+    </div>
+
+    <nav class="rail-nav">
+      <a
+        routerLink="/inspector/dashboard"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        <mat-icon>dashboard_customize</mat-icon>
+        <span>Overview</span>
+      </a>
+
+      <a routerLink="/inspector/inspections" routerLinkActive="active">
+        <mat-icon>fact_check</mat-icon>
+        <span>Inspections</span>
+      </a>
+
+      <a routerLink="/inspector/schedule" routerLinkActive="active">
+        <mat-icon>event</mat-icon>
+        <span>Schedule</span>
+      </a>
+
+      <a routerLink="/inspector/reports" routerLinkActive="active">
+        <mat-icon>timeline</mat-icon>
+        <span>Reports</span>
+      </a>
+
+      <a routerLink="/inspector/guides" routerLinkActive="active">
+        <mat-icon>help_outline</mat-icon>
+        <span>Guides</span>
+      </a>
+    </nav>
+
+    <div class="rail-footer">
+      <span class="rail-caption">
+        Precision, consistency &amp; unbiased inspection – powered by Algo.
+      </span>
+    </div>
+  </aside>
+
+  <!-- RIGHT: Main area -->
+  <main class="main">
+    <!-- Minimal chrome: only notifications + user dropdown -->
+    <div class="main-chrome">
+      <button type="button" class="notif-btn" mat-icon-button>
+        <mat-icon>notifications_none</mat-icon>
+        <span class="dot" *ngIf="hasUnread"></span>
+      </button>
+
+      <div
+        #userDropdown
+        class="user-pill"
+        [class.open]="dropdownOpen"
+        (click)="toggleDropdown()"
+      >
+        <div class="avatar">
+          {{ (displayName || 'I') | slice: 0:1 }}
+        </div>
+        <div class="meta">
+          <span class="name">{{ displayName }}</span>
+          <span class="role">Inspector</span>
+        </div>
+        <mat-icon class="chevron">expand_more</mat-icon>
+
+        <ul class="menu">
+          <li>
+            <button type="button" (click)="goProfile($event)">
+              Profile
+            </button>
+          </li>
+          <li>
+            <button type="button" (click)="changePassword()">
+              Change password
+            </button>
+          </li>
+          <li>
+            <button type="button" (click)="logout()">
+              Sign out
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </main>
+</div>

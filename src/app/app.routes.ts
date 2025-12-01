@@ -14,6 +14,12 @@ export const routes: Routes = [
       import('./features/bidder-portal/bidder/bidder-module')
         .then(m => m.BidderModule),
   },
+  {
+    path: 'inspector',   
+    loadChildren: () =>
+      import('./features/inspector/inspector-module')
+        .then(m => m.InspectorModule),
+  },
 
   
   { path: '', pathMatch: 'full', redirectTo: 'bidder' },
