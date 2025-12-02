@@ -467,33 +467,28 @@
 }
 
 /* CONTENT AREA – fills rest of page */
+/* CONTENT AREA – fills rest of page */
 .content {
   flex: 1;
   display: flex;
   align-items: stretch;
   justify-content: stretch;
+  min-height: 0; /* allows inner area to scroll */
 }
 
-/* Main work canvas – dark glass with Algo magenta/indigo */
+/* Full-page canvas for child routes (no card, no border) */
 .content-inner {
   flex: 1;
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  background:
-    linear-gradient(
-      120deg,
-      rgba(240, 0, 184, 0.45) 0%,
-      rgba(199, 60, 255, 0.35) 25%,
-      rgba(104, 88, 255, 0.4) 55%,
-      rgba(79, 70, 229, 0.55) 100%
-    ),
-    radial-gradient(circle at 0 0, rgba(15, 23, 42, 0.9) 0, #020617 55%);
-  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.7);
-  padding: 18px 18px 20px;
-  overflow: hidden;
-  color: #f9fafb;
-  backdrop-filter: blur(18px);
+  padding: 0;              /* child pages handle their own padding */
+  overflow: auto;          /* scroll if needed */
+  border: none;
+  border-radius: 0;
+  background: transparent; /* remove inner glass gradient */
+  box-shadow: none;
+  color: inherit;
+  backdrop-filter: none;
 }
+
 
 /* Responsive tweaks */
 @media (max-width: 1100px) {

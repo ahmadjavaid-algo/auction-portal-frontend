@@ -1,0 +1,248 @@
+<div class="inspections-shell">
+  <!-- Loading -->
+  <div *ngIf="loading" class="state state-loading">
+    <mat-progress-spinner diameter="42" mode="indeterminate"></mat-progress-spinner>
+    <div class="copy">
+      <h2>Loading your inspections</h2>
+      <p>Fetching assigned inventory and checklists…</p>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <!-- Error -->
+    <div *ngIf="error" class="state state-error">
+      <mat-icon>error_outline</mat-icon>
+      <div class="copy">
+        <h2>Something went wrong</h2>
+        <p>{{ error }}</p>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <ng-container *ngIf="!error">
+      <!-- Header -->
+      <header class="page-header">
+        <div class="titles">
+          <h1>Assigned Inspections</h1>
+          <p>
+            Review each assigned vehicle and complete the inspection checkpoints
+            grouped by type.
+          </p>
+        </div>
+
+        <div class="metrics" *ngIf="blocks.length">
+          <div class="metric-pill">
+            <span class="label">Inventory items</span>
+            <span class="value">{{ blocks.length }}</span>
+          </div>
+          <div class="metric-pill secondary">
+            <span class="label">Checklist progress</span>
+            <span class="value">
+              {{ totalCompleted }}/{{ totalCheckpoints }}
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Empty state -->
+      <section *ngIf="!blocks.length" class="state state-empty">
+        <mat-icon>inventory_2</mat-icon>
+        <div class="copy">
+          <h2>No inventory assigned yet</h2>
+          <p>
+            Once the admin assigns inventory to you, it will appear here for
+            inspection.
+          </p>
+        </div>
+      </section>
+
+      <!-- Assigned inventory list -->
+      <section *ngIf="blocks.length" class="inventory-grid">
+        <article
+          class="inventory-card"
+          *ngFor="let block of blocks"
+        >
+          <!-- Card header -->
+          <header class="card-header">
+            <div class="left">
+              <div class="badge">
+                Inventory #{{ block.inventory.inventoryId }}
+              </div>
+              <h2>{{ block.productName }}</h2>
+
+              <div class="meta-line">
+                <span *ngIf="block.productMeta">
+                  {{ block.productMeta }}
+                </span>
+                <span *ngIf="block.inventory.chassisNo">
+                  • Chassis: {{ block.inventory.chassisNo }}
+                </span>
+                <span *ngIf="block.inventory.registrationNo">
+                  • Reg: {{ block.inventory.registrationNo }}
+                </span>
+              </div>
+
+              <div class="meta-line description" *ngIf="block.inventory.description">
+                {{ block.inventory.description }}
+              </div>
+            </div>
+
+            <div class="right">
+              <div class="progress-pill" matTooltip="Answered vs total checkpoints">
+                <mat-icon>playlist_add_check</mat-icon>
+                <span>
+                  {{ getBlockCompleted(block) }}/{{ getBlockTotal(block) }}
+                </span>
+              </div>
+
+              <button
+                mat-stroked-button
+                class="toggle-btn"
+                type="button"
+                (click)="toggleExpanded(block)"
+              >
+                <mat-icon>{{ block.expanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+                {{ block.expanded ? 'Hide checklist' : 'Open checklist' }}
+              </button>
+            </div>
+          </header>
+
+          <!-- Checklist body -->
+          <section class="card-body" *ngIf="block.expanded">
+            <div
+              class="type-group"
+              *ngFor="let group of block.groups"
+            >
+              <div class="type-header">
+                <div class="title">
+                  <span class="type-label">
+                    {{ group.inspectionTypeName }}
+                  </span>
+                  <span class="weight" *ngIf="group.weightage">
+                    {{ group.weightage }}%
+                  </span>
+                </div>
+
+                <div class="counts">
+                  <span
+                    class="pill done"
+                    *ngIf="getGroupCompleted(group) === group.checkpoints.length && group.checkpoints.length"
+                  >
+                    <mat-icon>check_circle</mat-icon>
+                    Complete
+                  </span>
+
+                  <span
+                    class="pill"
+                    *ngIf="getGroupCompleted(group) !== group.checkpoints.length"
+                  >
+                    {{ getGroupCompleted(group) }}/{{ group.checkpoints.length }}
+                    answered
+                  </span>
+                </div>
+              </div>
+
+              <div class="checkpoints">
+                <div
+                  class="checkpoint-row"
+                  *ngFor="let row of group.checkpoints"
+                >
+                  <div class="label">
+                    <span>{{ row.inspectionCheckpointName }}</span>
+                  </div>
+
+                  <div class="control">
+                    <ng-container [ngSwitch]="normalizeInputType(row.inputType)">
+                      <!-- Textarea -->
+                      <textarea
+                        *ngSwitchCase="'textarea'"
+                        [(ngModel)]="row.resultValue"
+                        rows="2"
+                        placeholder="Enter notes or observations"
+                      ></textarea>
+
+                      <!-- Number -->
+                      <input
+                        *ngSwitchCase="'number'"
+                        type="number"
+                        [(ngModel)]="row.resultValue"
+                        placeholder="Enter score or numeric value"
+                      />
+
+                      <!-- Yes / No -->
+                      <div *ngSwitchCase="'yesno'" class="yesno-toggle">
+                        <button
+                          type="button"
+                          [class.active]="row.resultValue === 'Pass'"
+                          (click)="setYesNo(row, 'Pass')"
+                        >
+                          <mat-icon>check</mat-icon>
+                          Pass
+                        </button>
+                        <button
+                          type="button"
+                          [class.active]="row.resultValue === 'Fail'"
+                          (click)="setYesNo(row, 'Fail')"
+                        >
+                          <mat-icon>close</mat-icon>
+                          Fail
+                        </button>
+                      </div>
+
+                      <!-- Default text -->
+                      <input
+                        *ngSwitchDefault
+                        type="text"
+                        [(ngModel)]="row.resultValue"
+                        placeholder="Enter result or comment"
+                      />
+                    </ng-container>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card footer -->
+            <footer class="card-footer">
+              <div class="left">
+                <span class="hint">
+                  {{ getBlockCompleted(block) }}/{{ getBlockTotal(block) }}
+                  checkpoints answered
+                </span>
+              </div>
+
+              <div class="right">
+                <button
+                  mat-stroked-button
+                  type="button"
+                  class="collapse-btn"
+                  (click)="toggleExpanded(block)"
+                >
+                  Collapse
+                </button>
+
+                <button
+                  mat-flat-button
+                  type="button"
+                  class="save-btn"
+                  [disabled]="block.saving"
+                  (click)="saveInventory(block)"
+                >
+                  <mat-progress-spinner
+                    *ngIf="block.saving"
+                    diameter="18"
+                    mode="indeterminate"
+                  ></mat-progress-spinner>
+                  <ng-container *ngIf="!block.saving">
+                    <mat-icon>save</mat-icon>
+                    <span>Save inspection</span>
+                  </ng-container>
+                </button>
+              </div>
+            </footer>
+          </section>
+        </article>
+      </section>
+    </ng-container>
+  </ng-container>
+</div>

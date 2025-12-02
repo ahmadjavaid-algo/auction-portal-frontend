@@ -6,6 +6,7 @@ import { Dashboard } from './pages/dashboard/dashboard';
 import { InspectorsForgotpassword } from './pages/inspectors-forgotpassword/inspectors-forgotpassword';
 import { InspectorsResetpassword } from './pages/inspectors-resetpassword/inspectors-resetpassword';
 import { InspectorLayout } from './inspector-layout/inspector-layout';
+import { Inspections } from './pages/inspections/inspections';
 
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -20,6 +21,7 @@ const routes: Routes = [
     component: InspectorLayout,
     canActivate: [inspectorauthGuard],
     children: [
+      { path: 'inspection', component: Inspections, title: 'Inspection' },
       { path: 'dashboard', component: Dashboard, title: 'Dashboard' },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' }
     ]

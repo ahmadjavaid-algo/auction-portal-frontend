@@ -6,6 +6,7 @@ import { InspectorsLogin } from './pages/inspectors-login/inspectors-login';
 import { InspectorsForgotpassword } from './pages/inspectors-forgotpassword/inspectors-forgotpassword';
 import { InspectorsResetpassword } from './pages/inspectors-resetpassword/inspectors-resetpassword';
 import { Dashboard } from './pages/dashboard/dashboard';
+import { Inspections } from './pages/inspections/inspections';
 
 
 @NgModule({
@@ -15,7 +16,8 @@ import { Dashboard } from './pages/dashboard/dashboard';
     InspectorsLogin,
     InspectorsForgotpassword,
     InspectorsResetpassword,
-    Dashboard
+    Dashboard,
+    Inspections
   ]
 })
 export class InspectorModule { }

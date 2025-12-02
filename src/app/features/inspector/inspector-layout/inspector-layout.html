@@ -1,3 +1,4 @@
+<!-- inspector-layout.html -->
 <div class="inspector-frame">
   <!-- LEFT: Neon-inspired vertical rail -->
   <aside class="rail" [class.collapsed]="railCollapsed">
@@ -32,7 +33,7 @@
         <span>Overview</span>
       </a>
 
-      <a routerLink="/inspector/inspections" routerLinkActive="active">
+      <a routerLink="/inspector/inspection" routerLinkActive="active">
         <mat-icon>fact_check</mat-icon>
         <span>Inspections</span>
       </a>
@@ -62,7 +63,7 @@
 
   <!-- RIGHT: Main area -->
   <main class="main">
-    <!-- Minimal chrome: only notifications + user dropdown -->
+    <!-- Top chrome: notifications + user dropdown -->
     <div class="main-chrome">
       <button type="button" class="notif-btn" mat-icon-button>
         <mat-icon>notifications_none</mat-icon>
@@ -103,5 +104,12 @@
         </ul>
       </div>
     </div>
+
+    <!-- CONTENT AREA: where child pages (e.g. Inspections) render -->
+    <section class="content">
+      <div class="content-inner">
+        <router-outlet></router-outlet>
+      </div>
+    </section>
   </main>
 </div>
