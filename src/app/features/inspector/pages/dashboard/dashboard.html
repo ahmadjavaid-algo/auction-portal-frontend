@@ -1,1 +1,163 @@
-<p>dashboard works!</p>
+<!-- src/app/pages/inspector/dashboard/dashboard.html -->
+<div class="inspector-dashboard">
+  <!-- Loading State -->
+  <div class="loading-overlay" *ngIf="loading">
+    <mat-spinner diameter="48"></mat-spinner>
+    <span>Loading dashboard...</span>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-banner" *ngIf="!loading && error">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ error }}</span>
+  </div>
+
+  <!-- Main Content (no sidebar/top-layout here, outer layout handles that) -->
+  <div class="content-grid" *ngIf="!loading && !error">
+    <!-- Left Column -->
+    <div class="left-column">
+      <!-- Upcoming Appointment Hero -->
+      <article class="appointment-hero" *ngIf="upcoming">
+        <div class="appointment-content">
+          <p class="appointment-label">Upcoming Appointment</p>
+          <h2 class="appointment-title">{{ upcoming.title }}</h2>
+
+          <div class="appointment-details">
+            <div class="detail-item">
+              <mat-icon>location_on</mat-icon>
+              <span>{{ upcoming.location }}</span>
+            </div>
+            <div class="detail-item">
+              <mat-icon>schedule</mat-icon>
+              <span>{{ upcoming.dateTime }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="appointment-image">
+          <img [src]="heroImage" [alt]="upcoming.title" />
+        </div>
+      </article>
+
+      <!-- No Upcoming Appointment -->
+      <article class="appointment-hero" *ngIf="!upcoming">
+        <div class="appointment-content">
+          <p class="appointment-label">Upcoming Appointment</p>
+          <h2 class="appointment-title">No appointments scheduled</h2>
+          <p class="no-appointment-text">
+            Your upcoming inspections will appear here once assigned.
+          </p>
+        </div>
+        <div class="appointment-image">
+          <img [src]="fallbackHero" alt="No appointment" />
+        </div>
+      </article>
+
+      <!-- Summary Stats -->
+      <section class="stats-grid">
+        <div
+          class="stat-card"
+          *ngFor="let tile of summaryTiles"
+        >
+          <div class="stat-icon" [style.background-color]="tile.color">
+            <mat-icon>{{ tile.icon }}</mat-icon>
+          </div>
+          <div class="stat-content">
+            <p class="stat-value">{{ tile.value }}</p>
+            <p class="stat-label">{{ tile.label }}</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- My Reports -->
+      <section class="reports-section">
+        <div class="section-header">
+          <div>
+            <h3>My Reports</h3>
+            <p class="section-subtitle">Sales Summary</p>
+          </div>
+          <button mat-button class="view-all-btn">
+            View All
+          </button>
+        </div>
+
+        <div class="reports-grid">
+          <div class="report-card" *ngFor="let report of myReports">
+            <div class="report-icon">
+              <mat-icon>description</mat-icon>
+            </div>
+            <div class="report-content">
+              <h4>{{ report.title }}</h4>
+              <p>{{ report.month }} {{ report.year }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Right Column -->
+    <div class="right-column">
+      <!-- Profile Card -->
+      <article class="profile-card">
+        <div class="profile-avatar">
+          <span>{{ initials }}</span>
+        </div>
+        <h3 class="profile-name">{{ inspector.name }}</h3>
+        <p class="profile-handle">{{ inspector.handle }}</p>
+        <button mat-stroked-button class="switch-account-btn">
+          View Account
+        </button>
+      </article>
+
+      <!-- Registered Vehicles -->
+      <article class="vehicles-section">
+        <div class="section-header">
+          <div>
+            <h3>Registered Vehicles</h3>
+            <p class="section-subtitle">Sales Summary</p>
+          </div>
+        </div>
+
+        <div class="vehicles-list" *ngIf="registeredVehicles.length; else noVehicles">
+          <div
+            class="vehicle-item"
+            *ngFor="let vehicle of registeredVehicles"
+          >
+            <div class="vehicle-thumbnail">
+              <img
+                *ngIf="vehicle.thumbnail; else noThumb"
+                [src]="vehicle.thumbnail"
+                [alt]="vehicle.title"
+              />
+              <ng-template #noThumb>
+                <div class="thumbnail-placeholder">
+                  <mat-icon>directions_car</mat-icon>
+                </div>
+              </ng-template>
+            </div>
+
+            <div class="vehicle-details">
+              <p class="vehicle-name">{{ vehicle.title }}</p>
+              <p class="vehicle-id">{{ vehicle.subtitle }}</p>
+            </div>
+
+            <!-- Assigned to pill -->
+            <span
+              class="vehicle-assignment"
+              [class.me]="vehicle.isMine"
+            >
+              {{ vehicle.assignedToLabel }}
+            </span>
+          </div>
+        </div>
+
+        <ng-template #noVehicles>
+          <div class="no-vehicles">
+            <mat-icon>directions_car</mat-icon>
+            <span>No vehicles registered yet</span>
+          </div>
+        </ng-template>
+      </article>
+    </div>
+  </div>
+</div>

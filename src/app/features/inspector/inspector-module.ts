@@ -7,6 +7,8 @@ import { InspectorsForgotpassword } from './pages/inspectors-forgotpassword/insp
 import { InspectorsResetpassword } from './pages/inspectors-resetpassword/inspectors-resetpassword';
 import { Dashboard } from './pages/dashboard/dashboard';
 import { Inspections } from './pages/inspections/inspections';
+import { InspectorsAccdetails } from './pages/inspectors-accdetails/inspectors-accdetails';
+import { InspectorChangePassword } from './pages/inspector-change-password/inspector-change-password';
 
 
 @NgModule({
@@ -17,7 +19,9 @@ import { Inspections } from './pages/inspections/inspections';
     InspectorsForgotpassword,
     InspectorsResetpassword,
     Dashboard,
-    Inspections
+    Inspections,
+    InspectorsAccdetails,
+    InspectorChangePassword
   ]
 })
 export class InspectorModule { }

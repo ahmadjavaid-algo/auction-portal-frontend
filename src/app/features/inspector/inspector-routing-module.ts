@@ -7,6 +7,8 @@ import { InspectorsForgotpassword } from './pages/inspectors-forgotpassword/insp
 import { InspectorsResetpassword } from './pages/inspectors-resetpassword/inspectors-resetpassword';
 import { InspectorLayout } from './inspector-layout/inspector-layout';
 import { Inspections } from './pages/inspections/inspections';
+import { InspectorsAccdetails } from './pages/inspectors-accdetails/inspectors-accdetails';
+import { InspectorChangePassword } from './pages/inspector-change-password/inspector-change-password';
 
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -23,6 +25,8 @@ const routes: Routes = [
     children: [
       { path: 'inspection', component: Inspections, title: 'Inspection' },
       { path: 'dashboard', component: Dashboard, title: 'Dashboard' },
+      { path: 'accdetails', component: InspectorsAccdetails, title: 'Account Details' },
+      { path: 'change-password', component: InspectorChangePassword , title: 'Change Password'},
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' }
     ]
   }

@@ -41,7 +41,7 @@ import { BidderChangePassword } from './pages/bidder-change-password/bidder-chan
     Info,
     FavouritesList,
     Auctionbid,
-    BidderChangePassword
+    BidderChangePassword,
   ]
 })
 export class BidderModule { }

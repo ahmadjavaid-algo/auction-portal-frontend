@@ -1,0 +1,117 @@
+<!-- Loading -->
+<div class="center" *ngIf="loading">
+  <mat-progress-spinner mode="indeterminate" diameter="44"></mat-progress-spinner>
+</div>
+
+<!-- Error -->
+<div class="error" *ngIf="!loading && error">
+  <mat-icon>error_outline</mat-icon>
+  <span>{{ error }}</span>
+  <button mat-stroked-button color="primary" (click)="refresh()">Retry</button>
+</div>
+
+<!-- Content -->
+<section class="account" *ngIf="!loading && !error && user">
+
+
+  <!-- Hero/profile header -->
+  <div class="hero">
+    <div class="avatar">{{ initials }}</div>
+    <div class="who">
+      <!-- in the hero header name line -->
+      <h2 class="name">
+        {{ user.firstName }} {{ user.lastName }}
+        <span class="verified" *ngIf="user.emailConfirmed">Verified</span>
+      </h2>
+      <div class="email">{{ user.email || '—' }}</div>
+    </div>
+
+    <div class="hero-actions">
+      <button class="btn ghost" (click)="refresh()">
+        <mat-icon>refresh</mat-icon><span>Refresh</span>
+      </button>
+      <button class="btn primary" (click)="changePassword()">
+        <mat-icon>lock_reset</mat-icon><span>Change Password</span>
+      </button>
+      <button class="btn ghost warn" (click)="logout()">
+        <mat-icon>logout</mat-icon><span>Logout</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Two top cards (like the screenshot) -->
+  <div class="cards two-col">
+    <!-- Personal details -->
+    <mat-card class="panel">
+      <div class="panel-title">Personal details</div>
+      <div class="rows">
+        <div class="row"><div class="label">Full name:</div><div class="val">{{ user.firstName }} {{ user.lastName }}</div></div>
+        <div class="row"><div class="label">Address:</div><div class="val">{{ user.address1 || '—' }}</div></div>
+        <div class="row"><div class="label">Phone Number:</div><div class="val selectable">{{ user.phoneNumber || '—' }}</div></div>
+        <div class="row"><div class="label">Email:</div><div class="val selectable">{{ user.email || '—' }}</div></div>
+        <div class="row"><div class="label">Postal Code:</div><div class="val">{{ user.postalCode || '—' }}</div></div>
+      </div>
+    </mat-card>
+
+    <!-- Account details -->
+    <mat-card class="panel">
+      <div class="panel-title">Account details</div>
+      <div class="rows">
+        <div class="row"><div class="label">User Name:</div><div class="val selectable">{{ user.userName }}</div></div>
+        <div class="row"><div class="label">Account Created:</div><div class="val">{{ user.createdDate | date:'medium' }}</div></div>
+        <div class="row"><div class="label">Last Login:</div><div class="val">{{ user.loginDate | date:'medium' }}</div></div>
+        <div class="row"><div class="label">Identification #:</div><div class="val selectable">{{ user.identificationNumber || '—' }}</div></div>
+
+        <!-- Account Verification row -->
+        <div class="row">
+          <div class="label">Account Verification:</div>
+          <div class="val">
+            <span class="badge verified" *ngIf="user.emailConfirmed">Verified</span>
+            <span class="badge" *ngIf="!user.emailConfirmed">Unverified</span>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="label">Status:</div>
+          <div class="val">
+            <span class="dot" [class.on]="user.active"></span>
+            <span>{{ user.active ? 'Active' : 'Inactive' }}</span>
+          </div>
+        </div>
+        <div class="row"><div class="label">Security Stamp:</div><div class="val">{{ user.securityStamp || '—' }}</div></div>
+        <div class="row"><div class="label">User ID:</div><div class="val">ID {{ user.userId }}</div></div>
+      </div>
+    </mat-card>
+  </div>
+
+  <!-- Lower cards -->
+  <div class="cards two-col">
+    <!-- Security Settings -->
+    <mat-card class="panel">
+      <div class="panel-title">Security Settings</div>
+      <div class="rows">
+        <div class="row"><div class="label">Password Last Changed:</div><div class="val">—</div></div>
+        <div class="row"><div class="label">Two-Factor Authentication:</div><div class="val"><span class="badge">Disabled</span></div></div>
+        <div class="row"><div class="label">Login Notifications:</div><div class="val"><span class="badge">Disabled</span></div></div>
+        <div class="row"><div class="label">Recent Account Activity:</div><div class="val">—</div></div>
+      </div>
+    </mat-card>
+
+    <!-- Preferences -->
+    <mat-card class="panel">
+      <div class="panel-title">Preferences</div>
+      <div class="rows">
+        <div class="row"><div class="label">Email Notifications:</div><div class="val"><span class="badge">Subscribed</span></div></div>
+        <div class="row"><div class="label">Default Dashboard View:</div><div class="val">—</div></div>
+        <div class="row"><div class="label">Dark Mode:</div><div class="val">—</div></div>
+        <div class="row"><div class="label">Language for Content:</div><div class="val">—</div></div>
+      </div>
+    </mat-card>
+  </div>
+
+  <div class="footer">
+    <button class="btn ghost" (click)="back()">
+      <mat-icon>arrow_back</mat-icon><span>Back to Dashboard</span>
+    </button>
+  </div>
+</section>

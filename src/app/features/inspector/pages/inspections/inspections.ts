@@ -1,3 +1,4 @@
+// src/app/pages/inspector/inspections/inspections.ts
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -16,12 +17,14 @@ import { InventoryInspector } from '../../../../models/inventoryinspector.model'
 import { Inspection } from '../../../../models/inspection.model';
 import { InspectionType } from '../../../../models/inspectiontype.model';
 import { InspectionCheckpoint } from '../../../../models/inspectioncheckpoint.model';
+import { InventoryDocumentFile } from '../../../../models/inventorydocumentfile.model';
 
 import { InventoryService } from '../../../../services/inventory.service';
 import { InventoryInspectorService } from '../../../../services/inventoryinspector.service';
 import { InspectionTypesService } from '../../../../services/inspectiontypes.service';
 import { InspectionCheckpointsService } from '../../../../services/inspectioncheckpoints.service';
 import { InspectionsService } from '../../../../services/inspection.service';
+import { InventoryDocumentFileService } from '../../../../services/inventorydocumentfile.service';
 import { InspectorAuthService } from '../../../../services/inspectorauth';
 
 interface InspectionCheckpointRow {
@@ -48,6 +51,7 @@ interface InspectorInventoryBlock {
   groups: InspectionTypeGroupForUI[];
   expanded: boolean;
   saving: boolean;
+  images: string[];
 }
 
 @Component({
@@ -63,7 +67,7 @@ interface InspectorInventoryBlock {
     MatTooltipModule
   ],
   templateUrl: './inspections.html',
-  styleUrl: './inspections.scss'
+  styleUrls: ['./inspections.scss']
 })
 export class Inspections implements OnInit {
   private invSvc = inject(InventoryService);
@@ -71,6 +75,7 @@ export class Inspections implements OnInit {
   private inspTypesSvc = inject(InspectionTypesService);
   private cpSvc = inject(InspectionCheckpointsService);
   private inspectionsSvc = inject(InspectionsService);
+  private invDocSvc = inject(InventoryDocumentFileService);
   private auth = inject(InspectorAuthService);
   private snack = inject(MatSnackBar);
 
@@ -103,21 +108,24 @@ export class Inspections implements OnInit {
       inventory: this.invSvc.getList(),
       mappings: this.invInspectorSvc.getList(),
       types: this.inspTypesSvc.getList(),
-      checkpoints: this.cpSvc.getList()
+      checkpoints: this.cpSvc.getList(),
+      docs: this.invDocSvc.getList()
     })
       .pipe(
-        switchMap(({ inventory, mappings, types, checkpoints }) => {
+        switchMap(({ inventory, mappings, types, checkpoints, docs }) => {
           this.allTypes = types ?? [];
           this.allCheckpoints = checkpoints ?? [];
 
           const myInventoryIds = (mappings ?? [])
-            .filter(m => m.assignedTo === currentUserId )
+            .filter((m: InventoryInspector) => m.assignedTo === currentUserId)
             .map(m => m.inventoryId);
 
           const uniqueIds = Array.from(new Set(myInventoryIds));
           const myInventory = (inventory ?? []).filter(i =>
             uniqueIds.includes(i.inventoryId)
           );
+
+          const imageMap = this.buildImagesMap(docs ?? []);
 
           if (!myInventory.length) {
             this.blocks = [];
@@ -132,14 +140,17 @@ export class Inspections implements OnInit {
 
           return forkJoin(calls).pipe(
             map(results => {
-              const blocks: InspectorInventoryBlock[] = myInventory.map((inv, idx) => ({
-                inventory: inv,
-                productName: this.getProductName(inv),
-                productMeta: this.getProductMeta(inv),
-                groups: this.buildGroupsForInventory(inv, results[idx] ?? []),
-                expanded: false,
-                saving: false
-              }));
+              const blocks: InspectorInventoryBlock[] = myInventory.map(
+                (inv, idx) => ({
+                  inventory: inv,
+                  productName: this.getProductName(inv),
+                  productMeta: this.getProductMeta(inv),
+                  groups: this.buildGroupsForInventory(inv, results[idx] ?? []),
+                  expanded: false,
+                  saving: false,
+                  images: imageMap.get(inv.inventoryId) ?? []
+                })
+              );
 
               this.blocks = blocks;
               return null;
@@ -148,7 +159,8 @@ export class Inspections implements OnInit {
         }),
         catchError(err => {
           console.error('Failed to load assigned inspections', err);
-          this.error = err?.error?.message || 'Failed to load assigned inspections.';
+          this.error =
+            err?.error?.message || 'Failed to load assigned inspections.';
           this.blocks = [];
           return of(null);
         })
@@ -156,6 +168,41 @@ export class Inspections implements OnInit {
       .subscribe({
         complete: () => (this.loading = false)
       });
+  }
+
+  // Build images map: inventoryId -> all image URLs
+  private buildImagesMap(files: InventoryDocumentFile[]): Map<number, string[]> {
+    const map = new Map<number, string[]>();
+
+    const isImage = (d: InventoryDocumentFile): boolean => {
+      const s = (
+        d.documentUrl ||
+        d.documentName ||
+        d.documentDisplayName ||
+        ''
+      )
+        .toString()
+        .toLowerCase();
+
+      return ['.jpg', '.jpeg', '.png', '.webp'].some(ext => s.endsWith(ext));
+    };
+
+    (files || [])
+      .filter(
+        f =>
+          (f.active ?? true) &&
+          f.inventoryId != null &&
+          !!f.documentUrl &&
+          isImage(f)
+      )
+      .forEach(f => {
+        const id = f.inventoryId!;
+        const arr = map.get(id) ?? [];
+        arr.push(f.documentUrl!);
+        map.set(id, arr);
+      });
+
+    return map;
   }
 
   // Build UI groups for an inventory using types + checkpoints + existing inspections
@@ -303,6 +350,26 @@ export class Inspections implements OnInit {
     return this.blocks.reduce((sum, b) => sum + this.getBlockCompleted(b), 0);
   }
 
+  getBlockProgressPercent(block: InspectorInventoryBlock): number {
+    const total = this.getBlockTotal(block);
+    if (!total) {
+      return 0;
+    }
+    return Math.round((this.getBlockCompleted(block) / total) * 100);
+  }
+
+  getBlockStatus(block: InspectorInventoryBlock): 'Not started' | 'In progress' | 'Completed' {
+    const total = this.getBlockTotal(block);
+    const done = this.getBlockCompleted(block);
+    if (!total || !done) {
+      return 'Not started';
+    }
+    if (done < total) {
+      return 'In progress';
+    }
+    return 'Completed';
+  }
+
   // ---------- SAVE ----------
 
   saveInventory(block: InspectorInventoryBlock): void {
@@ -410,19 +477,17 @@ export class Inspections implements OnInit {
       )
       .subscribe({
         next: results => {
-          const okCount = (results || []).filter(x => x === true || x === 1).length;
+          const okCount = (results || []).filter(
+            x => x === true || x === 1
+          ).length;
           if (okCount) {
-            this.snack.open(
-              'Inspection saved for this inventory.',
-              'OK',
-              { duration: 2500 }
-            );
+            this.snack.open('Inspection saved for this inventory.', 'OK', {
+              duration: 2500
+            });
           } else {
-            this.snack.open(
-              'No changes could be saved.',
-              'Dismiss',
-              { duration: 3000 }
-            );
+            this.snack.open('No changes could be saved.', 'Dismiss', {
+              duration: 3000
+            });
           }
         },
         complete: () => {

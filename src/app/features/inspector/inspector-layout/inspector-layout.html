@@ -1,111 +1,156 @@
 <!-- inspector-layout.html -->
-<div class="inspector-frame">
-  <!-- LEFT: Neon-inspired vertical rail -->
-  <aside class="rail" [class.collapsed]="railCollapsed">
-    <div class="rail-header">
+<div class="inspector-shell" [class.collapsed]="railCollapsed">
+  <!-- LEFT: Sidebar Navigation -->
+  <aside class="sidebar" [class.collapsed]="railCollapsed">
+    <div class="sidebar-header">
       <div class="logo">
         <a routerLink="/inspector/dashboard">
           <img
             src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8"
             alt="Algo logo"
           />
-          <span class="logo-text" *ngIf="!railCollapsed">Auction Portal</span>
+          <span class="logo-text" *ngIf="!railCollapsed">
+            Algo<span class="logo-accent">X</span>
+          </span>
         </a>
       </div>
 
       <button
         type="button"
-        class="rail-toggle"
+        class="sidebar-toggle"
         (click)="toggleRail()"
         mat-icon-button
+        *ngIf="!railCollapsed"
       >
-        <mat-icon>{{ railCollapsed ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+        <mat-icon>menu</mat-icon>
       </button>
     </div>
 
-    <nav class="rail-nav">
+    <nav class="sidebar-nav">
       <a
         routerLink="/inspector/dashboard"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
       >
-        <mat-icon>dashboard_customize</mat-icon>
-        <span>Overview</span>
+        <mat-icon>dashboard</mat-icon>
+        <span *ngIf="!railCollapsed">Dashboard</span>
       </a>
 
       <a routerLink="/inspector/inspection" routerLinkActive="active">
-        <mat-icon>fact_check</mat-icon>
-        <span>Inspections</span>
+        <mat-icon>description</mat-icon>
+        <span *ngIf="!railCollapsed">Inspections</span>
+      </a>
+
+      <a routerLink="/inspector/reports" routerLinkActive="active">
+        <mat-icon>bar_chart</mat-icon>
+        <span *ngIf="!railCollapsed">Reports</span>
       </a>
 
       <a routerLink="/inspector/schedule" routerLinkActive="active">
         <mat-icon>event</mat-icon>
-        <span>Schedule</span>
-      </a>
-
-      <a routerLink="/inspector/reports" routerLinkActive="active">
-        <mat-icon>timeline</mat-icon>
-        <span>Reports</span>
+        <span *ngIf="!railCollapsed">Schedule</span>
       </a>
 
       <a routerLink="/inspector/guides" routerLinkActive="active">
         <mat-icon>help_outline</mat-icon>
-        <span>Guides</span>
+        <span *ngIf="!railCollapsed">Guides</span>
+      </a>
+
+      <a class="signout-link" (click)="logout()">
+        <mat-icon>exit_to_app</mat-icon>
+        <span *ngIf="!railCollapsed">Sign Out</span>
       </a>
     </nav>
 
-    <div class="rail-footer">
-      <span class="rail-caption">
-        Precision, consistency &amp; unbiased inspection – powered by Algo.
-      </span>
+    <!-- Sidebar CTA Card -->
+    <div class="sidebar-cta" *ngIf="!railCollapsed">
+      <img
+        src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=400&q=80"
+        alt="Inspection"
+        class="cta-image"
+      />
+      <p class="cta-title">Time for Inspection?</p>
+      <p class="cta-subtitle">Book now to keep your vehicle road-safe.</p>
+      <button mat-raised-button class="cta-button">Book Now</button>
     </div>
+
+    <!-- Expand button when collapsed -->
+    <button
+      type="button"
+      class="expand-btn"
+      (click)="toggleRail()"
+      mat-icon-button
+      *ngIf="railCollapsed"
+    >
+      <mat-icon>chevron_right</mat-icon>
+    </button>
   </aside>
 
-  <!-- RIGHT: Main area -->
-  <main class="main">
-    <!-- Top chrome: notifications + user dropdown -->
-    <div class="main-chrome">
-      <button type="button" class="notif-btn" mat-icon-button>
-        <mat-icon>notifications_none</mat-icon>
-        <span class="dot" *ngIf="hasUnread"></span>
-      </button>
-
-      <div
-        #userDropdown
-        class="user-pill"
-        [class.open]="dropdownOpen"
-        (click)="toggleDropdown()"
-      >
-        <div class="avatar">
-          {{ (displayName || 'I') | slice: 0:1 }}
-        </div>
-        <div class="meta">
-          <span class="name">{{ displayName }}</span>
-          <span class="role">Inspector</span>
-        </div>
-        <mat-icon class="chevron">expand_more</mat-icon>
-
-        <ul class="menu">
-          <li>
-            <button type="button" (click)="goProfile($event)">
-              Profile
-            </button>
-          </li>
-          <li>
-            <button type="button" (click)="changePassword()">
-              Change password
-            </button>
-          </li>
-          <li>
-            <button type="button" (click)="logout()">
-              Sign out
-            </button>
-          </li>
-        </ul>
+  <!-- RIGHT: Main Content Area -->
+  <main class="main-content">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div class="header-left">
+        <h1 class="page-title">{{ pageTitle }}</h1>
       </div>
-    </div>
 
-    <!-- CONTENT AREA: where child pages (e.g. Inspections) render -->
+      <div class="header-right">
+        <button mat-button class="lang-selector">
+          <img
+            src="https://flagcdn.com/w40/us.png"
+            alt="US"
+            class="flag-icon"
+          />
+          <span>Eng (US)</span>
+       
+        </button>
+
+        <button mat-icon-button class="notification-btn">
+          <mat-icon>notifications</mat-icon>
+          <span class="notification-badge" *ngIf="hasUnread"></span>
+        </button>
+
+        <div
+          #userDropdown
+          class="user-card"
+          [class.open]="dropdownOpen"
+          (click)="toggleDropdown()"
+        >
+          <div class="user-avatar">
+            <span>{{ initials }}</span>
+          </div>
+          <div class="user-meta">
+            <span class="user-name">{{ displayName }}</span>
+            <span class="user-role">Inspector</span>
+          </div>
+          <mat-icon class="user-chevron">expand_more</mat-icon>
+
+          <ul class="user-menu">
+            <li>
+              <button type="button" (click)="goProfile($event)">
+                <mat-icon>person</mat-icon>
+                <span>Profile</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" (click)="changePassword()">
+                <mat-icon>lock</mat-icon>
+                <span>Change Password</span>
+              </button>
+            </li>
+            <li class="divider"></li>
+            <li>
+              <button type="button" class="logout-btn" (click)="logout()">
+                <mat-icon>exit_to_app</mat-icon>
+                <span>Sign Out</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content Area -->
     <section class="content">
       <div class="content-inner">
         <router-outlet></router-outlet>
