@@ -11,7 +11,6 @@
 
 /* Root wrapper for this page (inside existing layout shell) */
 .inspector-dashboard {
- 
 }
 
 /* Loading Overlay */
@@ -78,6 +77,13 @@
   overflow: hidden;
   color: #ffffff;
   min-height: 240px;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.45);
+  }
 }
 
 .appointment-content {
@@ -242,20 +248,44 @@
 
 .report-card {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   gap: 12px;
   padding: 20px 16px;
   background: #f8fafc;
   border-radius: 12px;
-  text-align: center;
+  text-align: left;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+
+  &:hover {
+    background: #e5edff;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.1);
+    transform: translateY(-1px);
+  }
 }
 
-.report-icon {
+.report-thumbnail {
   width: 48px;
   height: 48px;
   border-radius: 12px;
+  overflow: hidden;
   background: linear-gradient(135deg, #2563eb, #3b82f6);
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+/* reuse thumbnail-placeholder style from vehicles for reports as well */
+.thumbnail-placeholder {
+  width: 100%;
+  height: 100%;
   display: grid;
   place-items: center;
 
@@ -263,7 +293,7 @@
     font-size: 24px;
     width: 24px;
     height: 24px;
-    color: #ffffff;
+    color: #cbd5e1;
   }
 }
 
@@ -290,29 +320,44 @@
   gap: 24px;
 }
 
-/* Profile Card */
+/* Profile Card – redesigned similar to reference */
 .profile-card {
   background: #ffffff;
-  border-radius: 16px;
-  padding: 32px 24px;
+  border-radius: 24px;
+  padding: 28px 24px 30px;
   text-align: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+  border: 1px solid #e2e8f0;
+}
+
+.profile-avatar-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
 }
 
 .profile-avatar {
   width: 80px;
   height: 80px;
-  margin: 0 auto 16px;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
-  display: grid;
-  place-items: center;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 20%, #fef3c7, #fed7aa);
+  border: 3px solid #bfdbfe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
 
-  span {
-    font-size: 32px;
-    font-weight: 700;
-    color: #ffffff;
-  }
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-avatar span {
+  font-size: 30px;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .profile-name {
@@ -323,19 +368,26 @@
 }
 
 .profile-handle {
-  margin: 0 0 20px;
+  margin: 0 0 18px;
   font-size: 13px;
   color: #64748b;
 }
 
+/* pill-like outline button similar to screenshot */
 .switch-account-btn {
   width: 100%;
-  border-radius: 8px;
-  border-color: #e2e8f0;
-  color: #0f172a;
+  border-radius: 999px;
+  border-color: #2563eb;
+  color: #2563eb;
   font-weight: 600;
   font-size: 13px;
-  padding: 10px 16px;
+  padding: 9px 16px;
+  background: #eff6ff;
+
+  &:hover {
+    background: #dbeafe;
+    border-color: #1d4ed8;
+  }
 }
 
 /* Vehicles Section */
@@ -377,20 +429,6 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-  }
-}
-
-.thumbnail-placeholder {
-  width: 100%;
-  height: 100%;
-  display: grid;
-  place-items: center;
-
-  mat-icon {
-    font-size: 24px;
-    width: 24px;
-    height: 24px;
-    color: #cbd5e1;
   }
 }
 

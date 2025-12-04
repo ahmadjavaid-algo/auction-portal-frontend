@@ -9,6 +9,7 @@ import { InspectorLayout } from './inspector-layout/inspector-layout';
 import { Inspections } from './pages/inspections/inspections';
 import { InspectorsAccdetails } from './pages/inspectors-accdetails/inspectors-accdetails';
 import { InspectorChangePassword } from './pages/inspector-change-password/inspector-change-password';
+import { Guides } from './pages/guides/guides';
 
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -27,6 +28,7 @@ const routes: Routes = [
       { path: 'dashboard', component: Dashboard, title: 'Dashboard' },
       { path: 'accdetails', component: InspectorsAccdetails, title: 'Account Details' },
       { path: 'change-password', component: InspectorChangePassword , title: 'Change Password'},
+      { path: 'guides', component: Guides , title: 'Guide'},
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' }
     ]
   }

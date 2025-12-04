@@ -13,6 +13,13 @@ import { InspectorsService } from '../../../../services/inspectors.service';
 import { Inspector } from '../../../../models/inspector.model';
 import { InspectorAuthService } from '../../../../services/inspectorauth';
 
+interface ActivityItem {
+  label: string;
+  meta: string;
+  badge?: string;
+  kind: 'success' | 'info' | 'warn';
+}
+
 @Component({
   selector: 'app-inspectors-accdetails',
   standalone: true,
@@ -31,18 +38,22 @@ import { InspectorAuthService } from '../../../../services/inspectorauth';
 })
 export class InspectorsAccdetails {
   private router = inject(Router);
-  private biddersSvc = inject(InspectorsService);
+  private inspectorsSvc = inject(InspectorsService);
   private auth = inject(InspectorAuthService);
 
   loading = true;
   error: string | null = null;
   user: Inspector | null = null;
 
+  // UI state
+  activeTab: 'overview' | 'activity' | 'security' = 'overview';
+  activity: ActivityItem[] = [];
+
   ngOnInit(): void {
-    
     if (!this.auth.isAuthenticated || !this.auth.currentUser?.userId) {
-      
-      this.router.navigate(['/inspector/login'], { queryParams: { returnUrl: this.router.url } });
+      this.router.navigate(['/inspector/login'], {
+        queryParams: { returnUrl: this.router.url }
+      });
       return;
     }
 
@@ -54,9 +65,10 @@ export class InspectorsAccdetails {
     this.loading = true;
     this.error = null;
 
-    this.biddersSvc.getById(id).subscribe({
+    this.inspectorsSvc.getById(id).subscribe({
       next: (u) => {
         this.user = u;
+        this.buildActivityTimeline();
         this.loading = false;
       },
       error: (e) => {
@@ -64,6 +76,64 @@ export class InspectorsAccdetails {
         this.loading = false;
       }
     });
+  }
+
+  private buildActivityTimeline(): void {
+    if (!this.user) {
+      this.activity = [];
+      return;
+    }
+
+    const items: ActivityItem[] = [];
+
+    if (this.user.createdDate) {
+      const joined = new Date(this.user.createdDate);
+      items.push({
+        label: 'Account created',
+        meta: joined.toLocaleString(),
+        badge: 'Joined',
+        kind: 'success'
+      });
+    }
+
+    if (this.user.loginDate) {
+      const lastLogin = new Date(this.user.loginDate);
+      items.push({
+        label: 'Last login',
+        meta: lastLogin.toLocaleString(),
+        badge: 'Login',
+        kind: 'info'
+      });
+    }
+
+    items.push({
+      label: 'Inspection workspace enabled',
+      meta: 'You can access inspections and assigned inventory from the dashboard.',
+      badge: 'Workspace',
+      kind: 'info'
+    });
+
+    if (this.user.emailConfirmed) {
+      items.push({
+        label: 'Email verified',
+        meta: 'Your email is verified and can be used for alerts and password recovery.',
+        badge: 'Security',
+        kind: 'success'
+      });
+    } else {
+      items.push({
+        label: 'Email not verified',
+        meta: 'Verify your email to increase account security.',
+        badge: 'Action needed',
+        kind: 'warn'
+      });
+    }
+
+    this.activity = items;
+  }
+
+  setTab(tab: 'overview' | 'activity' | 'security'): void {
+    this.activeTab = tab;
   }
 
   refresh(): void {

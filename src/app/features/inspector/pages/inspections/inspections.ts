@@ -8,6 +8,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+
+import { ActivatedRoute } from '@angular/router';
 
 import { forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
@@ -52,6 +55,8 @@ interface InspectorInventoryBlock {
   expanded: boolean;
   saving: boolean;
   images: string[];
+  registrationNo: string;
+  chassisNo: string;
 }
 
 @Component({
@@ -64,7 +69,8 @@ interface InspectorInventoryBlock {
     MatButtonModule,
     MatSnackBarModule,
     MatProgressSpinnerModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatDialogModule
   ],
   templateUrl: './inspections.html',
   styleUrls: ['./inspections.scss']
@@ -78,6 +84,8 @@ export class Inspections implements OnInit {
   private invDocSvc = inject(InventoryDocumentFileService);
   private auth = inject(InspectorAuthService);
   private snack = inject(MatSnackBar);
+  private dialog = inject(MatDialog);
+  private route = inject(ActivatedRoute);
 
   loading = true;
   error: string | null = null;
@@ -86,7 +94,26 @@ export class Inspections implements OnInit {
   allTypes: InspectionType[] = [];
   allCheckpoints: InspectionCheckpoint[] = [];
 
+  selectedImageGallery: string[] = [];
+  selectedImageIndex = 0;
+  showImageViewer = false;
+
+  // query-param based targeting
+  private targetInventoryId: number | null = null;
+  private hasScrolledToTarget = false;
+
   ngOnInit(): void {
+    // Listen for ?inventoryId=... in the URL
+    this.route.queryParamMap.subscribe(params => {
+      const id = params.get('inventoryId');
+      this.targetInventoryId = id ? +id : null;
+
+      // If data is already loaded, try to scroll immediately
+      if (!this.loading && this.blocks.length && this.targetInventoryId) {
+        this.scrollToTargetInventory();
+      }
+    });
+
     this.loadData();
   }
 
@@ -96,6 +123,7 @@ export class Inspections implements OnInit {
     this.loading = true;
     this.error = null;
     this.blocks = [];
+    this.hasScrolledToTarget = false; // reset on reload
 
     const currentUserId = this.auth.currentUser?.userId ?? null;
     if (!currentUserId) {
@@ -145,6 +173,8 @@ export class Inspections implements OnInit {
                   inventory: inv,
                   productName: this.getProductName(inv),
                   productMeta: this.getProductMeta(inv),
+                  registrationNo: inv.registrationNo || 'N/A',
+                  chassisNo: inv.chassisNo || 'N/A',
                   groups: this.buildGroupsForInventory(inv, results[idx] ?? []),
                   expanded: false,
                   saving: false,
@@ -166,7 +196,11 @@ export class Inspections implements OnInit {
         })
       )
       .subscribe({
-        complete: () => (this.loading = false)
+        complete: () => {
+          this.loading = false;
+          // after everything is loaded, try scrolling to any target from query param
+          this.scrollToTargetInventory();
+        }
       });
   }
 
@@ -286,11 +320,11 @@ export class Inspections implements OnInit {
     const model = pj?.Model || pj?.model;
     const year = pj?.Year || pj?.year;
 
+    if (year) bits.push(year);
     if (make) bits.push(make);
     if (model) bits.push(model);
-    if (year) bits.push(year);
 
-    return bits.join(' • ');
+    return bits.join(' ');
   }
 
   private safeParseProductJSON(json?: string | null): any | null {
@@ -358,16 +392,76 @@ export class Inspections implements OnInit {
     return Math.round((this.getBlockCompleted(block) / total) * 100);
   }
 
-  getBlockStatus(block: InspectorInventoryBlock): 'Not started' | 'In progress' | 'Completed' {
+  getBlockStatus(block: InspectorInventoryBlock): 'Not Started' | 'In Progress' | 'Completed' {
     const total = this.getBlockTotal(block);
     const done = this.getBlockCompleted(block);
     if (!total || !done) {
-      return 'Not started';
+      return 'Not Started';
     }
     if (done < total) {
-      return 'In progress';
+      return 'In Progress';
     }
     return 'Completed';
+  }
+
+  getStatusColor(status: string): string {
+    switch (status) {
+      case 'Completed':
+        return '#22c55e';
+      case 'In Progress':
+        return '#f59e0b';
+      default:
+        return '#94a3b8';
+    }
+  }
+
+  // ---------- QUICK JUMP SHORTCUTS ----------
+
+  private scrollToTargetInventory(): void {
+    if (!this.targetInventoryId || this.hasScrolledToTarget || !this.blocks.length) {
+      return;
+    }
+    this.hasScrolledToTarget = true;
+    this.scrollToInventory(this.targetInventoryId);
+  }
+
+  scrollToInventory(inventoryId: number): void {
+    const el = document.getElementById(`inv-${inventoryId}`);
+    const block = this.blocks.find(b => b.inventory.inventoryId === inventoryId);
+
+    if (block) {
+      block.expanded = true;
+    }
+
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  // ---------- IMAGE VIEWER ----------
+
+  openImageGallery(images: string[], startIndex: number = 0): void {
+    this.selectedImageGallery = images;
+    this.selectedImageIndex = startIndex;
+    this.showImageViewer = true;
+  }
+
+  closeImageViewer(): void {
+    this.showImageViewer = false;
+    this.selectedImageGallery = [];
+    this.selectedImageIndex = 0;
+  }
+
+  nextImage(): void {
+    if (this.selectedImageIndex < this.selectedImageGallery.length - 1) {
+      this.selectedImageIndex++;
+    }
+  }
+
+  prevImage(): void {
+    if (this.selectedImageIndex > 0) {
+      this.selectedImageIndex--;
+    }
   }
 
   // ---------- SAVE ----------
@@ -481,7 +575,7 @@ export class Inspections implements OnInit {
             x => x === true || x === 1
           ).length;
           if (okCount) {
-            this.snack.open('Inspection saved for this inventory.', 'OK', {
+            this.snack.open('Inspection saved successfully!', 'OK', {
               duration: 2500
             });
           } else {

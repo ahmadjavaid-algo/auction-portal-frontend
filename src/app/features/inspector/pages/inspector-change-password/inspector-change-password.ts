@@ -5,11 +5,13 @@ import { Router } from '@angular/router';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { InspectorAuthService } from '../../../../services/inspectorauth';
+import { MatIconModule } from "@angular/material/icon";
+import { MatDividerModule } from "@angular/material/divider";
 
 @Component({
   selector: 'app-inspector-change-password',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatSnackBarModule],
+  imports: [CommonModule, FormsModule, MatSnackBarModule, MatIconModule, MatDividerModule],
   templateUrl: './inspector-change-password.html',
   styleUrl: './inspector-change-password.scss'
 })

@@ -5,6 +5,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatTabsModule } from '@angular/material/tabs';
 import { FormsModule } from '@angular/forms';
 
 import { forkJoin, of } from 'rxjs';
@@ -15,12 +17,18 @@ import { InventoryAuction } from '../../../../../models/inventoryauction.model';
 import { InventoryDocumentFile } from '../../../../../models/inventorydocumentfile.model';
 import { Inventory } from '../../../../../models/inventory.model';
 import { Product } from '../../../../../models/product.model';
+import { InspectionType } from '../../../../../models/inspectiontype.model';
+import { InspectionCheckpoint } from '../../../../../models/inspectioncheckpoint.model';
+import { Inspection } from '../../../../../models/inspection.model';
 
 import { AuctionService } from '../../../../../services/auctions.service';
 import { InventoryAuctionService } from '../../../../../services/inventoryauctions.service';
 import { InventoryDocumentFileService } from '../../../../../services/inventorydocumentfile.service';
 import { InventoryService } from '../../../../../services/inventory.service';
 import { ProductsService } from '../../../../../services/products.service';
+import { InspectionTypesService } from '../../../../../services/inspectiontypes.service';
+import { InspectionCheckpointsService } from '../../../../../services/inspectioncheckpoints.service';
+import { InspectionsService } from '../../../../../services/inspection.service';
 
 type SpecRow = { label: string; value: string | number | null | undefined };
 
@@ -34,6 +42,23 @@ type RelatedCard = {
   reserve?: number | null;
 };
 
+interface InspectionCheckpointRow {
+  inspectionId?: number;
+  inspectionTypeId: number;
+  inspectionTypeName: string;
+  inspectionCheckpointId: number;
+  inspectionCheckpointName: string;
+  inputType?: string | null;
+  resultValue: string;
+}
+
+interface InspectionTypeGroupForUI {
+  inspectionTypeId: number;
+  inspectionTypeName: string;
+  weightage?: number | null;
+  checkpoints: InspectionCheckpointRow[];
+}
+
 @Component({
   selector: 'app-product-details',
   standalone: true,
@@ -44,7 +69,9 @@ type RelatedCard = {
     MatIconModule,
     MatButtonModule,
     MatTooltipModule,
-    MatProgressBarModule
+    MatProgressBarModule,
+    MatDividerModule,
+    MatTabsModule
   ],
   templateUrl: './product-details.html',
   styleUrls: ['./product-details.scss']
@@ -53,10 +80,14 @@ export class ProductDetails {
   private route = inject(ActivatedRoute);
 
   private auctionsSvc = inject(AuctionService);
-  private invAucSvc   = inject(InventoryAuctionService);
-  private filesSvc    = inject(InventoryDocumentFileService);
-  private invSvc      = inject(InventoryService);
+  private invAucSvc = inject(InventoryAuctionService);
+  private filesSvc = inject(InventoryDocumentFileService);
+  private invSvc = inject(InventoryService);
   private productsSvc = inject(ProductsService);
+
+  private inspTypesSvc = inject(InspectionTypesService);
+  private cpSvc = inject(InspectionCheckpointsService);
+  private inspectionsSvc = inject(InspectionsService);
 
   auctionId!: number;
   inventoryAuctionId!: number;
@@ -86,10 +117,19 @@ export class ProductDetails {
   specs: SpecRow[] = [];
   related: RelatedCard[] = [];
 
+  // Inspection report (read-only for bidders)
+  allTypes: InspectionType[] = [];
+  allCheckpoints: InspectionCheckpoint[] = [];
+  reportGroups: InspectionTypeGroupForUI[] = [];
+  reportLoading = false;
+  reportLoaded = false;
+
   ngOnInit(): void {
     this.route.paramMap.subscribe(pm => {
       this.auctionId = Number(pm.get('auctionId') || 0);
-      this.inventoryAuctionId = Number(pm.get('inventoryAuctionId') ?? pm.get('id'));
+      this.inventoryAuctionId = Number(
+        pm.get('inventoryAuctionId') ?? pm.get('id')
+      );
 
       this.load();
     });
@@ -115,37 +155,46 @@ export class ProductDetails {
     this.inventory = null;
     this.product = null;
 
+    // reset inspection state when listing changes
+    this.reportGroups = [];
+    this.reportLoaded = false;
+    this.reportLoading = false;
+
     forkJoin({
-      auctions : this.auctionsSvc.getList().pipe(catchError(() => of([] as Auction[]))),
-      invAucs  : this.invAucSvc.getList().pipe(catchError(() => of([] as InventoryAuction[]))),
-      files    : this.filesSvc.getList().pipe(catchError(() => of([] as InventoryDocumentFile[]))),
-      invs     : this.invSvc.getList().pipe(catchError(() => of([] as Inventory[]))),
-      products : this.productsSvc.getList().pipe(catchError(() => of([] as Product[])))
+      auctions: this.auctionsSvc.getList().pipe(catchError(() => of([] as Auction[]))),
+      invAucs: this.invAucSvc.getList().pipe(catchError(() => of([] as InventoryAuction[]))),
+      files: this.filesSvc.getList().pipe(catchError(() => of([] as InventoryDocumentFile[]))),
+      invs: this.invSvc.getList().pipe(catchError(() => of([] as Inventory[]))),
+      products: this.productsSvc.getList().pipe(catchError(() => of([] as Product[])))
     })
       .pipe(
         map(({ auctions, invAucs, files, invs, products }) => {
-          
+          // find lot
           this.lot =
             (invAucs || []).find(
               a =>
-                ((a as any).inventoryAuctionId ?? (a as any).inventoryauctionId) ===
-                this.inventoryAuctionId
+                ((a as any).inventoryAuctionId ??
+                  (a as any).inventoryauctionId) === this.inventoryAuctionId
             ) || null;
           if (!this.lot) throw new Error('Listing not found');
 
-          
+          // auction
           const currentAuctionId = (this.lot as any).auctionId ?? this.auctionId;
           this.auctionId = currentAuctionId;
-          this.auction = (auctions || []).find(a => a.auctionId === currentAuctionId) || null;
+          this.auction =
+            (auctions || []).find(a => a.auctionId === currentAuctionId) ||
+            null;
 
-          
+          // inventory & product
           this.inventory =
-            (invs || []).find(i => i.inventoryId === this.lot!.inventoryId) || null;
+            (invs || []).find(i => i.inventoryId === this.lot!.inventoryId) ||
+            null;
           this.product = this.inventory
-            ? (products || []).find(p => p.productId === this.inventory!.productId) || null
+            ? (products || []).find(
+                p => p.productId === this.inventory!.productId
+              ) || null
             : null;
 
-          
           const snap = this.safeParse(this.inventory?.productJSON);
           const year = this.product?.yearName ?? snap?.Year ?? snap?.year;
           const make = this.product?.makeName ?? snap?.Make ?? snap?.make;
@@ -154,17 +203,20 @@ export class ProductDetails {
             [year, make, model].filter(Boolean).join(' ') ||
             (this.inventory?.displayName ?? 'Listing');
 
-          const chassis = this.inventory?.chassisNo || snap?.Chassis || snap?.chassis;
+          const chassis =
+            this.inventory?.chassisNo || snap?.Chassis || snap?.chassis;
           this.subtitle = chassis
             ? `Chassis ${chassis} • Lot #${
                 (this.lot as any).inventoryAuctionId ?? ''
               }`
             : `Lot #${(this.lot as any).inventoryAuctionId ?? ''}`;
 
-          
+          // images
           const isImg = (u?: string | null, n?: string | null) => {
             const s = (u || n || '').toLowerCase();
-            return ['.jpg', '.jpeg', '.png', '.webp'].some(x => s.endsWith(x));
+            return ['.jpg', '.jpeg', '.png', '.webp'].some(x =>
+              s.endsWith(x)
+            );
           };
           this.images = (files || [])
             .filter(
@@ -178,11 +230,14 @@ export class ProductDetails {
             .slice(0, 32);
           if (this.images.length) this.activeImage = this.images[0];
 
-          
-          const colorExterior = snap?.ExteriorColor ?? snap?.exteriorColor ?? null;
-          const colorInterior = snap?.InteriorColor ?? snap?.interiorColor ?? null;
+          // specs
+          const colorExterior =
+            snap?.ExteriorColor ?? snap?.exteriorColor ?? null;
+          const colorInterior =
+            snap?.InteriorColor ?? snap?.interiorColor ?? null;
           const drivetrain = snap?.Drivetrain ?? snap?.drivetrain ?? null;
-          const transmission = snap?.Transmission ?? snap?.transmission ?? null;
+          const transmission =
+            snap?.Transmission ?? snap?.transmission ?? null;
           const bodyStyle = snap?.BodyStyle ?? snap?.bodyStyle ?? null;
           const engine = snap?.Engine ?? snap?.engine ?? null;
           const mileage = snap?.Mileage ?? snap?.mileage ?? null;
@@ -190,7 +245,10 @@ export class ProductDetails {
           const titleStatus = snap?.TitleStatus ?? snap?.titleStatus ?? null;
           const sellerType = snap?.SellerType ?? snap?.sellerType ?? null;
           const categoryName =
-            this.product?.categoryName ?? snap?.Category ?? snap?.category ?? null;
+            this.product?.categoryName ??
+            snap?.Category ??
+            snap?.category ??
+            null;
 
           const rows: SpecRow[] = [
             { label: 'Make', value: make || this.product?.makeName || '—' },
@@ -211,14 +269,16 @@ export class ProductDetails {
           ];
           this.specs = rows;
 
-          
+          // related
           const allLots = (invAucs || []).filter(x => x.active ?? true);
           const makeName = this.product?.makeName ?? make ?? '';
           const catName = categoryName ?? '';
           const byScore = (x: InventoryAuction) => {
-            const inv = (invs || []).find(i => i.inventoryId === x.inventoryId) || null;
+            const inv =
+              (invs || []).find(i => i.inventoryId === x.inventoryId) || null;
             const prod = inv
-              ? (products || []).find(p => p.productId === inv.productId) || null
+              ? (products || []).find(p => p.productId === inv.productId) ||
+                null
               : null;
             const sameAuction =
               ((x as any).auctionId ?? 0) === currentAuctionId ? 2 : 0;
@@ -238,24 +298,28 @@ export class ProductDetails {
           this.related = allLots
             .filter(
               x =>
-                ((x as any).inventoryAuctionId ?? (x as any).inventoryauctionId) !==
-                this.inventoryAuctionId
+                ((x as any).inventoryAuctionId ??
+                  (x as any).inventoryauctionId) !== this.inventoryAuctionId
             )
             .map(x => {
               const inv =
-                (invs || []).find(i => i.inventoryId === x.inventoryId) || null;
+                (invs || []).find(i => i.inventoryId === x.inventoryId) ||
+                null;
               const prod = inv
-                ? (products || []).find(p => p.productId === inv.productId) || null
+                ? (products || []).find(
+                    p => p.productId === inv.productId
+                  ) || null
                 : null;
               const snap2 = this.safeParse(inv?.productJSON);
               const yy = prod?.yearName ?? snap2?.Year ?? '';
               const mk = prod?.makeName ?? snap2?.Make ?? '';
               const md = prod?.modelName ?? snap2?.Model ?? '';
-              const title =
+              const title2 =
                 [yy, mk, md].filter(Boolean).join(' ') ||
                 (inv?.displayName ?? 'Listing');
               const img =
-                (imageMap.get(x.inventoryId) || [])[0] || (this.images[0] || '');
+                (imageMap.get(x.inventoryId) || [])[0] ||
+                (this.images[0] || '');
               const chassis2 = inv?.chassisNo || snap2?.Chassis || '';
               const sub = chassis2
                 ? `Chassis ${chassis2} • #${
@@ -269,7 +333,7 @@ export class ProductDetails {
                   (x as any).inventoryAuctionId ??
                     (x as any).inventoryauctionId
                 ],
-                title,
+                title: title2,
                 imageUrl: img,
                 sub,
                 auctionStartPrice: (x as any).auctionStartPrice ?? null,
@@ -281,6 +345,9 @@ export class ProductDetails {
             .sort((a: any, b: any) => b._score - a._score)
             .slice(0, 6)
             .map(({ _score, ...rest }: any) => rest as RelatedCard);
+
+          // kick off inspection report load (after we know inventory)
+          this.loadInspectionReport();
 
           try {
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -294,6 +361,164 @@ export class ProductDetails {
           this.loading = false;
         }
       });
+  }
+
+  private loadInspectionReport(): void {
+    if (!this.inventory || !this.inventory.inventoryId) {
+      this.reportLoaded = true;
+      this.reportGroups = [];
+      return;
+    }
+
+    this.reportLoading = true;
+    this.reportLoaded = false;
+    this.reportGroups = [];
+
+    const inventoryId = this.inventory.inventoryId;
+
+    forkJoin({
+      types: this.inspTypesSvc.getList().pipe(
+        catchError(() => of([] as InspectionType[]))
+      ),
+      checkpoints: this.cpSvc.getList().pipe(
+        catchError(() => of([] as InspectionCheckpoint[]))
+      ),
+      inspections: this.inspectionsSvc.getByInventory(inventoryId).pipe(
+        catchError(() => of([] as Inspection[]))
+      )
+    }).subscribe({
+      next: ({ types, checkpoints, inspections }) => {
+        this.allTypes = types ?? [];
+        this.allCheckpoints = checkpoints ?? [];
+        this.reportGroups = this.buildGroupsForInventory(
+          this.inventory!,
+          inspections ?? []
+        );
+      },
+      error: err => {
+        console.error('Failed to load inspection report', err);
+      },
+      complete: () => {
+        this.reportLoading = false;
+        this.reportLoaded = true;
+      }
+    });
+  }
+
+  private buildGroupsForInventory(
+    inventory: Inventory,
+    existing: Inspection[]
+  ): InspectionTypeGroupForUI[] {
+    if (!inventory) return [];
+
+    const groups: InspectionTypeGroupForUI[] = [];
+    const activeTypes = (this.allTypes ?? []).filter(t => t.active !== false);
+
+    activeTypes.forEach(t => {
+      const cps = (this.allCheckpoints ?? []).filter(
+        cp =>
+          (((cp as any).inspectionTypeId === t.inspectionTypeId) ||
+            ((cp as any).InspectionTypeId === t.inspectionTypeId)) &&
+          cp.active !== false
+      );
+
+      if (!cps.length) return;
+
+      const rows: InspectionCheckpointRow[] = cps.map(cp => {
+        const cpId =
+          (cp as any).inspectionCheckpointId ??
+          (cp as any).inspectioncheckpointId;
+
+        const match = (existing ?? []).find(
+          i =>
+            i.inspectionTypeId === t.inspectionTypeId &&
+            i.inspectionCheckpointId === cpId &&
+            i.inventoryId === inventory.inventoryId
+        );
+
+        return {
+          inspectionId: match?.inspectionId,
+          inspectionTypeId: t.inspectionTypeId,
+          inspectionTypeName: t.inspectionTypeName,
+          inspectionCheckpointId: cpId,
+          inspectionCheckpointName:
+            (cp as any).inspectionCheckpointName ??
+            (cp as any).inspectioncheckpointName ??
+            '',
+          inputType: cp.inputType,
+          resultValue: match?.result ?? ''
+        };
+      });
+
+      if (rows.length) {
+        groups.push({
+          inspectionTypeId: t.inspectionTypeId,
+          inspectionTypeName: t.inspectionTypeName,
+          weightage: t.weightage,
+          checkpoints: rows
+        });
+      }
+    });
+
+    return groups;
+  }
+
+  normalizeInputType(
+    inputType?: string | null
+  ): 'text' | 'textarea' | 'number' | 'yesno' {
+    const v = (inputType || '').toLowerCase();
+    if (v === 'textarea' || v === 'multiline') return 'textarea';
+    if (v === 'number' || v === 'numeric' || v === 'score') return 'number';
+    if (v === 'yesno' || v === 'boolean' || v === 'bool') return 'yesno';
+    return 'text';
+  }
+
+  isAnswered(value?: string | null): boolean {
+    return !!(value && value.toString().trim().length);
+  }
+
+  getGroupCompleted(group: InspectionTypeGroupForUI): number {
+    return group.checkpoints.filter(r => this.isAnswered(r.resultValue)).length;
+  }
+
+  getGroupTotal(group: InspectionTypeGroupForUI): number {
+    return group.checkpoints.length;
+  }
+
+  get totalCheckpoints(): number {
+    return this.reportGroups.reduce(
+      (sum, g) => sum + g.checkpoints.length,
+      0
+    );
+  }
+
+  get totalCompleted(): number {
+    return this.reportGroups.reduce(
+      (sum, g) => sum + this.getGroupCompleted(g),
+      0
+    );
+  }
+
+  get overallProgressPercent(): number {
+    if (!this.totalCheckpoints) return 0;
+    return Math.round((this.totalCompleted / this.totalCheckpoints) * 100);
+  }
+
+  getCompletionStatus(): 'Not Started' | 'In Progress' | 'Completed' {
+    if (!this.totalCheckpoints || !this.totalCompleted) return 'Not Started';
+    if (this.totalCompleted < this.totalCheckpoints) return 'In Progress';
+    return 'Completed';
+  }
+
+  getCompletionStatusColor(): string {
+    switch (this.getCompletionStatus()) {
+      case 'Completed':
+        return '#16a34a';
+      case 'In Progress':
+        return '#f59e0b';
+      default:
+        return '#9ca3af';
+    }
   }
 
   selectImage(url: string): void {

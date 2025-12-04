@@ -1,117 +1,261 @@
-<!-- Loading -->
-<div class="center" *ngIf="loading">
-  <mat-progress-spinner mode="indeterminate" diameter="44"></mat-progress-spinner>
+<!-- Loader -->
+<div class="loader" *ngIf="loading">
+  <mat-progress-spinner diameter="50" mode="indeterminate"></mat-progress-spinner>
 </div>
 
 <!-- Error -->
-<div class="error" *ngIf="!loading && error">
+<div class="err-box" *ngIf="!loading && error">
   <mat-icon>error_outline</mat-icon>
   <span>{{ error }}</span>
-  <button mat-stroked-button color="primary" (click)="refresh()">Retry</button>
+  <button mat-raised-button color="primary" (click)="refresh()">Retry</button>
 </div>
 
-<!-- Content -->
-<section class="account" *ngIf="!loading && !error && user">
+<!-- PROFILE PAGE -->
+<div class="profile-wrapper" *ngIf="!loading && !error && user">
 
-
-  <!-- Hero/profile header -->
-  <div class="hero">
-    <div class="avatar">{{ initials }}</div>
-    <div class="who">
-      <!-- in the hero header name line -->
-      <h2 class="name">
-        {{ user.firstName }} {{ user.lastName }}
-        <span class="verified" *ngIf="user.emailConfirmed">Verified</span>
-      </h2>
-      <div class="email">{{ user.email || '—' }}</div>
-    </div>
-
-    <div class="hero-actions">
-      <button class="btn ghost" (click)="refresh()">
-        <mat-icon>refresh</mat-icon><span>Refresh</span>
-      </button>
-      <button class="btn primary" (click)="changePassword()">
-        <mat-icon>lock_reset</mat-icon><span>Change Password</span>
-      </button>
-      <button class="btn ghost warn" (click)="logout()">
-        <mat-icon>logout</mat-icon><span>Logout</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- Two top cards (like the screenshot) -->
-  <div class="cards two-col">
-    <!-- Personal details -->
-    <mat-card class="panel">
-      <div class="panel-title">Personal details</div>
-      <div class="rows">
-        <div class="row"><div class="label">Full name:</div><div class="val">{{ user.firstName }} {{ user.lastName }}</div></div>
-        <div class="row"><div class="label">Address:</div><div class="val">{{ user.address1 || '—' }}</div></div>
-        <div class="row"><div class="label">Phone Number:</div><div class="val selectable">{{ user.phoneNumber || '—' }}</div></div>
-        <div class="row"><div class="label">Email:</div><div class="val selectable">{{ user.email || '—' }}</div></div>
-        <div class="row"><div class="label">Postal Code:</div><div class="val">{{ user.postalCode || '—' }}</div></div>
-      </div>
-    </mat-card>
-
-    <!-- Account details -->
-    <mat-card class="panel">
-      <div class="panel-title">Account details</div>
-      <div class="rows">
-        <div class="row"><div class="label">User Name:</div><div class="val selectable">{{ user.userName }}</div></div>
-        <div class="row"><div class="label">Account Created:</div><div class="val">{{ user.createdDate | date:'medium' }}</div></div>
-        <div class="row"><div class="label">Last Login:</div><div class="val">{{ user.loginDate | date:'medium' }}</div></div>
-        <div class="row"><div class="label">Identification #:</div><div class="val selectable">{{ user.identificationNumber || '—' }}</div></div>
-
-        <!-- Account Verification row -->
-        <div class="row">
-          <div class="label">Account Verification:</div>
-          <div class="val">
-            <span class="badge verified" *ngIf="user.emailConfirmed">Verified</span>
-            <span class="badge" *ngIf="!user.emailConfirmed">Unverified</span>
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="label">Status:</div>
-          <div class="val">
-            <span class="dot" [class.on]="user.active"></span>
-            <span>{{ user.active ? 'Active' : 'Inactive' }}</span>
-          </div>
-        </div>
-        <div class="row"><div class="label">Security Stamp:</div><div class="val">{{ user.securityStamp || '—' }}</div></div>
-        <div class="row"><div class="label">User ID:</div><div class="val">ID {{ user.userId }}</div></div>
-      </div>
-    </mat-card>
-  </div>
-
-  <!-- Lower cards -->
-  <div class="cards two-col">
-    <!-- Security Settings -->
-    <mat-card class="panel">
-      <div class="panel-title">Security Settings</div>
-      <div class="rows">
-        <div class="row"><div class="label">Password Last Changed:</div><div class="val">—</div></div>
-        <div class="row"><div class="label">Two-Factor Authentication:</div><div class="val"><span class="badge">Disabled</span></div></div>
-        <div class="row"><div class="label">Login Notifications:</div><div class="val"><span class="badge">Disabled</span></div></div>
-        <div class="row"><div class="label">Recent Account Activity:</div><div class="val">—</div></div>
-      </div>
-    </mat-card>
-
-    <!-- Preferences -->
-    <mat-card class="panel">
-      <div class="panel-title">Preferences</div>
-      <div class="rows">
-        <div class="row"><div class="label">Email Notifications:</div><div class="val"><span class="badge">Subscribed</span></div></div>
-        <div class="row"><div class="label">Default Dashboard View:</div><div class="val">—</div></div>
-        <div class="row"><div class="label">Dark Mode:</div><div class="val">—</div></div>
-        <div class="row"><div class="label">Language for Content:</div><div class="val">—</div></div>
-      </div>
-    </mat-card>
-  </div>
-
-  <div class="footer">
-    <button class="btn ghost" (click)="back()">
-      <mat-icon>arrow_back</mat-icon><span>Back to Dashboard</span>
+  <!-- Page header -->
+  <div class="page-header">
+    <h1>Profile</h1>
+    <button mat-stroked-button class="back-btn" (click)="back()">
+      <mat-icon>arrow_back</mat-icon>
+      Dashboard
     </button>
   </div>
-</section>
+
+  <!-- HERO CARD -->
+  <section class="hero-card">
+    <div class="hero-left">
+
+      <!-- Animated avatar orbit -->
+      <div class="avatar-orbit">
+        <div class="orbit-ring"></div>
+        <div class="avatar-circle">
+          <span>{{ initials }}</span>
+        </div>
+      </div>
+
+      <div class="hero-info">
+        <h2>{{ user.firstName }} {{ user.lastName }}</h2>
+        <p class="email">{{ user.email }}</p>
+
+        <div class="tags">
+          <span class="tag role">Inspector</span>
+          <span class="tag verified" *ngIf="user.emailConfirmed">
+            <mat-icon>verified</mat-icon>
+            Verified
+          </span>
+        </div>
+
+        <div class="actions">
+          <button class="act-btn" (click)="changePassword()">
+            <mat-icon>lock_reset</mat-icon>
+            Change Password
+          </button>
+
+          <button class="act-btn" (click)="refresh()">
+            <mat-icon>refresh</mat-icon>
+            Refresh
+          </button>
+
+          <button class="act-btn danger" (click)="logout()">
+            <mat-icon>logout</mat-icon>
+            Logout
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- TABS -->
+  <nav class="tabs">
+    <button
+      type="button"
+      [class.active]="activeTab === 'overview'"
+      (click)="setTab('overview')"
+    >
+      <mat-icon>dashboard</mat-icon>
+      Overview
+    </button>
+
+    <button
+      type="button"
+      [class.active]="activeTab === 'activity'"
+      (click)="setTab('activity')"
+    >
+      <mat-icon>timeline</mat-icon>
+      Activity
+    </button>
+
+    <button
+      type="button"
+      [class.active]="activeTab === 'security'"
+      (click)="setTab('security')"
+    >
+      <mat-icon>shield</mat-icon>
+      Security
+    </button>
+  </nav>
+
+  <!-- TAB PANELS -->
+  <section class="tab-panels">
+
+    <!-- OVERVIEW TAB -->
+    <section class="tab-section" *ngIf="activeTab === 'overview'">
+
+      <!-- Stats row -->
+      <section class="stats-row">
+        <div class="stat-box">
+          <mat-icon>badge</mat-icon>
+          <label>User ID</label>
+          <p>{{ user.userId }}</p>
+        </div>
+
+        <div class="stat-box">
+          <mat-icon>event</mat-icon>
+          <label>Joined</label>
+          <p>{{ user.createdDate | date: 'mediumDate' }}</p>
+        </div>
+
+        <div class="stat-box">
+          <mat-icon>login</mat-icon>
+          <label>Last Login</label>
+          <p>{{ user.loginDate | date: 'medium' }}</p>
+        </div>
+
+        <div class="stat-box">
+          <mat-icon>check_circle</mat-icon>
+          <label>Status</label>
+          <p>{{ user.active ? 'Active' : 'Inactive' }}</p>
+        </div>
+      </section>
+
+      <!-- Detail cards -->
+      <section class="detail-grid">
+        <mat-card class="detail-card">
+          <h2>Personal Details</h2>
+
+          <div class="row">
+            <span>Name</span>
+            <strong>{{ user.firstName }} {{ user.lastName }}</strong>
+          </div>
+          <div class="row">
+            <span>Email</span>
+            <strong>{{ user.email }}</strong>
+          </div>
+          <div class="row">
+            <span>Phone</span>
+            <strong>{{ user.phoneNumber || '—' }}</strong>
+          </div>
+          <div class="row">
+            <span>Address</span>
+            <strong>{{ user.address1 || '—' }}</strong>
+          </div>
+        </mat-card>
+
+        <mat-card class="detail-card">
+          <h2>Account Details</h2>
+
+          <div class="row">
+            <span>Username</span>
+            <strong>{{ user.userName }}</strong>
+          </div>
+          <div class="row">
+            <span>Verified</span>
+            <strong>{{ user.emailConfirmed ? 'Yes' : 'No' }}</strong>
+          </div>
+          <div class="row">
+            <span>ID #</span>
+            <strong>{{ user.identificationNumber || '—' }}</strong>
+          </div>
+          <div class="row">
+            <span>Security Stamp</span>
+            <strong>{{ user.securityStamp }}</strong>
+          </div>
+        </mat-card>
+      </section>
+    </section>
+
+    <!-- ACTIVITY TAB -->
+    <section class="tab-section" *ngIf="activeTab === 'activity'">
+      <div class="timeline-card">
+        <h2>Recent Activity</h2>
+        <p class="timeline-sub">
+          A quick snapshot of important events on your inspector account.
+        </p>
+
+        <ul class="timeline">
+          <li *ngFor="let item of activity">
+            <div class="timeline-dot" [class.success]="item.kind === 'success'"
+                                     [class.info]="item.kind === 'info'"
+                                     [class.warn]="item.kind === 'warn'"></div>
+
+            <div class="timeline-line"></div>
+
+            <div class="timeline-content">
+              <div class="timeline-header">
+                <span class="label">{{ item.label }}</span>
+                <span
+                  class="badge"
+                  *ngIf="item.badge"
+                  [class.success]="item.kind === 'success'"
+                  [class.info]="item.kind === 'info'"
+                  [class.warn]="item.kind === 'warn'"
+                >
+                  {{ item.badge }}
+                </span>
+              </div>
+              <p class="meta">{{ item.meta }}</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SECURITY TAB -->
+    <section class="tab-section" *ngIf="activeTab === 'security'">
+      <div class="security-grid">
+
+        <mat-card class="security-card">
+          <h2>Password & Login</h2>
+          <p class="desc">
+            Change your password regularly and avoid reusing passwords across different platforms.
+          </p>
+
+          <div class="sec-row">
+            <span>Last login</span>
+            <strong>{{ user.loginDate | date:'medium' }}</strong>
+          </div>
+
+          <button mat-raised-button color="primary" (click)="changePassword()">
+            <mat-icon>lock_reset</mat-icon>
+            Change Password
+          </button>
+        </mat-card>
+
+        <mat-card class="security-card">
+          <h2>Account Safety</h2>
+          <p class="desc">
+            Email verification helps us keep your account safe and send important inspection updates.
+          </p>
+
+          <div class="sec-row">
+            <span>Email verified</span>
+            <strong>{{ user.emailConfirmed ? 'Yes' : 'No' }}</strong>
+          </div>
+
+          <div class="sec-row">
+            <span>Status</span>
+            <strong>{{ user.active ? 'Active' : 'Inactive' }}</strong>
+          </div>
+
+          <div class="sec-hint">
+            Keep your login details private and log out after finishing inspections on shared systems.
+          </div>
+        </mat-card>
+
+      </div>
+    </section>
+
+  </section>
+</div>

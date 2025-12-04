@@ -69,41 +69,71 @@
         </div>
       </section>
 
-      <!-- My Reports -->
+      <!-- My Reports (now: assigned inventory thumbnails) -->
       <section class="reports-section">
         <div class="section-header">
           <div>
             <h3>My Reports</h3>
-            <p class="section-subtitle">Sales Summary</p>
+            <p class="section-subtitle">Assigned Inventory</p>
           </div>
           <button mat-button class="view-all-btn">
             View All
           </button>
         </div>
 
-        <div class="reports-grid">
-          <div class="report-card" *ngFor="let report of myReports">
-            <div class="report-icon">
-              <mat-icon>description</mat-icon>
+        <div class="reports-grid" *ngIf="myReports.length; else noReports">
+          <a
+            class="report-card"
+            *ngFor="let report of myReports"
+            [routerLink]="['/inspector/inspection']"
+            [queryParams]="{ inventoryId: report.inventoryId }"
+          >
+            <div class="report-thumbnail">
+              <img
+                *ngIf="report.thumbnail; else reportThumbPlaceholder"
+                [src]="report.thumbnail"
+                [alt]="report.title"
+              />
+              <ng-template #reportThumbPlaceholder>
+                <div class="thumbnail-placeholder">
+                  <mat-icon>directions_car</mat-icon>
+                </div>
+              </ng-template>
             </div>
             <div class="report-content">
               <h4>{{ report.title }}</h4>
-              <p>{{ report.month }} {{ report.year }}</p>
+              <p>{{ report.subtitle }}</p>
             </div>
-          </div>
+          </a>
         </div>
+
+        <ng-template #noReports>
+          <div class="no-vehicles">
+            <mat-icon>description</mat-icon>
+            <span>No inventory assigned yet</span>
+          </div>
+        </ng-template>
       </section>
     </div>
 
     <!-- Right Column -->
     <div class="right-column">
-      <!-- Profile Card -->
+      <!-- Profile Card (redesigned) -->
       <article class="profile-card">
-        <div class="profile-avatar">
-          <span>{{ initials }}</span>
+        <div class="profile-avatar-wrapper">
+          <div class="profile-avatar">
+            <ng-container *ngIf="inspector.avatar; else initialsAvatar">
+              <img [src]="inspector.avatar" [alt]="inspector.name" />
+            </ng-container>
+            <ng-template #initialsAvatar>
+              <span>{{ initials }}</span>
+            </ng-template>
+          </div>
         </div>
+
         <h3 class="profile-name">{{ inspector.name }}</h3>
         <p class="profile-handle">{{ inspector.handle }}</p>
+
         <button mat-stroked-button class="switch-account-btn">
           View Account
         </button>
@@ -116,12 +146,20 @@
             <h3>Registered Vehicles</h3>
             <p class="section-subtitle">Sales Summary</p>
           </div>
+          <button
+            mat-button
+            class="view-all-btn"
+            *ngIf="registeredVehicles.length > 5"
+            (click)="showAllVehicles = !showAllVehicles"
+          >
+            {{ showAllVehicles ? 'Show Less' : 'View All' }}
+          </button>
         </div>
 
         <div class="vehicles-list" *ngIf="registeredVehicles.length; else noVehicles">
           <div
             class="vehicle-item"
-            *ngFor="let vehicle of registeredVehicles"
+            *ngFor="let vehicle of visibleRegisteredVehicles"
           >
             <div class="vehicle-thumbnail">
               <img

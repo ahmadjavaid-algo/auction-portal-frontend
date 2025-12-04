@@ -82,8 +82,10 @@ export class InspectorLayout implements OnInit, OnDestroy {
       this.pageTitle = 'Reports';
     } else if (url.includes('/guides')) {
       this.pageTitle = 'Guides';
-    } else if (url.includes('/profile')) {
+    } else if (url.includes('/accdetails')) {
       this.pageTitle = 'Profile';
+    } else if (url.includes('/change-password')) {
+      this.pageTitle = 'Change Your Password';
     } else {
       this.pageTitle = 'Dashboard';
     }

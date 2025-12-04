@@ -56,6 +56,12 @@
                 <mat-icon class="pill-icn">badge</mat-icon>
                 {{ hasAssignment ? 'Assigned to ' + currentInspectorName : 'Not assigned' }}
               </span>
+
+              <span class="pill muted status-pill">
+                <mat-icon class="pill-icn">fact_check</mat-icon>
+                <span class="status-dot" [style.background]="getCompletionStatusColor()"></span>
+                {{ getCompletionStatus() }}
+              </span>
             </div>
           </div>
         </div>
@@ -145,30 +151,193 @@
           </div>
         </div>
 
-        <!-- Inspection report panel (placeholder for future detailed checkpoints) -->
+        <!-- Inspection report panel -->
         <div class="section">
           <h3>
             <mat-icon>fact_check</mat-icon>
             Inspection Report
           </h3>
-          <div class="report-body">
-            <p class="muted">
-              This section will show the detailed inspection report for this inventory,
-              including checkpoints, comments, and images captured by the assigned inspector.
-            </p>
 
-            <mat-divider></mat-divider>
-
-            <div class="report-placeholder">
-              <mat-icon>content_paste_search</mat-icon>
-              <div>
-                <h4>No inspection report linked yet</h4>
-                <p>
-                  Once the inspector completes the inspection and submits a report,
-                  you’ll see the full breakdown here.
-                </p>
+          <div class="report-body" *ngIf="reportLoaded">
+            <!-- Summary -->
+            <div class="report-summary" *ngIf="reportGroups.length">
+              <div class="summary-tile">
+                <div class="summary-label">Total Checkpoints</div>
+                <div class="summary-value">{{ totalCheckpoints }}</div>
+              </div>
+              <div class="summary-tile">
+                <div class="summary-label">Completed</div>
+                <div class="summary-value">{{ totalCompleted }}</div>
+              </div>
+              <div class="summary-tile">
+                <div class="summary-label">Completion</div>
+                <div class="summary-value">
+                  {{ overallProgressPercent }}%
+                  <span class="summary-chip" [style.background]="getCompletionStatusColor()">
+                    {{ getCompletionStatus() }}
+                  </span>
+                </div>
               </div>
             </div>
+
+            <mat-divider *ngIf="reportGroups.length"></mat-divider>
+
+            <!-- No report yet -->
+            <ng-container *ngIf="!reportGroups.length">
+              <p class="muted">
+                No inspection data has been recorded for this inventory yet.
+              </p>
+
+              <div class="report-placeholder">
+                <mat-icon>content_paste_search</mat-icon>
+                <div>
+                  <h4>No inspection report available</h4>
+                  <p>
+                    Once the inspector completes the checklist in their portal and saves the results,
+                    a detailed read-only report will appear here.
+                  </p>
+                </div>
+              </div>
+            </ng-container>
+
+            <!-- Tabbed groups -->
+            <div class="report-tabs" *ngIf="reportGroups.length">
+              <mat-tab-group
+                class="type-tabs"
+                animationDuration="200ms"
+              >
+                <mat-tab *ngFor="let group of reportGroups">
+                  <ng-template mat-tab-label>
+                    <span class="tab-label-title">
+                      {{ group.inspectionTypeName }}
+                    </span>
+                    <span class="tab-label-sub">
+                      {{ getGroupCompleted(group) }}/{{ getGroupTotal(group) }} completed
+                    </span>
+                  </ng-template>
+
+                  <section class="tab-panel">
+                    <article class="report-group">
+                      <header class="group-header">
+                        <div class="group-title">
+                          <mat-icon>category</mat-icon>
+                          <span class="group-name">{{ group.inspectionTypeName }}</span>
+                          <span class="group-weight" *ngIf="group.weightage">
+                            {{ group.weightage }}%
+                          </span>
+                        </div>
+
+                        <div class="group-meta">
+                          <span
+                            class="group-progress-chip"
+                            [class.complete]="getGroupCompleted(group) === getGroupTotal(group)"
+                          >
+                            <mat-icon>
+                              {{
+                                getGroupCompleted(group) === getGroupTotal(group)
+                                  ? 'check_circle'
+                                  : 'pending'
+                              }}
+                            </mat-icon>
+                            {{ getGroupCompleted(group) }}/{{ getGroupTotal(group) }} completed
+                          </span>
+                        </div>
+                      </header>
+
+                      <div class="group-checkpoints">
+                        <div
+                          class="cp-row"
+                          *ngFor="let cp of group.checkpoints"
+                          [class.answered]="isAnswered(cp.resultValue)"
+                        >
+                          <div class="cp-main">
+                            <div class="cp-title-row">
+                              <mat-icon class="cp-status-icn">
+                                {{
+                                  isAnswered(cp.resultValue)
+                                    ? 'check_circle'
+                                    : 'radio_button_unchecked'
+                                }}
+                              </mat-icon>
+                              <div class="cp-text">
+                                <div class="cp-name">
+                                  {{ cp.inspectionCheckpointName }}
+                                </div>
+                                <div class="cp-type">
+                                  <span *ngIf="normalizeInputType(cp.inputType) === 'yesno'">
+                                    Pass / Fail
+                                  </span>
+                                  <span *ngIf="normalizeInputType(cp.inputType) === 'number'">
+                                    Numeric value
+                                  </span>
+                                  <span *ngIf="normalizeInputType(cp.inputType) === 'textarea'">
+                                    Remarks
+                                  </span>
+                                  <span *ngIf="normalizeInputType(cp.inputType) === 'text'">
+                                    Text
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div class="cp-result">
+                            <ng-container [ngSwitch]="normalizeInputType(cp.inputType)">
+                              <!-- YES/NO -->
+                              <div
+                                *ngSwitchCase="'yesno'"
+                                class="cp-pill"
+                                [class.pass]="cp.resultValue === 'Pass'"
+                                [class.fail]="cp.resultValue === 'Fail'"
+                              >
+                                <mat-icon *ngIf="cp.resultValue === 'Pass'">
+                                  check_circle
+                                </mat-icon>
+                                <mat-icon *ngIf="cp.resultValue === 'Fail'">
+                                  cancel
+                                </mat-icon>
+                                <span>
+                                  {{ cp.resultValue || 'Not recorded' }}
+                                </span>
+                              </div>
+
+                              <!-- NUMBER -->
+                              <div *ngSwitchCase="'number'" class="cp-value-box">
+                                <span
+                                  class="cp-value"
+                                  *ngIf="isAnswered(cp.resultValue); else noNumber"
+                                >
+                                  {{ cp.resultValue }}
+                                </span>
+                                <ng-template #noNumber>
+                                  <span class="cp-empty">No value recorded</span>
+                                </ng-template>
+                              </div>
+
+                              <!-- TEXT / TEXTAREA -->
+                              <div *ngSwitchDefault class="cp-notes">
+                                <span *ngIf="isAnswered(cp.resultValue); else noNotes">
+                                  {{ cp.resultValue }}
+                                </span>
+                                <ng-template #noNotes>
+                                  <span class="cp-empty">No remarks recorded</span>
+                                </ng-template>
+                              </div>
+                            </ng-container>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  </section>
+                </mat-tab>
+              </mat-tab-group>
+            </div>
+          </div>
+
+          <!-- loading skeleton for report only -->
+          <div class="report-loading" *ngIf="!reportLoaded">
+            <mat-spinner diameter="32"></mat-spinner>
+            <span>Loading inspection report…</span>
           </div>
         </div>
       </div>

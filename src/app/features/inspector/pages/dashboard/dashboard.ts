@@ -1,10 +1,10 @@
-// src/app/pages/inspector/dashboard/dashboard.ts 
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { RouterModule } from '@angular/router';
 
 import { forkJoin } from 'rxjs';
 
@@ -27,9 +27,10 @@ type SummaryTile = {
 };
 
 type ReportCard = {
+  inventoryId: number;
   title: string;
-  month: string;
-  year: number;
+  subtitle: string;
+  thumbnail: string | null;
 };
 
 type VehicleCard = {
@@ -52,7 +53,13 @@ type UpcomingCard = {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule],
+  imports: [
+    CommonModule,
+    MatIconModule,
+    MatButtonModule,
+    MatProgressSpinnerModule,
+    RouterModule
+  ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss']
 })
@@ -74,20 +81,32 @@ export class Dashboard {
 
   summaryTiles: SummaryTile[] = [];
 
-  myReports: ReportCard[] = [
-    { title: 'BMW M3 Inspection Report', month: 'June', year: 2024 },
-    { title: 'Jaguar XE L P250 Inspection Report', month: 'Dec', year: 2023 },
-    { title: 'Yamaha YZF-R3 Inspection Report', month: 'Dec', year: 2023 }
-  ];
+  // Now holds assigned inventory thumbnails (not hard-coded reports)
+  myReports: ReportCard[] = [];
 
   upcoming: UpcomingCard | null = null;
   registeredVehicles: VehicleCard[] = [];
+
+  // list + rotation state for upcoming card
+  private upcomingList: UpcomingCard[] = [];
+  private upcomingIndex = 0;
+  private upcomingRotationTimer: any = null;
+
+  // show only 5 vehicles unless expanded
+  showAllVehicles = false;
 
   public fallbackHero =
     'https://images.unsplash.com/photo-1603386329225-868f9b1ee6c9?auto=format&fit=crop&w=1200&q=80';
 
   ngOnInit(): void {
     this.load();
+  }
+
+  ngOnDestroy(): void {
+    if (this.upcomingRotationTimer) {
+      clearInterval(this.upcomingRotationTimer);
+      this.upcomingRotationTimer = null;
+    }
   }
 
   private load(): void {
@@ -113,11 +132,14 @@ export class Dashboard {
         const assignmentMap = this.buildAssignmentMap(mapps);
 
         const assignedToMe = currentUserId
-          ? invs.filter(i => assignmentMap.get(i.inventoryId)?.assignedTo === currentUserId)
+          ? invs.filter(
+              i => assignmentMap.get(i.inventoryId)?.assignedTo === currentUserId
+            )
           : [];
 
         this.buildUpcomingCard(assignedToMe, assignmentMap, imgMap);
         this.buildVehicleCards(invs, assignmentMap, imgMap, insps, currentUserId);
+        this.buildMyReports(assignedToMe, imgMap);
         this.buildSummaryTiles(invs, assignmentMap, currentUserId);
       },
       error: (err) => {
@@ -197,38 +219,68 @@ export class Dashboard {
 
   private buildUpcomingCard(
     assignedToMe: Inventory[],
-    assignmentMap: Map<number, InventoryInspector>,
+    _assignmentMap: Map<number, InventoryInspector>,
     imgMap: Map<number, string>
   ): void {
+    // reset previous state + timer
+    if (this.upcomingRotationTimer) {
+      clearInterval(this.upcomingRotationTimer);
+      this.upcomingRotationTimer = null;
+    }
+    this.upcomingList = [];
+    this.upcomingIndex = 0;
+    this.upcoming = null;
+
     if (!assignedToMe.length) {
-      this.upcoming = null;
       return;
     }
 
-    const nextInv = [...assignedToMe].sort(
+    const sorted = [...assignedToMe].sort(
       (a, b) => (a.inventoryId ?? 0) - (b.inventoryId ?? 0)
-    )[0];
+    );
 
-    const snap = this.safeParse(nextInv.productJSON);
-    const year = snap?.Year ?? snap?.year ?? '';
-    const make = snap?.Make ?? snap?.make ?? '';
-    const model = snap?.Model ?? snap?.model ?? '';
-    const displayName =
-      nextInv.displayName ||
-      snap?.DisplayName ||
-      snap?.displayName ||
-      [year, make, model].filter(Boolean).join(' ') ||
-      `Inventory #${nextInv.inventoryId}`;
+    this.upcomingList = sorted.map(nextInv => {
+      const snap = this.safeParse(nextInv.productJSON);
+      const year = snap?.Year ?? snap?.year ?? '';
+      const make = snap?.Make ?? snap?.make ?? '';
+      const model = snap?.Model ?? snap?.model ?? '';
+      const displayName =
+        nextInv.displayName ||
+        snap?.DisplayName ||
+        snap?.displayName ||
+        [year, make, model].filter(Boolean).join(' ') ||
+        `Inventory #${nextInv.inventoryId}`;
 
-    const img = imgMap.get(nextInv.inventoryId) ?? null;
+      const img = imgMap.get(nextInv.inventoryId) ?? null;
 
-    this.upcoming = {
-      inventoryId: nextInv.inventoryId,
-      title: displayName,
-      location: 'QuickCheck Auto',
-      dateTime: 'Fri, 20th June - 7:00-7:30 PM',
-      imageUrl: img
-    };
+      return {
+        inventoryId: nextInv.inventoryId,
+        title: displayName,
+        location: 'Algo Business Hub',
+        dateTime: 'Fri, 20th June - 7:00-7:30 PM',
+        imageUrl: img
+      } as UpcomingCard;
+    });
+
+    this.upcoming = this.upcomingList[0] ?? null;
+    this.startUpcomingRotation();
+  }
+
+  private startUpcomingRotation(): void {
+    // only rotate if we have more than one upcoming appointment
+    if (this.upcomingList.length <= 1) {
+      return;
+    }
+
+    const intervalMs = 6000; // 6 seconds
+
+    this.upcomingRotationTimer = setInterval(() => {
+      if (!this.upcomingList.length) {
+        return;
+      }
+      this.upcomingIndex = (this.upcomingIndex + 1) % this.upcomingList.length;
+      this.upcoming = this.upcomingList[this.upcomingIndex];
+    }, intervalMs);
   }
 
   private buildVehicleCards(
@@ -286,24 +338,68 @@ export class Dashboard {
     });
   }
 
+  // Build "My Reports" thumbnails from inventory assigned to the current inspector
+  private buildMyReports(
+    assignedToMe: Inventory[],
+    imgMap: Map<number, string>
+  ): void {
+    this.myReports = (assignedToMe || []).map(inv => {
+      const snap = this.safeParse(inv.productJSON);
+      const year = snap?.Year ?? snap?.year ?? '';
+      const make = snap?.Make ?? snap?.make ?? '';
+      const model = snap?.Model ?? snap?.model ?? '';
+      const reg = inv.registrationNo || '';
+
+      const title =
+        inv.displayName ||
+        snap?.DisplayName ||
+        snap?.displayName ||
+        [year, make, model].filter(Boolean).join(' ') ||
+        `Inventory #${inv.inventoryId}`;
+
+      const subtitle = reg || `INV-${inv.inventoryId}`;
+      const thumbnail = imgMap.get(inv.inventoryId) ?? null;
+
+      return {
+        inventoryId: inv.inventoryId,
+        title,
+        subtitle,
+        thumbnail
+      } as ReportCard;
+    });
+  }
+
   private buildSummaryTiles(
     inventories: Inventory[],
     assignmentMap: Map<number, InventoryInspector>,
     currentUserId: number | null
   ): void {
     const totalVehicles = inventories.length;
-    const assignedToMe = currentUserId
-      ? inventories.filter(i => assignmentMap.get(i.inventoryId)?.assignedTo === currentUserId)
-          .length
+    const assignedToMeCount = currentUserId
+      ? inventories.filter(
+          i => assignmentMap.get(i.inventoryId)?.assignedTo === currentUserId
+        ).length
       : 0;
-    const unassigned = inventories.filter(
-      i => !assignmentMap.get(i.inventoryId) || !assignmentMap.get(i.inventoryId)!.assignedTo
-    ).length;
 
     this.summaryTiles = [
-      { label: 'Inspections', value: String(assignedToMe).padStart(2, '0'), icon: 'description',  color: '#6366f1' },
-      { label: 'Reports',     value: String(this.myReports.length).padStart(2, '0'), icon: 'assignment', color: '#ec4899' },
-      { label: 'Vehicles',    value: String(totalVehicles).padStart(2, '0'), icon: 'directions_car', color: '#06b6d4' }
+      {
+        label: 'Inspections',
+        value: String(assignedToMeCount).padStart(2, '0'),
+        icon: 'description',
+        color: '#6366f1'
+      },
+      {
+        label: 'Reports',
+        value: String(this.myReports.length).padStart(2, '0'),
+        icon: 'assignment',
+        color: '#ec4899'
+      },
+      {
+        label: 'Vehicles',
+        value: String(totalVehicles).padStart(2, '0'),
+        icon: 'directions_car',
+        color: '#06b6d4'
+      }
     ];
   }
 
@@ -325,5 +421,13 @@ export class Dashboard {
 
   get heroImage(): string {
     return this.upcoming?.imageUrl || this.fallbackHero;
+  }
+
+  // Only 5 vehicles unless expanded
+  get visibleRegisteredVehicles(): VehicleCard[] {
+    if (this.showAllVehicles) {
+      return this.registeredVehicles;
+    }
+    return this.registeredVehicles.slice(0, 3);
   }
 }

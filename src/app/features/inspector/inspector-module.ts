@@ -9,6 +9,7 @@ import { Dashboard } from './pages/dashboard/dashboard';
 import { Inspections } from './pages/inspections/inspections';
 import { InspectorsAccdetails } from './pages/inspectors-accdetails/inspectors-accdetails';
 import { InspectorChangePassword } from './pages/inspector-change-password/inspector-change-password';
+import { Guides } from './pages/guides/guides';
 
 
 @NgModule({
@@ -21,7 +22,8 @@ import { InspectorChangePassword } from './pages/inspector-change-password/inspe
     Dashboard,
     Inspections,
     InspectorsAccdetails,
-    InspectorChangePassword
+    InspectorChangePassword,
+    Guides
   ]
 })
 export class InspectorModule { }

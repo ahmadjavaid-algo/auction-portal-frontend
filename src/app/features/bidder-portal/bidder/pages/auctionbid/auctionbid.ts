@@ -1,4 +1,3 @@
-
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -9,6 +8,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatTabsModule } from '@angular/material/tabs';
 
 import { forkJoin, of, interval, Subscription } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -20,6 +21,10 @@ import { InventoryDocumentFile } from '../../../../../models/inventorydocumentfi
 import { Product } from '../../../../../models/product.model';
 import { AuctionTimebox } from '../../../../../models/auction-timebox.model';
 import { AuctionBid } from '../../../../../models/auctionbid.model';
+
+import { InspectionType } from '../../../../../models/inspectiontype.model';
+import { InspectionCheckpoint } from '../../../../../models/inspectioncheckpoint.model';
+import { Inspection } from '../../../../../models/inspection.model';
 
 import { AuctionService } from '../../../../../services/auctions.service';
 import { InventoryAuctionService } from '../../../../../services/inventoryauctions.service';
@@ -33,6 +38,10 @@ import {
   NotificationItem
 } from '../../../../../services/notification-hub.service';
 
+import { InspectionTypesService } from '../../../../../services/inspectiontypes.service';
+import { InspectionCheckpointsService } from '../../../../../services/inspectioncheckpoints.service';
+import { InspectionsService } from '../../../../../services/inspection.service';
+
 type SpecRow = { label: string; value: string | number | null | undefined };
 
 type BidView = {
@@ -43,6 +52,23 @@ type BidView = {
   isMine: boolean;
   statusName: string | null | undefined;
 };
+
+interface InspectionCheckpointRow {
+  inspectionId?: number;
+  inspectionTypeId: number;
+  inspectionTypeName: string;
+  inspectionCheckpointId: number;
+  inspectionCheckpointName: string;
+  inputType?: string | null;
+  resultValue: string;
+}
+
+interface InspectionTypeGroupForUI {
+  inspectionTypeId: number;
+  inspectionTypeName: string;
+  weightage?: number | null;
+  checkpoints: InspectionCheckpointRow[];
+}
 
 @Component({
   selector: 'app-auctionbid',
@@ -55,13 +81,14 @@ type BidView = {
     MatButtonModule,
     MatTooltipModule,
     MatProgressBarModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatDividerModule,
+    MatTabsModule
   ],
   templateUrl: './auctionbid.html',
   styleUrls: ['./auctionbid.scss']
 })
 export class Auctionbid implements OnInit, OnDestroy {
-  
   private route = inject(ActivatedRoute);
   private snack = inject(MatSnackBar);
 
@@ -74,17 +101,18 @@ export class Auctionbid implements OnInit, OnDestroy {
   private bidderAuth = inject(BidderAuthService);
   private notifHub = inject(NotificationHubService);
 
-  
+  private inspTypesSvc = inject(InspectionTypesService);
+  private cpSvc = inject(InspectionCheckpointsService);
+  private inspectionsSvc = inject(InspectionsService);
+
   auctionId!: number;
   inventoryAuctionId!: number;
 
-  
   auction: Auction | null = null;
   lot: InventoryAuction | null = null;
   inventory: Inventory | null = null;
   product: Product | null = null;
 
-  
   loading = true;
   error: string | null = null;
 
@@ -95,7 +123,6 @@ export class Auctionbid implements OnInit, OnDestroy {
 
   specs: SpecRow[] = [];
 
-  
   private auctionStartUtcMs: number | null = null;
   private auctionEndUtcMs: number | null = null;
   private clockSkewMs = 0;
@@ -106,7 +133,6 @@ export class Auctionbid implements OnInit, OnDestroy {
   auctionState: 'scheduled' | 'live' | 'ended' | 'unknown' = 'unknown';
   auctionCountdown = '—';
 
-  
   bids: BidView[] = [];
   currentPrice: number | null = null;
   yourMaxBid: number | null = null;
@@ -115,7 +141,13 @@ export class Auctionbid implements OnInit, OnDestroy {
   newBidAmount: number | null = null;
   placingBid = false;
 
-  
+  // Inspection report (read-only for bidders)
+  allTypes: InspectionType[] = [];
+  allCheckpoints: InspectionCheckpoint[] = [];
+  reportGroups: InspectionTypeGroupForUI[] = [];
+  reportLoading = false;
+  reportLoaded = false;
+
   heroUrl =
     'https://images.unsplash.com/photo-1517940310602-75e447f00b52?q=80&w=1400&auto=format&fit=crop';
 
@@ -127,8 +159,6 @@ export class Auctionbid implements OnInit, OnDestroy {
           currency: 'USD',
           maximumFractionDigits: 0
         });
-
-  
 
   get lotId(): number | null {
     const l: any = this.lot;
@@ -155,8 +185,6 @@ export class Auctionbid implements OnInit, OnDestroy {
     return (l?.bidIncrement ?? l?.BidIncrement) ?? null;
   }
 
-  
-
   ngOnInit(): void {
     this.route.paramMap.subscribe(pm => {
       this.auctionId = Number(pm.get('auctionId') || 0);
@@ -172,7 +200,6 @@ export class Auctionbid implements OnInit, OnDestroy {
 
       this.loadAll();
 
-      
       if (!this.notifStreamSub) {
         this.notifStreamSub = this.notifHub.stream$.subscribe(n =>
           this.handleNotification(n)
@@ -188,8 +215,6 @@ export class Auctionbid implements OnInit, OnDestroy {
     document.removeEventListener('visibilitychange', this.onVisChange);
   }
 
-  
-
   private loadAll(): void {
     this.loading = true;
     this.error = null;
@@ -201,6 +226,13 @@ export class Auctionbid implements OnInit, OnDestroy {
     this.yourMaxBid = null;
     this.yourStatus = 'No Bids';
     this.newBidAmount = null;
+
+    // reset inspection state when lot changes
+    this.reportGroups = [];
+    this.reportLoaded = false;
+    this.reportLoading = false;
+    this.allTypes = [];
+    this.allCheckpoints = [];
 
     forkJoin({
       timebox: this.auctionsSvc
@@ -225,7 +257,6 @@ export class Auctionbid implements OnInit, OnDestroy {
     })
       .pipe(
         map(({ timebox, auctions, invAucs, files, invs, products, bids }) => {
-          
           if (timebox) {
             this.auctionStartUtcMs = Number(timebox.startEpochMsUtc);
             this.auctionEndUtcMs = Number(timebox.endEpochMsUtc);
@@ -240,11 +271,9 @@ export class Auctionbid implements OnInit, OnDestroy {
             this.clockSkewMs = 0;
           }
 
-          
           this.auction =
             (auctions || []).find(a => a.auctionId === this.auctionId) || null;
 
-          
           this.lot =
             (invAucs || []).find(
               a =>
@@ -255,7 +284,6 @@ export class Auctionbid implements OnInit, OnDestroy {
             throw new Error('Listing not found');
           }
 
-          
           this.inventory =
             (invs || []).find(i => i.inventoryId === this.lot!.inventoryId) ||
             null;
@@ -265,7 +293,6 @@ export class Auctionbid implements OnInit, OnDestroy {
               ) || null
             : null;
 
-          
           const snap = this.safeParse(this.inventory?.productJSON);
           const year = this.product?.yearName ?? snap?.Year ?? snap?.year;
           const make = this.product?.makeName ?? snap?.Make ?? snap?.make;
@@ -280,7 +307,6 @@ export class Auctionbid implements OnInit, OnDestroy {
             ? `Chassis ${chassis} • Lot #${this.lotId ?? ''}`
             : `Lot #${this.lotId ?? ''}`;
 
-          
           const isImg = (u?: string | null, n?: string | null) => {
             const s = (u || n || '').toLowerCase();
             return ['.jpg', '.jpeg', '.png', '.webp'].some(x => s.endsWith(x));
@@ -301,7 +327,6 @@ export class Auctionbid implements OnInit, OnDestroy {
             this.activeImage = this.heroUrl;
           }
 
-          
           const colorExterior =
             snap?.ExteriorColor ?? snap?.exteriorColor ?? null;
           const colorInterior =
@@ -339,7 +364,6 @@ export class Auctionbid implements OnInit, OnDestroy {
             { label: 'Seller Type', value: sellerType || '—' }
           ];
 
-          
           const currentUserId = this.bidderAuth.currentUser?.userId ?? null;
 
           const bidsForLot = (bids || []).filter(b => {
@@ -380,16 +404,18 @@ export class Auctionbid implements OnInit, OnDestroy {
             .sort((a, b) => {
               const ta = a.createdDate ? Date.parse(a.createdDate) : 0;
               const tb = b.createdDate ? Date.parse(b.createdDate) : 0;
-              return tb - ta; 
+              return tb - ta;
             });
 
           this.recomputeBidMetrics();
 
-          
           this.updateCountdown();
           this.startTicker();
           this.startResync();
           this.wireVisibility();
+
+          // kick off inspection report load (after we know inventory)
+          this.loadInspectionReport();
 
           try {
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -415,8 +441,6 @@ export class Auctionbid implements OnInit, OnDestroy {
       return null;
     }
   }
-
-  
 
   private startTicker(): void {
     if (this.tickHandle) clearInterval(this.tickHandle);
@@ -476,7 +500,7 @@ export class Auctionbid implements OnInit, OnDestroy {
       this.auctionCountdown = 'Auction ended';
     }
 
-    this.recomputeBidMetrics(); 
+    this.recomputeBidMetrics();
   }
 
   private fmtCountdown(ms: number): string {
@@ -493,8 +517,6 @@ export class Auctionbid implements OnInit, OnDestroy {
     const pad = (n: number) => String(n).padStart(2, '0');
     return `${hh}:${pad(mm)}:${pad(s)}`;
   }
-
-  
 
   get isLive(): boolean {
     return this.auctionState === 'live';
@@ -518,7 +540,6 @@ export class Auctionbid implements OnInit, OnDestroy {
     this.currentPrice = highestBid != null ? highestBid : startPrice ?? null;
     this.yourMaxBid = yourHighest;
 
-    
     if (!yourHighest) {
       this.yourStatus = 'No Bids';
     } else if (this.auctionState === 'ended') {
@@ -530,7 +551,6 @@ export class Auctionbid implements OnInit, OnDestroy {
       this.yourStatus = 'Outbid';
     }
 
-    
     if (this.currentPrice != null) {
       const inc = this.lotBidIncrement ?? 0;
       const base = this.currentPrice || 0;
@@ -588,11 +608,9 @@ export class Auctionbid implements OnInit, OnDestroy {
 
     this.placingBid = true;
 
-    
     const payload: any = {
       createdById: userId,
       active: true,
-
       auctionBidId: 0,
       auctionId: this.auctionId,
       auctionBidStatusId: 0,
@@ -601,16 +619,12 @@ export class Auctionbid implements OnInit, OnDestroy {
       auctionBidStatusName: 'Winning'
     };
 
-    console.log('[bid] placing with payload', payload);
-
     this.bidsSvc.add(payload).subscribe({
       next: id => {
-        console.log('[bid] add() ok, new id =', id);
         this.snack.open('Bid placed successfully.', 'OK', { duration: 2500 });
         this.refreshBids();
       },
       error: err => {
-        console.error('[bid] add() failed', err);
         const msg =
           err && err.error
             ? typeof err.error === 'string'
@@ -686,16 +700,12 @@ export class Auctionbid implements OnInit, OnDestroy {
       });
   }
 
-  
-
   private handleNotification(n: NotificationItem): void {
-    
     if (!n.auctionId || !n.inventoryAuctionId) return;
     if (n.auctionId !== this.auctionId || n.inventoryAuctionId !== this.lotId) {
       return;
     }
 
-    
     if (
       n.type !== 'bid-outbid' &&
       n.type !== 'bid-winning' &&
@@ -705,7 +715,6 @@ export class Auctionbid implements OnInit, OnDestroy {
       return;
     }
 
-    
     switch (n.type) {
       case 'bid-outbid':
         this.snack.open(
@@ -740,11 +749,8 @@ export class Auctionbid implements OnInit, OnDestroy {
         break;
     }
 
-    
     this.refreshBids();
   }
-
-  
 
   selectImage(url: string): void {
     this.activeImage = url;
@@ -771,5 +777,165 @@ export class Auctionbid implements OnInit, OnDestroy {
         timeStyle: 'short'
       }).format(d);
     return `${s ? fmt(s) : '—'} → ${e ? fmt(e) : '—'}`;
+  }
+
+  // ---- Inspection report logic (copied from ProductDetails) ----
+
+  private loadInspectionReport(): void {
+    if (!this.inventory || !this.inventory.inventoryId) {
+      this.reportLoaded = true;
+      this.reportGroups = [];
+      return;
+    }
+
+    this.reportLoading = true;
+    this.reportLoaded = false;
+    this.reportGroups = [];
+
+    const inventoryId = this.inventory.inventoryId;
+
+    forkJoin({
+      types: this.inspTypesSvc.getList().pipe(
+        catchError(() => of([] as InspectionType[]))
+      ),
+      checkpoints: this.cpSvc.getList().pipe(
+        catchError(() => of([] as InspectionCheckpoint[]))
+      ),
+      inspections: this.inspectionsSvc.getByInventory(inventoryId).pipe(
+        catchError(() => of([] as Inspection[]))
+      )
+    }).subscribe({
+      next: ({ types, checkpoints, inspections }) => {
+        this.allTypes = types ?? [];
+        this.allCheckpoints = checkpoints ?? [];
+        this.reportGroups = this.buildGroupsForInventory(
+          this.inventory!,
+          inspections ?? []
+        );
+      },
+      error: err => {
+        console.error('Failed to load inspection report', err);
+      },
+      complete: () => {
+        this.reportLoading = false;
+        this.reportLoaded = true;
+      }
+    });
+  }
+
+  private buildGroupsForInventory(
+    inventory: Inventory,
+    existing: Inspection[]
+  ): InspectionTypeGroupForUI[] {
+    if (!inventory) return [];
+
+    const groups: InspectionTypeGroupForUI[] = [];
+    const activeTypes = (this.allTypes ?? []).filter(t => t.active !== false);
+
+    activeTypes.forEach(t => {
+      const cps = (this.allCheckpoints ?? []).filter(
+        cp =>
+          (((cp as any).inspectionTypeId === t.inspectionTypeId) ||
+            ((cp as any).InspectionTypeId === t.inspectionTypeId)) &&
+          cp.active !== false
+      );
+
+      if (!cps.length) return;
+
+      const rows: InspectionCheckpointRow[] = cps.map(cp => {
+        const cpId =
+          (cp as any).inspectionCheckpointId ??
+          (cp as any).inspectioncheckpointId;
+
+        const match = (existing ?? []).find(
+          i =>
+            i.inspectionTypeId === t.inspectionTypeId &&
+            i.inspectionCheckpointId === cpId &&
+            i.inventoryId === inventory.inventoryId
+        );
+
+        return {
+          inspectionId: match?.inspectionId,
+          inspectionTypeId: t.inspectionTypeId,
+          inspectionTypeName: t.inspectionTypeName,
+          inspectionCheckpointId: cpId,
+          inspectionCheckpointName:
+            (cp as any).inspectionCheckpointName ??
+            (cp as any).inspectioncheckpointName ??
+            '',
+          inputType: cp.inputType,
+          resultValue: match?.result ?? ''
+        };
+      });
+
+      if (rows.length) {
+        groups.push({
+          inspectionTypeId: t.inspectionTypeId,
+          inspectionTypeName: t.inspectionTypeName,
+          weightage: t.weightage,
+          checkpoints: rows
+        });
+      }
+    });
+
+    return groups;
+  }
+
+  normalizeInputType(
+    inputType?: string | null
+  ): 'text' | 'textarea' | 'number' | 'yesno' {
+    const v = (inputType || '').toLowerCase();
+    if (v === 'textarea' || v === 'multiline') return 'textarea';
+    if (v === 'number' || v === 'numeric' || v === 'score') return 'number';
+    if (v === 'yesno' || v === 'boolean' || v === 'bool') return 'yesno';
+    return 'text';
+  }
+
+  isAnswered(value?: string | null): boolean {
+    return !!(value && value.toString().trim().length);
+  }
+
+  getGroupCompleted(group: InspectionTypeGroupForUI): number {
+    return group.checkpoints.filter(r => this.isAnswered(r.resultValue)).length;
+  }
+
+  getGroupTotal(group: InspectionTypeGroupForUI): number {
+    return group.checkpoints.length;
+  }
+
+  get totalCheckpoints(): number {
+    return this.reportGroups.reduce(
+      (sum, g) => sum + g.checkpoints.length,
+      0
+    );
+  }
+
+  get totalCompleted(): number {
+    return this.reportGroups.reduce(
+      (sum, g) => sum + this.getGroupCompleted(g),
+      0
+    );
+  }
+
+  get overallProgressPercent(): number {
+    if (!this.totalCheckpoints) return 0;
+    return Math.round((this.totalCompleted / this.totalCheckpoints) * 100);
+  }
+
+  getCompletionStatus(): 'Not Started' | 'In Progress' | 'Completed' {
+    if (!this.totalCheckpoints || !this.totalCompleted) return 'Not Started';
+    if (this.totalCompleted < this.totalCheckpoints) return 'In Progress';
+    return 'Completed';
+  }
+
+  getCompletionStatusColor(): string {
+    switch (this.getCompletionStatus()) {
+      case 'Completed':
+        return '#16a34a';
+      case 'In Progress':
+        return '#f59e0b';
+      default:
+        return '#9ca3af';
+    }
   }
 }
