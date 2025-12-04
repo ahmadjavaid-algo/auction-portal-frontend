@@ -1,41 +1,108 @@
-<div class="inspector-login-frame">
-  <div class="login-card">
+<!-- src/app/pages/inspector/inspectors-login/inspectors-login.html -->
+<div class="login-container">
+  <!-- Purple Gradient Background with Wave -->
+  <div class="background-wave">
+    <svg viewBox="0 0 1440 320" preserveAspectRatio="none">
+      <path 
+        fill="url(#gradient)" 
+        d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,154.7C960,171,1056,181,1152,165.3C1248,149,1344,107,1392,85.3L1440,64L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z"
+      ></path>
+      <defs>
+        <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#6b46c1;stop-opacity:1" />
+          <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+        </linearGradient>
+      </defs>
+    </svg>
+  </div>
 
-    <!-- Logo + name -->
-    <div class="brand">
+  <!-- Main Content -->
+  <div class="content-wrapper">
+    <!-- Logo Section -->
+    <div class="logo-section">
       <img
         src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8"
         alt="Algo Logo"
-        class="brand-logo"
+        class="main-logo"
       />
-      <span class="brand-title">Auction Portal</span>
+      <div class="welcome-text">
+        <span>Hello</span>
+        <span class="wave-emoji">👋</span>
+        <span>Welcome!</span>
+      </div>
     </div>
 
-    <h2>Inspector Login</h2>
-    <p class="subtitle">Sign in to continue</p>
+    <!-- Login Card with Character -->
+    <div class="login-section">
+      <!-- Login Card -->
+      <div class="login-card">
+        <h1>Login</h1>
+        <p class="subtitle">Sign in to your Inspector Account</p>
 
-    <form (ngSubmit)="login()">
-      <label>Email</label>
-      <input type="email" [(ngModel)]="email" name="email" required />
+        <!-- Error Message -->
+        <div class="error-message" *ngIf="error && !loading">
+          {{ error }}
+        </div>
 
-      <label>Password</label>
-      <input type="password" [(ngModel)]="password" name="password" required />
+        <form (ngSubmit)="login()">
+          <!-- Email/Username Field -->
+          <div class="form-group">
+            <label for="email">Email/Username</label>
+            <input
+              id="email"
+              type="text"
+              [(ngModel)]="email"
+              name="email"
+              placeholder="Enter your email or username"
+              [disabled]="loading"
+              required
+            />
+          </div>
 
-      <div class="options">
-        <label class="remember">
-          <input type="checkbox" />
-          <span>Remember me</span>
-        </label>
+          <!-- Password Field -->
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input
+              id="password"
+              type="password"
+              [(ngModel)]="password"
+              name="password"
+              placeholder="Enter your password"
+              [disabled]="loading"
+              required
+            />
+          </div>
 
-        <a routerLink="/inspector/forgot-password">Forgot password?</a>
+          <!-- Remember Me & Forgot Password -->
+          <div class="form-options">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                [(ngModel)]="rememberMe"
+                name="rememberMe"
+                [disabled]="loading"
+              />
+              <span>Remember me</span>
+            </label>
+
+            <a routerLink="/inspector/forgot-password" class="forgot-link">
+              Forgot password?
+            </a>
+          </div>
+
+          <!-- Login Button -->
+          <button
+            type="submit"
+            class="login-button"
+            [disabled]="loading"
+          >
+            <mat-spinner *ngIf="loading" diameter="20"></mat-spinner>
+            <span *ngIf="!loading">Login</span>
+          </button>
+        </form>
       </div>
 
-      <button type="submit" class="primary-btn">Sign in</button>
-    </form>
 
-    <div class="request-access">
-      Need access? <a href="/inspector/login">Request Inspector Access</a>
     </div>
-
   </div>
 </div>

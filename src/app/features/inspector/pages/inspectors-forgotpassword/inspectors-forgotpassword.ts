@@ -1,14 +1,16 @@
+// src/app/pages/inspector/inspectors-forgotpassword/inspectors-forgotpassword.ts
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../../../services/auth';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+
 import { InspectorAuthService } from '../../../../services/inspectorauth';
 
 @Component({
   selector: 'app-inspectors-forgotpassword',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, MatProgressSpinnerModule],
   templateUrl: './inspectors-forgotpassword.html',
   styleUrl: './inspectors-forgotpassword.scss'
 })
@@ -20,7 +22,7 @@ export class InspectorsForgotpassword {
 
   email = '';
   loading = false;
-  sent = false;              
+  sent = false;
   error: string | null = null;
 
   submit(): void {
@@ -39,6 +41,7 @@ export class InspectorsForgotpassword {
         this.loading = false;
       },
       error: () => {
+        // Intentionally not surfacing detailed error to avoid user enumeration
         this.sent = true;
         this.loading = false;
       }

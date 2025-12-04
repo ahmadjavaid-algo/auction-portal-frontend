@@ -2,12 +2,13 @@ import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { InspectorAuthService } from '../../../../services/inspectorauth';
 
 @Component({
   selector: 'app-inspectors-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, MatProgressSpinnerModule],
   templateUrl: './inspectors-login.html',
   styleUrl: './inspectors-login.scss'
 })
@@ -18,6 +19,7 @@ export class InspectorsLogin {
   
   email = '';
   password = '';
+  rememberMe = false;
   loading = false;
   error: string | null = null;
 
@@ -37,7 +39,6 @@ export class InspectorsLogin {
       next: (resp) => {
         this.loading = false;
         if (resp?.success) {
-          
           this.router.navigate(['/inspector/dashboard']);
         } else {
           this.error = resp?.message ?? 'Invalid credentials.';

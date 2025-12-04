@@ -272,7 +272,7 @@ export class Dashboard {
       return;
     }
 
-    const intervalMs = 6000; // 6 seconds
+    const intervalMs = 3000; // 6 seconds
 
     this.upcomingRotationTimer = setInterval(() => {
       if (!this.upcomingList.length) {
