@@ -221,13 +221,13 @@
                       <div
                         class="insp-row"
                         *ngFor="let cp of group.checkpoints"
-                        [class.answered]="isAnswered(cp.resultValue)"
+                        [class.answered]="isRowAnswered(cp)"
                       >
                         <div class="insp-main">
                           <div class="insp-title-row">
                             <mat-icon class="insp-status-icn">
                               {{
-                                isAnswered(cp.resultValue)
+                                isRowAnswered(cp)
                                   ? 'check_circle'
                                   : 'radio_button_unchecked'
                               }}
@@ -263,10 +263,19 @@
                                 </span>
                                 <span
                                   *ngIf="
-                                    normalizeInputType(cp.inputType) === 'text'
+                                    normalizeInputType(cp.inputType) ===
+                                    'text'
                                   "
                                 >
                                   Text
+                                </span>
+                                <span
+                                  *ngIf="
+                                    normalizeInputType(cp.inputType) ===
+                                    'image'
+                                  "
+                                >
+                                  Photos
                                 </span>
                               </div>
                             </div>
@@ -308,7 +317,26 @@
                               </ng-template>
                             </div>
 
-                            <!-- TEXT / TEXTAREA -->
+                            <!-- IMAGE(S) -->
+                            <div *ngSwitchCase="'image'" class="insp-photos-wrap">
+                              <ng-container *ngIf="cp.imageUrls?.length; else noPhotos">
+                                <div class="insp-photos">
+                                  <button
+                                    type="button"
+                                    class="insp-photo-thumb"
+                                    *ngFor="let img of cp.imageUrls; let idx = index"
+                                    (click)="openImageViewer(cp.imageUrls!, idx)"
+                                    [ngStyle]="{ '--photo': 'url(' + img + ')' }"
+                                    matTooltip="Open photo"
+                                  ></button>
+                                </div>
+                              </ng-container>
+                              <ng-template #noPhotos>
+                                <span class="empty">No photos uploaded</span>
+                              </ng-template>
+                            </div>
+
+                            <!-- TEXT / TEXTAREA / DEFAULT -->
                             <div *ngSwitchDefault class="insp-notes">
                               <span
                                 *ngIf="isAnswered(cp.resultValue); else noNotes"
@@ -434,3 +462,39 @@
 <ng-template #busy>
   <mat-progress-bar mode="indeterminate"></mat-progress-bar>
 </ng-template>
+
+<!-- Image Viewer Modal (for inspection photos) -->
+<div class="image-viewer" *ngIf="showImageViewer" (click)="closeImageViewer()">
+  <div class="viewer-content" (click)="$event.stopPropagation()">
+    <button class="viewer-close" (click)="closeImageViewer()">
+      <mat-icon>close</mat-icon>
+    </button>
+
+    <button
+      class="viewer-nav prev"
+      (click)="prevImage()"
+      [disabled]="selectedImageIndex === 0"
+    >
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+
+    <div class="viewer-image">
+      <img
+        [src]="selectedImageGallery[selectedImageIndex]"
+        alt="Inspection image"
+      />
+    </div>
+
+    <button
+      class="viewer-nav next"
+      (click)="nextImage()"
+      [disabled]="selectedImageIndex === selectedImageGallery.length - 1"
+    >
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+
+    <div class="viewer-counter">
+      {{ selectedImageIndex + 1 }} / {{ selectedImageGallery.length }}
+    </div>
+  </div>
+</div>

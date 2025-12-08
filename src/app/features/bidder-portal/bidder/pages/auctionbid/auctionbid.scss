@@ -1,3 +1,4 @@
+/* src/app/pages/bidder/auctions/auctionbid/auctionbid.scss */
 :host {
   --algo-bg-0: #0d0716;
   --algo-bg-1: #1a0930;
@@ -372,7 +373,7 @@
     }
   }
 
-  /* Inspection panel (copied from ProductDetails) */
+  /* Inspection panel (with photos, same as ProductDetails) */
   .inspection {
     .insp-loading {
       display: flex;
@@ -726,6 +727,37 @@
         font-style: italic;
       }
     }
+
+    /* Photos grid for image checkpoints */
+    .insp-photos-wrap {
+      .insp-photos {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .insp-photo-thumb {
+        width: 64px;
+        height: 64px;
+        border-radius: 10px;
+        border: 2px solid transparent;
+        background: var(--photo) center / cover no-repeat;
+        cursor: pointer;
+        padding: 0;
+        outline: none;
+
+        &:hover {
+          border-color: var(--algo-pink);
+          box-shadow: 0 6px 16px rgba(255, 47, 176, 0.32);
+        }
+      }
+
+      .empty {
+        font-size: 12px;
+        color: #9ca3af;
+        font-style: italic;
+      }
+    }
   }
 
   .history {
@@ -1024,8 +1056,7 @@
       background: linear-gradient(90deg, var(--algo-purple), var(--algo-pink));
       color: #fff;
       box-shadow: 0 12px 26px rgba(255, 47, 176, 0.28);
-      transition: transform 0.08s ease, box-shadow 0.08s ease,
-        background 0.08s ease;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background 0.08s ease;
 
       &:hover {
         transform: translateY(-1px);
@@ -1085,5 +1116,104 @@
         color: #111;
       }
     }
+  }
+}
+
+/* Fullscreen image viewer (shared with product-details theme) */
+.image-viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+
+  .viewer-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 86vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .viewer-image {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.7);
+
+    img {
+      display: block;
+      max-width: 100%;
+      max-height: 80vh;
+      object-fit: contain;
+    }
+  }
+
+  .viewer-close {
+    position: absolute;
+    top: -40px;
+    right: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: #e5e7eb;
+
+    mat-icon {
+      font-size: 26px;
+      width: 26px;
+      height: 26px;
+    }
+  }
+
+  .viewer-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    border-radius: 999px;
+    border: none;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    background: rgba(15, 23, 42, 0.8);
+    color: #e5e7eb;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    &.prev {
+      left: -54px;
+    }
+
+    &.next {
+      right: -54px;
+    }
+
+    mat-icon {
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+  }
+
+  .viewer-counter {
+    position: absolute;
+    bottom: -32px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 13px;
+    color: #e5e7eb;
+    background: rgba(15, 23, 42, 0.8);
+    padding: 4px 10px;
+    border-radius: 999px;
   }
 }

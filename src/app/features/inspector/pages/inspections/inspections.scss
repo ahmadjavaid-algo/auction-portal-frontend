@@ -545,7 +545,7 @@
   }
 }
 
-/* Image Gallery */
+/* Image Gallery (Inventory) */
 .image-gallery {
   margin-bottom: 20px;
 
@@ -565,54 +565,93 @@
       color: #3b82f6;
     }
   }
+}
 
-  .gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
+/* Shared layout for inventory + checkpoint images */
+.image-gallery .gallery-grid,
+.checkpoint-gallery {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.image-gallery .gallery-item,
+.checkpoint-gallery .gallery-item {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: #3b82f6;
+    transform: scale(1.05);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
   }
 
-  .gallery-item {
-    position: relative;
-    aspect-ratio: 4/3;
-    border-radius: 12px;
-    overflow: hidden;
-    cursor: pointer;
-    border: 2px solid #e2e8f0;
-    transition: all 0.3s ease;
-
-    &:hover {
-      border-color: #3b82f6;
-      transform: scale(1.05);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-    }
-
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .gallery-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.7);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      color: #ffffff;
-      font-size: 14px;
-      font-weight: 600;
-
-      mat-icon {
-        font-size: 24px;
-        width: 24px;
-        height: 24px;
-      }
-    }
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
+}
+
+.image-gallery .gallery-item .gallery-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* Small remove icon overlay on checkpoint images */
+.checkpoint-gallery .gallery-item .image-remove-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: none;
+  outline: none;
+  background: rgba(15, 23, 42, 0.85);
+  color: #e5e7eb;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.15s ease, transform 0.15s ease, background 0.15s ease;
+  padding: 0;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.checkpoint-gallery .gallery-item:hover .image-remove-btn {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.checkpoint-gallery .gallery-item .image-remove-btn:hover {
+  background: rgba(239, 68, 68, 0.95);
 }
 
 /* Card Actions */
@@ -927,7 +966,85 @@
   }
 }
 
-/* Form Footer */
+/* ====== CHECKPOINT IMAGE UPLOAD ====== */
+
+.checkpoint-image-field {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.image-upload-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: linear-gradient(
+    120deg,
+    rgba(37, 99, 235, 0.06),
+    rgba(59, 130, 246, 0.12)
+  );
+  border: 1px dashed #93c5fd;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.2s ease,
+    border-color 0.2s ease, background 0.2s ease;
+
+  input[type='file'] {
+    display: none;
+  }
+
+  &:hover {
+    transform: translateY(-1px);
+    border-color: #3b82f6;
+    background: linear-gradient(
+      120deg,
+      rgba(37, 99, 235, 0.12),
+      rgba(59, 130, 246, 0.18)
+    );
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+  }
+}
+
+.upload-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.45);
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: #ffffff;
+  }
+}
+
+.upload-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .upload-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .upload-subtitle {
+    font-size: 11px;
+    font-weight: 500;
+    color: #64748b;
+  }
+}
+
+/* ====== FORM FOOTER ====== */
 .form-footer {
   display: flex;
   align-items: center;
@@ -1138,7 +1255,8 @@
     grid-template-columns: 1fr;
   }
 
-  .gallery-grid {
+  .image-gallery .gallery-grid,
+  .checkpoint-gallery {
     grid-template-columns: repeat(2, 1fr);
   }
 

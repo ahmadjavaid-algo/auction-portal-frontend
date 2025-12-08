@@ -279,12 +279,12 @@
                 <div
                   class="checkpoint-item"
                   *ngFor="let row of group.checkpoints"
-                  [class.answered]="isAnswered(row.resultValue)"
+                  [class.answered]="isRowAnswered(row)"
                 >
                   <div class="checkpoint-label">
                     <div class="label-main">
                       <mat-icon class="check-icon">
-                        {{ isAnswered(row.resultValue) ? 'check_circle' : 'radio_button_unchecked' }}
+                        {{ isRowAnswered(row) ? 'check_circle' : 'radio_button_unchecked' }}
                       </mat-icon>
                       <span>{{ row.inspectionCheckpointName }}</span>
                     </div>
@@ -297,10 +297,14 @@
                     <span class="label-hint" *ngIf="normalizeInputType(row.inputType) === 'textarea'">
                       Provide detailed notes
                     </span>
+                    <span class="label-hint" *ngIf="normalizeInputType(row.inputType) === 'image'">
+                      Upload clear images (multiple allowed)
+                    </span>
                   </div>
 
                   <div class="checkpoint-input">
                     <ng-container [ngSwitch]="normalizeInputType(row.inputType)">
+
                       <!-- Textarea -->
                       <textarea
                         *ngSwitchCase="'textarea'"
@@ -310,7 +314,7 @@
                         class="form-textarea"
                       ></textarea>
 
-                      <!-- Number -->
+                      <!-- Number ONLY (InputType = Number) -->
                       <input
                         *ngSwitchCase="'number'"
                         type="number"
@@ -341,7 +345,47 @@
                         </button>
                       </div>
 
-                      <!-- Default Text -->
+                    <!-- IMAGE upload (InputType = Image) -->
+<div *ngSwitchCase="'image'" class="checkpoint-image-field">
+  <label class="image-upload-btn">
+    <input
+      type="file"
+      accept="image/*"
+      multiple
+      (change)="uploadCheckpointImages(block, group, row, $event)"
+    />
+    <div class="upload-icon">
+      <mat-icon>cloud_upload</mat-icon>
+    </div>
+    <div class="upload-text">
+      <span class="upload-title">Upload inspection photos</span>
+      <span class="upload-subtitle">Click to add or replace images</span>
+    </div>
+  </label>
+
+  <div class="checkpoint-gallery" *ngIf="row.imageUrls?.length">
+    <div
+      class="gallery-item"
+      *ngFor="let img of row.imageUrls; let idx = index"
+      (click)="openImageGallery(row.imageUrls!, idx)"
+    >
+      <img [src]="img" [alt]="row.inspectionCheckpointName" />
+
+      <!-- Small remove icon (deactivate image) -->
+      <button
+        type="button"
+        class="image-remove-btn"
+        matTooltip="Remove this image from inspection"
+        (click)="removeCheckpointImage(row, idx, $event)"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+</div>
+
+
+                      <!-- Default Text (InputType = Text)  - numbers also allowed -->
                       <input
                         *ngSwitchDefault
                         type="text"
@@ -395,7 +439,7 @@
     </div>
   </ng-container>
 
-  <!-- Image Viewer Modal -->
+  <!-- Image Viewer Modal (shared) -->
   <div class="image-viewer" *ngIf="showImageViewer" (click)="closeImageViewer()">
     <div class="viewer-content" (click)="$event.stopPropagation()">
       <button class="viewer-close" (click)="closeImageViewer()">

@@ -1,3 +1,4 @@
+// src/app/pages/bidder/auctions/auctionbid/auctionbid.ts
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -61,6 +62,8 @@ interface InspectionCheckpointRow {
   inspectionCheckpointName: string;
   inputType?: string | null;
   resultValue: string;
+  /** Parsed image URLs when inputType === 'image' */
+  imageUrls?: string[];
 }
 
 interface InspectionTypeGroupForUI {
@@ -148,6 +151,11 @@ export class Auctionbid implements OnInit, OnDestroy {
   reportLoading = false;
   reportLoaded = false;
 
+  // shared image viewer (for inspection checkpoint images)
+  selectedImageGallery: string[] = [];
+  selectedImageIndex = 0;
+  showImageViewer = false;
+
   heroUrl =
     'https://images.unsplash.com/photo-1517940310602-75e447f00b52?q=80&w=1400&auto=format&fit=crop';
 
@@ -233,6 +241,11 @@ export class Auctionbid implements OnInit, OnDestroy {
     this.reportLoading = false;
     this.allTypes = [];
     this.allCheckpoints = [];
+
+    // reset viewer state
+    this.showImageViewer = false;
+    this.selectedImageGallery = [];
+    this.selectedImageIndex = 0;
 
     forkJoin({
       timebox: this.auctionsSvc
@@ -620,7 +633,7 @@ export class Auctionbid implements OnInit, OnDestroy {
     };
 
     this.bidsSvc.add(payload).subscribe({
-      next: id => {
+      next: () => {
         this.snack.open('Bid placed successfully.', 'OK', { duration: 2500 });
         this.refreshBids();
       },
@@ -779,7 +792,16 @@ export class Auctionbid implements OnInit, OnDestroy {
     return `${s ? fmt(s) : '—'} → ${e ? fmt(e) : '—'}`;
   }
 
-  // ---- Inspection report logic (copied from ProductDetails) ----
+  // ---- Inspection report logic (with images, same as ProductDetails) ----
+
+  private isActiveInspection(i: Inspection): boolean {
+    const raw =
+      (i as any).active ??
+      (i as any).Active ??
+      (i as any).isActive ??
+      true;
+    return raw !== false && raw !== 0;
+  }
 
   private loadInspectionReport(): void {
     if (!this.inventory || !this.inventory.inventoryId) {
@@ -831,6 +853,9 @@ export class Auctionbid implements OnInit, OnDestroy {
 
     const groups: InspectionTypeGroupForUI[] = [];
     const activeTypes = (this.allTypes ?? []).filter(t => t.active !== false);
+    const activeInspections = (existing ?? []).filter(i =>
+      this.isActiveInspection(i)
+    );
 
     activeTypes.forEach(t => {
       const cps = (this.allCheckpoints ?? []).filter(
@@ -847,15 +872,33 @@ export class Auctionbid implements OnInit, OnDestroy {
           (cp as any).inspectionCheckpointId ??
           (cp as any).inspectioncheckpointId;
 
-        const match = (existing ?? []).find(
+        const cpInspectionsAll = activeInspections.filter(
           i =>
             i.inspectionTypeId === t.inspectionTypeId &&
             i.inspectionCheckpointId === cpId &&
             i.inventoryId === inventory.inventoryId
         );
 
+        const inputType = cp.inputType;
+        const norm = this.normalizeInputType(inputType);
+
+        let resultValue = '';
+        let inspectionId: number | undefined;
+        let imageUrls: string[] | undefined;
+
+        if (norm === 'image') {
+          imageUrls = cpInspectionsAll
+            .flatMap(i => this.extractImageUrls(i.result ?? ''))
+            .filter(u => !!u);
+          inspectionId = cpInspectionsAll[0]?.inspectionId;
+        } else {
+          const match = cpInspectionsAll[0];
+          inspectionId = match?.inspectionId;
+          resultValue = match?.result ?? '';
+        }
+
         return {
-          inspectionId: match?.inspectionId,
+          inspectionId,
           inspectionTypeId: t.inspectionTypeId,
           inspectionTypeName: t.inspectionTypeName,
           inspectionCheckpointId: cpId,
@@ -863,8 +906,9 @@ export class Auctionbid implements OnInit, OnDestroy {
             (cp as any).inspectionCheckpointName ??
             (cp as any).inspectioncheckpointName ??
             '',
-          inputType: cp.inputType,
-          resultValue: match?.result ?? ''
+          inputType,
+          resultValue,
+          imageUrls: imageUrls ?? []
         };
       });
 
@@ -881,13 +925,19 @@ export class Auctionbid implements OnInit, OnDestroy {
     return groups;
   }
 
+  /**
+   * Normalize inputType for display/render logic.
+   * Includes 'image' for photo checkpoints.
+   */
   normalizeInputType(
     inputType?: string | null
-  ): 'text' | 'textarea' | 'number' | 'yesno' {
+  ): 'text' | 'textarea' | 'number' | 'yesno' | 'image' {
     const v = (inputType || '').toLowerCase();
     if (v === 'textarea' || v === 'multiline') return 'textarea';
     if (v === 'number' || v === 'numeric' || v === 'score') return 'number';
     if (v === 'yesno' || v === 'boolean' || v === 'bool') return 'yesno';
+    if (v === 'image' || v === 'photo' || v === 'picture' || v === 'file')
+      return 'image';
     return 'text';
   }
 
@@ -895,8 +945,16 @@ export class Auctionbid implements OnInit, OnDestroy {
     return !!(value && value.toString().trim().length);
   }
 
+  isRowAnswered(row: InspectionCheckpointRow): boolean {
+    const t = this.normalizeInputType(row.inputType);
+    if (t === 'image') {
+      return !!(row.imageUrls && row.imageUrls.length);
+    }
+    return this.isAnswered(row.resultValue);
+  }
+
   getGroupCompleted(group: InspectionTypeGroupForUI): number {
-    return group.checkpoints.filter(r => this.isAnswered(r.resultValue)).length;
+    return group.checkpoints.filter(r => this.isRowAnswered(r)).length;
   }
 
   getGroupTotal(group: InspectionTypeGroupForUI): number {
@@ -936,6 +994,84 @@ export class Auctionbid implements OnInit, OnDestroy {
         return '#f59e0b';
       default:
         return '#9ca3af';
+    }
+  }
+
+  /**
+   * Parse Inspection.result into an array of image URLs.
+   * Supports:
+   * - JSON array: '["url1","url2"]'
+   * - Pipe/comma/semicolon separated: 'url1|url2' or 'url1,url2'
+   * - Single URL string
+   */
+  private extractImageUrls(val?: string | null): string[] {
+    if (!val) return [];
+    const trimmed = val.trim();
+    if (!trimmed) return [];
+
+    // JSON array case
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) {
+          return parsed
+            .map(x => (typeof x === 'string' ? x.trim() : ''))
+            .filter(x => !!x);
+        }
+      } catch {
+        // fall through
+      }
+    }
+
+    // pipe / comma / semicolon separated OR single url
+    const parts = trimmed.split(/[|,;]/g).map(x => x.trim());
+    const urls = parts.filter(p => !!p);
+
+    const looksLikeImage = (s: string) => {
+      const lower = s.toLowerCase();
+      if (
+        lower.startsWith('http://') ||
+        lower.startsWith('https://') ||
+        lower.startsWith('blob:') ||
+        lower.startsWith('data:image/')
+      ) {
+        return true;
+      }
+      return ['.jpg', '.jpeg', '.png', '.webp', '.gif'].some(ext =>
+        lower.includes(ext)
+      );
+    };
+
+    return urls.filter(looksLikeImage);
+  }
+
+  // ---------- IMAGE VIEWER (inspection photos) ----------
+
+  openImageViewer(images: string[], startIndex: number = 0): void {
+    if (!images || !images.length) return;
+    this.selectedImageGallery = images;
+    this.selectedImageIndex = Math.min(
+      Math.max(startIndex, 0),
+      images.length - 1
+    );
+    this.showImageViewer = true;
+  }
+
+  closeImageViewer(): void {
+    this.showImageViewer = false;
+    this.selectedImageGallery = [];
+    this.selectedImageIndex = 0;
+  }
+
+  nextImage(): void {
+    if (this.selectedImageIndex < this.selectedImageGallery.length - 1) {
+      this.selectedImageIndex++;
+    }
+  }
+
+  prevImage(): void {
+    if (this.selectedImageIndex > 0) {
+      this.selectedImageIndex--;
     }
   }
 }

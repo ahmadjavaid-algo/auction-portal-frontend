@@ -30,6 +30,13 @@ import { InspectionsService } from '../../../../services/inspection.service';
 import { InventoryDocumentFileService } from '../../../../services/inventorydocumentfile.service';
 import { InspectorAuthService } from '../../../../services/inspectorauth';
 
+type NormalizedInputType = 'text' | 'textarea' | 'number' | 'yesno' | 'image';
+
+interface ImageItem {
+  inspectionId: number;
+  url: string;
+}
+
 interface InspectionCheckpointRow {
   inspectionId?: number;
   inspectionTypeId: number;
@@ -38,6 +45,8 @@ interface InspectionCheckpointRow {
   inspectionCheckpointName: string;
   inputType?: string | null;
   resultValue: string;
+  imageUrls?: string[];           // for gallery / viewer
+  imageItems?: ImageItem[];       // per-image mapping (id + url) for removal
 }
 
 interface InspectionTypeGroupForUI {
@@ -239,6 +248,17 @@ export class Inspections implements OnInit {
     return map;
   }
 
+  // ---------- HELPERS FOR ACTIVE FLAG ----------
+
+  private isActiveInspection(i: Inspection): boolean {
+    const raw =
+      (i as any).active ??
+      (i as any).Active ??
+      (i as any).isActive ??
+      true;
+    return raw !== false && raw !== 0;
+  }
+
   // Build UI groups for an inventory using types + checkpoints + existing inspections
   private buildGroupsForInventory(
     inventory: Inventory,
@@ -265,15 +285,43 @@ export class Inspections implements OnInit {
           (cp as any).inspectionCheckpointId ??
           (cp as any).inspectioncheckpointId;
 
-        const match = existing.find(
+        const cpInspectionsAll = existing.filter(
           i =>
             i.inspectionTypeId === t.inspectionTypeId &&
             i.inspectionCheckpointId === cpId &&
             i.inventoryId === inventory.inventoryId
         );
 
+        const cpInspections = cpInspectionsAll.filter(i =>
+          this.isActiveInspection(i)
+        );
+
+        const inputType = cp.inputType;
+        const norm = this.normalizeInputType(inputType);
+
+        let resultValue = '';
+        let inspectionId: number | undefined;
+        let imageUrls: string[] | undefined;
+        let imageItems: ImageItem[] | undefined;
+
+        if (norm === 'image') {
+          imageItems = cpInspections
+            .map(i => ({
+              inspectionId: i.inspectionId,
+              url: i.result ?? ''
+            }))
+            .filter(x => !!x.url);
+
+          imageUrls = imageItems.map(x => x.url);
+          inspectionId = imageItems[0]?.inspectionId;
+        } else {
+          const match = cpInspections[0];
+          inspectionId = match?.inspectionId;
+          resultValue = match?.result ?? '';
+        }
+
         return {
-          inspectionId: match?.inspectionId,
+          inspectionId,
           inspectionTypeId: t.inspectionTypeId,
           inspectionTypeName: t.inspectionTypeName,
           inspectionCheckpointId: cpId,
@@ -281,8 +329,10 @@ export class Inspections implements OnInit {
             (cp as any).inspectionCheckpointName ??
             (cp as any).inspectioncheckpointName ??
             '',
-          inputType: cp.inputType,
-          resultValue: match?.result ?? ''
+          inputType,
+          resultValue,
+          imageUrls: imageUrls ?? [],
+          imageItems: imageItems ?? []
         };
       });
 
@@ -342,11 +392,14 @@ export class Inspections implements OnInit {
     block.expanded = !block.expanded;
   }
 
-  normalizeInputType(inputType?: string | null): 'text' | 'textarea' | 'number' | 'yesno' {
+  normalizeInputType(inputType?: string | null): NormalizedInputType {
     const v = (inputType || '').toLowerCase();
     if (v === 'textarea' || v === 'multiline') return 'textarea';
     if (v === 'number' || v === 'numeric' || v === 'score') return 'number';
     if (v === 'yesno' || v === 'boolean' || v === 'bool') return 'yesno';
+    if (v === 'image' || v === 'photo' || v === 'picture' || v === 'file')
+      return 'image';
+    // "text" (or anything else) → free text (numbers allowed as well)
     return 'text';
   }
 
@@ -354,12 +407,20 @@ export class Inspections implements OnInit {
     row.resultValue = value;
   }
 
-  isAnswered(value?: string | null): boolean {
+  private isValueAnswered(value?: string | null): boolean {
     return !!(value && value.toString().trim().length);
   }
 
+  isRowAnswered(row: InspectionCheckpointRow): boolean {
+    const t = this.normalizeInputType(row.inputType);
+    if (t === 'image') {
+      return !!(row.imageUrls && row.imageUrls.length);
+    }
+    return this.isValueAnswered(row.resultValue);
+  }
+
   getGroupCompleted(group: InspectionTypeGroupForUI): number {
-    return group.checkpoints.filter(r => this.isAnswered(r.resultValue)).length;
+    return group.checkpoints.filter(r => this.isRowAnswered(r)).length;
   }
 
   getBlockCompleted(block: InspectorInventoryBlock): number {
@@ -438,7 +499,7 @@ export class Inspections implements OnInit {
     }
   }
 
-  // ---------- IMAGE VIEWER ----------
+  // ---------- IMAGE VIEWER (shared for inventory + checkpoint images) ----------
 
   openImageGallery(images: string[], startIndex: number = 0): void {
     this.selectedImageGallery = images;
@@ -464,7 +525,140 @@ export class Inspections implements OnInit {
     }
   }
 
-  // ---------- SAVE ----------
+  // ---------- CHECKPOINT IMAGE UPLOAD ----------
+
+  uploadCheckpointImages(
+    block: InspectorInventoryBlock,
+    group: InspectionTypeGroupForUI,
+    row: InspectionCheckpointRow,
+    event: Event
+  ): void {
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input?.files ?? []);
+    if (!files.length) return;
+
+    const currentUserId = this.auth.currentUser?.userId ?? null;
+    if (!currentUserId) {
+      this.snack.open('Session expired. Please sign in again.', 'Dismiss', {
+        duration: 3000
+      });
+      return;
+    }
+
+    // Use DocumentTypeId = 1 (Inventory) for inspection photos (can be changed later if you add a specific type)
+    const documentTypeId = 1;
+
+    block.saving = true;
+
+    const calls = files.map(file =>
+      this.inspectionsSvc
+        .addWithImage(file, {
+          inspectionTypeId: group.inspectionTypeId,
+          inspectionCheckpointId: row.inspectionCheckpointId,
+          inventoryId: block.inventory.inventoryId,
+          documentTypeId,
+          createdById: currentUserId,
+          documentName: row.inspectionCheckpointName
+        })
+        .pipe(
+          catchError(err => {
+            console.error('Failed to upload checkpoint image', err);
+            return of(0);
+          })
+        )
+    );
+
+    forkJoin(calls).subscribe({
+      next: ids => {
+        const successCount = (ids || []).filter(id => id && id > 0).length;
+        if (successCount) {
+          this.snack.open(
+            `${successCount} image(s) uploaded for "${row.inspectionCheckpointName}".`,
+            'OK',
+            { duration: 3500 }
+          );
+          // Refresh this inventory’s inspection data so new URLs come through
+          this.refreshInventoryBlock(block);
+        } else {
+          this.snack.open(
+            'Failed to upload images for this checkpoint.',
+            'Dismiss',
+            { duration: 3500 }
+          );
+        }
+      },
+      complete: () => {
+        block.saving = false;
+        if (input) {
+          input.value = '';
+        }
+      }
+    });
+  }
+
+  private refreshInventoryBlock(block: InspectorInventoryBlock): void {
+    this.inspectionsSvc
+      .getByInventory(block.inventory.inventoryId)
+      .pipe(catchError(() => of([] as Inspection[])))
+      .subscribe(list => {
+        block.groups = this.buildGroupsForInventory(block.inventory, list ?? []);
+      });
+  }
+
+  // ---------- REMOVE SINGLE CHECKPOINT IMAGE (set Active = 0) ----------
+
+  removeCheckpointImage(
+    row: InspectionCheckpointRow,
+    index: number,
+    event?: MouseEvent
+  ): void {
+    event?.stopPropagation();
+    event?.preventDefault();
+
+    const currentUserId = this.auth.currentUser?.userId ?? null;
+    if (!currentUserId) {
+      this.snack.open('Session expired. Please sign in again.', 'Dismiss', {
+        duration: 3000
+      });
+      return;
+    }
+
+    const item = row.imageItems?.[index];
+    if (!item || !item.inspectionId) {
+      return;
+    }
+
+    this.inspectionsSvc
+      .activate({
+        InspectionId: item.inspectionId,
+        Active: false,
+        ModifiedById: currentUserId
+      })
+      .pipe(
+        catchError(err => {
+          console.error('Failed to deactivate inspection image', err);
+          this.snack.open(
+            'Failed to remove image. Please try again.',
+            'Dismiss',
+            { duration: 3000 }
+          );
+          return of(false);
+        })
+      )
+      .subscribe(success => {
+        if (success) {
+          // Update UI instantly
+          row.imageItems = (row.imageItems ?? []).filter((_, i) => i !== index);
+          row.imageUrls = (row.imageUrls ?? []).filter((_, i) => i !== index);
+
+          this.snack.open('Image removed from checkpoint.', 'OK', {
+            duration: 2500
+          });
+        }
+      });
+  }
+
+  // ---------- SAVE (non-image checkpoints only) ----------
 
   saveInventory(block: InspectorInventoryBlock): void {
     const currentUserId = this.auth.currentUser?.userId ?? null;
@@ -485,6 +679,13 @@ export class Inspections implements OnInit {
 
     block.groups.forEach(group => {
       group.checkpoints.forEach(row => {
+        const normType = this.normalizeInputType(row.inputType);
+
+        // Image checkpoints are handled via uploadCheckpointImages/removeCheckpointImage
+        if (normType === 'image') {
+          return;
+        }
+
         const trimmed = row.resultValue?.toString().trim() ?? '';
 
         // If it's a new record with no value, skip.

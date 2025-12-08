@@ -1,3 +1,4 @@
+// src/app/pages/admin/inventory/inventory-inspectionreport/inventory-inspectionreport.ts
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -23,6 +24,7 @@ import { AuthService } from '../../../../services/auth';
 import { InspectionTypesService } from '../../../../services/inspectiontypes.service';
 import { InspectionCheckpointsService } from '../../../../services/inspectioncheckpoints.service';
 import { InspectionsService } from '../../../../services/inspection.service';
+import { InventoryDocumentFileService } from '../../../../services/inventorydocumentfile.service';
 
 import { Inventory } from '../../../../models/inventory.model';
 import { InventoryInspector } from '../../../../models/inventoryinspector.model';
@@ -30,6 +32,7 @@ import { Inspector } from '../../../../models/inspector.model';
 import { InspectionType } from '../../../../models/inspectiontype.model';
 import { InspectionCheckpoint } from '../../../../models/inspectioncheckpoint.model';
 import { Inspection } from '../../../../models/inspection.model';
+import { InventoryDocumentFile } from '../../../../models/inventorydocumentfile.model';
 
 type SummaryTile = {
   label: string;
@@ -37,6 +40,8 @@ type SummaryTile = {
   icon: string;
   color: string;
 };
+
+type NormalizedInputType = 'text' | 'textarea' | 'number' | 'yesno' | 'image';
 
 interface InspectionCheckpointRow {
   inspectionId?: number;
@@ -46,6 +51,7 @@ interface InspectionCheckpointRow {
   inspectionCheckpointName: string;
   inputType?: string | null;
   resultValue: string;
+  imageUrls?: string[]; // for image checkpoints
 }
 
 interface InspectionTypeGroupForUI {
@@ -87,6 +93,7 @@ export class InventoryInspectionreport {
   private inspTypesSvc = inject(InspectionTypesService);
   private cpSvc = inject(InspectionCheckpointsService);
   private inspectionsSvc = inject(InspectionsService);
+  private invDocSvc = inject(InventoryDocumentFileService);
 
   inventoryId!: number;
 
@@ -107,6 +114,14 @@ export class InventoryInspectionreport {
   reportGroups: InspectionTypeGroupForUI[] = [];
   reportLoaded = false;
 
+  // inventory-level images
+  inventoryImages: string[] = [];
+
+  // shared image viewer (inventory photos + checkpoint images)
+  selectedImageGallery: string[] = [];
+  selectedImageIndex = 0;
+  showImageViewer = false;
+
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (!id) {
@@ -124,6 +139,7 @@ export class InventoryInspectionreport {
     this.error = null;
     this.reportGroups = [];
     this.reportLoaded = false;
+    this.inventoryImages = [];
 
     forkJoin({
       inventory: this.invSvc.getById(this.inventoryId),
@@ -133,6 +149,9 @@ export class InventoryInspectionreport {
       checkpoints: this.cpSvc.getList(),
       inspections: this.inspectionsSvc.getByInventory(this.inventoryId).pipe(
         catchError(() => of([] as Inspection[]))
+      ),
+      docs: this.invDocSvc.getList().pipe(
+        catchError(() => of([] as InventoryDocumentFile[]))
       )
     }).subscribe({
       next: ({
@@ -141,7 +160,8 @@ export class InventoryInspectionreport {
         mappings,
         types,
         checkpoints,
-        inspections
+        inspections,
+        docs
       }) => {
         if (!inventory) {
           this.inventory = null;
@@ -160,6 +180,9 @@ export class InventoryInspectionreport {
 
         this.allTypes = types ?? [];
         this.allCheckpoints = checkpoints ?? [];
+
+        // inventory-level images (same logic as inspector inspections page)
+        this.inventoryImages = this.buildInventoryImages(docs ?? [], this.inventoryId);
 
         this.reportGroups = this.buildGroupsForInventory(
           this.inventory,
@@ -367,7 +390,44 @@ export class InventoryInspectionreport {
       });
   }
 
-  // ---------- REPORT BUILDING ----------
+  // ---------- REPORT BUILDING + IMAGES ----------
+
+  private isActiveInspection(i: Inspection): boolean {
+    const raw =
+      (i as any).active ??
+      (i as any).Active ??
+      (i as any).isActive ??
+      true;
+    return raw !== false && raw !== 0;
+  }
+
+  private buildInventoryImages(
+    files: InventoryDocumentFile[],
+    inventoryId: number
+  ): string[] {
+    const isImage = (d: InventoryDocumentFile): boolean => {
+      const s = (
+        d.documentUrl ||
+        d.documentName ||
+        d.documentDisplayName ||
+        ''
+      )
+        .toString()
+        .toLowerCase();
+
+      return ['.jpg', '.jpeg', '.png', '.webp'].some(ext => s.endsWith(ext));
+    };
+
+    return (files || [])
+      .filter(
+        f =>
+          (f.active ?? true) &&
+          f.inventoryId === inventoryId &&
+          !!f.documentUrl &&
+          isImage(f)
+      )
+      .map(f => f.documentUrl!);
+  }
 
   private buildGroupsForInventory(
     inventory: Inventory,
@@ -377,6 +437,9 @@ export class InventoryInspectionreport {
 
     const groups: InspectionTypeGroupForUI[] = [];
     const activeTypes = (this.allTypes ?? []).filter(t => t.active !== false);
+    const activeInspections = (existing ?? []).filter(i =>
+      this.isActiveInspection(i)
+    );
 
     activeTypes.forEach(t => {
       const cps = (this.allCheckpoints ?? []).filter(
@@ -395,15 +458,33 @@ export class InventoryInspectionreport {
           (cp as any).inspectionCheckpointId ??
           (cp as any).inspectioncheckpointId;
 
-        const match = (existing ?? []).find(
+        const cpInspectionsAll = activeInspections.filter(
           i =>
             i.inspectionTypeId === t.inspectionTypeId &&
             i.inspectionCheckpointId === cpId &&
             i.inventoryId === inventory.inventoryId
         );
 
+        const inputType = cp.inputType;
+        const norm = this.normalizeInputType(inputType);
+
+        let resultValue = '';
+        let inspectionId: number | undefined;
+        let imageUrls: string[] | undefined;
+
+        if (norm === 'image') {
+          imageUrls = cpInspectionsAll
+            .map(i => i.result ?? '')
+            .filter(u => !!u);
+          inspectionId = cpInspectionsAll[0]?.inspectionId;
+        } else {
+          const match = cpInspectionsAll[0];
+          inspectionId = match?.inspectionId;
+          resultValue = match?.result ?? '';
+        }
+
         return {
-          inspectionId: match?.inspectionId,
+          inspectionId,
           inspectionTypeId: t.inspectionTypeId,
           inspectionTypeName: t.inspectionTypeName,
           inspectionCheckpointId: cpId,
@@ -411,8 +492,9 @@ export class InventoryInspectionreport {
             (cp as any).inspectionCheckpointName ??
             (cp as any).inspectioncheckpointName ??
             '',
-          inputType: cp.inputType,
-          resultValue: match?.result ?? ''
+          inputType,
+          resultValue,
+          imageUrls: imageUrls ?? []
         };
       });
 
@@ -429,11 +511,13 @@ export class InventoryInspectionreport {
     return groups;
   }
 
-  normalizeInputType(inputType?: string | null): 'text' | 'textarea' | 'number' | 'yesno' {
+  normalizeInputType(inputType?: string | null): NormalizedInputType {
     const v = (inputType || '').toLowerCase();
     if (v === 'textarea' || v === 'multiline') return 'textarea';
     if (v === 'number' || v === 'numeric' || v === 'score') return 'number';
     if (v === 'yesno' || v === 'boolean' || v === 'bool') return 'yesno';
+    if (v === 'image' || v === 'photo' || v === 'picture' || v === 'file')
+      return 'image';
     return 'text';
   }
 
@@ -441,8 +525,16 @@ export class InventoryInspectionreport {
     return !!(value && value.toString().trim().length);
   }
 
+  isRowAnswered(row: InspectionCheckpointRow): boolean {
+    const t = this.normalizeInputType(row.inputType);
+    if (t === 'image') {
+      return !!(row.imageUrls && row.imageUrls.length);
+    }
+    return this.isAnswered(row.resultValue);
+  }
+
   getGroupCompleted(group: InspectionTypeGroupForUI): number {
-    return group.checkpoints.filter(r => this.isAnswered(r.resultValue)).length;
+    return group.checkpoints.filter(r => this.isRowAnswered(r)).length;
   }
 
   getGroupTotal(group: InspectionTypeGroupForUI): number {
@@ -489,5 +581,35 @@ export class InventoryInspectionreport {
     if (!value) return false;
     const v = value.toLowerCase();
     return v === 'pass' || v === 'fail';
+  }
+
+  // ---------- IMAGE VIEWER (inventory + checkpoint images) ----------
+
+  openImageViewer(images: string[], startIndex: number = 0): void {
+    if (!images || !images.length) return;
+    this.selectedImageGallery = images;
+    this.selectedImageIndex = Math.min(
+      Math.max(startIndex, 0),
+      images.length - 1
+    );
+    this.showImageViewer = true;
+  }
+
+  closeImageViewer(): void {
+    this.showImageViewer = false;
+    this.selectedImageGallery = [];
+    this.selectedImageIndex = 0;
+  }
+
+  nextImage(): void {
+    if (this.selectedImageIndex < this.selectedImageGallery.length - 1) {
+      this.selectedImageIndex++;
+    }
+  }
+
+  prevImage(): void {
+    if (this.selectedImageIndex > 0) {
+      this.selectedImageIndex--;
+    }
   }
 }

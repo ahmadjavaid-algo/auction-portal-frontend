@@ -1,3 +1,4 @@
+<!-- src/app/pages/admin/inventory/inventory-inspectionreport/inventory-inspectionreport.html -->
 <div class="page details-theme">
   <!-- Back -->
   <button mat-button class="back" (click)="back()">
@@ -86,6 +87,28 @@
             </div>
           </li>
         </ul>
+      </div>
+
+      <!-- Inventory-level image gallery (same pattern as inspector inspections page) -->
+      <div class="inventory-gallery" *ngIf="inventoryImages?.length">
+        <div class="gallery-header">
+          <mat-icon>photo_library</mat-icon>
+          <span>{{ inventoryImages.length }} vehicle photo{{ inventoryImages.length > 1 ? 's' : '' }}</span>
+        </div>
+
+        <div class="gallery-grid">
+          <div
+            class="gallery-item"
+            *ngFor="let img of inventoryImages | slice:0:4; let idx = index"
+            (click)="openImageViewer(inventoryImages, idx)"
+          >
+            <img [src]="img" [alt]="inventoryTitle" />
+            <div class="gallery-overlay" *ngIf="idx === 3 && inventoryImages.length > 4">
+              <mat-icon>add</mat-icon>
+              <span>{{ inventoryImages.length - 4 }} more</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Sections -->
@@ -248,13 +271,13 @@
                         <div
                           class="cp-row"
                           *ngFor="let cp of group.checkpoints"
-                          [class.answered]="isAnswered(cp.resultValue)"
+                          [class.answered]="isRowAnswered(cp)"
                         >
                           <div class="cp-main">
                             <div class="cp-title-row">
                               <mat-icon class="cp-status-icn">
                                 {{
-                                  isAnswered(cp.resultValue)
+                                  isRowAnswered(cp)
                                     ? 'check_circle'
                                     : 'radio_button_unchecked'
                                 }}
@@ -275,6 +298,9 @@
                                   </span>
                                   <span *ngIf="normalizeInputType(cp.inputType) === 'text'">
                                     Text
+                                  </span>
+                                  <span *ngIf="normalizeInputType(cp.inputType) === 'image'">
+                                    Image(s)
                                   </span>
                                 </div>
                               </div>
@@ -311,6 +337,27 @@
                                 </span>
                                 <ng-template #noNumber>
                                   <span class="cp-empty">No value recorded</span>
+                                </ng-template>
+                              </div>
+
+                              <!-- IMAGE(S) -->
+                              <div *ngSwitchCase="'image'" class="cp-images">
+                                <ng-container *ngIf="cp.imageUrls?.length; else noImages">
+                                  <div class="cp-image-grid">
+                                    <div
+                                      class="cp-img-item"
+                                      *ngFor="let img of cp.imageUrls; let idx = index"
+                                      (click)="openImageViewer(cp.imageUrls!, idx)"
+                                    >
+                                      <img
+                                        [src]="img"
+                                        [alt]="cp.inspectionCheckpointName"
+                                      />
+                                    </div>
+                                  </div>
+                                </ng-container>
+                                <ng-template #noImages>
+                                  <span class="cp-empty">No images uploaded</span>
                                 </ng-template>
                               </div>
 
@@ -361,4 +408,40 @@
       </div>
     </section>
   </ng-container>
+
+  <!-- Image Viewer Modal (shared for inventory + checkpoint images) -->
+  <div class="image-viewer" *ngIf="showImageViewer" (click)="closeImageViewer()">
+    <div class="viewer-content" (click)="$event.stopPropagation()">
+      <button class="viewer-close" (click)="closeImageViewer()">
+        <mat-icon>close</mat-icon>
+      </button>
+
+      <button
+        class="viewer-nav prev"
+        (click)="prevImage()"
+        [disabled]="selectedImageIndex === 0"
+      >
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+
+      <div class="viewer-image">
+        <img
+          [src]="selectedImageGallery[selectedImageIndex]"
+          alt="Inspection image"
+        />
+      </div>
+
+      <button
+        class="viewer-nav next"
+        (click)="nextImage()"
+        [disabled]="selectedImageIndex === selectedImageGallery.length - 1"
+      >
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+
+      <div class="viewer-counter">
+        {{ selectedImageIndex + 1 }} / {{ selectedImageGallery.length }}
+      </div>
+    </div>
+  </div>
 </div>

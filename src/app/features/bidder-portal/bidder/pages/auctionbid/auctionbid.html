@@ -1,3 +1,4 @@
+<!-- src/app/pages/bidder/auctions/auctionbid/auctionbid.html -->
 <div class="auction-bid-page" *ngIf="!loading; else busy">
   <!-- breadcrumbs -->
   <div class="crumbs">
@@ -21,7 +22,10 @@
       <section class="media">
         <div
           class="stage"
-          [ngStyle]="{ '--photo': 'url(' + (activeImage || images[0] || heroUrl) + ')' }"
+          [ngStyle]="{
+            '--photo':
+              'url(' + (activeImage || images[0] || heroUrl) + ')'
+          }"
         ></div>
 
         <div class="thumbs" *ngIf="images.length > 1">
@@ -41,7 +45,11 @@
           <span class="lot-pill">
             Lot #{{ lotId }}
           </span>
-          <span class="status-pill" [class.live]="isLive" [class.ended]="auctionState === 'ended'">
+          <span
+            class="status-pill"
+            [class.live]="isLive"
+            [class.ended]="auctionState === 'ended'"
+          >
             <mat-icon>schedule</mat-icon>
             <span>{{ auctionCountdown }}</span>
           </span>
@@ -82,7 +90,10 @@
 
         <div class="your-status">
           <div class="label">Your status</div>
-          <div class="pill" [ngClass]="yourStatus.toLowerCase().replace(' ', '-')">
+          <div
+            class="pill"
+            [ngClass]="yourStatus.toLowerCase().replace(' ', '-')"
+          >
             <mat-icon *ngIf="yourStatus === 'Winning' || yourStatus === 'Won'">
               emoji_events
             </mat-icon>
@@ -116,7 +127,7 @@
         </div>
       </section>
 
-      <!-- Inspection Report (Tabbed per inspection type, same as ProductDetails) -->
+      <!-- Inspection Report (Tabbed per inspection type, with images) -->
       <section class="panel inspection" *ngIf="inventory">
         <h3>Inspection report</h3>
 
@@ -193,7 +204,10 @@
                         <span class="name">{{ group.inspectionTypeName }}</span>
                         <span
                           class="weight"
-                          *ngIf="group.weightage != null && group.weightage !== undefined"
+                          *ngIf="
+                            group.weightage != null &&
+                            group.weightage !== undefined
+                          "
                         >
                           {{ group.weightage }}%
                         </span>
@@ -224,13 +238,13 @@
                       <div
                         class="insp-row"
                         *ngFor="let cp of group.checkpoints"
-                        [class.answered]="isAnswered(cp.resultValue)"
+                        [class.answered]="isRowAnswered(cp)"
                       >
                         <div class="insp-main">
                           <div class="insp-title-row">
                             <mat-icon class="insp-status-icn">
                               {{
-                                isAnswered(cp.resultValue)
+                                isRowAnswered(cp)
                                   ? 'check_circle'
                                   : 'radio_button_unchecked'
                               }}
@@ -266,10 +280,19 @@
                                 </span>
                                 <span
                                   *ngIf="
-                                    normalizeInputType(cp.inputType) === 'text'
+                                    normalizeInputType(cp.inputType) ===
+                                    'text'
                                   "
                                 >
                                   Text
+                                </span>
+                                <span
+                                  *ngIf="
+                                    normalizeInputType(cp.inputType) ===
+                                    'image'
+                                  "
+                                >
+                                  Photos
                                 </span>
                               </div>
                             </div>
@@ -311,7 +334,36 @@
                               </ng-template>
                             </div>
 
-                            <!-- TEXT / TEXTAREA -->
+                            <!-- IMAGE(S) -->
+                            <div
+                              *ngSwitchCase="'image'"
+                              class="insp-photos-wrap"
+                            >
+                              <ng-container
+                                *ngIf="cp.imageUrls?.length; else noPhotos"
+                              >
+                                <div class="insp-photos">
+                                  <button
+                                    type="button"
+                                    class="insp-photo-thumb"
+                                    *ngFor="
+                                      let img of cp.imageUrls;
+                                      let idx = index
+                                    "
+                                    (click)="openImageViewer(cp.imageUrls!, idx)"
+                                    [ngStyle]="{
+                                      '--photo': 'url(' + img + ')'
+                                    }"
+                                    matTooltip="Open photo"
+                                  ></button>
+                                </div>
+                              </ng-container>
+                              <ng-template #noPhotos>
+                                <span class="empty">No photos uploaded</span>
+                              </ng-template>
+                            </div>
+
+                            <!-- TEXT / TEXTAREA / DEFAULT -->
                             <div *ngSwitchDefault class="insp-notes">
                               <span
                                 *ngIf="isAnswered(cp.resultValue); else noNotes"
@@ -456,8 +508,8 @@
           </button>
 
           <div class="footnote">
-            Your bids are binding. Make sure you’ve reviewed the listing details before
-            placing a bid.
+            Your bids are binding. Make sure you’ve reviewed the listing
+            details before placing a bid.
           </div>
         </section>
 
@@ -482,7 +534,11 @@
           <div class="row">
             <div class="label">Status</div>
             <div class="value">
-              {{ auction?.auctionStatusName || auction?.auctionStatusCode || '—' }}
+              {{
+                auction?.auctionStatusName ||
+                  auction?.auctionStatusCode ||
+                  '—'
+              }}
             </div>
           </div>
         </section>
@@ -494,3 +550,42 @@
 <ng-template #busy>
   <mat-progress-bar mode="indeterminate"></mat-progress-bar>
 </ng-template>
+
+<!-- Image Viewer Modal (for inspection photos) -->
+<div class="image-viewer" *ngIf="showImageViewer" (click)="closeImageViewer()">
+  <div class="viewer-content" (click)="$event.stopPropagation()">
+    <button class="viewer-close" (click)="closeImageViewer()">
+      <mat-icon>close</mat-icon>
+    </button>
+
+    <button
+      class="viewer-nav prev"
+      (click)="prevImage()"
+      [disabled]="selectedImageIndex === 0"
+    >
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+
+    <div class="viewer-image">
+      <img
+        [src]="selectedImageGallery[selectedImageIndex]"
+        alt="Inspection image"
+      />
+    </div>
+
+    <button
+      class="viewer-nav next"
+      (click)="nextImage()"
+      [disabled]="
+        selectedImageIndex === selectedImageGallery.length - 1
+      "
+    >
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+
+    <div class="viewer-counter">
+      {{ selectedImageIndex + 1 }} /
+      {{ selectedImageGallery.length }}
+    </div>
+  </div>
+</div>
