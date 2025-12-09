@@ -50,7 +50,7 @@ interface InspectionCheckpointRow {
   inspectionCheckpointName: string;
   inputType?: string | null;
   resultValue: string;
-  /** Parsed image URLs when inputType === 'image' */
+  
   imageUrls?: string[];
 }
 
@@ -119,14 +119,14 @@ export class ProductDetails {
   specs: SpecRow[] = [];
   related: RelatedCard[] = [];
 
-  // Inspection report (read-only for bidders)
+  
   allTypes: InspectionType[] = [];
   allCheckpoints: InspectionCheckpoint[] = [];
   reportGroups: InspectionTypeGroupForUI[] = [];
   reportLoading = false;
   reportLoaded = false;
 
-  // shared image viewer (for inspection checkpoint images)
+  
   selectedImageGallery: string[] = [];
   selectedImageIndex = 0;
   showImageViewer = false;
@@ -162,7 +162,7 @@ export class ProductDetails {
     this.inventory = null;
     this.product = null;
 
-    // reset inspection state when listing changes
+    
     this.reportGroups = [];
     this.reportLoaded = false;
     this.reportLoading = false;
@@ -176,7 +176,7 @@ export class ProductDetails {
     })
       .pipe(
         map(({ auctions, invAucs, files, invs, products }) => {
-          // find lot
+          
           this.lot =
             (invAucs || []).find(
               a =>
@@ -185,14 +185,14 @@ export class ProductDetails {
             ) || null;
           if (!this.lot) throw new Error('Listing not found');
 
-          // auction
+          
           const currentAuctionId = (this.lot as any).auctionId ?? this.auctionId;
           this.auctionId = currentAuctionId;
           this.auction =
             (auctions || []).find(a => a.auctionId === currentAuctionId) ||
             null;
 
-          // inventory & product
+          
           this.inventory =
             (invs || []).find(i => i.inventoryId === this.lot!.inventoryId) ||
             null;
@@ -218,7 +218,7 @@ export class ProductDetails {
               }`
             : `Lot #${(this.lot as any).inventoryAuctionId ?? ''}`;
 
-          // images
+          
           const isImg = (u?: string | null, n?: string | null) => {
             const s = (u || n || '').toLowerCase();
             return ['.jpg', '.jpeg', '.png', '.webp'].some(x =>
@@ -237,7 +237,7 @@ export class ProductDetails {
             .slice(0, 32);
           if (this.images.length) this.activeImage = this.images[0];
 
-          // specs
+          
           const colorExterior =
             snap?.ExteriorColor ?? snap?.exteriorColor ?? null;
           const colorInterior =
@@ -276,7 +276,7 @@ export class ProductDetails {
           ];
           this.specs = rows;
 
-          // related
+          
           const allLots = (invAucs || []).filter(x => x.active ?? true);
           const makeName = this.product?.makeName ?? make ?? '';
           const catName = categoryName ?? '';
@@ -353,7 +353,7 @@ export class ProductDetails {
             .slice(0, 6)
             .map(({ _score, ...rest }: any) => rest as RelatedCard);
 
-          // kick off inspection report load (after we know inventory)
+          
           this.loadInspectionReport();
 
           try {
@@ -370,7 +370,7 @@ export class ProductDetails {
       });
   }
 
-  // ---------- INSPECTION REPORT BUILDING ----------
+  
 
   private loadInspectionReport(): void {
     if (!this.inventory || !this.inventory.inventoryId) {
@@ -465,7 +465,7 @@ export class ProductDetails {
         let imageUrls: string[] | undefined;
 
         if (norm === 'image') {
-          // collect all image urls for this checkpoint
+          
           imageUrls = cpInspectionsAll
             .flatMap(i => this.extractImageUrls(i.result ?? ''))
             .filter(u => !!u);
@@ -592,7 +592,7 @@ export class ProductDetails {
     const trimmed = val.trim();
     if (!trimmed) return [];
 
-    // JSON array case
+    
     if (trimmed.startsWith('[')) {
       try {
         const parsed = JSON.parse(trimmed);
@@ -602,11 +602,11 @@ export class ProductDetails {
             .filter(x => !!x);
         }
       } catch {
-        // fall through
+        
       }
     }
 
-    // pipe / comma / semicolon separated OR single url
+    
     const parts = trimmed.split(/[|,;]/g).map(x => x.trim());
     const urls = parts.filter(p => !!p);
 
@@ -628,7 +628,7 @@ export class ProductDetails {
     return urls.filter(looksLikeImage);
   }
 
-  // ---------- IMAGE VIEWER (inspection photos) ----------
+  
 
   openImageViewer(images: string[], startIndex: number = 0): void {
     if (!images || !images.length) return;

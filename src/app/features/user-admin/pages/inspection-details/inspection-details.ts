@@ -59,7 +59,7 @@ export class InspectionDetails {
   }
 
   back(): void {
-    // match your route: list page for inspection types
+    
     this.router.navigate(['/admin/inspection']);
   }
 

@@ -62,7 +62,7 @@ export class InspectionForm implements OnInit {
       inspectionTypeId: [0],
       inspectionTypeName: ['', [Validators.required, Validators.maxLength(200)]],
       weightage: [null, [Validators.required, Validators.min(0)]]
-      // add Validators.max(100) here later if you enforce 0–100
+      
     });
 
     if (this.mode === 'edit' && this.data.initialData) {
@@ -86,7 +86,7 @@ export class InspectionForm implements OnInit {
       inspectionTypeName: (v.inspectionTypeName ?? '').trim(),
       weightage: Number(v.weightage),
 
-      // BaseModel fields
+      
       createdById: this.mode === 'create' ? currentUserId : null,
       createdDate: null,
       modifiedById: currentUserId ?? null,

@@ -133,13 +133,13 @@
   gap: 16px;
 }
 
-/* -------- Auctions at a glance -------- */
+
 .auction-list{
   list-style:none; padding:0; margin:0;
 
   li{
     display:grid;
-    grid-template-columns: 90px minmax(0, 1fr) auto; /* ID | Make+count | Status */
+    grid-template-columns: 90px minmax(0, 1fr) auto; 
     gap: 10px;
     padding:10px; border-radius:12px;
     &:not(:first-child){ margin-top:6px; }
@@ -197,7 +197,7 @@
   }
 }
 
-/* ------- Other panels (unchanged) ------- */
+
 
 .performance .perf-grid{
   display:grid; grid-template-columns: 1fr; gap: 10px; padding: 2px 6px 8px;
@@ -285,7 +285,7 @@
   box-shadow: inset 0 0 0 10px #fff, var(--shadow-1);
   border:1px solid var(--edge);
 
-  /* NEW – make inner content perfectly centered */
+  
   display:flex;
   align-items:center;
   justify-content:center;
@@ -318,7 +318,7 @@
   .main-grid{ grid-template-columns: 1fr; }
 }
 
-/* -------- Bidder Funnel (replaces System Health styles) -------- */
+
 
 .bidder-funnel {
   .funnel-grid{

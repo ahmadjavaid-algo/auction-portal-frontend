@@ -10,10 +10,10 @@
   max-width: 1300px;
   margin: 0 auto;
   padding: 24px;
-  overflow-x: hidden !important; // ensures absolutely zero horizontal scroll
+  overflow-x: hidden !important; 
 }
 
-/* HEADER */
+
 .guides-header {
   background: linear-gradient(135deg, #1e40af, #3b82f6);
   padding: 32px;
@@ -22,7 +22,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap; // prevents overflow
+  flex-wrap: wrap; 
 }
 
 .header-icon {
@@ -55,7 +55,7 @@
   color: #dbeafe;
 }
 
-/* SECTION GRID — AUTO WRAPS, NO SCROLLING */
+
 .guides-sections {
   margin-top: 24px;
   display: grid;
@@ -64,7 +64,7 @@
   width: 100%;
 }
 
-/* CARDS */
+
 .guide-card {
   background: #ffffff;
   border-radius: 20px;
@@ -126,7 +126,7 @@ h2 {
   }
 }
 
-/* ANIMATIONS */
+
 .fade-in {
   animation: fadeIn .7s ease forwards;
   opacity: 0;
@@ -152,7 +152,7 @@ h2 {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* RESPONSIVE */
+
 @media (max-width: 768px) {
   .guides-header {
     text-align: center;

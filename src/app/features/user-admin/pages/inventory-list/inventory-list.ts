@@ -61,7 +61,7 @@ export class InventoryList {
   private snack = inject(MatSnackBar);
   private auth = inject(AuthService);
 
-  // NOTE: replaced 'product' with 'inspectionReport'
+  
   displayedColumns: string[] = [
     'select',
     'name',
@@ -353,9 +353,9 @@ export class InventoryList {
     this.router.navigate(['/admin/inventory', inventoryId]);
   }
 
-  // NEW: open inspection report screen for this inventory
+  
   openInspectionReport(row: Inventory): void {
-    // adjust route if you wire it differently
+    
     this.router.navigate(['/admin/inventory-inspectionreport', row.inventoryId]);
   }
 }

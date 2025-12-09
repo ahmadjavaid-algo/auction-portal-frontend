@@ -54,7 +54,12 @@ export class Dashboard {
   slides: Slide[] = [];
   index = 0;
 
-  
+  // --- Auto slideshow state ---
+  private autoTimer: any = null;
+  private readonly autoIntervalMs = 3000; // 6s per slide
+  isAnimating = false;
+  private readonly animationDurationMs = 700; // should match CSS animation
+
   private fallbackHero =
     'https://carwow-uk-wp-3.imgix.net/GT-R-driving-front.jpg';
 
@@ -80,7 +85,7 @@ export class Dashboard {
         switchMap(({ auctions, files }) => {
           const active = (auctions || []).filter(a => a.active ?? true);
 
-          
+          // newest first
           const recent = [...active]
             .sort((a, b) =>
               this.dateDesc(
@@ -123,6 +128,11 @@ export class Dashboard {
           this.slides = slides ?? [];
           this.index = 0;
           this.loading = false;
+
+          if (this.slides.length) {
+            this.playAnimation();
+            this.startAutoRotation();
+          }
         },
         error: () => {
           this.error = 'Failed to load dashboard.';
@@ -131,7 +141,58 @@ export class Dashboard {
       });
   }
 
-  
+  ngOnDestroy(): void {
+    this.clearAutoRotation();
+  }
+
+  // --- Auto slideshow helpers ---
+
+  private startAutoRotation(): void {
+    this.clearAutoRotation();
+    if (this.slides.length <= 1) return;
+
+    this.autoTimer = setInterval(() => {
+      // auto-advance without resetting timer again
+      this.advanceSlide(false, 1);
+    }, this.autoIntervalMs);
+  }
+
+  private clearAutoRotation(): void {
+    if (this.autoTimer) {
+      clearInterval(this.autoTimer);
+      this.autoTimer = null;
+    }
+  }
+
+  private playAnimation(): void {
+    // restart CSS animation cleanly
+    this.isAnimating = false;
+    setTimeout(() => {
+      this.isAnimating = true;
+      setTimeout(() => {
+        this.isAnimating = false;
+      }, this.animationDurationMs);
+    }, 0);
+  }
+
+  private advanceSlide(userTriggered: boolean, direction: 1 | -1): void {
+    if (!this.slides.length) return;
+
+    if (userTriggered) {
+      // user interaction: reset timer so they get a fresh interval
+      this.clearAutoRotation();
+    }
+
+    const nextIndex = (this.index + direction + this.slides.length) % this.slides.length;
+    this.index = nextIndex;
+    this.playAnimation();
+
+    if (userTriggered) {
+      this.startAutoRotation();
+    }
+  }
+
+  // --- Existing helpers ---
 
   private isImageFile(f: InventoryDocumentFile): boolean {
     const url = (f.documentUrl || '').toLowerCase();
@@ -196,14 +257,14 @@ export class Dashboard {
     return `url('${url}')`;
   }
 
+  // --- Navigation exposed to template ---
+
   prev(): void {
-    if (!this.slides.length) return;
-    this.index = (this.index - 1 + this.slides.length) % this.slides.length;
+    this.advanceSlide(true, -1);
   }
 
   next(): void {
-    if (!this.slides.length) return;
-    this.index = (this.index + 1) % this.slides.length;
+    this.advanceSlide(true, 1);
   }
 
   formatMoney(n?: number | null): string {

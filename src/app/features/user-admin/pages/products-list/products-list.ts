@@ -71,7 +71,7 @@ export class ProductsList {
 
   loading = false;
 
-  // single selection
+  
   selection = new SelectionModel<Product>(false, []);
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -99,7 +99,7 @@ export class ProductsList {
   private loadData(): void {
     this.loading = true;
 
-    // Only need products here; inventory list is no longer required
+    
     this.productsSvc.getList().subscribe({
       next: (products) => {
         this.products.data = products ?? [];
@@ -163,7 +163,7 @@ export class ProductsList {
     return Math.min(this.totalItems, (this.pageIndex + 1) * this.pageSize);
   }
 
-  /* ------------------ Selection helpers (single select) ------------------ */
+  
 
   onRowCheckboxChange(p: Product): void {
     if (this.selection.isSelected(p)) {
@@ -174,7 +174,7 @@ export class ProductsList {
     }
   }
 
-  /* ------------------ CRUD + Add to inventory ------------------ */
+  
 
   openCreateProduct(): void {
     const ref = this.dialog.open<
@@ -270,14 +270,14 @@ export class ProductsList {
     });
   }
 
-  /** Toolbar button: add the currently selected product to inventory */
+  
   addSelectedToInventory(): void {
     const p = this.selection.selected[0];
     if (!p) return;
     this.addToInventory(p);
   }
 
-  /** Single-product add to inventory with chassis/registration dialog */
+  
   addToInventory(p: Product): void {
     const ref = this.dialog.open<
       AddToInventoryDialog,

@@ -14,7 +14,7 @@ import { Guides } from './pages/guides/guides';
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
 
-  // Auth
+  
   { path: 'login', component: InspectorsLogin, title: 'Inspector Login' },
   { path: 'forgot-password', component: InspectorsForgotpassword, title: 'Forgot Password' },
   { path: 'auth/reset-password', component: InspectorsResetpassword, title: 'Reset Password' },

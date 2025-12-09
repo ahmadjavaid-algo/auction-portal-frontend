@@ -1,4 +1,4 @@
-// src/app/pages/bidder/auctions/auctionbid/auctionbid.ts
+
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -62,7 +62,7 @@ interface InspectionCheckpointRow {
   inspectionCheckpointName: string;
   inputType?: string | null;
   resultValue: string;
-  /** Parsed image URLs when inputType === 'image' */
+  
   imageUrls?: string[];
 }
 
@@ -144,14 +144,14 @@ export class Auctionbid implements OnInit, OnDestroy {
   newBidAmount: number | null = null;
   placingBid = false;
 
-  // Inspection report (read-only for bidders)
+  
   allTypes: InspectionType[] = [];
   allCheckpoints: InspectionCheckpoint[] = [];
   reportGroups: InspectionTypeGroupForUI[] = [];
   reportLoading = false;
   reportLoaded = false;
 
-  // shared image viewer (for inspection checkpoint images)
+  
   selectedImageGallery: string[] = [];
   selectedImageIndex = 0;
   showImageViewer = false;
@@ -235,14 +235,14 @@ export class Auctionbid implements OnInit, OnDestroy {
     this.yourStatus = 'No Bids';
     this.newBidAmount = null;
 
-    // reset inspection state when lot changes
+    
     this.reportGroups = [];
     this.reportLoaded = false;
     this.reportLoading = false;
     this.allTypes = [];
     this.allCheckpoints = [];
 
-    // reset viewer state
+    
     this.showImageViewer = false;
     this.selectedImageGallery = [];
     this.selectedImageIndex = 0;
@@ -427,7 +427,7 @@ export class Auctionbid implements OnInit, OnDestroy {
           this.startResync();
           this.wireVisibility();
 
-          // kick off inspection report load (after we know inventory)
+          
           this.loadInspectionReport();
 
           try {
@@ -792,7 +792,7 @@ export class Auctionbid implements OnInit, OnDestroy {
     return `${s ? fmt(s) : '—'} → ${e ? fmt(e) : '—'}`;
   }
 
-  // ---- Inspection report logic (with images, same as ProductDetails) ----
+  
 
   private isActiveInspection(i: Inspection): boolean {
     const raw =
@@ -1009,7 +1009,7 @@ export class Auctionbid implements OnInit, OnDestroy {
     const trimmed = val.trim();
     if (!trimmed) return [];
 
-    // JSON array case
+    
     if (trimmed.startsWith('[')) {
       try {
         const parsed = JSON.parse(trimmed);
@@ -1019,11 +1019,11 @@ export class Auctionbid implements OnInit, OnDestroy {
             .filter(x => !!x);
         }
       } catch {
-        // fall through
+        
       }
     }
 
-    // pipe / comma / semicolon separated OR single url
+    
     const parts = trimmed.split(/[|,;]/g).map(x => x.trim());
     const urls = parts.filter(p => !!p);
 
@@ -1045,7 +1045,7 @@ export class Auctionbid implements OnInit, OnDestroy {
     return urls.filter(looksLikeImage);
   }
 
-  // ---------- IMAGE VIEWER (inspection photos) ----------
+  
 
   openImageViewer(images: string[], startIndex: number = 0): void {
     if (!images || !images.length) return;

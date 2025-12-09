@@ -33,10 +33,10 @@ export class InspectorLayout implements OnInit, OnDestroy {
   dropdownOpen = false;
   railCollapsed = false;
 
-  // placeholder for future notifications integration
+  
   hasUnread = true;
 
-  // page title based on route
+  
   pageTitle = 'Dashboard';
 
   get displayName(): string {
@@ -55,19 +55,19 @@ export class InspectorLayout implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Update page title based on route
+    
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe(() => {
         this.updatePageTitle();
       });
     
-    // Set initial title
+    
     this.updatePageTitle();
   }
 
   ngOnDestroy(): void {
-    // hook for cleanup if needed later
+    
   }
 
   private updatePageTitle(): void {

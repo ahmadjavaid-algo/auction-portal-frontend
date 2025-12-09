@@ -1,4 +1,4 @@
-/* src/app/pages/admin/inventory/inventory-inspectionreport/inventory-inspectionreport.scss */
+
 :host {
   display: block;
 }
@@ -48,7 +48,7 @@
   box-shadow: var(--shadow-1, 0 10px 24px rgba(16, 24, 40, 0.1));
 }
 
-/* HERO */
+
 
 .hero {
   display: flex;
@@ -175,7 +175,7 @@
   }
 }
 
-/* INVENTORY IMAGE GALLERY (top, below hero) */
+
 
 .inventory-gallery {
   padding: 10px 24px 14px;
@@ -250,7 +250,7 @@
   }
 }
 
-/* Sections */
+
 
 .sections {
   padding: 16px 24px 6px;
@@ -331,7 +331,7 @@
   }
 }
 
-/* REPORT */
+
 
 .report-body {
   padding-top: 4px;
@@ -420,7 +420,7 @@
   }
 }
 
-/* TAB STRIP FOR INSPECTION TYPES */
+
 
 .report-tabs {
   margin-top: 10px;
@@ -483,7 +483,7 @@
   color: #64748b;
 }
 
-/* Report Groups */
+
 
 .report-groups {
   margin-top: 10px;
@@ -672,7 +672,7 @@
   }
 }
 
-/* Checkpoint images */
+
 
 .cp-images {
   width: 100%;
@@ -721,7 +721,7 @@
   font-style: italic;
 }
 
-/* Footer */
+
 
 .footer {
   margin-top: 6px;
@@ -743,7 +743,7 @@
   }
 }
 
-/* Buttons */
+
 
 .btn-primary {
   background: linear-gradient(135deg, var(--brand), var(--brand-2)) !important;
@@ -766,7 +766,7 @@
   }
 }
 
-/* IMAGE VIEWER MODAL (shared) */
+
 
 .image-viewer {
   position: fixed;
@@ -896,7 +896,7 @@
   backdrop-filter: blur(10px);
 }
 
-/* Responsive */
+
 
 @media (max-width: 900px) {
   .hero {

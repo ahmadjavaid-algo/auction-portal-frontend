@@ -1,10 +1,15 @@
 <div class="landing">
   <!-- HERO -->
-  <section class="hero-banner" [ngStyle]="{ '--photo': bgUrl }">
+  <section
+    class="hero-banner"
+    [ngClass]="{ 'is-animating': isAnimating }"
+    [ngStyle]="{ '--photo': bgUrl }"
+  >
     <button
       class="arrow prev"
       aria-label="Previous slide"
       (click)="prev()"
+      *ngIf="slides.length > 1"
     >
       <span>&lsaquo;</span>
     </button>
@@ -12,6 +17,7 @@
       class="arrow next"
       aria-label="Next slide"
       (click)="next()"
+      *ngIf="slides.length > 1"
     >
       <span>&rsaquo;</span>
     </button>
@@ -35,19 +41,30 @@
         <div class="actions">
           <a
             class="btn primary"
-            [routerLink]="['/bidder/auctions', current?.auction?.auctionId]"
+            [routerLink]="[
+              '/bidder/auctions',
+              current?.auction?.auctionId,
+              current?.auction?.inventoryAuctionId
+            ]"
             matTooltip="Place a bid"
           >
             Place Bid
           </a>
+
           <a
             class="btn ghost"
-            [routerLink]="['/bidder/auctions', current?.auction?.auctionId]"
+            [routerLink]="[
+              '/bidder/auctions',
+              current?.auction?.auctionId,
+              current?.auction?.inventoryAuctionId,
+              'details'
+            ]"
             matTooltip="View car details"
           >
             Check Car
           </a>
         </div>
+
       </div>
     </div>
   </section>

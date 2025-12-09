@@ -59,11 +59,11 @@ export class InspectionList {
   pageIndex = 0;
   searchTerm = '';
 
-  // stats: total, active, inactive, aggregate weight
+  
   stats = { total: 0, active: 0, inactive: 0, totalWeight: 0 };
   loading = false;
 
-  // expanded rows for checkpoints
+  
   expanded = new Set<number>();
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -113,7 +113,7 @@ export class InspectionList {
     this.stats = { total: all.length, active, inactive, totalWeight };
   }
 
-  // expand helpers
+  
   toggleExpand(id: number): void {
     if (this.expanded.has(id)) {
       this.expanded.delete(id);
@@ -127,7 +127,7 @@ export class InspectionList {
   isDetailRow = (_index: number, row: InspectionType) =>
     this.isExpanded(row.inspectionTypeId);
 
-  // search + paging
+  
   onSearch(): void {
     this.inspectionTypes.filter = this.searchTerm.trim().toLowerCase();
     this.totalItems = this.inspectionTypes.filteredData.length;
@@ -156,7 +156,7 @@ export class InspectionList {
     return Math.min(this.totalItems, (this.pageIndex + 1) * this.pageSize);
   }
 
-  // CRUD actions
+  
   openCreateInspectionType(): void {
     const ref = this.dialog.open<
       InspectionForm,

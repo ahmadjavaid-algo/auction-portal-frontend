@@ -42,7 +42,7 @@ export class UsersList {
   private snack = inject(MatSnackBar);
   private auth = inject(AuthService);
 
-  // Added "phone" column
+  
   displayedColumns: string[] = ['user', 'email', 'phone', 'verified', 'lastLogin', 'status', 'actions'];
   users = new MatTableDataSource<User>([]);
   totalItems = 0;
@@ -63,7 +63,7 @@ export class UsersList {
         this.getFullName(u),
         u.email ?? '',
         u.userName ?? '',
-        u.phoneNumber ?? '' // include phone in search
+        u.phoneNumber ?? '' 
       ]
         .join(' ')
         .toLowerCase();

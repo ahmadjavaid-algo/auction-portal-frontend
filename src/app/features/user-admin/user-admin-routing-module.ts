@@ -29,13 +29,13 @@ import { InspectorsDetails } from './pages/inspectors-details/inspectors-details
 import { InspectionList } from './pages/inspection-list/inspection-list';
 import { InspectionDetails } from './pages/inspection-details/inspection-details';
 
-// NEW: inventory inspection report page
+
 import { InventoryInspectionreport } from './pages/inventory-inspectionreport/inventory-inspectionreport';
 
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
 
-  // Auth
+  
   { path: 'login', component: UsersLogin, title: 'Admin Login' },
   { path: 'forgot-password', component: UsersForgotpassword, title: 'Forgot Password' },
   { path: 'auth/reset-password', component: UsersResetpassword, title: 'Reset Password' },

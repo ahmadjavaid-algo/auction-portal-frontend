@@ -11,7 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 })
 export class Guides {
 
-  // Highlight current section in sidebar
+  
   activeSection: string = 'intro';
 
   @HostListener('window:scroll', [])

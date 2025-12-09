@@ -145,7 +145,7 @@
     }
   }
 
-  /* Inspection panel */
+  
   .inspection{
     .insp-loading{
       display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--muted);
@@ -337,7 +337,7 @@
       }
     }
 
-    /* photos inside checkpoints (inputType = image) */
+    
     .insp-photos-wrap{
       display:flex;
       flex-direction:column;
@@ -466,7 +466,7 @@
   }
 }
 
-/* IMAGE VIEWER MODAL (for inspection photos) */
+
 .image-viewer {
   position: fixed;
   inset: 0;

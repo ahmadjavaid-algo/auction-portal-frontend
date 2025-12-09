@@ -43,7 +43,7 @@ export class InspectioncheckpointsForm implements OnInit {
   inspectionTypes: InspectionType[] = [];
   loadingInspectionTypes = false;
 
-  // ✅ Fixed set of allowed input types
+  
   inputTypeOptions: string[] = ['Number', 'Text', 'Image'];
 
   constructor(
@@ -69,7 +69,7 @@ export class InspectioncheckpointsForm implements OnInit {
       inputType: ['', [Validators.required]]
     });
 
-    // Load Inspection Types for dropdown
+    
     this.loadingInspectionTypes = true;
     this.inspectionTypesSvc.getList().subscribe({
       next: (list) => (this.inspectionTypes = list ?? []),
@@ -77,7 +77,7 @@ export class InspectioncheckpointsForm implements OnInit {
       complete: () => (this.loadingInspectionTypes = false)
     });
 
-    // Edit mode patch
+    
     if (this.mode === 'edit' && this.data.initialData) {
       const r = this.data.initialData;
       this.form.patchValue({
@@ -102,12 +102,12 @@ export class InspectioncheckpointsForm implements OnInit {
       inspectionCheckpointId: v.inspectionCheckpointId,
       inspectionTypeId: v.inspectionTypeId,
       inspectionCheckpointName: (v.inspectionCheckpointName ?? '').trim(),
-      inputType: (v.inputType ?? '').trim(),   // will be 'Number' | 'Text' | 'Image'
+      inputType: (v.inputType ?? '').trim(),   
 
-      // Optional display field
+      
       inspectionTypeName: this.data.initialData?.inspectionTypeName ?? null,
 
-      // Audit fields (server can overwrite if it wants)
+      
       createdById:
         this.mode === 'create'
           ? currentUserId

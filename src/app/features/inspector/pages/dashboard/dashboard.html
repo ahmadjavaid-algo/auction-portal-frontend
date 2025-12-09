@@ -134,9 +134,13 @@
         <h3 class="profile-name">{{ inspector.name }}</h3>
         <p class="profile-handle">{{ inspector.handle }}</p>
 
-        <button mat-stroked-button class="switch-account-btn">
+        <button 
+          mat-stroked-button 
+          class="switch-account-btn"
+          [routerLink]="['/inspector/accdetails']">
           View Account
         </button>
+
       </article>
 
       <!-- Registered Vehicles -->

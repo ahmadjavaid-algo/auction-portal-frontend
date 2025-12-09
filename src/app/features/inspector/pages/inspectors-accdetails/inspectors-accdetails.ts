@@ -45,7 +45,7 @@ export class InspectorsAccdetails {
   error: string | null = null;
   user: Inspector | null = null;
 
-  // UI state
+  
   activeTab: 'overview' | 'activity' | 'security' = 'overview';
   activity: ActivityItem[] = [];
 

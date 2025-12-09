@@ -1,4 +1,4 @@
-// src/app/pages/admin/inventory/inventory-inspectionreport/inventory-inspectionreport.ts
+
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -51,7 +51,7 @@ interface InspectionCheckpointRow {
   inspectionCheckpointName: string;
   inputType?: string | null;
   resultValue: string;
-  imageUrls?: string[]; // for image checkpoints
+  imageUrls?: string[]; 
 }
 
 interface InspectionTypeGroupForUI {
@@ -105,19 +105,19 @@ export class InventoryInspectionreport {
   inspectors: Inspector[] = [];
   assignment: InventoryInspector | null = null;
 
-  // bound to dropdown
+  
   selectedInspectorId: number | null = null;
 
-  // inspection report data
+  
   allTypes: InspectionType[] = [];
   allCheckpoints: InspectionCheckpoint[] = [];
   reportGroups: InspectionTypeGroupForUI[] = [];
   reportLoaded = false;
 
-  // inventory-level images
+  
   inventoryImages: string[] = [];
 
-  // shared image viewer (inventory photos + checkpoint images)
+  
   selectedImageGallery: string[] = [];
   selectedImageIndex = 0;
   showImageViewer = false;
@@ -181,7 +181,7 @@ export class InventoryInspectionreport {
         this.allTypes = types ?? [];
         this.allCheckpoints = checkpoints ?? [];
 
-        // inventory-level images (same logic as inspector inspections page)
+        
         this.inventoryImages = this.buildInventoryImages(docs ?? [], this.inventoryId);
 
         this.reportGroups = this.buildGroupsForInventory(
@@ -203,7 +203,7 @@ export class InventoryInspectionreport {
     this.router.navigate(['/admin/inventory']);
   }
 
-  // ---------- INVENTORY DISPLAY ----------
+  
 
   get inventoryTitle(): string {
     if (!this.inventory) return '(No inventory)';
@@ -237,7 +237,7 @@ export class InventoryInspectionreport {
     }
   }
 
-  // ---------- INSPECTOR ASSIGNMENT ----------
+  
 
   getInspectorDisplay(i: Inspector): string {
     const name = [i.firstName, i.lastName].filter(Boolean).join(' ').trim();
@@ -273,7 +273,7 @@ export class InventoryInspectionreport {
     this.saving = true;
 
     if (this.assignment && this.assignment.inventoryInspectorId > 0) {
-      // update existing mapping
+      
       const payload: InventoryInspector = {
         inventoryInspectorId: this.assignment.inventoryInspectorId,
         assignedTo: this.selectedInspectorId,
@@ -310,7 +310,7 @@ export class InventoryInspectionreport {
         complete: () => (this.saving = false)
       });
     } else {
-      // create new mapping
+      
       const payload: InventoryInspector = {
         inventoryInspectorId: 0,
         assignedTo: this.selectedInspectorId,
@@ -390,7 +390,7 @@ export class InventoryInspectionreport {
       });
   }
 
-  // ---------- REPORT BUILDING + IMAGES ----------
+  
 
   private isActiveInspection(i: Inspection): boolean {
     const raw =
@@ -583,7 +583,7 @@ export class InventoryInspectionreport {
     return v === 'pass' || v === 'fail';
   }
 
-  // ---------- IMAGE VIEWER (inventory + checkpoint images) ----------
+  
 
   openImageViewer(images: string[], startIndex: number = 0): void {
     if (!images || !images.length) return;

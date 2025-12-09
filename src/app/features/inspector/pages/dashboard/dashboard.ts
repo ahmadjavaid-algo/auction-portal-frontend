@@ -81,18 +81,18 @@ export class Dashboard {
 
   summaryTiles: SummaryTile[] = [];
 
-  // Now holds assigned inventory thumbnails (not hard-coded reports)
+  
   myReports: ReportCard[] = [];
 
   upcoming: UpcomingCard | null = null;
   registeredVehicles: VehicleCard[] = [];
 
-  // list + rotation state for upcoming card
+  
   private upcomingList: UpcomingCard[] = [];
   private upcomingIndex = 0;
   private upcomingRotationTimer: any = null;
 
-  // show only 5 vehicles unless expanded
+  
   showAllVehicles = false;
 
   public fallbackHero =
@@ -222,7 +222,7 @@ export class Dashboard {
     _assignmentMap: Map<number, InventoryInspector>,
     imgMap: Map<number, string>
   ): void {
-    // reset previous state + timer
+    
     if (this.upcomingRotationTimer) {
       clearInterval(this.upcomingRotationTimer);
       this.upcomingRotationTimer = null;
@@ -267,12 +267,12 @@ export class Dashboard {
   }
 
   private startUpcomingRotation(): void {
-    // only rotate if we have more than one upcoming appointment
+    
     if (this.upcomingList.length <= 1) {
       return;
     }
 
-    const intervalMs = 3000; // 6 seconds
+    const intervalMs = 3000; 
 
     this.upcomingRotationTimer = setInterval(() => {
       if (!this.upcomingList.length) {
@@ -338,7 +338,7 @@ export class Dashboard {
     });
   }
 
-  // Build "My Reports" thumbnails from inventory assigned to the current inspector
+  
   private buildMyReports(
     assignedToMe: Inventory[],
     imgMap: Map<number, string>
@@ -423,7 +423,7 @@ export class Dashboard {
     return this.upcoming?.imageUrl || this.fallbackHero;
   }
 
-  // Only 5 vehicles unless expanded
+  
   get visibleRegisteredVehicles(): VehicleCard[] {
     if (this.showAllVehicles) {
       return this.registeredVehicles;

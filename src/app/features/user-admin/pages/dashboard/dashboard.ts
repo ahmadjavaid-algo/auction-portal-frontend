@@ -1,4 +1,4 @@
-// src/app/pages/admin/dashboard/dashboard.ts
+
 import {
   Component,
   AfterViewInit,
@@ -37,17 +37,17 @@ import { Bidder } from '../../../../models/bidder.model';
 import { DashboardsService } from '../../../../services/dashboards.service';
 import { Dashboard as DashboardStat } from '../../../../models/dashboard.model';
 
-// NEW: for dynamic “Top Bidders Today”
+
 import { AuctionBidService } from '../../../../services/auctionbids.service';
 import { AuctionBid } from '../../../../models/auctionbid.model';
 
 type GlanceItemStatus = 'Live' | 'Scheduled' | 'Closed' | '—';
 
 interface GlanceItem {
-  lot: string;              // AU-xx
-  make: string;             // BMW, Mercedes etc
-  count: number;            // how many of that make in this auction
-  status: GlanceItemStatus; // Live / Scheduled
+  lot: string;              
+  make: string;             
+  count: number;            
+  status: GlanceItemStatus; 
   auctionId: number;
 }
 
@@ -72,7 +72,7 @@ interface MakeSummaryRow {
   count: number;
 }
 
-// NEW: Top bidder row type
+
 interface TopBidderRow {
   userId: number;
   name: string;
@@ -110,13 +110,13 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
   private biddersSvc = inject(BiddersService);
   private dashboardsSvc = inject(DashboardsService);
 
-  // NEW: bids service
+  
   private bidsSvc = inject(AuctionBidService);
 
   private counterTimer?: any;
   private notifSub?: Subscription;
 
-  // --- DASHBOARD STATS (from Dashboardstats table) ---
+  
   statsLoading = false;
   stats: StatTile[] = [
     {
@@ -169,7 +169,7 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     },
   ];
 
-  // performance-card helpers
+  
   get totalRevenue(): number {
     return this.stats.find((s) => s.key === 'Revenue')?.value || 0;
   }
@@ -188,11 +188,11 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     return Math.round((this.revenueToday / total) * 100);
   }
 
-  // --- Auctions at a glance ---
+  
   glanceLoading = false;
-  liveAuctions: GlanceItem[] = [];           // all grouped rows
-  auctionMakeSummary: MakeSummaryRow[] = []; // kept for future use
-  glanceExpanded = false;                    // controls "View all" expansion
+  liveAuctions: GlanceItem[] = [];           
+  auctionMakeSummary: MakeSummaryRow[] = []; 
+  glanceExpanded = false;                    
 
   get visibleGlanceAuctions(): GlanceItem[] {
     if (!this.liveAuctions?.length) return [];
@@ -200,16 +200,16 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     return this.liveAuctions.slice(0, 5);
   }
 
-  // --- Recent Activity ---
+  
   activityLoading = false;
   activity: ActivityRow[] = [];
   activityCollapsed = true;
 
-  // --- Verification Queue ---
+  
   kycLoading = false;
   unverifiedBidders: Bidder[] = [];
 
-  // --- Bidder Funnel (new card) ---
+  
   totalBidders = 0;
   verifiedBidders = 0;
   recentSignups7d = 0;
@@ -219,7 +219,7 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     return Math.round((this.verifiedBidders / this.totalBidders) * 100);
   }
 
-  // --- Top Bidders Today (dynamic) ---
+  
   topBiddersLoading = false;
   topBidders: TopBidderRow[] = [];
 
@@ -230,9 +230,9 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     return name || u.userName || 'Admin';
   }
 
-  // ----------------------------------------------------
-  // LIFECYCLE
-  // ----------------------------------------------------
+  
+  
+  
   ngOnInit(): void {
     this.loadDashboardStats();
 
@@ -247,7 +247,7 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
       });
     }
 
-    // NEW: top bidders card
+    
     this.loadTopBiddersToday();
   }
 
@@ -261,9 +261,9 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     this.notifSub?.unsubscribe();
   }
 
-  // ----------------------------------------------------
-  // DASHBOARDSTATS – dynamic KPI tiles
-  // ----------------------------------------------------
+  
+  
+  
   private loadDashboardStats(): void {
     this.statsLoading = true;
     this.dashboardsSvc
@@ -302,9 +302,9 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
       });
   }
 
-  // ----------------------------------------------------
-  // COUNT-UP ANIMATION
-  // ----------------------------------------------------
+  
+  
+  
   private runCountUpAnimation(): void {
     const els = Array.from(
       document.querySelectorAll<HTMLElement>('.count-up')
@@ -331,9 +331,9 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     this.counterTimer = setTimeout(() => this.runCountUpAnimation(), 300);
   }
 
-  // ----------------------------------------------------
-  // VERIFICATION QUEUE + BIDDER FUNNEL
-  // ----------------------------------------------------
+  
+  
+  
   loadUnverifiedBidders(): void {
     this.kycLoading = true;
     this.biddersSvc
@@ -343,10 +343,10 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
         next: (list) => {
           const all = list || [];
 
-          // total bidders
+          
           this.totalBidders = all.length;
 
-          // unverified list for queue
+          
           const unverified = all.filter(
             (b) =>
               (b as any).emailConfirmed === false ||
@@ -354,10 +354,10 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
           );
           this.unverifiedBidders = unverified;
 
-          // verified bidders
+          
           this.verifiedBidders = this.totalBidders - unverified.length;
 
-          // new signups in last 7 days
+          
           const now = new Date();
           const weekAgo = new Date(
             now.getTime() - 7 * 24 * 60 * 60 * 1000
@@ -388,9 +388,9 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
       });
   }
 
-  // ----------------------------------------------------
-  // RECENT ACTIVITY
-  // ----------------------------------------------------
+  
+  
+  
   private refreshActivityFromHistory(): void {
     this.activityLoading = true;
     this.adminNotifApi.getHistory(200).subscribe({
@@ -438,9 +438,9 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     this.activityCollapsed = !this.activityCollapsed;
   }
 
-  // ----------------------------------------------------
-  // AUCTIONS AT A GLANCE
-  // ----------------------------------------------------
+  
+  
+  
   private loadGlance(): void {
     this.glanceLoading = true;
 
@@ -478,7 +478,7 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
           else if (statusName.includes('sched')) status = 'Scheduled';
           else if (statusName.includes('close')) status = 'Closed';
 
-          // Only Live or Scheduled auctions
+          
           if (status !== 'Live' && status !== 'Scheduled') return;
 
           const inv = invById.get(row.inventoryId);
@@ -544,9 +544,9 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     this.glanceExpanded = !this.glanceExpanded;
   }
 
-  // ----------------------------------------------------
-  // TOP BIDDERS TODAY
-  // ----------------------------------------------------
+  
+  
+  
   private loadTopBiddersToday(): void {
     this.topBiddersLoading = true;
 
@@ -620,9 +620,9 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  // ----------------------------------------------------
-  // HELPERS
-  // ----------------------------------------------------
+  
+  
+  
   private iconFor(n: AdminNotificationItem): string {
     const t = (n?.type || '').toLowerCase();
     const text = `${n?.title ?? ''} ${n?.message ?? ''}`.toLowerCase();

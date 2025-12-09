@@ -1,4 +1,4 @@
-// src/app/pages/inspector/inspections/inspections.ts
+
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -45,8 +45,8 @@ interface InspectionCheckpointRow {
   inspectionCheckpointName: string;
   inputType?: string | null;
   resultValue: string;
-  imageUrls?: string[];           // for gallery / viewer
-  imageItems?: ImageItem[];       // per-image mapping (id + url) for removal
+  imageUrls?: string[];           
+  imageItems?: ImageItem[];       
 }
 
 interface InspectionTypeGroupForUI {
@@ -107,17 +107,17 @@ export class Inspections implements OnInit {
   selectedImageIndex = 0;
   showImageViewer = false;
 
-  // query-param based targeting
+  
   private targetInventoryId: number | null = null;
   private hasScrolledToTarget = false;
 
   ngOnInit(): void {
-    // Listen for ?inventoryId=... in the URL
+    
     this.route.queryParamMap.subscribe(params => {
       const id = params.get('inventoryId');
       this.targetInventoryId = id ? +id : null;
 
-      // If data is already loaded, try to scroll immediately
+      
       if (!this.loading && this.blocks.length && this.targetInventoryId) {
         this.scrollToTargetInventory();
       }
@@ -126,13 +126,13 @@ export class Inspections implements OnInit {
     this.loadData();
   }
 
-  // ---------- LOAD DATA ----------
+  
 
   loadData(): void {
     this.loading = true;
     this.error = null;
     this.blocks = [];
-    this.hasScrolledToTarget = false; // reset on reload
+    this.hasScrolledToTarget = false; 
 
     const currentUserId = this.auth.currentUser?.userId ?? null;
     if (!currentUserId) {
@@ -207,13 +207,13 @@ export class Inspections implements OnInit {
       .subscribe({
         complete: () => {
           this.loading = false;
-          // after everything is loaded, try scrolling to any target from query param
+          
           this.scrollToTargetInventory();
         }
       });
   }
 
-  // Build images map: inventoryId -> all image URLs
+  
   private buildImagesMap(files: InventoryDocumentFile[]): Map<number, string[]> {
     const map = new Map<number, string[]>();
 
@@ -248,7 +248,7 @@ export class Inspections implements OnInit {
     return map;
   }
 
-  // ---------- HELPERS FOR ACTIVE FLAG ----------
+  
 
   private isActiveInspection(i: Inspection): boolean {
     const raw =
@@ -259,7 +259,7 @@ export class Inspections implements OnInit {
     return raw !== false && raw !== 0;
   }
 
-  // Build UI groups for an inventory using types + checkpoints + existing inspections
+  
   private buildGroupsForInventory(
     inventory: Inventory,
     existing: Inspection[]
@@ -349,7 +349,7 @@ export class Inspections implements OnInit {
     return groups;
   }
 
-  // ---------- HELPERS: INVENTORY META ----------
+  
 
   getProductName(i: Inventory): string {
     if (i.displayName) return i.displayName;
@@ -386,7 +386,7 @@ export class Inspections implements OnInit {
     }
   }
 
-  // ---------- UI HELPERS ----------
+  
 
   toggleExpanded(block: InspectorInventoryBlock): void {
     block.expanded = !block.expanded;
@@ -394,12 +394,11 @@ export class Inspections implements OnInit {
 
   normalizeInputType(inputType?: string | null): NormalizedInputType {
     const v = (inputType || '').toLowerCase();
-    if (v === 'textarea' || v === 'multiline') return 'textarea';
+    if (v === 'text' || v === 'multiline') return 'textarea';
     if (v === 'number' || v === 'numeric' || v === 'score') return 'number';
-    if (v === 'yesno' || v === 'boolean' || v === 'bool') return 'yesno';
     if (v === 'image' || v === 'photo' || v === 'picture' || v === 'file')
       return 'image';
-    // "text" (or anything else) → free text (numbers allowed as well)
+    
     return 'text';
   }
 
@@ -476,7 +475,7 @@ export class Inspections implements OnInit {
     }
   }
 
-  // ---------- QUICK JUMP SHORTCUTS ----------
+  
 
   private scrollToTargetInventory(): void {
     if (!this.targetInventoryId || this.hasScrolledToTarget || !this.blocks.length) {
@@ -499,7 +498,7 @@ export class Inspections implements OnInit {
     }
   }
 
-  // ---------- IMAGE VIEWER (shared for inventory + checkpoint images) ----------
+  
 
   openImageGallery(images: string[], startIndex: number = 0): void {
     this.selectedImageGallery = images;
@@ -525,7 +524,7 @@ export class Inspections implements OnInit {
     }
   }
 
-  // ---------- CHECKPOINT IMAGE UPLOAD ----------
+  
 
   uploadCheckpointImages(
     block: InspectorInventoryBlock,
@@ -545,7 +544,7 @@ export class Inspections implements OnInit {
       return;
     }
 
-    // Use DocumentTypeId = 1 (Inventory) for inspection photos (can be changed later if you add a specific type)
+    
     const documentTypeId = 1;
 
     block.saving = true;
@@ -577,7 +576,7 @@ export class Inspections implements OnInit {
             'OK',
             { duration: 3500 }
           );
-          // Refresh this inventory’s inspection data so new URLs come through
+          
           this.refreshInventoryBlock(block);
         } else {
           this.snack.open(
@@ -605,7 +604,7 @@ export class Inspections implements OnInit {
       });
   }
 
-  // ---------- REMOVE SINGLE CHECKPOINT IMAGE (set Active = 0) ----------
+  
 
   removeCheckpointImage(
     row: InspectionCheckpointRow,
@@ -647,7 +646,7 @@ export class Inspections implements OnInit {
       )
       .subscribe(success => {
         if (success) {
-          // Update UI instantly
+          
           row.imageItems = (row.imageItems ?? []).filter((_, i) => i !== index);
           row.imageUrls = (row.imageUrls ?? []).filter((_, i) => i !== index);
 
@@ -658,7 +657,7 @@ export class Inspections implements OnInit {
       });
   }
 
-  // ---------- SAVE (non-image checkpoints only) ----------
+  
 
   saveInventory(block: InspectorInventoryBlock): void {
     const currentUserId = this.auth.currentUser?.userId ?? null;
@@ -681,20 +680,20 @@ export class Inspections implements OnInit {
       group.checkpoints.forEach(row => {
         const normType = this.normalizeInputType(row.inputType);
 
-        // Image checkpoints are handled via uploadCheckpointImages/removeCheckpointImage
+        
         if (normType === 'image') {
           return;
         }
 
         const trimmed = row.resultValue?.toString().trim() ?? '';
 
-        // If it's a new record with no value, skip.
+        
         if (!row.inspectionId && !trimmed) {
           return;
         }
 
         if (row.inspectionId && row.inspectionId > 0) {
-          // UPDATE existing inspection
+          
           const payload: Inspection = {
             inspectionId: row.inspectionId,
             inspectionTypeId: group.inspectionTypeId,
@@ -717,7 +716,7 @@ export class Inspections implements OnInit {
               .pipe(catchError(() => of(false)))
           );
         } else {
-          // ADD new inspection row
+          
           const payload: Inspection = {
             inspectionId: 0,
             inspectionTypeId: group.inspectionTypeId,

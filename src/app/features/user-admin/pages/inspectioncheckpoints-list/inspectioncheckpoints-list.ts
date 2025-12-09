@@ -40,7 +40,7 @@ export class InspectioncheckpointsList implements OnChanges {
   private auth = inject(AuthService);
   private dialog = inject(MatDialog);
 
-  /** Parent inspection type id (like auctionId in inventoryauctions-list) */
+  
   @Input() inspectionTypeId!: number;
 
   displayedColumns: string[] = [
@@ -64,7 +64,7 @@ export class InspectioncheckpointsList implements OnChanges {
 
     this.cpSvc.getList().subscribe({
       next: list => {
-        // Filter checkpoints belonging to this inspection type
+        
         this.rows = (list ?? []).filter(
           x => (x as any).inspectionTypeId === this.inspectionTypeId
         );
@@ -203,6 +203,6 @@ export class InspectioncheckpointsList implements OnChanges {
   }
 
   viewItem(_row: InspectionCheckpoint): void {
-    // Reserved for future navigation if you want a checkpoint details page
+    
   }
 }

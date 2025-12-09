@@ -65,8 +65,15 @@
         class="cta-image"
       />
       <p class="cta-title">Time for Inspection?</p>
-      <p class="cta-subtitle">Book now to keep your vehicle road-safe.</p>
-      <button mat-raised-button class="cta-button">Book Now</button>
+      <p class="cta-subtitle">Inspect assigned vehicles and Earn upto PKR 20000</p>
+      <button
+        mat-raised-button
+        class="cta-button"
+        [routerLink]="['/inspector/inspection']"
+      >
+        Inspect Now
+      </button>
+
     </div>
 
     <!-- Expand button when collapsed -->

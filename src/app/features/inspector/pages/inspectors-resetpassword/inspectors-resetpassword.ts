@@ -1,4 +1,4 @@
-// src/app/pages/inspector/inspectors-resetpassword/inspectors-resetpassword.ts
+
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -73,7 +73,7 @@ export class InspectorsResetpassword implements OnInit {
           this.loading = false;
           if (ok) {
             this.success = true;
-            // small delay then back to login
+            
             setTimeout(() => this.router.navigate(['/inspector/login']), 1500);
           } else {
             this.error = 'Reset failed. Your link may be expired or already used.';

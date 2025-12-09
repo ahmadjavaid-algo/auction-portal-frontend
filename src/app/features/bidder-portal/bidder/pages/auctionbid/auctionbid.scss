@@ -1,4 +1,4 @@
-/* src/app/pages/bidder/auctions/auctionbid/auctionbid.scss */
+
 :host {
   --algo-bg-0: #0d0716;
   --algo-bg-1: #1a0930;
@@ -373,7 +373,7 @@
     }
   }
 
-  /* Inspection panel (with photos, same as ProductDetails) */
+  
   .inspection {
     .insp-loading {
       display: flex;
@@ -728,7 +728,7 @@
       }
     }
 
-    /* Photos grid for image checkpoints */
+    
     .insp-photos-wrap {
       .insp-photos {
         display: flex;
@@ -1119,7 +1119,7 @@
   }
 }
 
-/* Fullscreen image viewer (shared with product-details theme) */
+
 .image-viewer {
   position: fixed;
   inset: 0;

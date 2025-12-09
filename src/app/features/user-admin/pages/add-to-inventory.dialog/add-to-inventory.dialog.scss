@@ -2,7 +2,7 @@
   display: block;
 }
 
-/* Header */
+
 .header {
   padding: 8px 12px 0;
 }
@@ -16,14 +16,14 @@
   font-size: 13px;
 }
 
-/* Body */
+
 .body {
   padding: 12px;
   max-height: 70vh;
   overflow: auto;
 }
 
-/* Card / sheet */
+
 .sheet {
   background: #fff;
   border-radius: 16px;
@@ -31,7 +31,7 @@
   padding: 16px 18px 14px;
 }
 
-/* Product summary */
+
 .product-summary {
   display: flex;
   align-items: center;
@@ -64,7 +64,7 @@
   color: #6b7280;
 }
 
-/* Form grid */
+
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -75,7 +75,7 @@ mat-form-field {
   width: 100%;
 }
 
-/* Actions */
+
 .actions {
   padding: 10px 12px 14px;
   display: flex;

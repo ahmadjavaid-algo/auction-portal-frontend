@@ -1,4 +1,4 @@
-// src/app/pages/inspector/inspectors-forgotpassword/inspectors-forgotpassword.ts
+
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -41,7 +41,7 @@ export class InspectorsForgotpassword {
         this.loading = false;
       },
       error: () => {
-        // Intentionally not surfacing detailed error to avoid user enumeration
+        
         this.sent = true;
         this.loading = false;
       }

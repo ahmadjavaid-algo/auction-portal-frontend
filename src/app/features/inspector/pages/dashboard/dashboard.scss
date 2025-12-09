@@ -1,4 +1,4 @@
-/* src/app/pages/inspector/dashboard/dashboard.scss */
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
 :host {
@@ -9,11 +9,11 @@
   width: 100%;
 }
 
-/* Root wrapper for this page (inside existing layout shell) */
+
 .inspector-dashboard {
 }
 
-/* Loading Overlay */
+
 .loading-overlay {
   display: flex;
   flex-direction: column;
@@ -33,7 +33,7 @@
   }
 }
 
-/* Error Banner */
+
 .error-banner {
   display: flex;
   align-items: center;
@@ -52,21 +52,21 @@
   }
 }
 
-/* ====== CONTENT GRID (no sidebar/top here) ====== */
+
 .content-grid {
   display: grid;
   grid-template-columns: 1fr 380px;
   gap: 24px;
 }
 
-/* ====== LEFT COLUMN ====== */
+
 .left-column {
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
-/* Appointment Hero */
+
 .appointment-hero {
   position: relative;
   display: grid;
@@ -154,7 +154,7 @@
   }
 }
 
-/* Stats Grid */
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -205,7 +205,7 @@
   color: #64748b;
 }
 
-/* Reports Section */
+
 .reports-section {
   background: #ffffff;
   border-radius: 16px;
@@ -282,7 +282,7 @@
   }
 }
 
-/* reuse thumbnail-placeholder style from vehicles for reports as well */
+
 .thumbnail-placeholder {
   width: 100%;
   height: 100%;
@@ -313,14 +313,14 @@
   }
 }
 
-/* ====== RIGHT COLUMN ====== */
+
 .right-column {
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
-/* Profile Card – redesigned similar to reference */
+
 .profile-card {
   background: #ffffff;
   border-radius: 24px;
@@ -373,7 +373,7 @@
   color: #64748b;
 }
 
-/* pill-like outline button similar to screenshot */
+
 .switch-account-btn {
   width: 100%;
   border-radius: 999px;
@@ -390,7 +390,7 @@
   }
 }
 
-/* Vehicles Section */
+
 .vehicles-section {
   background: #ffffff;
   border-radius: 16px;
@@ -453,7 +453,7 @@
   color: #64748b;
 }
 
-/* Assigned-to pill */
+
 .vehicle-assignment {
   margin-left: 8px;
   padding: 4px 9px;
@@ -493,7 +493,7 @@
   }
 }
 
-/* ====== RESPONSIVE ====== */
+
 @media (max-width: 1400px) {
   .content-grid {
     grid-template-columns: 1fr 340px;
