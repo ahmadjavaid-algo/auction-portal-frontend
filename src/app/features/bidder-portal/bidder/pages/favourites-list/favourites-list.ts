@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { forkJoin, of, interval, Subscription } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -18,6 +19,7 @@ import { Inventory } from '../../../../../models/inventory.model';
 import { Product } from '../../../../../models/product.model';
 import { AuctionTimebox } from '../../../../../models/auction-timebox.model';
 import { Favourite } from '../../../../../models/favourite.model';
+import { AuctionBid } from '../../../../../models/auctionbid.model';
 
 import { AuctionService } from '../../../../../services/auctions.service';
 import { InventoryAuctionService } from '../../../../../services/inventoryauctions.service';
@@ -25,20 +27,18 @@ import { InventoryDocumentFileService } from '../../../../../services/inventoryd
 import { InventoryService } from '../../../../../services/inventory.service';
 import { ProductsService } from '../../../../../services/products.service';
 import { FavouriteService } from '../../../../../services/favourites.service';
+import { AuctionBidService } from '../../../../../services/auctionbids.service';
 import { BidderAuthService } from '../../../../../services/bidderauth';
 
 type LotCard = {
-  
   inventoryAuctionId: number;
   auctionId: number;
   auctionName: string | null;
 
-  
   title: string;
   sub: string;
   imageUrl: string;
 
-  
   auctionStartPrice?: number | null;
   buyNow?: number | null;
   reserve?: number | null;
@@ -48,13 +48,22 @@ type LotCard = {
   modelName?: string | null;
   categoryName?: string | null;
 
-  
   isFavourite?: boolean;
   favouriteId?: number | null;
 
-  
   countdownText?: string;
   countdownState?: 'scheduled' | 'live' | 'ended';
+
+  // bidding metrics
+  currentPrice?: number | null;
+  yourMaxBid?: number | null;
+  reserveMet?: boolean;
+
+  // quick-bid UX
+  bidCooldownActive?: boolean;
+  bidCooldownRemaining?: number;
+  cooldownHandle?: any;
+  placingBid?: boolean;
 };
 
 @Component({
@@ -67,22 +76,23 @@ type LotCard = {
     MatIconModule,
     MatButtonModule,
     MatTooltipModule,
-    MatProgressBarModule
+    MatProgressBarModule,
+    MatSnackBarModule
   ],
   templateUrl: './favourites-list.html',
   styleUrl: './favourites-list.scss'
 })
 export class FavouritesList implements OnDestroy {
-  
   private auctionsSvc = inject(AuctionService);
-  private invAucSvc   = inject(InventoryAuctionService);
-  private filesSvc    = inject(InventoryDocumentFileService);
-  private invSvc      = inject(InventoryService);
+  private invAucSvc = inject(InventoryAuctionService);
+  private filesSvc = inject(InventoryDocumentFileService);
+  private invSvc = inject(InventoryService);
   private productsSvc = inject(ProductsService);
-  private favSvc      = inject(FavouriteService);
-  private bidderAuth  = inject(BidderAuthService);
+  private favSvc = inject(FavouriteService);
+  private bidsSvc = inject(AuctionBidService);
+  private bidderAuth = inject(BidderAuthService);
+  private snack = inject(MatSnackBar);
 
-  
   loading = true;
   error: string | null = null;
 
@@ -90,7 +100,13 @@ export class FavouritesList implements OnDestroy {
 
   q = '';
   filters = { auction: '', make: '', model: '', year: '', category: '' };
-  sortBy: 'newest' | 'price_low' | 'price_high' | 'year_new' | 'year_old' | 'start_time' = 'newest';
+  sortBy:
+    | 'newest'
+    | 'price_low'
+    | 'price_high'
+    | 'year_new'
+    | 'year_old'
+    | 'start_time' = 'newest';
 
   options = {
     auctions: [] as string[],
@@ -100,15 +116,13 @@ export class FavouritesList implements OnDestroy {
     categories: [] as string[]
   };
 
-  
   heroUrl =
     'https://images.unsplash.com/photo-1517940310602-75e447f00b52?q=80&w=1400&auto=format&fit=crop';
 
-  
   private tickHandle: any = null;
   private resyncSub?: Subscription;
-  private clockSkewMs = 0; 
-  private timeboxes = new Map<number, AuctionTimebox>(); 
+  private clockSkewMs = 0;
+  private timeboxes = new Map<number, AuctionTimebox>(); // auctionId → timebox
 
   ngOnInit(): void {
     const currentUserId = this.bidderAuth.currentUser?.userId ?? null;
@@ -123,54 +137,69 @@ export class FavouritesList implements OnDestroy {
 
     forkJoin({
       auctions: this.auctionsSvc.getList().pipe(catchError(() => of([] as Auction[]))),
-      invAucs : this.invAucSvc.getList().pipe(catchError(() => of([] as InventoryAuction[]))),
-      files   : this.filesSvc.getList().pipe(catchError(() => of([] as InventoryDocumentFile[]))),
-      invs    : this.invSvc.getList().pipe(catchError(() => of([] as Inventory[]))),
+      invAucs: this.invAucSvc.getList().pipe(catchError(() => of([] as InventoryAuction[]))),
+      files: this.filesSvc.getList().pipe(catchError(() => of([] as InventoryDocumentFile[]))),
+      invs: this.invSvc.getList().pipe(catchError(() => of([] as Inventory[]))),
       products: this.productsSvc.getList().pipe(catchError(() => of([] as Product[]))),
-      favs    : this.favSvc.getList().pipe(catchError(() => of([] as Favourite[])))
+      favs: this.favSvc.getList().pipe(catchError(() => of([] as Favourite[]))),
+      bids: this.bidsSvc.getList().pipe(catchError(() => of([] as AuctionBid[])))
     })
       .pipe(
-        map(({ auctions, invAucs, files, invs, products, favs }) => {
+        map(({ auctions, invAucs, files, invs, products, favs, bids }) => {
           const auctionMap = new Map<number, Auction>();
           (auctions || []).forEach(a => auctionMap.set(a.auctionId, a));
 
-          const currentFavs = (favs || []).filter(f =>
-            (f.userId ?? (f as any).UserId) === currentUserId &&
-            (f.active ?? true)
+          const currentFavs = (favs || []).filter(
+            f =>
+              (f.userId ?? (f as any).UserId) === currentUserId &&
+              (f.active ?? true)
           );
 
           const favIds = new Set(
-            currentFavs.map(f => f.inventoryAuctionId ?? (f as any).inventoryAuctionId)
+            currentFavs.map(
+              f => f.inventoryAuctionId ?? (f as any).inventoryAuctionId
+            )
           );
 
-          
+          // images per inventory
           const imageMap = this.buildImagesMap(files);
 
-          
+          // inventory & product maps
           const invMap = new Map<number, Inventory>();
           (invs || []).forEach(i => invMap.set(i.inventoryId, i));
 
           const prodMap = new Map<number, Product>();
           (products || []).forEach(p => prodMap.set(p.productId, p));
 
-          
+          // only invAucs that are favourited
           const rows = (invAucs || []).filter(x =>
-            favIds.has((x as any).inventoryAuctionId ?? (x as any).inventoryauctionId)
+            favIds.has(
+              (x as any).inventoryAuctionId ?? (x as any).inventoryauctionId
+            )
           );
 
           const cards: LotCard[] = rows.map(r => {
-            const invAucId = (r as any).inventoryAuctionId ?? (r as any).inventoryauctionId;
+            const invAucId =
+              (r as any).inventoryAuctionId ??
+              (r as any).inventoryauctionId;
             const aid = (r as any).auctionId as number;
+
             const inv = invMap.get(r.inventoryId) || null;
             const prod = inv ? prodMap.get(inv.productId) || null : null;
             const snap = this.safeParse(inv?.productJSON);
 
-            const yearName  = (prod?.yearName ?? snap?.Year ?? snap?.year) ?? null;
-            const makeName  = (prod?.makeName ?? snap?.Make ?? snap?.make) ?? null;
-            const modelName = (prod?.modelName ?? snap?.Model ?? snap?.model) ?? null;
-            const category  = (prod?.categoryName ?? snap?.Category ?? snap?.category) ?? null;
+            const yearName =
+              (prod?.yearName ?? snap?.Year ?? snap?.year) ?? null;
+            const makeName =
+              (prod?.makeName ?? snap?.Make ?? snap?.make) ?? null;
+            const modelName =
+              (prod?.modelName ?? snap?.Model ?? snap?.model) ?? null;
+            const category =
+              (prod?.categoryName ?? snap?.Category ?? snap?.category) ?? null;
 
-            const titleFromMeta = [yearName, makeName, modelName].filter(Boolean).join(' ');
+            const titleFromMeta = [yearName, makeName, modelName]
+              .filter(Boolean)
+              .join(' ');
             const title =
               titleFromMeta ||
               inv?.displayName ||
@@ -179,15 +208,20 @@ export class FavouritesList implements OnDestroy {
               `Inventory #${r.inventoryId}`;
 
             const chassis = inv?.chassisNo || null;
-            const sub = chassis ? `Chassis ${chassis} • #${invAucId}` : `#${invAucId}`;
+            const sub = chassis
+              ? `Chassis ${chassis} • #${invAucId}`
+              : `#${invAucId}`;
 
-            const cover = this.pickRandom(imageMap.get(r.inventoryId)) || this.heroUrl;
+            const cover =
+              this.pickRandom(imageMap.get(r.inventoryId)) || this.heroUrl;
             const aucName =
               auctionMap.get(aid)?.auctionName ??
               (auctionMap.has(aid) ? `Auction #${aid}` : null);
 
-            const fav = currentFavs.find(ff =>
-              (ff.inventoryAuctionId ?? (ff as any).inventoryAuctionId) === invAucId
+            const fav = currentFavs.find(
+              ff =>
+                (ff.inventoryAuctionId ??
+                  (ff as any).inventoryAuctionId) === invAucId
             );
 
             return {
@@ -209,12 +243,23 @@ export class FavouritesList implements OnDestroy {
               favouriteId:
                 fav?.bidderInventoryAuctionFavoriteId ??
                 (fav as any)?.BidderInventoryAuctionFavoriteId ??
-                null
+                null,
+              countdownText: '—',
+              countdownState: 'scheduled',
+              currentPrice: null,
+              yourMaxBid: null,
+              reserveMet: false,
+              bidCooldownActive: false,
+              bidCooldownRemaining: 0,
+              placingBid: false
             };
           });
 
           const firstImg = cards.find(c => !!c.imageUrl)?.imageUrl;
           if (firstImg) this.heroUrl = firstImg;
+
+          // apply bidding metrics from all bids
+          this.applyBidMetrics(cards, bids || []);
 
           this.lots = cards;
 
@@ -248,9 +293,18 @@ export class FavouritesList implements OnDestroy {
     if (this.tickHandle) clearInterval(this.tickHandle);
     this.resyncSub?.unsubscribe();
     document.removeEventListener('visibilitychange', this.onVisChange);
+
+    // clear any active cooldown timers
+    for (const c of this.lots) {
+      if (c.cooldownHandle) {
+        clearInterval(c.cooldownHandle);
+        c.cooldownHandle = null;
+      }
+    }
   }
 
-  
+  // ---------- favourites toggle ----------
+
   toggleFavourite(card: LotCard): void {
     const userId = this.bidderAuth.currentUser?.userId ?? null;
     if (!userId) {
@@ -258,7 +312,7 @@ export class FavouritesList implements OnDestroy {
       return;
     }
 
-    
+    // ADD favourite
     if (!card.isFavourite) {
       const nowIso = new Date().toISOString();
       const payload: Favourite = {
@@ -272,52 +326,42 @@ export class FavouritesList implements OnDestroy {
         active: true
       };
 
-      console.log('[fav] ADD payload (favourites page)', payload);
-
       this.favSvc.add(payload).subscribe({
-        next: (id) => {
-          console.log('[fav] ADD success, id =', id);
+        next: id => {
           card.isFavourite = true;
           card.favouriteId = id;
         },
-        error: (e) => {
+        error: e => {
           console.error('[fav] ADD failed', e);
-          console.log('[fav] ADD server error body:', e?.error);
         }
       });
 
       return;
     }
 
-    
+    // REMOVE favourite
     if (card.isFavourite && card.favouriteId != null) {
-      console.log('[fav] REMOVE payload', {
-        FavouriteId: card.favouriteId,
-        Active: false,
-        ModifiedById: userId
-      });
-
-      this.favSvc.activate({
-        FavouriteId: card.favouriteId,
-        Active: false,
-        ModifiedById: userId
-      }).subscribe({
-        next: (ok) => {
-          console.log('[fav] REMOVE response ok =', ok);
-          if (ok) {
-            
-            this.lots = this.lots.filter(l => l !== card);
+      this.favSvc
+        .activate({
+          FavouriteId: card.favouriteId,
+          Active: false,
+          ModifiedById: userId
+        })
+        .subscribe({
+          next: ok => {
+            if (ok) {
+              this.lots = this.lots.filter(l => l !== card);
+            }
+          },
+          error: e => {
+            console.error('[fav] REMOVE failed', e);
           }
-        },
-        error: (e) => {
-          console.error('[fav] REMOVE failed', e);
-          console.log('[fav] REMOVE server error body:', e?.error);
-        }
-      });
+        });
     }
   }
 
-  
+  // ---------- filters & sorting ----------
+
   get filteredLots(): LotCard[] {
     const q = this.q.trim().toLowerCase();
     return this.lots.filter(c => {
@@ -332,8 +376,10 @@ export class FavouritesList implements OnDestroy {
       )
         return false;
       if (this.filters.make && (c.makeName ?? '') !== this.filters.make) return false;
-      if (this.filters.model && (c.modelName ?? '') !== this.filters.model) return false;
-      if (this.filters.year && String(c.yearName ?? '') !== this.filters.year) return false;
+      if (this.filters.model && (c.modelName ?? '') !== this.filters.model)
+        return false;
+      if (this.filters.year && String(c.yearName ?? '') !== this.filters.year)
+        return false;
       if (this.filters.category && (c.categoryName ?? '') !== this.filters.category)
         return false;
 
@@ -357,23 +403,21 @@ export class FavouritesList implements OnDestroy {
       case 'year_new':
         return list.sort(
           (a, b) =>
-            parseInt(String(b.yearName || 0)) -
-            parseInt(String(a.yearName || 0))
+            parseInt(String(b.yearName || 0)) - parseInt(String(a.yearName || 0))
         );
       case 'year_old':
         return list.sort(
           (a, b) =>
-            parseInt(String(a.yearName || 0)) -
-            parseInt(String(b.yearName || 0))
+            parseInt(String(a.yearName || 0)) - parseInt(String(b.yearName || 0))
         );
       case 'start_time': {
         const start = (c: LotCard) =>
           this.timeboxes.get(c.auctionId)?.startEpochMsUtc ??
           Number.MAX_SAFE_INTEGER;
-        return list.sort((a, b) => start(a) - start(b));
+        return list.sort((a, b) => Number(start(a)) - Number(start(b)));
       }
       default:
-        return list; 
+        return list; // newest by default (we don’t have per-lot dates here)
     }
   }
 
@@ -382,6 +426,7 @@ export class FavouritesList implements OnDestroy {
     this.filters = { auction: '', make: '', model: '', year: '', category: '' };
     this.sortBy = 'newest';
   }
+
   clearOne(key: keyof typeof this.filters): void {
     this.filters[key] = '';
   }
@@ -397,13 +442,12 @@ export class FavouritesList implements OnDestroy {
     );
     this.options.makes = uniq(this.lots.map(l => l.makeName));
     this.options.models = uniq(this.lots.map(l => l.modelName));
-    this.options.years = uniq(
-      this.lots.map(l => (l.yearName ?? null) as any)
-    );
+    this.options.years = uniq(this.lots.map(l => (l.yearName ?? null) as any));
     this.options.categories = uniq(this.lots.map(l => l.categoryName));
   }
 
-  
+  // ---------- countdown / timeboxes ----------
+
   private startTicker(): void {
     if (this.tickHandle) clearInterval(this.tickHandle);
     this.tickHandle = setInterval(() => this.updateCountdowns(), 1000);
@@ -498,7 +542,230 @@ export class FavouritesList implements OnDestroy {
     return `${hh}:${pad(mm)}:${pad(s)}`;
   }
 
-  
+  private isLive(card: LotCard): boolean {
+    const tb = this.timeboxes.get(card.auctionId);
+    if (!tb) return false;
+    const now = Date.now() + this.clockSkewMs;
+    const start = Number(tb.startEpochMsUtc);
+    const end = Number(tb.endEpochMsUtc);
+    return now >= start && now <= end;
+  }
+
+  // ---------- bidding metrics ----------
+
+  private applyBidMetrics(cards: LotCard[], bids: AuctionBid[]): void {
+    const currentUserId = this.bidderAuth.currentUser?.userId ?? null;
+
+    cards.forEach(card => {
+      const lotId = card.inventoryAuctionId;
+
+      const lotBids = (bids || []).filter(b => {
+        const iaId =
+          (b as any).inventoryAuctionId ??
+          (b as any).InventoryAuctionId ??
+          (b as any).inventoryauctionId;
+        const aucId =
+          (b as any).auctionId ??
+          (b as any).AuctionId ??
+          (b as any).auctionID;
+        return iaId === lotId && aucId === card.auctionId;
+      });
+
+      const highestBid = lotBids.length
+        ? Math.max(
+            ...lotBids.map(b =>
+              Number(
+                (b as any).bidAmount ??
+                  (b as any).BidAmount ??
+                  (b as any).Amount ??
+                  0
+              )
+            )
+          )
+        : null;
+
+      const yourBids =
+        currentUserId != null
+          ? lotBids.filter(b => {
+              const createdBy =
+                (b as any).createdById ??
+                (b as any).CreatedById ??
+                null;
+              return createdBy === currentUserId;
+            })
+          : [];
+
+      const yourHighest = yourBids.length
+        ? Math.max(
+            ...yourBids.map(b =>
+              Number(
+                (b as any).bidAmount ??
+                  (b as any).BidAmount ??
+                  (b as any).Amount ??
+                  0
+              )
+            )
+          )
+        : null;
+
+      const startPrice = card.auctionStartPrice ?? null;
+      card.currentPrice = highestBid != null ? highestBid : startPrice;
+      card.yourMaxBid = yourHighest;
+
+      const reserve = card.reserve ?? null;
+      card.reserveMet =
+        reserve != null &&
+        reserve > 0 &&
+        card.currentPrice != null &&
+        card.currentPrice >= reserve;
+    });
+  }
+
+  private refreshAllBids(): void {
+    this.bidsSvc
+      .getList()
+      .pipe(catchError(() => of([] as AuctionBid[])))
+      .subscribe(bids => {
+        this.applyBidMetrics(this.lots, bids || []);
+      });
+  }
+
+  // ---------- quick bid (per card) ----------
+
+  onQuickBid(card: LotCard): void {
+    if (!this.isLive(card)) {
+      this.snack.open(
+        'Quick bidding is only available while the auction is live.',
+        'OK',
+        { duration: 3000 }
+      );
+      return;
+    }
+
+    const userId = this.bidderAuth.currentUser?.userId ?? null;
+    if (!userId) {
+      this.snack.open('Please log in as a bidder to place bids.', 'OK', {
+        duration: 3000
+      });
+      return;
+    }
+
+    if (card.bidCooldownActive || card.placingBid) {
+      return;
+    }
+
+    const inc = card.bidIncrement ?? 100;
+    const base =
+      card.currentPrice ??
+      card.auctionStartPrice ??
+      card.buyNow ??
+      card.reserve ??
+      0;
+    const amount = base + (inc > 0 ? inc : 0);
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      this.snack.open('Unable to compute a valid quick bid amount.', 'OK', {
+        duration: 3000
+      });
+      return;
+    }
+
+    // stash amount on card so executeQuickBid uses consistent value
+    (card as any).__pendingAmount = amount;
+
+    card.bidCooldownActive = true;
+    card.bidCooldownRemaining = 5;
+
+    if (card.cooldownHandle) {
+      clearInterval(card.cooldownHandle);
+      card.cooldownHandle = null;
+    }
+
+    card.cooldownHandle = setInterval(() => {
+      if (!card.bidCooldownActive) {
+        clearInterval(card.cooldownHandle);
+        card.cooldownHandle = null;
+        return;
+      }
+
+      card.bidCooldownRemaining = (card.bidCooldownRemaining || 0) - 1;
+
+      if ((card.bidCooldownRemaining || 0) <= 0) {
+        this.executeQuickBid(card);
+      }
+    }, 1000);
+  }
+
+  cancelQuickBid(card: LotCard): void {
+    if (card.cooldownHandle) {
+      clearInterval(card.cooldownHandle);
+      card.cooldownHandle = null;
+    }
+    card.bidCooldownActive = false;
+    card.bidCooldownRemaining = 0;
+    delete (card as any).__pendingAmount;
+  }
+
+  private executeQuickBid(card: LotCard): void {
+    if (card.cooldownHandle) {
+      clearInterval(card.cooldownHandle);
+      card.cooldownHandle = null;
+    }
+
+    card.bidCooldownActive = false;
+    const userId = this.bidderAuth.currentUser?.userId ?? null;
+    if (!userId) return;
+
+    const lotId = card.inventoryAuctionId;
+    const amount = Number((card as any).__pendingAmount ?? 0);
+    delete (card as any).__pendingAmount;
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      this.snack.open('Failed to place bid: invalid amount.', 'OK', {
+        duration: 3000
+      });
+      return;
+    }
+
+    card.placingBid = true;
+
+    const payload: any = {
+      createdById: userId,
+      active: true,
+      auctionBidId: 0,
+      auctionId: card.auctionId,
+      auctionBidStatusId: 0,
+      inventoryAuctionId: lotId,
+      bidAmount: amount,
+      auctionBidStatusName: 'Winning'
+    };
+
+    this.bidsSvc.add(payload).subscribe({
+      next: () => {
+        this.snack.open('Quick bid placed successfully.', 'OK', {
+          duration: 2500
+        });
+        this.refreshAllBids();
+      },
+      error: err => {
+        const msg =
+          err && err.error
+            ? typeof err.error === 'string'
+              ? err.error
+              : JSON.stringify(err.error)
+            : 'Unknown error';
+        this.snack.open('Failed to place bid: ' + msg, 'OK', {
+          duration: 5000
+        });
+      },
+      complete: () => {
+        card.placingBid = false;
+      }
+    });
+  }
+
+  // ---------- helpers ----------
+
   private buildImagesMap(files: InventoryDocumentFile[]): Map<number, string[]> {
     const m = new Map<number, string[]>();
     const isImg = (u?: string | null, n?: string | null) => {

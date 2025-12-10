@@ -63,10 +63,18 @@
             <div class="label">Start Price</div>
             <div class="value">{{ money(lotStartPrice) }}</div>
           </div>
-          <div class="chip">
-            <div class="label">Reserve</div>
+
+          <!-- 🔴 Reserve chip (default red) that flips 🟢 when met -->
+          <div class="chip reserve" [class.met]="isReserveMet">
+            <div class="label">
+              Reserve
+              <span class="reserve-badge" *ngIf="lotReservePrice">
+                {{ isReserveMet ? 'Met' : 'Not met' }}
+              </span>
+            </div>
             <div class="value">{{ money(lotReservePrice) }}</div>
           </div>
+
           <div class="chip">
             <div class="label">Buy Now</div>
             <div class="value">{{ money(lotBuyNowPrice) }}</div>

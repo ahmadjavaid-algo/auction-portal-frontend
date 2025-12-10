@@ -1,11 +1,23 @@
-<form class="dialog-form" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
+<form
+  class="dialog-form"
+  [formGroup]="form"
+  (ngSubmit)="onSubmit()"
+  autocomplete="off"
+>
   <!-- Header -->
   <div class="header">
     <div class="title">
-      <h2>{{ mode === 'edit' ? 'Edit inventory in auction' : 'Add inventory to auction' }}</h2>
+      <h2>
+        {{ mode === 'edit' ? 'Edit inventory in auction' : 'Add inventory to auction' }}
+      </h2>
       <p class="sub">
         Select an Inventory and an Auction. Auction Start, Buy Now and Reserve are optional.
         Bid Increment is snapshotted from the selected auction by the server.
+        <br />
+        <strong>Note:</strong>
+        Only vehicles with
+        <span class="highlight">Completed inspection (100%)</span>
+        can be added to an auction.
       </p>
     </div>
   </div>
@@ -17,14 +29,50 @@
         <!-- Inventory -->
         <mat-form-field appearance="outline">
           <mat-label>Inventory *</mat-label>
-          <mat-select formControlName="inventoryId" [disabled]="loadingInventories">
-            <mat-option *ngFor="let i of inventories" [value]="i.inventoryId">
-              {{ inventoryLabel($any(i)) }}
+          <mat-select
+            formControlName="inventoryId"
+            [disabled]="loadingInventories || loadingInspectionMeta"
+          >
+            <mat-option
+              *ngFor="let i of inventories"
+              [value]="i.inventoryId"
+              [disabled]="!isInventoryInspectionCompleted(i.inventoryId)"
+              [matTooltip]="
+                'Inspection status: ' +
+                getInventoryInspectionStatus(i.inventoryId) +
+                ' (' +
+                getInventoryCompletionPercent(i.inventoryId) +
+                '%)'
+              "
+              matTooltipPosition="right"
+            >
+              <div class="inv-option">
+                <span class="inv-main">{{ inventoryLabel($any(i)) }}</span>
+
+                <span
+                  class="inv-status-pill"
+                  [class.complete]="isInventoryInspectionCompleted(i.inventoryId)"
+                  [class.pending]="!isInventoryInspectionCompleted(i.inventoryId)"
+                >
+                  <mat-icon class="pill-icn" *ngIf="isInventoryInspectionCompleted(i.inventoryId)">
+                    check_circle
+                  </mat-icon>
+                  <mat-icon class="pill-icn" *ngIf="!isInventoryInspectionCompleted(i.inventoryId)">
+                    hourglass_empty
+                  </mat-icon>
+                  {{ getInventoryInspectionStatus(i.inventoryId) }}
+                  • {{ getInventoryCompletionPercent(i.inventoryId) }}%
+                </span>
+              </div>
             </mat-option>
           </mat-select>
+
           <mat-error *ngIf="form.get('inventoryId')?.hasError('required')">
             Inventory is required
           </mat-error>
+          <mat-hint align="start" *ngIf="!loadingInventories && !loadingInspectionMeta">
+            Vehicles whose inspection is not fully completed are disabled in this list.
+          </mat-hint>
         </mat-form-field>
 
         <!-- Auction -->
@@ -43,7 +91,12 @@
         <!-- Status Id -->
         <mat-form-field appearance="outline">
           <mat-label>Inventory Auction Status Id *</mat-label>
-          <input matInput type="number" formControlName="inventoryAuctionStatusId" min="1" />
+          <input
+            matInput
+            type="number"
+            formControlName="inventoryAuctionStatusId"
+            min="1"
+          />
           <mat-error *ngIf="form.get('inventoryAuctionStatusId')?.hasError('required')">
             Status Id is required
           </mat-error>
@@ -80,6 +133,7 @@
           <mat-label>Note</mat-label>
           <textarea matInput rows="2" disabled>
 Bid Increment is automatically snapshotted from the selected Auction on save.
+Inspection must be fully completed (all checkpoints answered) before a vehicle can be added.
           </textarea>
         </mat-form-field>
       </div>
@@ -88,8 +142,20 @@ Bid Increment is automatically snapshotted from the selected Auction on save.
 
   <!-- Actions -->
   <mat-dialog-actions align="end" class="actions">
-    <button mat-stroked-button type="button" class="btn-cancel" (click)="onCancel()">Cancel</button>
-    <button mat-flat-button type="submit" class="btn-primary" [disabled]="form.invalid">
+    <button
+      mat-stroked-button
+      type="button"
+      class="btn-cancel"
+      (click)="onCancel()"
+    >
+      Cancel
+    </button>
+    <button
+      mat-flat-button
+      type="submit"
+      class="btn-primary"
+      [disabled]="form.invalid || loadingInventories || loadingInspectionMeta"
+    >
       {{ mode === 'edit' ? 'Update' : 'Create' }}
     </button>
   </mat-dialog-actions>

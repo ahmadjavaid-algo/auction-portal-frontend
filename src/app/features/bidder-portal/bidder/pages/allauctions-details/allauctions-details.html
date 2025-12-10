@@ -147,32 +147,41 @@
           class="fav-btn"
           [class.is-active]="c.isFavourite"
           (click)="toggleFavourite(c); $event.stopPropagation()"
-          matTooltip="{{ c.isFavourite ? 'Remove from favourites' : 'Add to favourites' }}"
+          matTooltip="{{
+            c.isFavourite ? 'Remove from favourites' : 'Add to favourites'
+          }}"
         >
           <mat-icon>{{ c.isFavourite ? 'favorite' : 'favorite_border' }}</mat-icon>
         </button>
       </div>
 
       <div class="body">
-        <div class="auction-chip" *ngIf="c.auctionName">
-          <mat-icon>event</mat-icon>
-          <span>{{ c.auctionName }}</span>
+        <div class="top-row">
+          <div class="auction-chip" *ngIf="c.auctionName">
+            <mat-icon>event</mat-icon>
+            <span>{{ c.auctionName }}</span>
+          </div>
+
+          <div class="reserve-pill"
+               *ngIf="c.reserve != null"
+               [class.met]="c.reserveMet"
+               [class.not-met]="!c.reserveMet">
+            <mat-icon inline>
+              {{ c.reserveMet ? 'check_circle' : 'error_outline' }}
+            </mat-icon>
+            <span>{{ c.reserveMet ? 'Reserve met' : 'Reserve not met' }}</span>
+          </div>
         </div>
 
         <h3 class="title">{{ c.title }}</h3>
         <div class="sub">{{ c.sub }}</div>
 
+        <!-- base numbers row -->
         <div class="numbers">
           <div class="num" *ngIf="c.auctionStartPrice != null">
             <div class="label">Start Price</div>
             <div class="value">
               {{ c.auctionStartPrice | currency: 'USD':'symbol':'1.0-0' }}
-            </div>
-          </div>
-          <div class="num" *ngIf="c.reserve != null">
-            <div class="label">Reserve</div>
-            <div class="value">
-              {{ c.reserve | currency: 'USD':'symbol':'1.0-0' }}
             </div>
           </div>
           <div class="num" *ngIf="c.buyNow != null">
@@ -189,6 +198,91 @@
           </div>
         </div>
 
+        <!-- bidding status row: current bid + your max -->
+        <div class="bid-row">
+          <div class="col current">
+            <div class="label">Current bid</div>
+            <div class="value-line">
+              <span class="value">
+                <ng-container *ngIf="c.currentPrice != null; else noCurrent">
+                  {{
+                    c.currentPrice
+                      | currency: 'USD':'symbol':'1.0-0'
+                  }}
+                </ng-container>
+                <ng-template #noCurrent>—</ng-template>
+              </span>
+
+              <span
+                class="pill leading-pill"
+                *ngIf="c.isLeading && c.currentPrice != null"
+              >
+                <mat-icon inline>emoji_events</mat-icon>
+                You're leading
+              </span>
+            </div>
+          </div>
+
+          <div class="col your-max" *ngIf="c.yourMaxBid != null">
+            <div class="label">Your max</div>
+            <div class="value-line">
+              <span
+                class="value"
+                [class.highlight]="c.isLeading"
+              >
+                {{
+                  c.yourMaxBid
+                    | currency: 'USD':'symbol':'1.0-0'
+                }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- quick bid row -->
+        <div class="quick-bid" *ngIf="c.bidIncrement != null">
+          <ng-container *ngIf="c.countdownState === 'live'; else qbDisabled">
+            <button
+              type="button"
+              class="quick-btn"
+              [disabled]="c.bidCooldownActive || c.placingBid"
+              (click)="onQuickBid(c)"
+            >
+              <mat-icon>bolt</mat-icon>
+              <span *ngIf="!c.bidCooldownActive">
+                Quick bid
+                <ng-container *ngIf="c.minNextBid != null">
+                  •
+                  {{
+                    c.minNextBid
+                      | currency: 'USD':'symbol':'1.0-0'
+                  }}
+                </ng-container>
+              </span>
+              <span *ngIf="c.bidCooldownActive">
+                Placing in {{ c.bidCooldownRemaining }}s
+              </span>
+            </button>
+
+            <button
+              type="button"
+              class="quick-cancel"
+              *ngIf="c.bidCooldownActive"
+              (click)="cancelQuickBid(c)"
+            >
+              Cancel
+            </button>
+          </ng-container>
+
+          <ng-template #qbDisabled>
+            <div class="quick-disabled">
+              <mat-icon>lock_clock</mat-icon>
+              <span>Quick bid available when auction is live</span>
+            </div>
+          </ng-template>
+        </div>
+
+        <!-- actions -->
         <div class="actions">
           <a
             class="btn primary"
@@ -204,11 +298,11 @@
           <a
             class="btn ghost"
             [routerLink]="[
-            '/bidder/auctions',
-            c.auctionId,
-            c.inventoryAuctionId,
-            'details'
-          ]"
+              '/bidder/auctions',
+              c.auctionId,
+              c.inventoryAuctionId,
+              'details'
+            ]"
             matTooltip="View details"
           >
             View Details

@@ -1,4 +1,3 @@
-
 :host {
   --algo-bg-0: #0d0716;
   --algo-bg-1: #1a0930;
@@ -243,11 +242,60 @@
           font-size: 11px;
           font-weight: 900;
           margin-bottom: 2px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
         }
 
         .value {
           font-weight: 900;
           color: #111;
+        }
+
+        /* 🔴 default reserve styling */
+        &.reserve {
+          border-color: #fecaca;
+          background: #fef2f2;
+
+          .label {
+            color: #b91c1c;
+          }
+
+          .value {
+            color: #b91c1c;
+          }
+        }
+
+        /* 🟢 reserve met state */
+        &.reserve.met {
+          border-color: #bbf7d0;
+          background: #ecfdf5;
+
+          .label {
+            color: #166534;
+          }
+
+          .value {
+            color: #166534;
+          }
+
+          .reserve-badge {
+            background: rgba(22, 163, 52, 0.1);
+            color: #15803d;
+            border-color: rgba(22, 163, 52, 0.4);
+          }
+        }
+
+        .reserve-badge {
+          font-size: 10px;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          padding: 2px 6px;
+          border-radius: 999px;
+          border: 1px solid rgba(248, 113, 113, 0.4);
+          background: rgba(248, 113, 113, 0.1);
+          color: #b91c1c;
         }
       }
     }
@@ -372,6 +420,7 @@
       }
     }
   }
+
 
   
   .inspection {

@@ -61,7 +61,6 @@ export class InventoryList {
   private snack = inject(MatSnackBar);
   private auth = inject(AuthService);
 
-  
   displayedColumns: string[] = [
     'select',
     'name',
@@ -228,11 +227,22 @@ export class InventoryList {
   }
 
   addSelectedToAuction(): void {
-    if (!this.selection.selected.length) return;
+    const ids = this.selectedIds;
+    if (!ids.length) return;
 
-    const ref = this.dialog.open<AddToAuctionDialog, { count: number }, AddToAuctionResult>(
+    const ref = this.dialog.open<
       AddToAuctionDialog,
-      { width: '680px', data: { count: this.selection.selected.length } }
+      { count: number; inventoryIds: number[] },
+      AddToAuctionResult
+    >(
+      AddToAuctionDialog,
+      {
+        width: '680px',
+        data: {
+          count: ids.length,
+          inventoryIds: ids          // 🔐 needed for inspection-complete rule
+        }
+      }
     );
 
     ref.afterClosed().subscribe(res => {
@@ -263,15 +273,27 @@ export class InventoryList {
           return { success, failed };
         })
       ).subscribe(({ success, failed }) => {
-        if (success) this.snack.open(`Added ${success} item(s) to auction #${auctionId}.`, 'OK', { duration: 2500 });
-        if (failed) this.snack.open(`${failed} item(s) could not be added (maybe already in this auction).`, 'Dismiss', { duration: 3500 });
+        if (success) {
+          this.snack.open(`Added ${success} item(s) to auction #${auctionId}.`, 'OK', { duration: 2500 });
+        }
+        if (failed) {
+          this.snack.open(
+            `${failed} item(s) could not be added (maybe already in this auction).`,
+            'Dismiss',
+            { duration: 3500 }
+          );
+        }
         this.clearSelection();
       });
     });
   }
 
   openUploadFor(row: Inventory): void {
-    const ref = this.dialog.open<InventoryImagesform, { inventoryId: number }, InventoryImagesDialogResult>(
+    const ref = this.dialog.open<
+      InventoryImagesform,
+      { inventoryId: number },
+      InventoryImagesDialogResult
+    >(
       InventoryImagesform,
       { width: '720px', data: { inventoryId: row.inventoryId } }
     );
@@ -285,7 +307,11 @@ export class InventoryList {
   }
 
   openCreateInventory(): void {
-    const ref = this.dialog.open<InventoryForm, { mode: 'create' }, InventoryFormResult>(InventoryForm, {
+    const ref = this.dialog.open<
+      InventoryForm,
+      { mode: 'create' },
+      InventoryFormResult
+    >(InventoryForm, {
       width: '720px',
       data: { mode: 'create' }
     });
@@ -298,14 +324,23 @@ export class InventoryList {
             this.snack.open(`Inventory created (ID ${id}).`, 'OK', { duration: 2500 });
             this.loadInventory();
           },
-          error: (e) => this.snack.open(e?.error?.message || 'Failed to create inventory.', 'Dismiss', { duration: 3000 })
+          error: (e) =>
+            this.snack.open(
+              e?.error?.message || 'Failed to create inventory.',
+              'Dismiss',
+              { duration: 3000 }
+            )
         });
       }
     });
   }
 
   editInventory(row: Inventory): void {
-    const ref = this.dialog.open<InventoryForm, { mode: 'edit'; initialData: Inventory }, InventoryFormResult>(InventoryForm, {
+    const ref = this.dialog.open<
+      InventoryForm,
+      { mode: 'edit'; initialData: Inventory },
+      InventoryFormResult
+    >(InventoryForm, {
       width: '720px',
       data: { mode: 'edit', initialData: row }
     });
@@ -322,7 +357,12 @@ export class InventoryList {
               this.snack.open('Failed to update inventory.', 'Dismiss', { duration: 3000 });
             }
           },
-          error: (e) => this.snack.open(e?.error?.message || 'Failed to update inventory.', 'Dismiss', { duration: 3000 })
+          error: (e) =>
+            this.snack.open(
+              e?.error?.message || 'Failed to update inventory.',
+              'Dismiss',
+              { duration: 3000 }
+            )
         });
       }
     });
@@ -345,7 +385,8 @@ export class InventoryList {
           this.snack.open('Failed to change status.', 'Dismiss', { duration: 3000 });
         }
       },
-      error: () => this.snack.open('Failed to change status.', 'Dismiss', { duration: 3000 })
+      error: () =>
+        this.snack.open('Failed to change status.', 'Dismiss', { duration: 3000 })
     });
   }
 
@@ -353,9 +394,7 @@ export class InventoryList {
     this.router.navigate(['/admin/inventory', inventoryId]);
   }
 
-  
   openInspectionReport(row: Inventory): void {
-    
     this.router.navigate(['/admin/inventory-inspectionreport', row.inventoryId]);
   }
 }

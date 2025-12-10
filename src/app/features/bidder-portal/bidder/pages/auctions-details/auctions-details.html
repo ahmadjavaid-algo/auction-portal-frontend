@@ -1,3 +1,4 @@
+<!-- src/app/pages/bidder/auctions/auctions-details/auctions-details.html -->
 <div class="auction-details">
   <!-- crumbs -->
   <div class="crumbs">
@@ -60,12 +61,7 @@
         placeholder="Search car, chassis, make, model…"
         [(ngModel)]="q"
       />
-      <button
-        *ngIf="q"
-        class="clear"
-        (click)="q = ''"
-        matTooltip="Clear"
-      >
+      <button *ngIf="q" class="clear" (click)="q = ''" matTooltip="Clear">
         <mat-icon>close</mat-icon>
       </button>
     </div>
@@ -123,7 +119,8 @@
 
     <button
       class="link clear-all"
-      (click)="clearAll()"
+      (click)="clearAll()
+      "
       *ngIf="
         q ||
         filters.make ||
@@ -154,6 +151,19 @@
           <mat-icon inline>schedule</mat-icon>
           <span>{{ c.countdownText || '—' }}</span>
         </div>
+
+        <!-- favourite button (replicated from allauctions-details) -->
+        <button
+          type="button"
+          class="fav-btn"
+          [class.is-active]="c.isFavourite"
+          (click)="toggleFavourite(c); $event.stopPropagation()"
+          matTooltip="{{
+            c.isFavourite ? 'Remove from favourites' : 'Add to favourites'
+          }}"
+        >
+          <mat-icon>{{ c.isFavourite ? 'favorite' : 'favorite_border' }}</mat-icon>
+        </button>
       </div>
 
       <div class="body">
@@ -161,18 +171,45 @@
         <div class="sub">{{ c.sub }}</div>
 
         <div class="numbers">
+          <!-- Current bid (highlighted chip) -->
+          <div class="num current" *ngIf="c.currentPrice != null">
+            <div class="label">
+              <span class="pill-current">Current Bid</span>
+              <span class="your-max" *ngIf="c.yourMaxBid != null">
+                Your max: {{ money(c.yourMaxBid) }}
+              </span>
+            </div>
+            <div class="value-highlight">
+              <span class="value">{{ money(c.currentPrice) }}</span>
+            </div>
+          </div>
+
+          <!-- Start price -->
           <div class="num" *ngIf="c.auctionStartPrice != null">
             <div class="label">Start Price</div>
             <div class="value">{{ money(c.auctionStartPrice) }}</div>
           </div>
-          <div class="num" *ngIf="c.reserve != null">
-            <div class="label">Reserve</div>
+
+          <!-- Reserve with Met / Not met -->
+          <div
+            class="num reserve"
+            *ngIf="c.reserve != null"
+            [class.met]="c.reserveMet"
+          >
+            <div class="label">
+              Reserve
+              <span class="reserve-badge">
+                {{ c.reserveMet ? 'Met' : 'Not met' }}
+              </span>
+            </div>
             <div class="value">{{ money(c.reserve) }}</div>
           </div>
+
           <div class="num" *ngIf="c.buyNow != null">
             <div class="label">Buy Now</div>
             <div class="value">{{ money(c.buyNow) }}</div>
           </div>
+
           <div class="num" *ngIf="c.bidIncrement != null">
             <div class="label">Bid Increment</div>
             <div class="value">{{ money(c.bidIncrement) }}</div>
@@ -180,29 +217,81 @@
         </div>
 
         <div class="actions">
+          <!-- Quick bid -->
+          <button
+            type="button"
+            class="btn quick"
+            mat-button
+            (click)="onQuickBid(c)"
+            [disabled]="!isLive || c.placingBid || c.bidCooldownActive"
+            matTooltip="Quick bid (+1x increment on current price)"
+          >
+            <mat-icon>flash_on</mat-icon>
+            <span *ngIf="!c.bidCooldownActive && !c.placingBid">
+              Quick Bid
+            </span>
+            <span *ngIf="c.bidCooldownActive && !c.placingBid">
+              Pending…
+            </span>
+            <span *ngIf="c.placingBid">Placing…</span>
+          </button>
+
+          <!-- View details -->
           <a
-            class="btn primary"
+            class="btn outline"
+            [routerLink]="[
+              '/bidder/auctions',
+              auctionId,
+              c.invAuc.inventoryAuctionId,
+              'details'
+            ]"
+            matTooltip="View lot details"
+          >
+            <mat-icon>description</mat-icon>
+            <span>Details</span>
+          </a>
+
+          <!-- Full bidding page -->
+          <a
+            class="btn ghost"
             [routerLink]="[
               '/bidder/auctions',
               auctionId,
               c.invAuc.inventoryAuctionId
             ]"
-            matTooltip="Bid on this car"
+            matTooltip="Open full bidding page"
           >
-            Place Bid
+            <mat-icon>open_in_new</mat-icon>
+            <span>Open</span>
           </a>
-          <a
-            class="btn ghost"
-            [routerLink]="[
-            '/bidder/auctions',
-            auctionId,
-            c.invAuc.inventoryAuctionId,
-            'details'
-          ]"
-            matTooltip="View details"
-          >
-            View Details
-          </a>
+        </div>
+
+        <!-- Soft popup cooldown with cancel -->
+        <div class="cooldown" *ngIf="c.bidCooldownActive">
+          <div class="cooldown-inner">
+            <div class="copy">
+              <div class="line1">
+                Placing bid in
+                <strong>{{ c.bidCooldownRemaining }}s</strong>…
+              </div>
+              <div class="line2">
+                Click cancel if you changed your mind.
+              </div>
+            </div>
+            <button
+              type="button"
+              class="cancel-btn"
+              (click)="cancelQuickBid(c)"
+            >
+              Cancel
+            </button>
+          </div>
+          <div class="cooldown-bar">
+            <div
+              class="fill"
+              [style.width.%]="(c.bidCooldownRemaining || 0) * 20"
+            ></div>
+          </div>
         </div>
       </div>
     </article>

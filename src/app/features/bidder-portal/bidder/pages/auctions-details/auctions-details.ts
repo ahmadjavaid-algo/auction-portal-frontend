@@ -1,3 +1,4 @@
+// src/app/pages/bidder/auctions/auctions-details/auctions-details.ts
 import { Component, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { forkJoin, of, interval, Subscription } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -16,13 +18,18 @@ import { InventoryAuction } from '../../../../../models/inventoryauction.model';
 import { InventoryDocumentFile } from '../../../../../models/inventorydocumentfile.model';
 import { Inventory } from '../../../../../models/inventory.model';
 import { Product } from '../../../../../models/product.model';
+import { AuctionTimebox } from '../../../../../models/auction-timebox.model';
+import { AuctionBid } from '../../../../../models/auctionbid.model';
+import { Favourite } from '../../../../../models/favourite.model';
 
 import { AuctionService } from '../../../../../services/auctions.service';
 import { InventoryAuctionService } from '../../../../../services/inventoryauctions.service';
 import { InventoryDocumentFileService } from '../../../../../services/inventorydocumentfile.service';
 import { InventoryService } from '../../../../../services/inventory.service';
 import { ProductsService } from '../../../../../services/products.service';
-import { AuctionTimebox } from '../../../../../models/auction-timebox.model';
+import { AuctionBidService } from '../../../../../services/auctionbids.service';
+import { FavouriteService } from '../../../../../services/favourites.service';
+import { BidderAuthService } from '../../../../../services/bidderauth';
 
 type LotCard = {
   invAuc: InventoryAuction;
@@ -43,6 +50,21 @@ type LotCard = {
 
   countdownText?: string;
   countdownState?: 'scheduled' | 'live' | 'ended';
+
+  // bidding metrics
+  currentPrice?: number | null;
+  yourMaxBid?: number | null;
+  reserveMet?: boolean;
+
+  // favourites
+  isFavourite?: boolean;
+  favouriteId?: number | null;
+
+  // quick-bid UX
+  bidCooldownActive?: boolean;
+  bidCooldownRemaining?: number;
+  cooldownHandle?: any;
+  placingBid?: boolean;
 };
 
 @Component({
@@ -55,19 +77,24 @@ type LotCard = {
     MatIconModule,
     MatButtonModule,
     MatTooltipModule,
-    MatProgressBarModule
+    MatProgressBarModule,
+    MatSnackBarModule
   ],
   templateUrl: './auctions-details.html',
   styleUrls: ['./auctions-details.scss']
 })
 export class AuctionsDetails implements OnDestroy {
   private route = inject(ActivatedRoute);
+  private snack = inject(MatSnackBar);
 
   private auctionsSvc = inject(AuctionService);
-  private invAucSvc   = inject(InventoryAuctionService);
-  private filesSvc    = inject(InventoryDocumentFileService);
-  private invSvc      = inject(InventoryService);
+  private invAucSvc = inject(InventoryAuctionService);
+  private filesSvc = inject(InventoryDocumentFileService);
+  private invSvc = inject(InventoryService);
   private productsSvc = inject(ProductsService);
+  private bidsSvc = inject(AuctionBidService);
+  private favSvc = inject(FavouriteService);
+  private bidderAuth = inject(BidderAuthService);
 
   loading = true;
   error: string | null = null;
@@ -82,7 +109,8 @@ export class AuctionsDetails implements OnDestroy {
 
   q = '';
   filters = { make: '', model: '', year: '', category: '' };
-  sortBy: 'newest' | 'price_low' | 'price_high' | 'year_new' | 'year_old' = 'newest';
+  sortBy: 'newest' | 'price_low' | 'price_high' | 'year_new' | 'year_old' =
+    'newest';
   options = {
     makes: [] as string[],
     models: [] as string[],
@@ -95,6 +123,9 @@ export class AuctionsDetails implements OnDestroy {
   private auctionStartUtcMs: number | null = null;
   private auctionEndUtcMs: number | null = null;
   private clockSkewMs = 0;
+
+  // favourites map: inventoryAuctionId -> Favourite
+  private favMap = new Map<number, Favourite>();
 
   ngOnInit(): void {
     this.auctionId = Number(
@@ -109,117 +140,194 @@ export class AuctionsDetails implements OnDestroy {
 
     this.loading = true;
 
+    const currentUserId = this.bidderAuth.currentUser?.userId ?? null;
+
     forkJoin({
-      timebox : this.auctionsSvc
+      timebox: this.auctionsSvc
         .getTimebox(this.auctionId)
         .pipe(catchError(() => of(null as AuctionTimebox | null))),
       auctions: this.auctionsSvc
         .getList()
         .pipe(catchError(() => of([] as Auction[]))),
-      invAucs : this.invAucSvc
+      invAucs: this.invAucSvc
         .getList()
         .pipe(catchError(() => of([] as InventoryAuction[]))),
-      files   : this.filesSvc
+      files: this.filesSvc
         .getList()
         .pipe(catchError(() => of([] as InventoryDocumentFile[]))),
-      invs    : this.invSvc
-        .getList()
-        .pipe(catchError(() => of([] as Inventory[]))),
+      invs: this.invSvc.getList().pipe(catchError(() => of([] as Inventory[]))),
       products: this.productsSvc
         .getList()
-        .pipe(catchError(() => of([] as Product[])))
+        .pipe(catchError(() => of([] as Product[]))),
+      bids: this.bidsSvc
+        .getList()
+        .pipe(catchError(() => of([] as AuctionBid[]))),
+      favs: this.favSvc
+        .getList()
+        .pipe(catchError(() => of([] as Favourite[])))
     })
       .pipe(
-        map(({ timebox, auctions, invAucs, files, invs, products }) => {
-          if (timebox) {
-            this.auctionStartUtcMs = Number(timebox.startEpochMsUtc);
-            this.auctionEndUtcMs = Number(timebox.endEpochMsUtc);
-            if (Number.isFinite(timebox.nowEpochMsUtc)) {
-              this.clockSkewMs = Number(timebox.nowEpochMsUtc) - Date.now();
+        map(
+          ({
+            timebox,
+            auctions,
+            invAucs,
+            files,
+            invs,
+            products,
+            bids,
+            favs
+          }) => {
+            // timebox
+            if (timebox) {
+              this.auctionStartUtcMs = Number(timebox.startEpochMsUtc);
+              this.auctionEndUtcMs = Number(timebox.endEpochMsUtc);
+              if (Number.isFinite(timebox.nowEpochMsUtc as any)) {
+                this.clockSkewMs =
+                  Number(timebox.nowEpochMsUtc) - Date.now();
+              }
+            } else {
+              this.clockSkewMs = 0;
             }
-          } else {
-            this.clockSkewMs = 0;
+
+            // auction
+            this.auction =
+              (auctions || []).find(a => a.auctionId === this.auctionId) ||
+              null;
+
+            // favourites map – only for current user
+            this.favMap.clear();
+            const favsForUserAll = (favs || []).filter(f => {
+              const uid =
+                (f as any).userId ??
+                (f as any).UserId ??
+                (f as any).userID ??
+                (f as any).userid;
+              return uid === currentUserId;
+            });
+
+            favsForUserAll.forEach(f => {
+              const invAucIdFromFav =
+                (f as any).inventoryAuctionId ??
+                (f as any).InventoryAuctionId ??
+                (f as any).inventoryauctionId;
+              if (invAucIdFromFav != null) {
+                this.favMap.set(Number(invAucIdFromFav), f);
+              }
+            });
+
+            const rows = (invAucs || []).filter(
+              x =>
+                (x as any).auctionId === this.auctionId && (x.active ?? true)
+            );
+            const imageMap = this.buildImagesMap(files);
+
+            const invMap = new Map<number, Inventory>();
+            (invs || []).forEach(i => invMap.set(i.inventoryId, i));
+
+            const prodMap = new Map<number, Product>();
+            (products || []).forEach(p => prodMap.set(p.productId, p));
+
+            const cards: LotCard[] = rows.map(r => {
+              const inv = invMap.get(r.inventoryId) || null;
+              const prod = inv ? prodMap.get(inv.productId) || null : null;
+              const snap = this.safeParse(inv?.productJSON);
+
+              const yearName =
+                (prod?.yearName ?? snap?.Year ?? snap?.year) ?? null;
+              const makeName =
+                (prod?.makeName ?? snap?.Make ?? snap?.make) ?? null;
+              const modelName =
+                (prod?.modelName ?? snap?.Model ?? snap?.model) ?? null;
+              const categoryName =
+                (prod?.categoryName ?? snap?.Category ?? snap?.category) ??
+                null;
+
+              const titleFromMeta = [yearName, makeName, modelName]
+                .filter(Boolean)
+                .join(' ');
+              const title =
+                titleFromMeta ||
+                inv?.displayName ||
+                snap?.DisplayName ||
+                snap?.displayName ||
+                `Inventory #${r.inventoryId}`;
+
+              const chassis = inv?.chassisNo || null;
+              const sub = chassis
+                ? `Chassis ${chassis} • #${r.inventoryId}`
+                : `#${r.inventoryId}`;
+
+              const cover =
+                this.pickRandom(imageMap.get(r.inventoryId)) ||
+                this.heroUrl;
+
+              const invAucId =
+                (r as any).inventoryAuctionId ??
+                (r as any).InventoryAuctionId ??
+                (r as any).inventoryauctionId;
+
+              const favRecord = this.favMap.get(invAucId);
+              const isActive =
+                (favRecord as any)?.active ??
+                (favRecord as any)?.Active ??
+                favRecord?.active;
+              const isFav = !!favRecord && isActive !== false;
+              const favId =
+                (favRecord as any)?.BidderInventoryAuctionFavoriteId ??
+                (favRecord as any)?.bidderInventoryAuctionFavoriteId ??
+                null;
+
+              return {
+                invAuc: r,
+                inventory: inv,
+                title,
+                sub,
+                imageUrl: cover,
+                auctionStartPrice: (r as any).auctionStartPrice ?? null,
+                buyNow: r.buyNowPrice ?? null,
+                reserve: r.reservePrice ?? null,
+                bidIncrement: r.bidIncrement ?? null,
+                yearName,
+                makeName,
+                modelName,
+                categoryName,
+                countdownText: '—',
+                countdownState: 'scheduled',
+                currentPrice: null,
+                yourMaxBid: null,
+                reserveMet: false,
+                isFavourite: isFav,
+                favouriteId: favId,
+                bidCooldownActive: false,
+                bidCooldownRemaining: 0,
+                cooldownHandle: null,
+                placingBid: false
+              };
+            });
+
+            const firstImg = cards.find(c => !!c.imageUrl)?.imageUrl;
+            if (firstImg) this.heroUrl = firstImg;
+
+            this.applyBidMetrics(cards, bids || []);
+
+            this.lots = cards.sort((a, b) =>
+              this.dateDesc(
+                (a.inventory?.modifiedDate || a.inventory?.createdDate) ??
+                  null,
+                (b.inventory?.modifiedDate || b.inventory?.createdDate) ??
+                  null
+              )
+            );
+
+            this.buildFilterOptions();
+
+            this.updateCountdowns();
+            this.startTicker();
+            this.startResync();
+            this.wireVisibility();
           }
-
-          this.auction =
-            (auctions || []).find(a => a.auctionId === this.auctionId) || null;
-
-          const rows = (invAucs || []).filter(
-            x => (x as any).auctionId === this.auctionId && (x.active ?? true)
-          );
-          const imageMap = this.buildImagesMap(files);
-
-          const invMap = new Map<number, Inventory>();
-          (invs || []).forEach(i => invMap.set(i.inventoryId, i));
-
-          const prodMap = new Map<number, Product>();
-          (products || []).forEach(p => prodMap.set(p.productId, p));
-
-          const cards: LotCard[] = rows.map(r => {
-            const inv = invMap.get(r.inventoryId) || null;
-            const prod = inv ? prodMap.get(inv.productId) || null : null;
-            const snap = this.safeParse(inv?.productJSON);
-
-            const yearName =
-              (prod?.yearName ?? snap?.Year ?? snap?.year) ?? null;
-            const makeName =
-              (prod?.makeName ?? snap?.Make ?? snap?.make) ?? null;
-            const modelName =
-              (prod?.modelName ?? snap?.Model ?? snap?.model) ?? null;
-            const categoryName =
-              (prod?.categoryName ?? snap?.Category ?? snap?.category) ?? null;
-
-            const titleFromMeta = [yearName, makeName, modelName]
-              .filter(Boolean)
-              .join(' ');
-            const title =
-              titleFromMeta ||
-              inv?.displayName ||
-              snap?.DisplayName ||
-              snap?.displayName ||
-              `Inventory #${r.inventoryId}`;
-
-            const chassis = inv?.chassisNo || null;
-            const sub = chassis
-              ? `Chassis ${chassis} • #${r.inventoryId}`
-              : `#${r.inventoryId}`;
-
-            const cover = this.pickRandom(imageMap.get(r.inventoryId)) || this.heroUrl;
-
-            return {
-              invAuc: r,
-              inventory: inv,
-              title,
-              sub,
-              imageUrl: cover,
-              auctionStartPrice: (r as any).auctionStartPrice ?? null,
-              buyNow: r.buyNowPrice ?? null,
-              reserve: r.reservePrice ?? null,
-              bidIncrement: r.bidIncrement ?? null,
-              yearName,
-              makeName,
-              modelName,
-              categoryName
-            };
-          });
-
-          const firstImg = cards.find(c => !!c.imageUrl)?.imageUrl;
-          if (firstImg) this.heroUrl = firstImg;
-
-          this.lots = cards.sort((a, b) =>
-            this.dateDesc(
-              (a.inventory?.modifiedDate || a.inventory?.createdDate) ?? null,
-              (b.inventory?.modifiedDate || b.inventory?.createdDate) ?? null
-            )
-          );
-
-          this.buildFilterOptions();
-
-          this.updateCountdowns();
-          this.startTicker();
-          this.startResync();
-          this.wireVisibility();
-        })
+        )
       )
       .subscribe({
         next: () => {
@@ -236,15 +344,152 @@ export class AuctionsDetails implements OnDestroy {
     if (this.tickHandle) clearInterval(this.tickHandle);
     this.resyncSub?.unsubscribe();
     document.removeEventListener('visibilitychange', this.onVisChange);
+
+    // clear any active cooldown timers
+    for (const c of this.lots) {
+      if (c.cooldownHandle) {
+        clearInterval(c.cooldownHandle);
+        c.cooldownHandle = null;
+      }
+    }
   }
 
-  
+  // --------- live state ----------
+
+  get isLive(): boolean {
+    if (!this.auctionStartUtcMs || !this.auctionEndUtcMs) return false;
+    const now = Date.now() + this.clockSkewMs;
+    return now >= this.auctionStartUtcMs && now <= this.auctionEndUtcMs;
+  }
+
+  // --------- favourites (replicated layout/behaviour) ----------
+
+  toggleFavourite(card: LotCard): void {
+    const userId = this.bidderAuth.currentUser?.userId ?? null;
+    if (!userId) {
+      console.warn('[fav] No logged-in bidder, ignoring favourite click.');
+      return;
+    }
+
+    const invAucId =
+      (card.invAuc as any).inventoryAuctionId ??
+      (card.invAuc as any).InventoryAuctionId ??
+      (card.invAuc as any).inventoryauctionId;
+
+    if (invAucId == null) {
+      console.warn('[fav] inventoryAuctionId missing on card.invAuc', card);
+      return;
+    }
+
+    // add / reactivate
+    if (!card.isFavourite) {
+      const existing = this.favMap.get(invAucId);
+
+      if (existing) {
+        const favId =
+          (existing as any).BidderInventoryAuctionFavoriteId ??
+          (existing as any).bidderInventoryAuctionFavoriteId ??
+          card.favouriteId;
+
+        if (!favId) {
+          console.warn(
+            '[fav] Existing favourite has no id, falling back to add().',
+            existing
+          );
+        } else {
+          this.favSvc
+            .activate({
+              FavouriteId: favId,
+              Active: true,
+              ModifiedById: userId
+            })
+            .subscribe({
+              next: ok => {
+                if (ok) {
+                  card.isFavourite = true;
+                  card.favouriteId = favId;
+                  (existing as any).Active = true;
+                  (existing as any).active = true;
+                }
+              },
+              error: e => {
+                console.error('[fav] REACTIVATE failed', e);
+              }
+            });
+
+          return;
+        }
+      }
+
+      const nowIso = new Date().toISOString();
+      const payload: Favourite = {
+        bidderInventoryAuctionFavoriteId: 0,
+        userId: userId,
+        inventoryAuctionId: invAucId,
+        createdById: userId,
+        createdDate: nowIso,
+        modifiedById: 0,
+        modifiedDate: nowIso,
+        active: true
+      };
+
+      this.favSvc.add(payload).subscribe({
+        next: id => {
+          card.isFavourite = true;
+          card.favouriteId = id;
+
+          const favStub: any = {
+            ...payload,
+            BidderInventoryAuctionFavoriteId: id,
+            bidderInventoryAuctionFavoriteId: id,
+            UserId: userId,
+            InventoryAuctionId: invAucId,
+            Active: true
+          };
+          this.favMap.set(invAucId, favStub as Favourite);
+        },
+        error: e => {
+          console.error('[fav] ADD failed', e);
+        }
+      });
+
+      return;
+    }
+
+    // deactivate
+    if (card.isFavourite && card.favouriteId != null) {
+      const payload = {
+        FavouriteId: card.favouriteId,
+        Active: false,
+        ModifiedById: userId
+      };
+
+      this.favSvc.activate(payload).subscribe({
+        next: ok => {
+          if (ok) {
+            card.isFavourite = false;
+            const existing = this.favMap.get(invAucId);
+            if (existing) {
+              (existing as any).Active = false;
+              (existing as any).active = false;
+            }
+          }
+        },
+        error: e => {
+          console.error('[fav] DEACTIVATE failed', e);
+        }
+      });
+    }
+  }
+
+  // --------- filters & sorting ----------
+
   get filteredLots(): LotCard[] {
     const q = this.q.trim().toLowerCase();
     return this.lots.filter(c => {
-      const hay = `${c.title} ${c.sub} ${c.makeName ?? ''} ${c.modelName ?? ''} ${
-        c.yearName ?? ''
-      } ${c.categoryName ?? ''}`.toLowerCase();
+      const hay = `${c.title} ${c.sub} ${c.makeName ?? ''} ${
+        c.modelName ?? ''
+      } ${c.yearName ?? ''} ${c.categoryName ?? ''}`.toLowerCase();
       if (q && !hay.includes(q)) return false;
 
       if (this.filters.make && (c.makeName ?? '') !== this.filters.make) {
@@ -308,6 +553,7 @@ export class AuctionsDetails implements OnDestroy {
     this.filters = { make: '', model: '', year: '', category: '' };
     this.sortBy = 'newest';
   }
+
   clearOne(key: keyof typeof this.filters): void {
     this.filters[key] = '';
   }
@@ -324,14 +570,14 @@ export class AuctionsDetails implements OnDestroy {
     this.options.categories = uniq(this.lots.map(l => l.categoryName));
   }
 
-  
+  // --------- countdown / timebox ----------
+
   private startTicker(): void {
     if (this.tickHandle) clearInterval(this.tickHandle);
     this.tickHandle = setInterval(() => this.updateCountdowns(), 1000);
   }
 
   private startResync(): void {
-    
     this.resyncSub = interval(120000).subscribe(() => {
       this.auctionsSvc.getTimebox(this.auctionId).subscribe({
         next: tb => {
@@ -406,7 +652,229 @@ export class AuctionsDetails implements OnDestroy {
     return `${hh}:${pad(mm)}:${pad(s)}`;
   }
 
-  
+  // --------- bidding metrics per lot ----------
+
+  private applyBidMetrics(cards: LotCard[], bids: AuctionBid[]): void {
+    const currentUserId = this.bidderAuth.currentUser?.userId ?? null;
+
+    cards.forEach(card => {
+      const lotId =
+        (card.invAuc as any).inventoryAuctionId ??
+        (card.invAuc as any).InventoryAuctionId ??
+        (card.invAuc as any).inventoryauctionId;
+
+      const lotBids = (bids || []).filter(b => {
+        const iaId =
+          (b as any).inventoryAuctionId ??
+          (b as any).InventoryAuctionId ??
+          (b as any).inventoryauctionId;
+        const aucId =
+          (b as any).auctionId ??
+          (b as any).AuctionId ??
+          (b as any).auctionID;
+        return iaId === lotId && aucId === this.auctionId;
+      });
+
+      const highestBid = lotBids.length
+        ? Math.max(
+            ...lotBids.map(b =>
+              Number(
+                (b as any).bidAmount ??
+                  (b as any).BidAmount ??
+                  (b as any).Amount ??
+                  0
+              )
+            )
+          )
+        : null;
+
+      const yourBids =
+        currentUserId != null
+          ? lotBids.filter(b => {
+              const createdBy =
+                (b as any).createdById ?? (b as any).CreatedById ?? null;
+              return createdBy === currentUserId;
+            })
+          : [];
+
+      const yourHighest = yourBids.length
+        ? Math.max(
+            ...yourBids.map(b =>
+              Number(
+                (b as any).bidAmount ??
+                  (b as any).BidAmount ??
+                  (b as any).Amount ??
+                  0
+              )
+            )
+          )
+        : null;
+
+      const startPrice = card.auctionStartPrice ?? null;
+      card.currentPrice = highestBid != null ? highestBid : startPrice;
+      card.yourMaxBid = yourHighest;
+
+      const reserve = card.reserve ?? null;
+      card.reserveMet =
+        reserve != null &&
+        reserve > 0 &&
+        card.currentPrice != null &&
+        card.currentPrice >= reserve;
+    });
+  }
+
+  private refreshAllBids(): void {
+    this.bidsSvc
+      .getList()
+      .pipe(catchError(() => of([] as AuctionBid[])))
+      .subscribe(bids => {
+        this.applyBidMetrics(this.lots, bids || []);
+      });
+  }
+
+  // --------- quick bid (per card) ----------
+
+  onQuickBid(card: LotCard): void {
+    if (!this.isLive) {
+      this.snack.open(
+        'Bidding is only available while the auction is live.',
+        'OK',
+        { duration: 3000 }
+      );
+      return;
+    }
+
+    const userId = this.bidderAuth.currentUser?.userId ?? null;
+    if (!userId) {
+      this.snack.open('Please log in as a bidder to place bids.', 'OK', {
+        duration: 3000
+      });
+      return;
+    }
+
+    if (card.bidCooldownActive || card.placingBid) {
+      return;
+    }
+
+    // compute bid amount: currentPrice + 1x increment (or fallback)
+    const inc = card.bidIncrement ?? 100;
+    const base =
+      card.currentPrice ??
+      card.auctionStartPrice ??
+      card.buyNow ??
+      card.reserve ??
+      0;
+    const amount = base + (inc > 0 ? inc : 0);
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      this.snack.open('Unable to compute a valid quick bid amount.', 'OK', {
+        duration: 3000
+      });
+      return;
+    }
+
+    // stash amount on card so executeQuickBid uses consistent value
+    (card as any).__pendingAmount = amount;
+
+    card.bidCooldownActive = true;
+    card.bidCooldownRemaining = 5;
+
+    if (card.cooldownHandle) {
+      clearInterval(card.cooldownHandle);
+      card.cooldownHandle = null;
+    }
+
+    card.cooldownHandle = setInterval(() => {
+      if (!card.bidCooldownActive) {
+        clearInterval(card.cooldownHandle);
+        card.cooldownHandle = null;
+        return;
+      }
+
+      card.bidCooldownRemaining = (card.bidCooldownRemaining || 0) - 1;
+
+      if ((card.bidCooldownRemaining || 0) <= 0) {
+        // time's up → execute bid
+        this.executeQuickBid(card);
+      }
+    }, 1000);
+  }
+
+  cancelQuickBid(card: LotCard): void {
+    if (card.cooldownHandle) {
+      clearInterval(card.cooldownHandle);
+      card.cooldownHandle = null;
+    }
+    card.bidCooldownActive = false;
+    card.bidCooldownRemaining = 0;
+    delete (card as any).__pendingAmount;
+  }
+
+  private executeQuickBid(card: LotCard): void {
+    if (card.cooldownHandle) {
+      clearInterval(card.cooldownHandle);
+      card.cooldownHandle = null;
+    }
+
+    card.bidCooldownActive = false;
+    const userId = this.bidderAuth.currentUser?.userId ?? null;
+    if (!userId) return;
+
+    const lotId =
+      (card.invAuc as any).inventoryAuctionId ??
+      (card.invAuc as any).InventoryAuctionId ??
+      (card.invAuc as any).inventoryauctionId ??
+      0;
+
+    const amount = Number((card as any).__pendingAmount ?? 0);
+    delete (card as any).__pendingAmount;
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      this.snack.open('Failed to place bid: invalid amount.', 'OK', {
+        duration: 3000
+      });
+      return;
+    }
+
+    card.placingBid = true;
+
+    const payload: any = {
+      createdById: userId,
+      active: true,
+      auctionBidId: 0,
+      auctionId: this.auctionId,
+      auctionBidStatusId: 0,
+      inventoryAuctionId: lotId,
+      bidAmount: amount,
+      auctionBidStatusName: 'Winning'
+    };
+
+    this.bidsSvc.add(payload).subscribe({
+      next: () => {
+        this.snack.open('Quick bid placed successfully.', 'OK', {
+          duration: 2500
+        });
+        this.refreshAllBids();
+      },
+      error: err => {
+        const msg =
+          err && err.error
+            ? typeof err.error === 'string'
+              ? err.error
+              : JSON.stringify(err.error)
+            : 'Unknown error';
+        this.snack.open('Failed to place bid: ' + msg, 'OK', {
+          duration: 5000
+        });
+      },
+      complete: () => {
+        card.placingBid = false;
+      }
+    });
+  }
+
+  // --------- helpers ----------
+
   private buildImagesMap(
     files: InventoryDocumentFile[]
   ): Map<number, string[]> {

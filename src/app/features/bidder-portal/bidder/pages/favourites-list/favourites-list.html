@@ -148,10 +148,14 @@
           class="fav-pill"
           [class.active]="c.isFavourite"
           (click)="toggleFavourite(c)"
-          matTooltip="{{ c.isFavourite ? 'Remove from favourites' : 'Add to favourites' }}"
+          matTooltip="{{
+            c.isFavourite ? 'Remove from favourites' : 'Add to favourites'
+          }}"
           type="button"
         >
-          <mat-icon>{{ c.isFavourite ? 'favorite' : 'favorite_border' }}</mat-icon>
+          <mat-icon>{{
+            c.isFavourite ? 'favorite' : 'favorite_border'
+          }}</mat-icon>
         </button>
       </div>
 
@@ -191,18 +195,106 @@
           </div>
         </div>
 
+        <!-- bidding metrics like auctions-details card -->
+        <div class="bid-metrics">
+          <div class="metric">
+            <div class="label">Current Bid</div>
+            <div class="value">
+              <ng-container *ngIf="c.currentPrice != null; else noCurrent">
+                {{ c.currentPrice | currency: 'USD':'symbol':'1.0-0' }}
+              </ng-container>
+              <ng-template #noCurrent>—</ng-template>
+            </div>
+          </div>
+
+          <div class="metric">
+            <div class="label">Your Max</div>
+            <div
+              class="value"
+              [class.outbid]="
+                c.yourMaxBid != null &&
+                c.currentPrice != null &&
+                c.yourMaxBid < c.currentPrice
+              "
+            >
+              <ng-container *ngIf="c.yourMaxBid != null; else noYourMax">
+                {{ c.yourMaxBid | currency: 'USD':'symbol':'1.0-0' }}
+              </ng-container>
+              <ng-template #noYourMax>—</ng-template>
+            </div>
+
+            <div class="tag" *ngIf="c.yourMaxBid != null">
+              <ng-container
+                *ngIf="
+                  c.currentPrice != null && c.yourMaxBid >= c.currentPrice;
+                  else outbidTag
+                "
+              >
+                <span class="pill winning">
+                  <span class="dot"></span>
+                  Winning
+                </span>
+              </ng-container>
+              <ng-template #outbidTag>
+                <span class="pill outbid">
+                  <span class="dot"></span>
+                  Outbid
+                </span>
+              </ng-template>
+            </div>
+          </div>
+
+          <div class="metric reserve" *ngIf="c.reserve != null">
+            <div class="label">Reserve Status</div>
+            <div
+              class="pill"
+              [class.met]="c.reserveMet"
+              [class.not-met]="!c.reserveMet"
+            >
+              <span class="dot"></span>
+              <span>{{ c.reserveMet ? 'Reserve met' : 'Reserve not met' }}</span>
+            </div>
+          </div>
+        </div>
+
         <div class="actions">
-          <a
-            class="btn primary"
-            [routerLink]="[
-              '/bidder/auctions',
-              c.auctionId,
-              c.inventoryAuctionId
-            ]"
-            matTooltip="Bid on this car"
+          <!-- quick bid button -->
+          <button
+            type="button"
+            class="btn primary quick"
+            (click)="onQuickBid(c)"
+            [disabled]="
+              c.bidCooldownActive ||
+              c.placingBid ||
+              c.countdownState !== 'live'
+            "
+            matTooltip="Place a quick bid on this lot"
           >
-            Place Bid
-          </a>
+            <mat-icon *ngIf="!c.bidCooldownActive && !c.placingBid">
+              bolt
+            </mat-icon>
+            <mat-icon *ngIf="c.placingBid">hourglass_top</mat-icon>
+
+            <span *ngIf="!c.bidCooldownActive && !c.placingBid">
+              Quick bid
+            </span>
+            <span *ngIf="c.bidCooldownActive && !c.placingBid">
+              Confirm ({{ c.bidCooldownRemaining }}s)
+            </span>
+            <span *ngIf="c.placingBid">Placing…</span>
+          </button>
+
+          <!-- cancel quick bid -->
+          <button
+            type="button"
+            class="btn ghost"
+            *ngIf="c.bidCooldownActive && !c.placingBid"
+            (click)="cancelQuickBid(c)"
+          >
+            Cancel
+          </button>
+
+          <!-- view details -->
           <a
             class="btn ghost"
             [routerLink]="[
@@ -210,9 +302,9 @@
               c.auctionId,
               c.inventoryAuctionId
             ]"
-            matTooltip="View details"
+            matTooltip="View full details & place a custom bid"
           >
-            View Details
+            View details
           </a>
         </div>
       </div>

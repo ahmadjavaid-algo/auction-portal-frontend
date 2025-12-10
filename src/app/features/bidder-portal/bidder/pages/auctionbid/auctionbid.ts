@@ -1,4 +1,4 @@
-
+// src/app/pages/bidder/auctions/auctionbid/auctionbid.ts
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -62,7 +62,7 @@ interface InspectionCheckpointRow {
   inspectionCheckpointName: string;
   inputType?: string | null;
   resultValue: string;
-  
+
   imageUrls?: string[];
 }
 
@@ -144,14 +144,12 @@ export class Auctionbid implements OnInit, OnDestroy {
   newBidAmount: number | null = null;
   placingBid = false;
 
-  
   allTypes: InspectionType[] = [];
   allCheckpoints: InspectionCheckpoint[] = [];
   reportGroups: InspectionTypeGroupForUI[] = [];
   reportLoading = false;
   reportLoaded = false;
 
-  
   selectedImageGallery: string[] = [];
   selectedImageIndex = 0;
   showImageViewer = false;
@@ -191,6 +189,16 @@ export class Auctionbid implements OnInit, OnDestroy {
   get lotBidIncrement(): number | null {
     const l: any = this.lot;
     return (l?.bidIncrement ?? l?.BidIncrement) ?? null;
+  }
+
+  /** 🔴🟢 True once current bid meets or exceeds reserve price */
+  get isReserveMet(): boolean {
+    const reserve = this.lotReservePrice;
+    const current = this.currentPrice;
+    if (reserve == null || reserve <= 0 || current == null) {
+      return false;
+    }
+    return current >= reserve;
   }
 
   ngOnInit(): void {
@@ -235,14 +243,12 @@ export class Auctionbid implements OnInit, OnDestroy {
     this.yourStatus = 'No Bids';
     this.newBidAmount = null;
 
-    
     this.reportGroups = [];
     this.reportLoaded = false;
     this.reportLoading = false;
     this.allTypes = [];
     this.allCheckpoints = [];
 
-    
     this.showImageViewer = false;
     this.selectedImageGallery = [];
     this.selectedImageIndex = 0;
@@ -427,7 +433,6 @@ export class Auctionbid implements OnInit, OnDestroy {
           this.startResync();
           this.wireVisibility();
 
-          
           this.loadInspectionReport();
 
           try {
@@ -792,8 +797,6 @@ export class Auctionbid implements OnInit, OnDestroy {
     return `${s ? fmt(s) : '—'} → ${e ? fmt(e) : '—'}`;
   }
 
-  
-
   private isActiveInspection(i: Inspection): boolean {
     const raw =
       (i as any).active ??
@@ -925,10 +928,6 @@ export class Auctionbid implements OnInit, OnDestroy {
     return groups;
   }
 
-  /**
-   * Normalize inputType for display/render logic.
-   * Includes 'image' for photo checkpoints.
-   */
   normalizeInputType(
     inputType?: string | null
   ): 'text' | 'textarea' | 'number' | 'yesno' | 'image' {
@@ -997,19 +996,11 @@ export class Auctionbid implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Parse Inspection.result into an array of image URLs.
-   * Supports:
-   * - JSON array: '["url1","url2"]'
-   * - Pipe/comma/semicolon separated: 'url1|url2' or 'url1,url2'
-   * - Single URL string
-   */
   private extractImageUrls(val?: string | null): string[] {
     if (!val) return [];
     const trimmed = val.trim();
     if (!trimmed) return [];
 
-    
     if (trimmed.startsWith('[')) {
       try {
         const parsed = JSON.parse(trimmed);
@@ -1019,11 +1010,10 @@ export class Auctionbid implements OnInit, OnDestroy {
             .filter(x => !!x);
         }
       } catch {
-        
+        // ignore
       }
     }
 
-    
     const parts = trimmed.split(/[|,;]/g).map(x => x.trim());
     const urls = parts.filter(p => !!p);
 
@@ -1044,8 +1034,6 @@ export class Auctionbid implements OnInit, OnDestroy {
 
     return urls.filter(looksLikeImage);
   }
-
-  
 
   openImageViewer(images: string[], startIndex: number = 0): void {
     if (!images || !images.length) return;
