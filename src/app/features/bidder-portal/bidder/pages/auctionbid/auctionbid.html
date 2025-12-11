@@ -125,6 +125,76 @@
         </div>
       </section>
 
+      <!-- 👇 Bid history moved directly under Your status -->
+      <section class="panel history">
+        <div class="head">
+          <div class="titles">
+            <h3>Bid history</h3>
+            <p class="sub">
+              Newest bids at the top. 
+              <span class="ai-highlight">AI bids glow in neon ✨</span>
+            </p>
+          </div>
+          <span class="badge" *ngIf="bids.length">{{ bids.length }} bids</span>
+        </div>
+
+        <div class="empty" *ngIf="bids.length === 0">
+          <mat-icon>info</mat-icon>
+          No bids yet. Be the first to make a move.
+        </div>
+
+        <div class="timeline" *ngIf="bids.length > 0">
+          <div
+            class="item"
+            *ngFor="let b of bids; let i = index"
+            [ngClass]="{ 'ai-bid': b.isAutoBid, 'top-item': i === 0 }"
+          >
+            <div class="dot" [class.top]="i === 0"></div>
+            <div class="line" *ngIf="i < bids.length - 1"></div>
+            <div class="card" [ngClass]="{ 'me': b.isMine, 'ai-card': b.isAutoBid }">
+              <div class="row1">
+                <span class="who" [class.me]="b.isMine">
+                  {{
+                    b.isMine
+                      ? (b.isAutoBid ? 'You (AI bid)' : 'You')
+                      : 'Bidder #' + (b.createdById ?? '—')
+                  }}
+                </span>
+
+                <span class="tag-ai" *ngIf="b.isAutoBid">
+                  🤖 AI bid
+                </span>
+
+                <span class="top-pill" *ngIf="i === 0">
+                  Top bid
+                </span>
+
+                <span class="amount">{{ money(b.amount) }}</span>
+              </div>
+              <div class="row2">
+                <span class="when">{{ formatDate(b.createdDate) }}</span>
+                <span class="caption">
+                  <ng-container *ngIf="b.isAutoBid; else humanCaption">
+                    AI boost: keeping this bid in the spotlight 🤖
+                  </ng-container>
+                  <ng-template #humanCaption>
+                    <ng-container *ngIf="i === 0; else olderCaption">
+                      Fresh move on the board 🔥
+                    </ng-container>
+                    <ng-template #olderCaption>
+                      Logged in the bidding battle history.
+                    </ng-template>
+                  </ng-template>
+                </span>
+                <span class="status" *ngIf="b.statusName">
+                  {{ b.statusName }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section class="panel specs">
         <h3>Vehicle details</h3>
         <div class="grid">
@@ -393,39 +463,6 @@
           </ng-template>
         </ng-container>
       </section>
-
-      <section class="panel history">
-        <div class="head">
-          <h3>Bid history</h3>
-          <span class="badge" *ngIf="bids.length">{{ bids.length }} bids</span>
-        </div>
-
-        <div class="empty" *ngIf="bids.length === 0">
-          <mat-icon>info</mat-icon>
-          No bids yet. Be the first to bid.
-        </div>
-
-        <div class="timeline" *ngIf="bids.length > 0">
-          <div class="item" *ngFor="let b of bids; let i = index">
-            <div class="dot" [class.top]="i === 0"></div>
-            <div class="line" *ngIf="i < bids.length - 1"></div>
-            <div class="card">
-              <div class="row1">
-                <span class="who" [class.me]="b.isMine">
-                  {{ b.isMine ? 'You' : 'Bidder #' + (b.createdById ?? '—') }}
-                </span>
-                <span class="amount">{{ money(b.amount) }}</span>
-              </div>
-              <div class="row2">
-                <span class="when">{{ formatDate(b.createdDate) }}</span>
-                <span class="status" *ngIf="b.statusName">
-                  {{ b.statusName }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
 
     <!-- RIGHT: bidding panel -->
@@ -452,6 +489,27 @@
             </div>
           </div>
 
+          <!-- AI bidding status strip (shows when you have any AI-bid history) -->
+          <div class="auto-strip" *ngIf="hasAutoBidHistory">
+            <div class="left">
+              <mat-icon>auto_awesome</mat-icon>
+              <div class="copy">
+                <div class="title">
+                  AI bidding in effect
+                  <span *ngIf="auctionState === 'live'"> (live)</span>
+                  <span *ngIf="auctionState === 'scheduled'"> (queued)</span>
+                </div>
+                <div class="sub">
+                  AlgoX AI will automatically nudge your bid whenever you're
+                  challenged, up to your maximum.
+                </div>
+              </div>
+            </div>
+            <div class="max" *ngIf="autoBidCeiling != null">
+              Max: <strong>{{ money(autoBidCeiling) }}</strong>
+            </div>
+          </div>
+
           <div class="input-row">
             <label for="bidInput">Your bid</label>
             <div class="input-wrap">
@@ -470,6 +528,41 @@
               <span *ngIf="!lotBidIncrement">
                 Enter an amount higher than current price.
               </span>
+            </div>
+          </div>
+
+          <!-- AI bidding controls -->
+          <div class="auto-row">
+            <button
+              type="button"
+              class="auto-toggle"
+              [class.on]="autoBidEnabled"
+              (click)="toggleAutoBid()"
+              [disabled]="!isLive || placingBid"
+            >
+              <span class="switch"></span>
+              <div class="labels">
+                <div class="label-main">Enable AI bidding</div>
+                <div class="label-sub">
+                  Let AlgoX AI keep you in the lead automatically up to your max.
+                </div>
+              </div>
+            </button>
+
+            <div class="auto-input" *ngIf="autoBidEnabled">
+              <label for="autoMax">AI max budget</label>
+              <div class="input-wrap">
+                <span class="prefix">$</span>
+                <input
+                  id="autoMax"
+                  type="number"
+                  [(ngModel)]="autoBidMaxAmount"
+                  [disabled]="!isLive || placingBid"
+                />
+              </div>
+              <div class="hint">
+                AI bidding will never go beyond this amount.
+              </div>
             </div>
           </div>
 

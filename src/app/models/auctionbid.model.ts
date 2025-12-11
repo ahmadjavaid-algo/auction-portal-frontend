@@ -13,4 +13,6 @@ export interface AuctionBid {
   modifiedById?: number | null;
   modifiedDate?: string | null;
   active?: boolean | null;
+  isAutoBid?: boolean | null;      
+  autoBidAmount?: number | null;  
 }

@@ -1,4 +1,3 @@
-
 import {
   Component,
   ElementRef,
@@ -9,7 +8,7 @@ import {
   OnDestroy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
@@ -19,6 +18,7 @@ import {
   AdminNotificationHubService,
   AdminNotificationItem
 } from '../../../../services/admin-notification-hub.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-admin-layout',
@@ -40,10 +40,14 @@ export class AdminLayout implements OnInit, OnDestroy {
   notifications: AdminNotificationItem[] = [];
   unreadCount = 0;
 
+  /** Current page title shown in topbar (left side) */
+  currentPageTitle = 'Dashboard';
+
   @ViewChild('dropdown') dropdownRef!: ElementRef;
   @ViewChild('notifHost') notifHostRef!: ElementRef;
 
-  private notifSub?: any;
+  private notifSub?: Subscription;
+  private routeSub?: Subscription;
 
   get displayName(): string {
     const u = this.auth.currentUser;
@@ -60,10 +64,53 @@ export class AdminLayout implements OnInit, OnDestroy {
         this.unreadCount = list.filter(n => !n.read).length;
       });
     }
+
+    // Set initial title
+    this.updatePageTitleFromUrl(this.router.url);
+
+    // Update title on navigation
+    this.routeSub = this.router.events.subscribe(ev => {
+      if (ev instanceof NavigationEnd) {
+        this.updatePageTitleFromUrl(ev.urlAfterRedirects || ev.url);
+      }
+    });
   }
 
   ngOnDestroy(): void {
     this.notifSub?.unsubscribe();
+    this.routeSub?.unsubscribe();
+  }
+
+  private updatePageTitleFromUrl(url: string): void {
+    const clean = (url || '').split('?')[0].toLowerCase();
+
+    if (clean.includes('/admin/users')) {
+      this.currentPageTitle = 'Users';
+    } else if (clean.includes('/admin/roles')) {
+      this.currentPageTitle = 'Roles';
+    } else if (clean.includes('/admin/inspectors')) {
+      this.currentPageTitle = 'Inspectors';
+    } else if (clean.includes('/admin/bidders')) {
+      this.currentPageTitle = 'Bidders';
+    } else if (clean.includes('/admin/emails')) {
+      this.currentPageTitle = 'Emails';
+    } else if (clean.includes('/admin/make')) {
+      this.currentPageTitle = 'Product Configuration';
+    } else if (clean.includes('/admin/products')) {
+      this.currentPageTitle = 'Products';
+    } else if (clean.includes('/admin/inventory')) {
+      this.currentPageTitle = 'Inventory';
+    } else if (clean.includes('/admin/auctions')) {
+      this.currentPageTitle = 'Auctions';
+    } else if (clean.includes('/admin/inspection')) {
+      this.currentPageTitle = 'Inspection';
+    } else if (clean.includes('/admin/change-password')) {
+      this.currentPageTitle = 'Change Password';
+    } else if (clean.includes('/admin/dashboard')) {
+      this.currentPageTitle = 'Dashboard';
+    } else {
+      this.currentPageTitle = 'Admin';
+    }
   }
 
   toggleDropdown(): void {
@@ -71,7 +118,9 @@ export class AdminLayout implements OnInit, OnDestroy {
     if (this.dropdownOpen) this.notifOpen = false;
   }
 
-  toggleSidebar(): void { this.sidebarCollapsed = !this.sidebarCollapsed; }
+  toggleSidebar(): void {
+    this.sidebarCollapsed = !this.sidebarCollapsed;
+  }
 
   toggleNotifications(): void {
     this.notifOpen = !this.notifOpen;
@@ -86,11 +135,9 @@ export class AdminLayout implements OnInit, OnDestroy {
     this.adminNotifHub.clearAll();
   }
 
-  
   onNotificationClick(n: AdminNotificationItem): void {
     this.notifOpen = false;
 
-    
     if (n.auctionId && n.inventoryAuctionId) {
       this.router.navigate(['/admin/auctions', n.auctionId]);
       return;

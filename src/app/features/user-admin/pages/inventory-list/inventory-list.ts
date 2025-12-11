@@ -240,7 +240,7 @@ export class InventoryList {
         width: '680px',
         data: {
           count: ids.length,
-          inventoryIds: ids          // 🔐 needed for inspection-complete rule
+          inventoryIds: ids          
         }
       }
     );
