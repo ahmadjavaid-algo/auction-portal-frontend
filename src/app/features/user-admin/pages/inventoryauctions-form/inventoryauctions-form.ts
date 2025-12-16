@@ -1,4 +1,4 @@
-// src/app/pages/admin/inventory/inventoryauctions-form/inventoryauctions-form.ts
+
 import { Component, Inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -87,7 +87,7 @@ export class InventoryauctionsForm implements OnInit {
   allTypes: InspectionType[] = [];
   allCheckpoints: InspectionCheckpoint[] = [];
 
-  /** Map: inventoryId -> inspection summary */
+  
   inspectionSummaryByInventory: Record<number, InventoryInspectionSummary> = {};
 
   constructor(
@@ -120,7 +120,7 @@ export class InventoryauctionsForm implements OnInit {
     this.loadAuctions();
     this.loadInventoriesWithInspectionStatus();
 
-    // patch for edit
+    
     if (this.mode === 'edit' && this.data.initialData) {
       const r = this.data.initialData;
       this.form.patchValue({
@@ -139,7 +139,7 @@ export class InventoryauctionsForm implements OnInit {
     }
   }
 
-  // ----------------------- LOAD DATA -----------------------
+  
 
   private loadAuctions(): void {
     this.loadingAuctions = true;
@@ -169,13 +169,13 @@ export class InventoryauctionsForm implements OnInit {
         this.allCheckpoints = checkpoints ?? [];
 
         if (!this.inventories.length || !this.allTypes.length || !this.allCheckpoints.length) {
-          // nothing to compute (will treat as Not Started)
+          
           this.loadingInventories = false;
           this.loadingInspectionMeta = false;
           return;
         }
 
-        // For each inventory, load its inspections and compute summary.
+        
         const calls = this.inventories.map(inv =>
           this.inspectionsSvc.getByInventory(inv.inventoryId).pipe(
             catchError(() => of([] as Inspection[]))
@@ -207,7 +207,7 @@ export class InventoryauctionsForm implements OnInit {
     });
   }
 
-  // ----------------------- INSPECTION COMPLETION LOGIC -----------------------
+  
 
   private isActiveInspection(i: Inspection): boolean {
     const raw =
@@ -252,7 +252,7 @@ export class InventoryauctionsForm implements OnInit {
       return !!urls.length;
     }
 
-    // Non-image (text, textarea, number, yesno)
+    
     const first = inspectionsForCheckpoint[0];
     return this.isAnswered(first?.result ?? '');
   }
@@ -323,7 +323,7 @@ export class InventoryauctionsForm implements OnInit {
     };
   }
 
-  // ----------------------- HELPERS USED BY TEMPLATE / SUBMIT -----------------------
+  
 
   inventoryLabel(i: any): string {
     return i?.displayName
@@ -353,7 +353,7 @@ export class InventoryauctionsForm implements OnInit {
     return this.getInventoryInspectionStatus(inventoryId) === 'Completed';
   }
 
-  // ----------------------- ACTIONS -----------------------
+  
 
   onSubmit(): void {
     if (this.form.invalid) return;
@@ -363,9 +363,9 @@ export class InventoryauctionsForm implements OnInit {
     const selectedInventoryId = v.inventoryId as number | null;
     const originalInventoryId = this.data.initialData?.inventoryId ?? null;
 
-    // Enforce inspection completion rule:
-    // - Always for create
-    // - For edit, enforce only if the inventory is being changed (treated as "adding" a new vehicle to auction)
+    
+    
+    
     const inventoryChanged =
       this.mode === 'create' ||
       (!!selectedInventoryId && selectedInventoryId !== originalInventoryId);

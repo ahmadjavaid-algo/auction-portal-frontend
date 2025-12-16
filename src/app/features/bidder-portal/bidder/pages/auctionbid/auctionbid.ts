@@ -1,4 +1,4 @@
-// src/app/pages/bidder/auctions/auctionbid/auctionbid.ts
+
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -52,9 +52,9 @@ type BidView = {
   createdById: number | null;
   isMine: boolean;
   statusName: string | null | undefined;
-  /** whether this row was an AI-powered bid (stored as IsAutoBid in DB) */
+  
   isAutoBid: boolean;
-  /** AI max ceiling (from AutoBidAmount in DB) */
+  
   autoBidAmount: number | null;
 };
 
@@ -148,10 +148,10 @@ export class Auctionbid implements OnInit, OnDestroy {
   newBidAmount: number | null = null;
   placingBid = false;
 
-  /** UI state for AI bidding (stored as AutoBid in DB) */
+  
   autoBidEnabled = false;
-  autoBidMaxAmount: number | null = null; // user-entered ceiling for this bid
-  autoBidCeiling: number | null = null; // highest max seen from history for this lot/user
+  autoBidMaxAmount: number | null = null; 
+  autoBidCeiling: number | null = null; 
 
   allTypes: InspectionType[] = [];
   allCheckpoints: InspectionCheckpoint[] = [];
@@ -200,7 +200,7 @@ export class Auctionbid implements OnInit, OnDestroy {
     return (l?.bidIncrement ?? l?.BidIncrement) ?? null;
   }
 
-  /** 🔴🟢 True once current bid meets or exceeds reserve price */
+  
   get isReserveMet(): boolean {
     const reserve = this.lotReservePrice;
     const current = this.currentPrice;
@@ -210,7 +210,7 @@ export class Auctionbid implements OnInit, OnDestroy {
     return current >= reserve;
   }
 
-  /** Convenience: does this user have *any* AI-bid history on this lot? */
+  
   get hasAutoBidHistory(): boolean {
     return this.autoBidCeiling != null;
   }
@@ -257,7 +257,7 @@ export class Auctionbid implements OnInit, OnDestroy {
     this.yourStatus = 'No Bids';
     this.newBidAmount = null;
 
-    // Reset AI bidding UI state but keep historical ceiling once loaded.
+    
     this.autoBidEnabled = false;
     this.autoBidMaxAmount = null;
     this.autoBidCeiling = null;
@@ -457,8 +457,8 @@ export class Auctionbid implements OnInit, OnDestroy {
             .sort((a, b) => {
               const ta = a.createdDate ? Date.parse(a.createdDate) : 0;
               const tb = b.createdDate ? Date.parse(b.createdDate) : 0;
-              if (tb !== ta) return tb - ta; // newest first
-              return (b.auctionBidId ?? 0) - (a.auctionBidId ?? 0); // tie-breaker
+              if (tb !== ta) return tb - ta; 
+              return (b.auctionBidId ?? 0) - (a.auctionBidId ?? 0); 
             });
 
           this.recomputeBidMetrics();
@@ -593,7 +593,7 @@ export class Auctionbid implements OnInit, OnDestroy {
     this.currentPrice = highestBid != null ? highestBid : startPrice ?? null;
     this.yourMaxBid = yourHighest;
 
-    // derive your AI-bid ceiling from history (stored as AutoBid)
+    
     const yourAutoBids = yourBids.filter(
       b => b.isAutoBid && (b.autoBidAmount != null || b.amount != null)
     );
@@ -607,7 +607,7 @@ export class Auctionbid implements OnInit, OnDestroy {
         )
       : null;
 
-    // Pre-fill AI-bid max from your ceiling the first time we compute it
+    
     if (this.autoBidCeiling != null && this.autoBidMaxAmount == null) {
       this.autoBidMaxAmount = this.autoBidCeiling;
     }
@@ -639,7 +639,7 @@ export class Auctionbid implements OnInit, OnDestroy {
     this.newBidAmount = next;
   }
 
-  /** Toggle the AI bidding UI switch (backed by AutoBid fields in DB) */
+  
   toggleAutoBid(): void {
     this.autoBidEnabled = !this.autoBidEnabled;
 
@@ -692,7 +692,7 @@ export class Auctionbid implements OnInit, OnDestroy {
       return;
     }
 
-    // validate AI max if enabled (stored in AutoBid fields)
+    
     const isAutoBid = this.autoBidEnabled;
     let autoMax: number | null = null;
 
@@ -741,7 +741,7 @@ export class Auctionbid implements OnInit, OnDestroy {
       inventoryAuctionId: this.lotId ?? 0,
       bidAmount: amount,
       auctionBidStatusName: 'Winning',
-      // AI bidding fields (mapped to IsAutoBid / AutoBidAmount in DB)
+      
       isAutoBid: isAutoBid,
       autoBidAmount: isAutoBid ? autoMax : null
     };
@@ -834,7 +834,7 @@ export class Auctionbid implements OnInit, OnDestroy {
             .sort((a, b) => {
               const ta = a.createdDate ? Date.parse(a.createdDate) : 0;
               const tb = b.createdDate ? Date.parse(b.createdDate) : 0;
-              if (tb !== ta) return tb - ta; // newest first
+              if (tb !== ta) return tb - ta; 
               return (b.auctionBidId ?? 0) - (a.auctionBidId ?? 0);
             });
 
@@ -1138,7 +1138,7 @@ export class Auctionbid implements OnInit, OnDestroy {
             .filter(x => !!x);
         }
       } catch {
-        // ignore
+        
       }
     }
 

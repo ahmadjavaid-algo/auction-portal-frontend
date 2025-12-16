@@ -40,7 +40,7 @@ export class AdminLayout implements OnInit, OnDestroy {
   notifications: AdminNotificationItem[] = [];
   unreadCount = 0;
 
-  /** Current page title shown in topbar (left side) */
+  
   currentPageTitle = 'Dashboard';
 
   @ViewChild('dropdown') dropdownRef!: ElementRef;
@@ -65,10 +65,10 @@ export class AdminLayout implements OnInit, OnDestroy {
       });
     }
 
-    // Set initial title
+    
     this.updatePageTitleFromUrl(this.router.url);
 
-    // Update title on navigation
+    
     this.routeSub = this.router.events.subscribe(ev => {
       if (ev instanceof NavigationEnd) {
         this.updatePageTitleFromUrl(ev.urlAfterRedirects || ev.url);

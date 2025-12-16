@@ -1,4 +1,4 @@
-// src/app/pages/admin/inventory/add-to-auction/add-to-auction.dialog.ts
+
 import { Component, Inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
@@ -69,7 +69,7 @@ export class AddToAuctionDialog implements OnInit {
   auctions: Auction[] = [];
   loadingAuctions = false;
 
-  // inspection rule flags (for the whole selection)
+  
   loadingInspection = false;
   inspectionChecked = false;
   allSelectionInspectionCompleted = true;
@@ -95,7 +95,7 @@ export class AddToAuctionDialog implements OnInit {
     @Inject(MAT_DIALOG_DATA)
     public data: {
       count: number;
-      /** IDs of inventories being added in bulk */
+      
       inventoryIds: number[];
     }
   ) {}
@@ -114,7 +114,7 @@ export class AddToAuctionDialog implements OnInit {
     this.checkInspectionCompletionForSelection();
   }
 
-  // ---------------- AUCTIONS ----------------
+  
 
   private loadAuctions(): void {
     this.loadingAuctions = true;
@@ -128,7 +128,7 @@ export class AddToAuctionDialog implements OnInit {
     });
   }
 
-  // --------------- INSPECTION COMPLETION LOGIC (mirrors inventoryauctions-form) ---------------
+  
 
   private isActiveInspection(i: Inspection): boolean {
     const raw =
@@ -232,8 +232,8 @@ export class AddToAuctionDialog implements OnInit {
   private checkInspectionCompletionForSelection(): void {
     const ids = this.data?.inventoryIds ?? [];
     if (!ids.length) {
-      // If caller didn't pass IDs, we can't enforce per-vehicle safely;
-      // treat as not completed to be strict (you can relax this if needed).
+      
+      
       this.inspectionChecked = true;
       this.allSelectionInspectionCompleted = false;
       this.completedCount = 0;
@@ -265,7 +265,7 @@ export class AddToAuctionDialog implements OnInit {
         const cp = cps ?? [];
 
         if (!t.length || !cp.length) {
-          // same behaviour as inventoryauctions-form: treat as Not Started
+          
           this.allSelectionInspectionCompleted = false;
           this.completedCount = 0;
           return;
@@ -304,7 +304,7 @@ export class AddToAuctionDialog implements OnInit {
     });
   }
 
-  // --------------- ACTIONS ---------------
+  
 
   submit(): void {
     if (this.form.invalid) return;

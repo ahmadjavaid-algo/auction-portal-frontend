@@ -8,7 +8,7 @@ export interface InventoryDocumentFile {
   documentDisplayName?: string | null;
   documentName?: string | null;
   documentUrl?: string | null;
-
+  DocumentThumbnailUrl?: string | null;
   
   createdById?: number | null;
   createdDate?: string | null;

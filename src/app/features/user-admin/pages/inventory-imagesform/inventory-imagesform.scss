@@ -1,8 +1,6 @@
-
 :host {
   display: block;
 }
-
 
 :host ::ng-deep .mdc-dialog__surface,
 :host ::ng-deep .mat-mdc-dialog-surface {
@@ -10,16 +8,22 @@
   background: var(--surface, #fff) !important;
 }
 
-
 .dialog-shell {
   padding: 20px 22px;
   background: var(--surface);
   border-radius: 22px;
 
   .dialog-title {
-    display: flex; align-items: center; gap: 8px;
-    margin: 0 0 12px; font-weight: 800; color: #0f172a;
-    mat-icon { color: var(--brand-700); }
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 12px;
+    font-weight: 800;
+    color: #0f172a;
+
+    mat-icon {
+      color: var(--brand-700);
+    }
   }
 }
 
@@ -27,50 +31,113 @@
   display: grid;
   grid-template-columns: minmax(220px, 320px);
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
-.type-field { width: 100%; }
+.type-field {
+  width: 100%;
+}
+
+.hint {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: #6b7280;
+}
 
 .file-row {
-  display: flex; align-items: flex-start; gap: 12px; margin: 8px 0 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 8px 0 16px;
 
   .file-btn {
-    input[type="file"] { display: none; }
+    input[type='file'] {
+      display: none;
+    }
   }
 
   .file-list {
-    display: flex; flex-wrap: wrap; gap: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 
     .chip {
-      display: inline-flex; align-items: center; gap: 8px;
-      background: #eef2ff; color: #3730a3; border: 1px solid #e0e7ff;
-      padding: 6px 10px; border-radius: 999px;
-      mat-icon { font-size: 18px; width: 18px; height: 18px; }
-      &.linked { background: rgba(34,197,94,.12); border-color: rgba(34,197,94,.35); color: #166534; }
-      &.failed { background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.35); color: #7f1d1d; }
-      .name { font-weight: 600; }
-      .msg { font-size: 12px; opacity: .85; }
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #eef2ff;
+      color: #3730a3;
+      border: 1px solid #e0e7ff;
+      padding: 6px 10px;
+      border-radius: 999px;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+
+      &.linked {
+        background: rgba(34, 197, 94, 0.12);
+        border-color: rgba(34, 197, 94, 0.35);
+        color: #166534;
+      }
+
+      &.failed {
+        background: rgba(239, 68, 68, 0.12);
+        border-color: rgba(239, 68, 68, 0.35);
+        color: #7f1d1d;
+      }
+
+      .name {
+        font-weight: 600;
+      }
+
+      .msg {
+        font-size: 12px;
+        opacity: 0.85;
+      }
     }
   }
 }
 
-
 .btn {
-  display: inline-flex; align-items: center; gap: 8px; font-weight: 800; border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  border-radius: 12px;
 
   &.gradient {
-    background: linear-gradient(135deg, var(--primary-500, #3461ff), var(--teal-500, #06b6d4)) !important;
+    background: linear-gradient(
+        135deg,
+        var(--primary-500, #3461ff),
+        var(--teal-500, #06b6d4)
+      ) !important;
     color: #fff !important;
-    box-shadow: var(--shadow-1, 0 6px 16px rgba(52,97,255,.25));
-    transition: transform .15s ease, box-shadow .2s ease, filter .2s ease;
+    box-shadow: var(
+      --shadow-1,
+      0 6px 16px rgba(52, 97, 255, 0.25)
+    );
+    transition: transform 0.15s ease, box-shadow 0.2s ease,
+      filter 0.2s ease;
 
-    mat-icon { color: #fff !important; }
+    mat-icon {
+      color: #fff !important;
+    }
 
-    &:hover { transform: translateY(-1px); filter: brightness(1.05); box-shadow: var(--shadow-2, 0 8px 20px rgba(52,97,255,.35)); }
+    &:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+      box-shadow: var(
+        --shadow-2,
+        0 8px 20px rgba(52, 97, 255, 0.35)
+      );
+    }
+
     &:disabled {
-      opacity: .55 !important;
-      filter: grayscale(.25);
+      opacity: 0.55 !important;
+      filter: grayscale(0.25);
       cursor: not-allowed;
       box-shadow: none;
     }
@@ -85,11 +152,16 @@
 }
 
 .actions {
-  display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
 }
 
-mat-progress-bar { margin-top: 12px; border-radius: 8px; }
-
+mat-progress-bar {
+  margin-top: 12px;
+  border-radius: 8px;
+}
 
 .file-btn {
   @extend .btn;

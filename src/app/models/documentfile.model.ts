@@ -6,7 +6,7 @@ export interface DocumentFile {
   DocumentTypeName?: string | null;
   DocumentUrl?: string | null;
   DocumentName: string;
-  
+  DocumentThumbnailUrl?: string | null;
   createdById?: number | null;
   createdDate?: string | null;
   modifiedById?: number | null;

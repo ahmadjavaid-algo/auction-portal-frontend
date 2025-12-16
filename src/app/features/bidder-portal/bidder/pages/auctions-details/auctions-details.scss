@@ -1,4 +1,4 @@
-/* src/app/pages/bidder/auctions/auctions-details/auctions-details.scss */
+
 :host {
   --algo-bg-0: #0d0716;
   --algo-bg-1: #1a0930;
@@ -315,7 +315,7 @@
       }
     }
 
-    /* FAVOURITE BUTTON – copied from allauctions-details */
+    
     .fav-btn {
       position: absolute;
       right: 10px;
@@ -392,7 +392,7 @@
         font-weight: 900;
       }
 
-      /* current bid styling - make it pop as a chip */
+      
       .num.current {
         padding: 8px 10px;
         border-radius: 14px;

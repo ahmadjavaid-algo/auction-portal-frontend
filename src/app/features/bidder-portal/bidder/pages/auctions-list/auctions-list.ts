@@ -109,23 +109,58 @@ export class AuctionsList {
 
   
 
-  private buildImagesMap(files: InventoryDocumentFile[]): Map<number, string[]> {
-    const m = new Map<number, string[]>();
-    const isImage = (url?: string | null, name?: string | null) => {
-      const s = (url || name || '').toLowerCase();
-      return ['.jpg', '.jpeg', '.png', 'jpg', 'jpeg', 'png'].some(x => s.endsWith(x));
-    };
+ private buildImagesMap(
+  files: InventoryDocumentFile[]
+): Map<number, string[]> {
+  const m = new Map<number, string[]>();
 
-    (files || [])
-      .filter(f => (f.active ?? true) && !!f.inventoryId && !!f.documentUrl && isImage(f.documentUrl!, f.documentName))
-      .forEach(f => {
-        const list = m.get(f.inventoryId) || [];
-        list.push(f.documentUrl!);
-        m.set(f.inventoryId, list);
-      });
+  const isImg = (u?: string | null, n?: string | null) => {
+    const s = (u || n || '').toLowerCase();
+    return ['.jpg', '.jpeg', '.png', 'jpg', 'jpeg', 'png'].some(x =>
+      s.endsWith(x)
+    );
+  };
 
-    return m;
-  }
+  (files || [])
+    .filter(f => {
+      const active =
+        (f as any).active ?? (f as any).Active ?? true;
+
+      const invId =
+        (f as any).inventoryId ?? (f as any).InventoryId;
+
+      
+      const thumbUrl =
+        (f as any).documentThumbnailUrl ??
+        (f as any).DocumentThumbnailUrl ??
+        null;
+
+      const name =
+        (f as any).documentName ??
+        (f as any).DocumentName ??
+        null;
+
+      return active && !!invId && !!thumbUrl && isImg(thumbUrl, name);
+    })
+    .forEach(f => {
+      const invId =
+        (f as any).inventoryId ?? (f as any).InventoryId;
+
+      const thumbUrl =
+        (f as any).documentThumbnailUrl ??
+        (f as any).DocumentThumbnailUrl ??
+        null;
+
+      if (!thumbUrl) return; 
+
+      const list = m.get(invId) || [];
+      list.push(thumbUrl);
+      m.set(invId, list);
+    });
+
+  return m;
+}
+
 
   private pickRandom(arr: string[]): string | undefined {
     if (!arr?.length) return undefined;

@@ -54,11 +54,11 @@ export class Dashboard {
   slides: Slide[] = [];
   index = 0;
 
-  // --- Auto slideshow state ---
+  
   private autoTimer: any = null;
-  private readonly autoIntervalMs = 3000; // 6s per slide
+  private readonly autoIntervalMs = 3000; 
   isAnimating = false;
-  private readonly animationDurationMs = 700; // should match CSS animation
+  private readonly animationDurationMs = 700; 
 
   private fallbackHero =
     'https://carwow-uk-wp-3.imgix.net/GT-R-driving-front.jpg';
@@ -85,7 +85,7 @@ export class Dashboard {
         switchMap(({ auctions, files }) => {
           const active = (auctions || []).filter(a => a.active ?? true);
 
-          // newest first
+          
           const recent = [...active]
             .sort((a, b) =>
               this.dateDesc(
@@ -145,14 +145,14 @@ export class Dashboard {
     this.clearAutoRotation();
   }
 
-  // --- Auto slideshow helpers ---
+  
 
   private startAutoRotation(): void {
     this.clearAutoRotation();
     if (this.slides.length <= 1) return;
 
     this.autoTimer = setInterval(() => {
-      // auto-advance without resetting timer again
+      
       this.advanceSlide(false, 1);
     }, this.autoIntervalMs);
   }
@@ -165,7 +165,7 @@ export class Dashboard {
   }
 
   private playAnimation(): void {
-    // restart CSS animation cleanly
+    
     this.isAnimating = false;
     setTimeout(() => {
       this.isAnimating = true;
@@ -179,7 +179,7 @@ export class Dashboard {
     if (!this.slides.length) return;
 
     if (userTriggered) {
-      // user interaction: reset timer so they get a fresh interval
+      
       this.clearAutoRotation();
     }
 
@@ -192,7 +192,7 @@ export class Dashboard {
     }
   }
 
-  // --- Existing helpers ---
+  
 
   private isImageFile(f: InventoryDocumentFile): boolean {
     const url = (f.documentUrl || '').toLowerCase();
@@ -257,7 +257,7 @@ export class Dashboard {
     return `url('${url}')`;
   }
 
-  // --- Navigation exposed to template ---
+  
 
   prev(): void {
     this.advanceSlide(true, -1);

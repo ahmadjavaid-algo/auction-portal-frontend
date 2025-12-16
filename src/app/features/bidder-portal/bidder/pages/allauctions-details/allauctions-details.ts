@@ -1,4 +1,4 @@
-// src/app/pages/bidder/auctions/allauctions-details/allauctions-details.ts
+
 import { Component, inject, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -32,17 +32,17 @@ import { AuctionBidService } from '../../../../../services/auctionbids.service';
 import { BidderAuthService } from '../../../../../services/bidderauth';
 
 type LotCard = {
-  // identity
+  
   inventoryAuctionId: number;
   auctionId: number;
   auctionName: string | null;
 
-  // display
+  
   title: string;
   sub: string;
   imageUrl: string;
 
-  // pricing / meta
+  
   auctionStartPrice?: number | null;
   buyNow?: number | null;
   reserve?: number | null;
@@ -52,22 +52,22 @@ type LotCard = {
   modelName?: string | null;
   categoryName?: string | null;
 
-  // favourites
+  
   isFavourite?: boolean;
   favouriteId?: number | null;
 
-  // live state / countdown
+  
   countdownText?: string;
   countdownState?: 'scheduled' | 'live' | 'ended';
 
-  // bidding metrics
+  
   currentPrice?: number | null;
   yourMaxBid?: number | null;
   reserveMet?: boolean;
   isLeading?: boolean;
   minNextBid?: number | null;
 
-  // quick-bid UX
+  
   bidCooldownActive?: boolean;
   bidCooldownRemaining?: number;
   cooldownHandle?: any;
@@ -162,7 +162,7 @@ export class AllauctionsDetails implements OnDestroy {
           const auctionMap = new Map<number, Auction>();
           (auctions || []).forEach(a => auctionMap.set(a.auctionId, a));
 
-          // favourites map – only for current user
+          
           this.favMap.clear();
           const favsForUserAll = (favs || []).filter(f => {
             const uid =
@@ -191,7 +191,7 @@ export class AllauctionsDetails implements OnDestroy {
           const prodMap = new Map<number, Product>();
           (products || []).forEach(p => prodMap.set(p.productId, p));
 
-          // only active rows
+          
           const rows = (invAucs || []).filter(x => x.active ?? true);
 
           const cards: LotCard[] = rows.map(r => {
@@ -279,7 +279,7 @@ export class AllauctionsDetails implements OnDestroy {
           const firstImg = cards.find(c => !!c.imageUrl)?.imageUrl;
           if (firstImg) this.heroUrl = firstImg;
 
-          // apply bidding metrics: current bid, your max, reserveMet, isLeading, minNextBid
+          
           this.applyBidMetrics(cards, bids || []);
 
           this.lots = cards;
@@ -315,7 +315,7 @@ export class AllauctionsDetails implements OnDestroy {
     this.resyncSub?.unsubscribe();
     document.removeEventListener('visibilitychange', this.onVisChange);
 
-    // clear any active cooldown timers
+    
     for (const c of this.lots) {
       if (c.cooldownHandle) {
         clearInterval(c.cooldownHandle);
@@ -324,7 +324,7 @@ export class AllauctionsDetails implements OnDestroy {
     }
   }
 
-  // ---------- favourites ----------
+  
 
   toggleFavourite(card: LotCard): void {
     const userId = this.bidderAuth.currentUser?.userId ?? null;
@@ -333,7 +333,7 @@ export class AllauctionsDetails implements OnDestroy {
       return;
     }
 
-    // add / reactivate
+    
     if (!card.isFavourite) {
       const existing = this.favMap.get(card.inventoryAuctionId);
 
@@ -408,7 +408,7 @@ export class AllauctionsDetails implements OnDestroy {
       return;
     }
 
-    // deactivate
+    
     if (card.isFavourite && card.favouriteId != null) {
       const payload = {
         FavouriteId: card.favouriteId,
@@ -434,7 +434,7 @@ export class AllauctionsDetails implements OnDestroy {
     }
   }
 
-  // ---------- QUICK BID (replicated behaviour) ----------
+  
 
   onQuickBid(card: LotCard): void {
     if (card.countdownState !== 'live') {
@@ -456,7 +456,7 @@ export class AllauctionsDetails implements OnDestroy {
 
     if (card.bidCooldownActive || card.placingBid) return;
 
-    // compute minNextBid if not set
+    
     if (card.minNextBid == null) {
       const inc = card.bidIncrement ?? 100;
       const base =
@@ -576,7 +576,7 @@ export class AllauctionsDetails implements OnDestroy {
       });
   }
 
-  // ---------- filters & sorting ----------
+  
 
   get filteredLots(): LotCard[] {
     const q = this.q.trim().toLowerCase();
@@ -643,7 +643,7 @@ export class AllauctionsDetails implements OnDestroy {
         return list.sort((a, b) => start(a) - start(b));
       }
       default:
-        return list; // keep default ordering
+        return list; 
     }
   }
 
@@ -672,7 +672,7 @@ export class AllauctionsDetails implements OnDestroy {
     this.options.categories = uniq(this.lots.map(l => l.categoryName));
   }
 
-  // ---------- countdown / timeboxes ----------
+  
 
   private startTicker(): void {
     if (this.tickHandle) clearInterval(this.tickHandle);
@@ -772,7 +772,7 @@ export class AllauctionsDetails implements OnDestroy {
     return `${hh}:${pad(mm)}:${pad(s)}`;
   }
 
-  // ---------- bidding metrics (replicating auctions-details logic) ----------
+  
 
   private applyBidMetrics(cards: LotCard[], bids: AuctionBid[]): void {
     const currentUserId = this.bidderAuth.currentUser?.userId ?? null;
@@ -857,33 +857,60 @@ export class AllauctionsDetails implements OnDestroy {
     });
   }
 
-  // ---------- helpers ----------
+  
 
-  private buildImagesMap(
-    files: InventoryDocumentFile[]
-  ): Map<number, string[]> {
-    const m = new Map<number, string[]>();
-    const isImg = (u?: string | null, n?: string | null) => {
-      const s = (u || n || '').toLowerCase();
-      return ['.jpg', '.jpeg', '.png', 'jpg', 'jpeg', 'png'].some(x =>
-        s.endsWith(x)
-      );
-    };
-    (files || [])
-      .filter(
-        f =>
-          (f.active ?? true) &&
-          !!f.inventoryId &&
-          !!f.documentUrl &&
-          isImg(f.documentUrl!, f.documentName)
-      )
-      .forEach(f => {
-        const list = m.get(f.inventoryId) || [];
-        list.push(f.documentUrl!);
-        m.set(f.inventoryId, list);
-      });
-    return m;
-  }
+private buildImagesMap(
+  files: InventoryDocumentFile[]
+): Map<number, string[]> {
+  const m = new Map<number, string[]>();
+
+  const isImg = (u?: string | null, n?: string | null) => {
+    const s = (u || n || '').toLowerCase();
+    return ['.jpg', '.jpeg', '.png', 'jpg', 'jpeg', 'png'].some(x =>
+      s.endsWith(x)
+    );
+  };
+
+  (files || [])
+    .filter(f => {
+      const active =
+        (f as any).active ?? (f as any).Active ?? true;
+
+      const invId =
+        (f as any).inventoryId ?? (f as any).InventoryId;
+
+      
+      const thumbUrl =
+        (f as any).documentThumbnailUrl ??
+        (f as any).DocumentThumbnailUrl ??
+        null;
+
+      const name =
+        (f as any).documentName ??
+        (f as any).DocumentName ??
+        null;
+
+      return active && !!invId && !!thumbUrl && isImg(thumbUrl, name);
+    })
+    .forEach(f => {
+      const invId =
+        (f as any).inventoryId ?? (f as any).InventoryId;
+
+      const thumbUrl =
+        (f as any).documentThumbnailUrl ??
+        (f as any).DocumentThumbnailUrl ??
+        null;
+
+      if (!thumbUrl) return; 
+
+      const list = m.get(invId) || [];
+      list.push(thumbUrl);
+      m.set(invId, list);
+    });
+
+  return m;
+}
+
 
   private pickRandom(arr?: string[]): string | undefined {
     if (!arr?.length) return undefined;

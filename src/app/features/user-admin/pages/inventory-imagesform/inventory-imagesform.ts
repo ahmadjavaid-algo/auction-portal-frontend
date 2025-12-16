@@ -60,25 +60,60 @@ export class InventoryImagesform {
     @Inject(MAT_DIALOG_DATA) public data: InventoryImagesDialogData
   ) {}
 
-  get inventoryId(): number { return this.data?.inventoryId ?? 0; }
+  get inventoryId(): number {
+    return this.data?.inventoryId ?? 0;
+  }
 
   uploading = false;
   files: UploadItem[] = [];
 
   
+  
   documentTypes = [
-    { id: 1, name: 'Inventory' },
-    { id: 2, name: 'Auction' }
+    { id: 1, name: 'Inventory Images' }
   ];
+
+  
+  imageAccept = '.jpg,.jpeg,.png';
 
   form = this.fb.group({
     documentTypeId: [1, Validators.required]
   });
 
+  private isImageFile(file: File): boolean {
+    const ext = file.name.toLowerCase().match(/\.[^.]+$/)?.[0] ?? '';
+    return ext === '.jpg' || ext === '.jpeg' || ext === '.png';
+  }
+
   onFilesChange(ev: Event) {
     const input = ev.target as HTMLInputElement;
     const list = Array.from(input?.files ?? []);
-    this.files = list.map(f => ({ file: f, status: 'pending' }));
+
+    if (!list.length) {
+      this.files = [];
+      return;
+    }
+
+    const accepted: UploadItem[] = [];
+    const rejectedNames: string[] = [];
+
+    for (const f of list) {
+      if (this.isImageFile(f)) {
+        accepted.push({ file: f, status: 'pending' });
+      } else {
+        rejectedNames.push(f.name);
+      }
+    }
+
+    this.files = accepted;
+
+    if (rejectedNames.length) {
+      this.snack.open(
+        `Only JPG/PNG images are allowed. Skipped: ${rejectedNames.join(', ')}`,
+        'Dismiss',
+        { duration: 4000 }
+      );
+    }
   }
 
   private baseNameOf(file: File): string {
@@ -95,7 +130,7 @@ export class InventoryImagesform {
       return;
     }
     if (!this.files.length) {
-      this.snack.open('Please choose at least one file.', 'Dismiss', { duration: 2500 });
+      this.snack.open('Please choose at least one image.', 'Dismiss', { duration: 2500 });
       return;
     }
     if (this.form.invalid) {
@@ -121,8 +156,8 @@ export class InventoryImagesform {
         try {
           docFileId = await this.docSvc
             .upload(item.file, {
-              documentTypeId: documentTypeId!,
-              documentName: this.baseNameOf(item.file),   
+              documentTypeId: documentTypeId!, 
+              documentName: this.baseNameOf(item.file),
               createdById
             })
             .toPromise();
@@ -158,7 +193,7 @@ export class InventoryImagesform {
             linked++;
           } else {
             item.status = 'failed';
-            item.message = 'File saved, but linking failed.';
+            item.message = 'Image saved, but linking failed.';
             failed++;
           }
         } catch (e: any) {
@@ -168,10 +203,12 @@ export class InventoryImagesform {
         }
       }
 
-      const summary = `${uploaded} uploaded, ${linked} linked` + (failed ? `, ${failed} failed` : '');
+      const summary =
+        `${uploaded} image(s) uploaded (main + thumbnail), ` +
+        `${linked} linked` +
+        (failed ? `, ${failed} failed` : '');
       this.snack.open(summary, 'OK', { duration: 3500 });
 
-      
       this.dialogRef.close({ uploaded, linked, failed, refresh: linked > 0 });
     } finally {
       this.uploading = false;

@@ -11,14 +11,14 @@
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
-/* Dialog surface */
+
 :host ::ng-deep .mat-mdc-dialog-container .mdc-dialog__surface {
   border-radius: 16px;
   box-shadow: 0 28px 80px rgba(17, 24, 39, 0.22);
   background: transparent;
 }
 
-/* Header */
+
 .header {
   padding: 8px 12px 0 12px;
 }
@@ -37,7 +37,7 @@
   color: var(--brand-600);
 }
 
-/* Body */
+
 .body {
   padding: 12px;
   max-height: 70vh;
@@ -64,7 +64,7 @@ mat-form-field {
   width: 100%;
 }
 
-/* Form field theme overrides */
+
 :host ::ng-deep .mat-mdc-form-field.mat-mdc-form-field-appearance-outline {
   --mdc-outlined-text-field-container-shape: 12px;
   --mdc-outlined-text-field-outline-color: #e6eaf4;
@@ -81,7 +81,7 @@ mat-form-field {
   padding: 0 4px;
 }
 
-/* Actions */
+
 .actions {
   padding: 10px 12px 14px;
   display: flex;
@@ -110,7 +110,7 @@ mat-form-field {
   box-shadow: none;
 }
 
-/* Inventory option styling */
+
 .inv-option {
   display: flex;
   flex-direction: column;
@@ -157,7 +157,7 @@ mat-form-field {
   }
 }
 
-/* Scrollbar */
+
 .body::-webkit-scrollbar {
   width: 10px;
 }
@@ -166,7 +166,7 @@ mat-form-field {
   border-radius: 8px;
 }
 
-/* Responsive */
+
 @media (max-width: 920px) {
   .grid {
     grid-template-columns: 1fr;
