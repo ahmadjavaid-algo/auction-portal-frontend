@@ -1,4 +1,4 @@
-
+// src/app/pages/bidder/auctions/auctionbid/auctionbid.ts
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -52,9 +52,8 @@ type BidView = {
   createdById: number | null;
   isMine: boolean;
   statusName: string | null | undefined;
-  
+
   isAutoBid: boolean;
-  
   autoBidAmount: number | null;
 };
 
@@ -112,6 +111,11 @@ export class Auctionbid implements OnInit, OnDestroy {
   private cpSvc = inject(InspectionCheckpointsService);
   private inspectionsSvc = inject(InspectionsService);
 
+  private routeSub?: Subscription;
+  private resyncSub?: Subscription;
+  private notifStreamSub?: Subscription;
+  private tickHandle: any = null;
+
   auctionId!: number;
   inventoryAuctionId!: number;
 
@@ -133,9 +137,6 @@ export class Auctionbid implements OnInit, OnDestroy {
   private auctionStartUtcMs: number | null = null;
   private auctionEndUtcMs: number | null = null;
   private clockSkewMs = 0;
-  private tickHandle: any = null;
-  private resyncSub?: Subscription;
-  private notifStreamSub?: Subscription;
 
   auctionState: 'scheduled' | 'live' | 'ended' | 'unknown' = 'unknown';
   auctionCountdown = '—';
@@ -148,10 +149,9 @@ export class Auctionbid implements OnInit, OnDestroy {
   newBidAmount: number | null = null;
   placingBid = false;
 
-  
   autoBidEnabled = false;
-  autoBidMaxAmount: number | null = null; 
-  autoBidCeiling: number | null = null; 
+  autoBidMaxAmount: number | null = null;
+  autoBidCeiling: number | null = null;
 
   allTypes: InspectionType[] = [];
   allCheckpoints: InspectionCheckpoint[] = [];
@@ -200,27 +200,25 @@ export class Auctionbid implements OnInit, OnDestroy {
     return (l?.bidIncrement ?? l?.BidIncrement) ?? null;
   }
 
-  
   get isReserveMet(): boolean {
     const reserve = this.lotReservePrice;
     const current = this.currentPrice;
-    if (reserve == null || reserve <= 0 || current == null) {
-      return false;
-    }
+    if (reserve == null || reserve <= 0 || current == null) return false;
     return current >= reserve;
   }
 
-  
   get hasAutoBidHistory(): boolean {
     return this.autoBidCeiling != null;
   }
 
+  get isLive(): boolean {
+    return this.auctionState === 'live';
+  }
+
   ngOnInit(): void {
-    this.route.paramMap.subscribe(pm => {
+    this.routeSub = this.route.paramMap.subscribe(pm => {
       this.auctionId = Number(pm.get('auctionId') || 0);
-      this.inventoryAuctionId = Number(
-        pm.get('inventoryAuctionId') ?? pm.get('id') ?? 0
-      );
+      this.inventoryAuctionId = Number(pm.get('inventoryAuctionId') ?? pm.get('id') ?? 0);
 
       if (!this.auctionId || !this.inventoryAuctionId) {
         this.error = 'Invalid auction or lot id.';
@@ -231,15 +229,14 @@ export class Auctionbid implements OnInit, OnDestroy {
       this.loadAll();
 
       if (!this.notifStreamSub) {
-        this.notifStreamSub = this.notifHub.stream$.subscribe(n =>
-          this.handleNotification(n)
-        );
+        this.notifStreamSub = this.notifHub.stream$.subscribe(n => this.handleNotification(n));
       }
     });
   }
 
   ngOnDestroy(): void {
     if (this.tickHandle) clearInterval(this.tickHandle);
+    this.routeSub?.unsubscribe();
     this.resyncSub?.unsubscribe();
     this.notifStreamSub?.unsubscribe();
     document.removeEventListener('visibilitychange', this.onVisChange);
@@ -248,16 +245,17 @@ export class Auctionbid implements OnInit, OnDestroy {
   private loadAll(): void {
     this.loading = true;
     this.error = null;
+
     this.images = [];
     this.activeImage = '';
     this.specs = [];
+
     this.bids = [];
     this.currentPrice = null;
     this.yourMaxBid = null;
     this.yourStatus = 'No Bids';
     this.newBidAmount = null;
 
-    
     this.autoBidEnabled = false;
     this.autoBidMaxAmount = null;
     this.autoBidCeiling = null;
@@ -273,74 +271,55 @@ export class Auctionbid implements OnInit, OnDestroy {
     this.selectedImageIndex = 0;
 
     forkJoin({
-      timebox: this.auctionsSvc
-        .getTimebox(this.auctionId)
-        .pipe(catchError(() => of(null as AuctionTimebox | null))),
-      auctions: this.auctionsSvc
-        .getList()
-        .pipe(catchError(() => of([] as Auction[]))),
-      invAucs: this.invAucSvc
-        .getList()
-        .pipe(catchError(() => of([] as InventoryAuction[]))),
-      files: this.filesSvc
-        .getList()
-        .pipe(catchError(() => of([] as InventoryDocumentFile[]))),
+      timebox: this.auctionsSvc.getTimebox(this.auctionId).pipe(catchError(() => of(null as AuctionTimebox | null))),
+      auctions: this.auctionsSvc.getList().pipe(catchError(() => of([] as Auction[]))),
+      invAucs: this.invAucSvc.getList().pipe(catchError(() => of([] as InventoryAuction[]))),
+      files: this.filesSvc.getList().pipe(catchError(() => of([] as InventoryDocumentFile[]))),
       invs: this.invSvc.getList().pipe(catchError(() => of([] as Inventory[]))),
-      products: this.productsSvc
-        .getList()
-        .pipe(catchError(() => of([] as Product[]))),
-      bids: this.bidsSvc
-        .getList()
-        .pipe(catchError(() => of([] as AuctionBid[])))
+      products: this.productsSvc.getList().pipe(catchError(() => of([] as Product[]))),
+      bids: this.bidsSvc.getList().pipe(catchError(() => of([] as AuctionBid[])))
     })
       .pipe(
         map(({ timebox, auctions, invAucs, files, invs, products, bids }) => {
           if (timebox) {
             this.auctionStartUtcMs = Number(timebox.startEpochMsUtc);
             this.auctionEndUtcMs = Number(timebox.endEpochMsUtc);
-            if (Number.isFinite(timebox.nowEpochMsUtc as any)) {
-              this.clockSkewMs = Number(timebox.nowEpochMsUtc) - Date.now();
-            } else {
-              this.clockSkewMs = 0;
-            }
+            this.clockSkewMs = Number.isFinite(timebox.nowEpochMsUtc as any)
+              ? Number(timebox.nowEpochMsUtc) - Date.now()
+              : 0;
           } else {
             this.auctionStartUtcMs = null;
             this.auctionEndUtcMs = null;
             this.clockSkewMs = 0;
           }
 
-          this.auction =
-            (auctions || []).find(a => a.auctionId === this.auctionId) || null;
+          this.auction = (auctions || []).find(a => a.auctionId === this.auctionId) || null;
 
           this.lot =
-            (invAucs || []).find(
-              a =>
-                ((a as any).inventoryAuctionId ??
-                  (a as any).inventoryauctionId) === this.inventoryAuctionId
-            ) || null;
-          if (!this.lot) {
-            throw new Error('Listing not found');
-          }
+            (invAucs || []).find(a => {
+              const ia = (a as any).inventoryAuctionId ?? (a as any).inventoryauctionId;
+              return ia === this.inventoryAuctionId;
+            }) || null;
 
-          this.inventory =
-            (invs || []).find(i => i.inventoryId === this.lot!.inventoryId) ||
-            null;
+          if (!this.lot) throw new Error('Listing not found');
+
+          this.inventory = (invs || []).find(i => i.inventoryId === this.lot!.inventoryId) || null;
+
           this.product = this.inventory
-            ? (products || []).find(
-                p => p.productId === this.inventory!.productId
-              ) || null
+            ? (products || []).find(p => p.productId === this.inventory!.productId) || null
             : null;
 
           const snap = this.safeParse(this.inventory?.productJSON);
+
           const year = this.product?.yearName ?? snap?.Year ?? snap?.year;
           const make = this.product?.makeName ?? snap?.Make ?? snap?.make;
           const model = this.product?.modelName ?? snap?.Model ?? snap?.model;
+
           this.title =
             [year, make, model].filter(Boolean).join(' ') ||
             (this.inventory?.displayName ?? 'Auction lot');
 
-          const chassis =
-            this.inventory?.chassisNo || snap?.Chassis || snap?.chassis;
+          const chassis = this.inventory?.chassisNo || snap?.Chassis || snap?.chassis;
           this.subtitle = chassis
             ? `Chassis ${chassis} • Lot #${this.lotId ?? ''}`
             : `Lot #${this.lotId ?? ''}`;
@@ -349,29 +328,27 @@ export class Auctionbid implements OnInit, OnDestroy {
             const s = (u || n || '').toLowerCase();
             return ['.jpg', '.jpeg', '.png', '.webp'].some(x => s.endsWith(x));
           };
+
+          // NOTE: using documentUrl only (no fallback)
           this.images = (files || [])
-            .filter(
-              f =>
-                (f.active ?? true) &&
+            .filter(f => {
+              const active = (f as any).active ?? (f as any).Active ?? true;
+              return (
+                active &&
                 f.inventoryId === this.inventory?.inventoryId &&
-                f.documentUrl &&
+                !!f.documentUrl &&
                 isImg(f.documentUrl, f.documentName)
-            )
+              );
+            })
             .map(f => f.documentUrl!)
             .slice(0, 32);
-          if (this.images.length) {
-            this.activeImage = this.images[0];
-          } else {
-            this.activeImage = this.heroUrl;
-          }
 
-          const colorExterior =
-            snap?.ExteriorColor ?? snap?.exteriorColor ?? null;
-          const colorInterior =
-            snap?.InteriorColor ?? snap?.interiorColor ?? null;
+          this.activeImage = this.images.length ? this.images[0] : this.heroUrl;
+
+          const colorExterior = snap?.ExteriorColor ?? snap?.exteriorColor ?? null;
+          const colorInterior = snap?.InteriorColor ?? snap?.interiorColor ?? null;
           const drivetrain = snap?.Drivetrain ?? snap?.drivetrain ?? null;
-          const transmission =
-            snap?.Transmission ?? snap?.transmission ?? null;
+          const transmission = snap?.Transmission ?? snap?.transmission ?? null;
           const bodyStyle = snap?.BodyStyle ?? snap?.bodyStyle ?? null;
           const engine = snap?.Engine ?? snap?.engine ?? null;
           const mileage = snap?.Mileage ?? snap?.mileage ?? null;
@@ -379,10 +356,7 @@ export class Auctionbid implements OnInit, OnDestroy {
           const titleStatus = snap?.TitleStatus ?? snap?.titleStatus ?? null;
           const sellerType = snap?.SellerType ?? snap?.sellerType ?? null;
           const categoryName =
-            this.product?.categoryName ??
-            snap?.Category ??
-            snap?.category ??
-            null;
+            this.product?.categoryName ?? snap?.Category ?? snap?.category ?? null;
 
           this.specs = [
             { label: 'Make', value: make || this.product?.makeName || '—' },
@@ -402,65 +376,7 @@ export class Auctionbid implements OnInit, OnDestroy {
             { label: 'Seller Type', value: sellerType || '—' }
           ];
 
-          const currentUserId = this.bidderAuth.currentUser?.userId ?? null;
-
-          const bidsForLot = (bids || []).filter(b => {
-            const iaId =
-              (b as any).inventoryAuctionId ??
-              (b as any).InventoryAuctionId ??
-              (b as any).inventoryauctionId;
-            const aucId =
-              (b as any).auctionId ??
-              (b as any).AuctionId ??
-              (b as any).auctionID;
-            return iaId === this.lotId && aucId === this.auctionId;
-          });
-
-          this.bids = bidsForLot
-            .map(b => {
-              const createdRaw =
-                (b as any).createdDate ?? (b as any).CreatedDate ?? null;
-              const createdBy =
-                (b as any).createdById ?? (b as any).CreatedById ?? null;
-              const statusName =
-                (b as any).auctionBidStatusName ??
-                (b as any).AuctionBidStatusName ??
-                null;
-
-              const isAuto =
-                !!((b as any).isAutoBid ?? (b as any).IsAutoBid ?? false);
-              const rawMax =
-                (b as any).autoBidAmount ?? (b as any).AutoBidAmount ?? null;
-              const parsedMax =
-                rawMax !== null && rawMax !== undefined && rawMax !== ''
-                  ? Number(rawMax)
-                  : null;
-              const safeMax =
-                parsedMax !== null && Number.isFinite(parsedMax)
-                  ? parsedMax
-                  : null;
-
-              return {
-                auctionBidId:
-                  (b as any).auctionBidId ?? (b as any).AuctionBidId ?? 0,
-                amount: Number(
-                  (b as any).bidAmount ?? (b as any).BidAmount ?? 0
-                ),
-                createdDate: createdRaw,
-                createdById: createdBy,
-                isMine: currentUserId != null && createdBy === currentUserId,
-                statusName,
-                isAutoBid: isAuto,
-                autoBidAmount: safeMax
-              } as BidView;
-            })
-            .sort((a, b) => {
-              const ta = a.createdDate ? Date.parse(a.createdDate) : 0;
-              const tb = b.createdDate ? Date.parse(b.createdDate) : 0;
-              if (tb !== ta) return tb - ta; 
-              return (b.auctionBidId ?? 0) - (a.auctionBidId ?? 0); 
-            });
-
+          this.bids = this.mapBidsForLot(bids || []);
           this.recomputeBidMetrics();
 
           this.updateCountdown();
@@ -476,14 +392,65 @@ export class Auctionbid implements OnInit, OnDestroy {
         })
       )
       .subscribe({
-        next: () => {
-          this.loading = false;
-        },
+        next: () => (this.loading = false),
         error: () => {
           this.error = 'Failed to load auction.';
           this.loading = false;
         }
       });
+  }
+
+  private mapBidsForLot(allBids: AuctionBid[]): BidView[] {
+    const currentUserId = this.bidderAuth.currentUser?.userId ?? null;
+
+    const bidsForLot = (allBids || []).filter(b => {
+      const iaId =
+        (b as any).inventoryAuctionId ??
+        (b as any).InventoryAuctionId ??
+        (b as any).inventoryauctionId;
+      const aucId =
+        (b as any).auctionId ??
+        (b as any).AuctionId ??
+        (b as any).auctionID;
+      return iaId === this.lotId && aucId === this.auctionId;
+    });
+
+    const mapped = bidsForLot.map(b => {
+      const createdRaw = (b as any).createdDate ?? (b as any).CreatedDate ?? null;
+      const createdBy = (b as any).createdById ?? (b as any).CreatedById ?? null;
+      const statusName =
+        (b as any).auctionBidStatusName ??
+        (b as any).AuctionBidStatusName ??
+        null;
+
+      const isAuto = !!((b as any).isAutoBid ?? (b as any).IsAutoBid ?? false);
+
+      const rawMax = (b as any).autoBidAmount ?? (b as any).AutoBidAmount ?? null;
+      const parsedMax =
+        rawMax !== null && rawMax !== undefined && rawMax !== '' ? Number(rawMax) : null;
+      const safeMax = parsedMax !== null && Number.isFinite(parsedMax) ? parsedMax : null;
+
+      return {
+        auctionBidId: (b as any).auctionBidId ?? (b as any).AuctionBidId ?? 0,
+        amount: Number((b as any).bidAmount ?? (b as any).BidAmount ?? 0),
+        createdDate: createdRaw,
+        createdById: createdBy,
+        isMine: currentUserId != null && createdBy === currentUserId,
+        statusName,
+        isAutoBid: isAuto,
+        autoBidAmount: safeMax
+      } as BidView;
+    });
+
+    // Keep "LEADING BID" (first item in UI) aligned to the highest bid.
+    // Tie-breakers: most recent, then higher id.
+    return mapped.sort((a, b) => {
+      if (b.amount !== a.amount) return b.amount - a.amount;
+      const ta = a.createdDate ? Date.parse(a.createdDate) : 0;
+      const tb = b.createdDate ? Date.parse(b.createdDate) : 0;
+      if (tb !== ta) return tb - ta;
+      return (b.auctionBidId ?? 0) - (a.auctionBidId ?? 0);
+    });
   }
 
   private safeParse(json?: string | null): any | null {
@@ -501,8 +468,9 @@ export class Auctionbid implements OnInit, OnDestroy {
   }
 
   private startResync(): void {
+    this.resyncSub?.unsubscribe();
     this.resyncSub = interval(120000).subscribe(() => {
-      this.auctionsSvc.getTimebox(this.auctionId).subscribe({
+      this.auctionsSvc.getTimebox(this.auctionId).pipe(catchError(() => of(null))).subscribe({
         next: tb => {
           if (!tb) return;
           this.auctionStartUtcMs = Number(tb.startEpochMsUtc);
@@ -515,20 +483,20 @@ export class Auctionbid implements OnInit, OnDestroy {
   }
 
   private onVisChange = () => {
-    if (document.visibilityState === 'visible') {
-      this.auctionsSvc.getTimebox(this.auctionId).subscribe({
-        next: tb => {
-          if (!tb) return;
-          this.auctionStartUtcMs = Number(tb.startEpochMsUtc);
-          this.auctionEndUtcMs = Number(tb.endEpochMsUtc);
-          this.clockSkewMs = Number(tb.nowEpochMsUtc) - Date.now();
-          this.updateCountdown();
-        }
-      });
-    }
+    if (document.visibilityState !== 'visible') return;
+    this.auctionsSvc.getTimebox(this.auctionId).pipe(catchError(() => of(null))).subscribe({
+      next: tb => {
+        if (!tb) return;
+        this.auctionStartUtcMs = Number(tb.startEpochMsUtc);
+        this.auctionEndUtcMs = Number(tb.endEpochMsUtc);
+        this.clockSkewMs = Number(tb.nowEpochMsUtc) - Date.now();
+        this.updateCountdown();
+      }
+    });
   };
 
   private wireVisibility(): void {
+    document.removeEventListener('visibilitychange', this.onVisChange);
     document.addEventListener('visibilitychange', this.onVisChange);
   }
 
@@ -538,6 +506,7 @@ export class Auctionbid implements OnInit, OnDestroy {
       this.auctionCountdown = '—';
       return;
     }
+
     const now = Date.now() + this.clockSkewMs;
     const start = this.auctionStartUtcMs;
     const end = this.auctionEndUtcMs;
@@ -571,10 +540,6 @@ export class Auctionbid implements OnInit, OnDestroy {
     return `${hh}:${pad(mm)}:${pad(s)}`;
   }
 
-  get isLive(): boolean {
-    return this.auctionState === 'live';
-  }
-
   private recomputeBidMetrics(): void {
     if (!this.lot) return;
 
@@ -584,30 +549,22 @@ export class Auctionbid implements OnInit, OnDestroy {
     const highestBid = all.length ? Math.max(...all.map(b => b.amount)) : null;
 
     const yourBids = currentUserId ? all.filter(b => b.isMine) : [];
-    const yourHighest = yourBids.length
-      ? Math.max(...yourBids.map(b => b.amount))
-      : null;
+    const yourHighest = yourBids.length ? Math.max(...yourBids.map(b => b.amount)) : null;
 
     const startPrice = this.lotStartPrice;
-
     this.currentPrice = highestBid != null ? highestBid : startPrice ?? null;
     this.yourMaxBid = yourHighest;
 
-    
-    const yourAutoBids = yourBids.filter(
-      b => b.isAutoBid && (b.autoBidAmount != null || b.amount != null)
-    );
+    // Track any auto-bid ceiling you have used historically
+    const yourAutoBids = yourBids.filter(b => b.isAutoBid && (b.autoBidAmount != null || b.amount != null));
     this.autoBidCeiling = yourAutoBids.length
       ? Math.max(
           ...yourAutoBids.map(b =>
-            b.autoBidAmount != null && Number.isFinite(b.autoBidAmount)
-              ? b.autoBidAmount
-              : b.amount
+            b.autoBidAmount != null && Number.isFinite(b.autoBidAmount) ? b.autoBidAmount : b.amount
           )
         )
       : null;
 
-    
     if (this.autoBidCeiling != null && this.autoBidMaxAmount == null) {
       this.autoBidMaxAmount = this.autoBidCeiling;
     }
@@ -615,14 +572,14 @@ export class Auctionbid implements OnInit, OnDestroy {
     if (!yourHighest) {
       this.yourStatus = 'No Bids';
     } else if (this.auctionState === 'ended') {
-      this.yourStatus =
-        highestBid != null && yourHighest === highestBid ? 'Won' : 'Lost';
+      this.yourStatus = highestBid != null && yourHighest === highestBid ? 'Won' : 'Lost';
     } else if (highestBid != null && yourHighest === highestBid) {
       this.yourStatus = 'Winning';
     } else {
       this.yourStatus = 'Outbid';
     }
 
+    // Suggest next valid bid if needed
     if (this.currentPrice != null) {
       const inc = this.lotBidIncrement ?? 0;
       const base = this.currentPrice || 0;
@@ -635,17 +592,14 @@ export class Auctionbid implements OnInit, OnDestroy {
 
   adjustBid(delta: number): void {
     const current = this.newBidAmount ?? this.currentPrice ?? 0;
-    const next = Math.max(0, current + delta);
-    this.newBidAmount = next;
+    this.newBidAmount = Math.max(0, current + delta);
   }
 
-  
   toggleAutoBid(): void {
     this.autoBidEnabled = !this.autoBidEnabled;
 
     if (this.autoBidEnabled) {
-      const base =
-        this.newBidAmount ?? this.currentPrice ?? this.lotStartPrice ?? 0;
+      const base = this.newBidAmount ?? this.currentPrice ?? this.lotStartPrice ?? 0;
       const inc = this.lotBidIncrement || 100;
       if (this.autoBidMaxAmount == null || this.autoBidMaxAmount <= base) {
         this.autoBidMaxAmount = base + inc * 3;
@@ -656,20 +610,12 @@ export class Auctionbid implements OnInit, OnDestroy {
   placeBid(): void {
     const userId = this.bidderAuth.currentUser?.userId ?? null;
     if (!userId) {
-      this.snack.open('Please log in as a bidder to place bids.', 'OK', {
-        duration: 3000
-      });
+      this.snack.open('Please log in as a bidder to place bids.', 'OK', { duration: 3000 });
       return;
     }
 
     if (!this.isLive) {
-      this.snack.open(
-        'Bidding is only available while the auction is live.',
-        'OK',
-        {
-          duration: 3000
-        }
-      );
+      this.snack.open('Bidding is only available while the auction is live.', 'OK', { duration: 3000 });
       return;
     }
 
@@ -682,50 +628,28 @@ export class Auctionbid implements OnInit, OnDestroy {
     }
 
     if (this.currentPrice != null && amount <= this.currentPrice) {
-      this.snack.open(
-        'Your bid must be higher than the current price.',
-        'OK',
-        {
-          duration: 3000
-        }
-      );
+      this.snack.open('Your bid must be higher than the current price.', 'OK', { duration: 3000 });
       return;
     }
 
-    
     const isAutoBid = this.autoBidEnabled;
     let autoMax: number | null = null;
 
     if (isAutoBid) {
-      autoMax =
-        this.autoBidMaxAmount != null
-          ? Number(this.autoBidMaxAmount)
-          : null;
+      autoMax = this.autoBidMaxAmount != null ? Number(this.autoBidMaxAmount) : null;
 
       if (!Number.isFinite(autoMax) || autoMax == null) {
-        this.snack.open(
-          'Enter a valid maximum amount for AI bidding.',
-          'OK',
-          { duration: 3000 }
-        );
+        this.snack.open('Enter a valid maximum amount for AI bidding.', 'OK', { duration: 3000 });
         return;
       }
 
       if (autoMax <= amount) {
-        this.snack.open(
-          'Your AI max must be higher than your starting bid.',
-          'OK',
-          { duration: 3500 }
-        );
+        this.snack.open('Your AI max must be higher than your starting bid.', 'OK', { duration: 3500 });
         return;
       }
 
       if (this.currentPrice != null && autoMax <= this.currentPrice) {
-        this.snack.open(
-          'Your AI max must be higher than the current price.',
-          'OK',
-          { duration: 3500 }
-        );
+        this.snack.open('Your AI max must be higher than the current price.', 'OK', { duration: 3500 });
         return;
       }
     }
@@ -741,7 +665,7 @@ export class Auctionbid implements OnInit, OnDestroy {
       inventoryAuctionId: this.lotId ?? 0,
       bidAmount: amount,
       auctionBidStatusName: 'Winning',
-      
+
       isAutoBid: isAutoBid,
       autoBidAmount: isAutoBid ? autoMax : null
     };
@@ -761,9 +685,7 @@ export class Auctionbid implements OnInit, OnDestroy {
               ? err.error
               : JSON.stringify(err.error)
             : 'Unknown error';
-        this.snack.open('Failed to place bid: ' + msg, 'OK', {
-          duration: 5000
-        });
+        this.snack.open('Failed to place bid: ' + msg, 'OK', { duration: 5000 });
       },
       complete: () => {
         this.placingBid = false;
@@ -779,65 +701,7 @@ export class Auctionbid implements OnInit, OnDestroy {
       .pipe(catchError(() => of([] as AuctionBid[])))
       .subscribe({
         next: bids => {
-          const currentUserId = this.bidderAuth.currentUser?.userId ?? null;
-
-          const filtered = (bids || []).filter(b => {
-            const iaId =
-              (b as any).inventoryAuctionId ??
-              (b as any).InventoryAuctionId ??
-              (b as any).inventoryauctionId;
-            const aucId =
-              (b as any).auctionId ??
-              (b as any).AuctionId ??
-              (b as any).auctionID;
-            return iaId === this.lotId && aucId === this.auctionId;
-          });
-
-          this.bids = filtered
-            .map(b => {
-              const createdRaw =
-                (b as any).createdDate ?? (b as any).CreatedDate ?? null;
-              const createdBy =
-                (b as any).createdById ?? (b as any).CreatedById ?? null;
-              const statusName =
-                (b as any).auctionBidStatusName ??
-                (b as any).AuctionBidStatusName ??
-                null;
-
-              const isAuto =
-                !!((b as any).isAutoBid ?? (b as any).IsAutoBid ?? false);
-              const rawMax =
-                (b as any).autoBidAmount ?? (b as any).AutoBidAmount ?? null;
-              const parsedMax =
-                rawMax !== null && rawMax !== undefined && rawMax !== ''
-                  ? Number(rawMax)
-                  : null;
-              const safeMax =
-                parsedMax !== null && Number.isFinite(parsedMax)
-                  ? parsedMax
-                  : null;
-
-              return {
-                auctionBidId:
-                  (b as any).auctionBidId ?? (b as any).AuctionBidId ?? 0,
-                amount: Number(
-                  (b as any).bidAmount ?? (b as any).BidAmount ?? 0
-                ),
-                createdDate: createdRaw,
-                createdById: createdBy,
-                isMine: currentUserId != null && createdBy === currentUserId,
-                statusName,
-                isAutoBid: isAuto,
-                autoBidAmount: safeMax
-              } as BidView;
-            })
-            .sort((a, b) => {
-              const ta = a.createdDate ? Date.parse(a.createdDate) : 0;
-              const tb = b.createdDate ? Date.parse(b.createdDate) : 0;
-              if (tb !== ta) return tb - ta; 
-              return (b.auctionBidId ?? 0) - (a.auctionBidId ?? 0);
-            });
-
+          this.bids = this.mapBidsForLot(bids || []);
           this.recomputeBidMetrics();
         },
         error: err => {
@@ -848,9 +712,7 @@ export class Auctionbid implements OnInit, OnDestroy {
 
   private handleNotification(n: NotificationItem): void {
     if (!n.auctionId || !n.inventoryAuctionId) return;
-    if (n.auctionId !== this.auctionId || n.inventoryAuctionId !== this.lotId) {
-      return;
-    }
+    if (n.auctionId !== this.auctionId || n.inventoryAuctionId !== this.lotId) return;
 
     if (
       n.type !== 'bid-outbid' &&
@@ -863,35 +725,23 @@ export class Auctionbid implements OnInit, OnDestroy {
 
     switch (n.type) {
       case 'bid-outbid':
-        this.snack.open(
-          'You have been outbid on this lot. Refreshing bid history…',
-          'OK',
-          { duration: 5000 }
-        );
+        this.snack.open('You have been outbid on this lot. Refreshing bid history…', 'OK', {
+          duration: 5000
+        });
         break;
 
       case 'bid-winning':
-        this.snack.open(
-          'Your bid is currently winning for this lot.',
-          'OK',
-          { duration: 4000 }
-        );
+        this.snack.open('Your bid is currently winning for this lot.', 'OK', { duration: 4000 });
         break;
 
       case 'auction-won':
-        this.snack.open(
-          'Congratulations! You have won this lot.',
-          'View',
-          { duration: 6000 }
-        );
+        this.snack.open('Congratulations! You have won this lot.', 'View', { duration: 6000 });
         break;
 
       case 'auction-lost':
-        this.snack.open(
-          'The auction has ended and your bid was not the winning bid.',
-          'OK',
-          { duration: 6000 }
-        );
+        this.snack.open('The auction has ended and your bid was not the winning bid.', 'OK', {
+          duration: 6000
+        });
         break;
     }
 
@@ -905,10 +755,7 @@ export class Auctionbid implements OnInit, OnDestroy {
   formatDate(d?: string | null): string {
     if (!d) return '—';
     try {
-      return new Intl.DateTimeFormat(undefined, {
-        dateStyle: 'medium',
-        timeStyle: 'short'
-      }).format(new Date(d));
+      return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(d));
     } catch {
       return d;
     }
@@ -918,19 +765,14 @@ export class Auctionbid implements OnInit, OnDestroy {
     const s = a ? new Date(a) : null;
     const e = b ? new Date(b) : null;
     const fmt = (d: Date) =>
-      new Intl.DateTimeFormat(undefined, {
-        dateStyle: 'medium',
-        timeStyle: 'short'
-      }).format(d);
+      new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(d);
     return `${s ? fmt(s) : '—'} → ${e ? fmt(e) : '—'}`;
   }
 
+  // ===================== INSPECTION REPORT =====================
+
   private isActiveInspection(i: Inspection): boolean {
-    const raw =
-      (i as any).active ??
-      (i as any).Active ??
-      (i as any).isActive ??
-      true;
+    const raw = (i as any).active ?? (i as any).Active ?? (i as any).isActive ?? true;
     return raw !== false && raw !== 0;
   }
 
@@ -948,23 +790,14 @@ export class Auctionbid implements OnInit, OnDestroy {
     const inventoryId = this.inventory.inventoryId;
 
     forkJoin({
-      types: this.inspTypesSvc.getList().pipe(
-        catchError(() => of([] as InspectionType[]))
-      ),
-      checkpoints: this.cpSvc.getList().pipe(
-        catchError(() => of([] as InspectionCheckpoint[]))
-      ),
-      inspections: this.inspectionsSvc.getByInventory(inventoryId).pipe(
-        catchError(() => of([] as Inspection[]))
-      )
+      types: this.inspTypesSvc.getList().pipe(catchError(() => of([] as InspectionType[]))),
+      checkpoints: this.cpSvc.getList().pipe(catchError(() => of([] as InspectionCheckpoint[]))),
+      inspections: this.inspectionsSvc.getByInventory(inventoryId).pipe(catchError(() => of([] as Inspection[])))
     }).subscribe({
       next: ({ types, checkpoints, inspections }) => {
         this.allTypes = types ?? [];
         this.allCheckpoints = checkpoints ?? [];
-        this.reportGroups = this.buildGroupsForInventory(
-          this.inventory!,
-          inspections ?? []
-        );
+        this.reportGroups = this.buildGroupsForInventory(this.inventory!, inspections ?? []);
       },
       error: err => {
         console.error('Failed to load inspection report', err);
@@ -976,32 +809,24 @@ export class Auctionbid implements OnInit, OnDestroy {
     });
   }
 
-  private buildGroupsForInventory(
-    inventory: Inventory,
-    existing: Inspection[]
-  ): InspectionTypeGroupForUI[] {
+  private buildGroupsForInventory(inventory: Inventory, existing: Inspection[]): InspectionTypeGroupForUI[] {
     if (!inventory) return [];
 
     const groups: InspectionTypeGroupForUI[] = [];
     const activeTypes = (this.allTypes ?? []).filter(t => t.active !== false);
-    const activeInspections = (existing ?? []).filter(i =>
-      this.isActiveInspection(i)
-    );
+    const activeInspections = (existing ?? []).filter(i => this.isActiveInspection(i));
 
     activeTypes.forEach(t => {
-      const cps = (this.allCheckpoints ?? []).filter(
-        cp =>
-          (((cp as any).inspectionTypeId === t.inspectionTypeId) ||
-            ((cp as any).InspectionTypeId === t.inspectionTypeId)) &&
-          cp.active !== false
-      );
+      const cps = (this.allCheckpoints ?? []).filter(cp => {
+        const typeId = (cp as any).inspectionTypeId ?? (cp as any).InspectionTypeId;
+        const active = (cp as any).active ?? (cp as any).Active ?? true;
+        return typeId === t.inspectionTypeId && active !== false && active !== 0;
+      });
 
       if (!cps.length) return;
 
       const rows: InspectionCheckpointRow[] = cps.map(cp => {
-        const cpId =
-          (cp as any).inspectionCheckpointId ??
-          (cp as any).inspectioncheckpointId;
+        const cpId = (cp as any).inspectionCheckpointId ?? (cp as any).inspectioncheckpointId;
 
         const cpInspectionsAll = activeInspections.filter(
           i =>
@@ -1010,7 +835,7 @@ export class Auctionbid implements OnInit, OnDestroy {
             i.inventoryId === inventory.inventoryId
         );
 
-        const inputType = cp.inputType;
+        const inputType = (cp as any).inputType ?? (cp as any).InputType ?? null;
         const norm = this.normalizeInputType(inputType);
 
         let resultValue = '';
@@ -1019,13 +844,13 @@ export class Auctionbid implements OnInit, OnDestroy {
 
         if (norm === 'image') {
           imageUrls = cpInspectionsAll
-            .flatMap(i => this.extractImageUrls(i.result ?? ''))
+            .flatMap(i => this.extractImageUrls((i as any).result ?? ''))
             .filter(u => !!u);
           inspectionId = cpInspectionsAll[0]?.inspectionId;
         } else {
           const match = cpInspectionsAll[0];
           inspectionId = match?.inspectionId;
-          resultValue = match?.result ?? '';
+          resultValue = (match as any)?.result ?? '';
         }
 
         return {
@@ -1034,9 +859,7 @@ export class Auctionbid implements OnInit, OnDestroy {
           inspectionTypeName: t.inspectionTypeName,
           inspectionCheckpointId: cpId,
           inspectionCheckpointName:
-            (cp as any).inspectionCheckpointName ??
-            (cp as any).inspectioncheckpointName ??
-            '',
+            (cp as any).inspectionCheckpointName ?? (cp as any).inspectioncheckpointName ?? '',
           inputType,
           resultValue,
           imageUrls: imageUrls ?? []
@@ -1047,7 +870,7 @@ export class Auctionbid implements OnInit, OnDestroy {
         groups.push({
           inspectionTypeId: t.inspectionTypeId,
           inspectionTypeName: t.inspectionTypeName,
-          weightage: t.weightage,
+          weightage: (t as any).weightage ?? null,
           checkpoints: rows
         });
       }
@@ -1056,15 +879,12 @@ export class Auctionbid implements OnInit, OnDestroy {
     return groups;
   }
 
-  normalizeInputType(
-    inputType?: string | null
-  ): 'text' | 'textarea' | 'number' | 'yesno' | 'image' {
+  normalizeInputType(inputType?: string | null): 'text' | 'textarea' | 'number' | 'yesno' | 'image' {
     const v = (inputType || '').toLowerCase();
     if (v === 'textarea' || v === 'multiline') return 'textarea';
     if (v === 'number' || v === 'numeric' || v === 'score') return 'number';
     if (v === 'yesno' || v === 'boolean' || v === 'bool') return 'yesno';
-    if (v === 'image' || v === 'photo' || v === 'picture' || v === 'file')
-      return 'image';
+    if (v === 'image' || v === 'photo' || v === 'picture' || v === 'file') return 'image';
     return 'text';
   }
 
@@ -1074,9 +894,7 @@ export class Auctionbid implements OnInit, OnDestroy {
 
   isRowAnswered(row: InspectionCheckpointRow): boolean {
     const t = this.normalizeInputType(row.inputType);
-    if (t === 'image') {
-      return !!(row.imageUrls && row.imageUrls.length);
-    }
+    if (t === 'image') return !!(row.imageUrls && row.imageUrls.length);
     return this.isAnswered(row.resultValue);
   }
 
@@ -1089,17 +907,11 @@ export class Auctionbid implements OnInit, OnDestroy {
   }
 
   get totalCheckpoints(): number {
-    return this.reportGroups.reduce(
-      (sum, g) => sum + g.checkpoints.length,
-      0
-    );
+    return this.reportGroups.reduce((sum, g) => sum + g.checkpoints.length, 0);
   }
 
   get totalCompleted(): number {
-    return this.reportGroups.reduce(
-      (sum, g) => sum + this.getGroupCompleted(g),
-      0
-    );
+    return this.reportGroups.reduce((sum, g) => sum + this.getGroupCompleted(g), 0);
   }
 
   get overallProgressPercent(): number {
@@ -1138,7 +950,7 @@ export class Auctionbid implements OnInit, OnDestroy {
             .filter(x => !!x);
         }
       } catch {
-        
+        // ignore
       }
     }
 
@@ -1147,29 +959,21 @@ export class Auctionbid implements OnInit, OnDestroy {
 
     const looksLikeImage = (s: string) => {
       const lower = s.toLowerCase();
-      if (
-        lower.startsWith('http://') ||
-        lower.startsWith('https://') ||
-        lower.startsWith('blob:') ||
-        lower.startsWith('data:image/')
-      ) {
+      if (lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('blob:') || lower.startsWith('data:image/')) {
         return true;
       }
-      return ['.jpg', '.jpeg', '.png', '.webp', '.gif'].some(ext =>
-        lower.includes(ext)
-      );
+      return ['.jpg', '.jpeg', '.png', '.webp', '.gif'].some(ext => lower.includes(ext));
     };
 
     return urls.filter(looksLikeImage);
   }
 
+  // ===================== IMAGE VIEWER =====================
+
   openImageViewer(images: string[], startIndex: number = 0): void {
     if (!images || !images.length) return;
     this.selectedImageGallery = images;
-    this.selectedImageIndex = Math.min(
-      Math.max(startIndex, 0),
-      images.length - 1
-    );
+    this.selectedImageIndex = Math.min(Math.max(startIndex, 0), images.length - 1);
     this.showImageViewer = true;
   }
 
@@ -1180,14 +984,10 @@ export class Auctionbid implements OnInit, OnDestroy {
   }
 
   nextImage(): void {
-    if (this.selectedImageIndex < this.selectedImageGallery.length - 1) {
-      this.selectedImageIndex++;
-    }
+    if (this.selectedImageIndex < this.selectedImageGallery.length - 1) this.selectedImageIndex++;
   }
 
   prevImage(): void {
-    if (this.selectedImageIndex > 0) {
-      this.selectedImageIndex--;
-    }
+    if (this.selectedImageIndex > 0) this.selectedImageIndex--;
   }
 }

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -40,7 +40,7 @@ type Slide = {
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss']
 })
-export class Dashboard {
+export class Dashboard implements OnInit, OnDestroy {
   readonly Math = Math;
 
   private auth = inject(BidderAuthService);
@@ -54,44 +54,83 @@ export class Dashboard {
   slides: Slide[] = [];
   index = 0;
 
-  
   private autoTimer: any = null;
-  private readonly autoIntervalMs = 3000; 
+  private readonly autoIntervalMs = 4800;
+
   isAnimating = false;
-  private readonly animationDurationMs = 700; 
+  private readonly animationDurationMs = 720;
 
   private fallbackHero =
-    'https://carwow-uk-wp-3.imgix.net/GT-R-driving-front.jpg';
+    'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1920';
 
-  get adminName(): string {
-    const u = this.auth.currentUser;
-    if (!u) return 'Admin';
-    const name = [u.firstName].filter(Boolean).join(' ').trim();
-    return name || u.userName || 'Admin';
-  }
+  stats = [
+    { value: '50K+', label: 'Vehicles Auctioned' },
+    { value: '98%', label: 'Satisfaction Rate' },
+    { value: '24/7', label: 'AI Bidding Active' },
+    { value: '150+', label: 'Countries Served' }
+  ];
+
+  features = [
+    {
+      icon: 'psychology',
+      title: 'AI Auto-Bidding',
+      desc: 'Set your max bid and let our AI handle the rest with intelligent, strategic bidding'
+    },
+    {
+      icon: 'speed',
+      title: 'Quick Bid System',
+      desc: 'Lightning-fast bidding interface designed for split-second decisions'
+    },
+    {
+      icon: 'verified',
+      title: 'Verified Inspections',
+      desc: 'Comprehensive inspection sheets from certified professionals you can trust'
+    },
+    {
+      icon: 'security',
+      title: 'Secure Transactions',
+      desc: 'Bank-grade security with escrow protection for every purchase'
+    }
+  ];
+
+  testimonials = [
+    {
+      name: 'Marcus Chen',
+      role: 'Collector',
+      avatar: 'MC',
+      text: 'Found my dream 911 through Algo. The AI bidding saved me hours of manual tracking.',
+      rating: 5
+    },
+    {
+      name: 'Sarah Mitchell',
+      role: 'Dealer',
+      avatar: 'SM',
+      text: 'Best auction platform for serious buyers. Inspection reports are incredibly detailed.',
+      rating: 5
+    },
+    {
+      name: 'David Park',
+      role: 'Enthusiast',
+      avatar: 'DP',
+      text: 'The quick bid feature is a game-changer. Won 3 auctions in one week!',
+      rating: 5
+    }
+  ];
 
   ngOnInit(): void {
     this.loading = true;
 
     forkJoin({
-      auctions: this.auctionSvc
-        .getList()
-        .pipe(catchError(() => of([] as InventoryAuction[]))),
-      files: this.fileSvc
-        .getList()
-        .pipe(catchError(() => of([] as InventoryDocumentFile[])))
+      auctions: this.auctionSvc.getList().pipe(catchError(() => of([] as InventoryAuction[]))),
+      files: this.fileSvc.getList().pipe(catchError(() => of([] as InventoryDocumentFile[])))
     })
       .pipe(
         switchMap(({ auctions, files }) => {
           const active = (auctions || []).filter(a => a.active ?? true);
 
-          
           const recent = [...active]
             .sort((a, b) =>
-              this.dateDesc(
-                a.createdDate || a.modifiedDate,
-                b.createdDate || b.modifiedDate
-              )
+              this.dateDesc(a.createdDate || a.modifiedDate, b.createdDate || b.modifiedDate)
             )
             .slice(0, 10);
 
@@ -145,65 +184,68 @@ export class Dashboard {
     this.clearAutoRotation();
   }
 
-  
+  // ====== Slider controls ======
+  prev(): void {
+    this.advanceSlide(true, -1);
+  }
 
-  private startAutoRotation(): void {
+  next(): void {
+    this.advanceSlide(true, 1);
+  }
+
+  goTo(i: number): void {
+    if (!this.slides.length) return;
+    this.clearAutoRotation();
+    this.index = Math.max(0, Math.min(i, this.slides.length - 1));
+    this.playAnimation();
+    this.startAutoRotation();
+  }
+
+  public startAutoRotation(): void {
     this.clearAutoRotation();
     if (this.slides.length <= 1) return;
 
     this.autoTimer = setInterval(() => {
-      
       this.advanceSlide(false, 1);
     }, this.autoIntervalMs);
   }
 
-  private clearAutoRotation(): void {
+  public clearAutoRotation(): void {
     if (this.autoTimer) {
       clearInterval(this.autoTimer);
       this.autoTimer = null;
     }
   }
 
-  private playAnimation(): void {
-    
+  public playAnimation(): void {
     this.isAnimating = false;
     setTimeout(() => {
       this.isAnimating = true;
-      setTimeout(() => {
-        this.isAnimating = false;
-      }, this.animationDurationMs);
+      setTimeout(() => (this.isAnimating = false), this.animationDurationMs);
     }, 0);
   }
 
   private advanceSlide(userTriggered: boolean, direction: 1 | -1): void {
     if (!this.slides.length) return;
 
-    if (userTriggered) {
-      
-      this.clearAutoRotation();
-    }
+    if (userTriggered) this.clearAutoRotation();
 
-    const nextIndex = (this.index + direction + this.slides.length) % this.slides.length;
-    this.index = nextIndex;
+    this.index = (this.index + direction + this.slides.length) % this.slides.length;
     this.playAnimation();
 
-    if (userTriggered) {
-      this.startAutoRotation();
-    }
+    if (userTriggered) this.startAutoRotation();
   }
 
-  
-
+  // ====== Data helpers ======
   private isImageFile(f: InventoryDocumentFile): boolean {
     const url = (f.documentUrl || '').toLowerCase();
     const name = (f.documentName || '').toLowerCase();
 
     const extFromUrl = url.match(/\.(\w+)(?:\?|#|$)/)?.[1] || '';
     const extFromName = name.match(/\.(\w+)(?:\?|#|$)/)?.[1] || '';
-
     const ext = (extFromUrl || extFromName).replace(/[^a-z0-9]/g, '');
-    const ok = ['jpg', 'jpeg', 'png', 'webp'];
 
+    const ok = ['jpg', 'jpeg', 'png', 'webp'];
     return !!url && (ok.includes(ext) || ok.some(e => url.endsWith('.' + e)));
   }
 
@@ -211,13 +253,7 @@ export class Dashboard {
     const map = new Map<number, string[]>();
 
     (files || [])
-      .filter(
-        f =>
-          (f.active ?? true) &&
-          !!f.inventoryId &&
-          !!f.documentUrl &&
-          this.isImageFile(f)
-      )
+      .filter(f => (f.active ?? true) && !!f.inventoryId && !!f.documentUrl && this.isImageFile(f))
       .forEach(f => {
         const list = map.get(f.inventoryId) || [];
         list.push(f.documentUrl!);
@@ -229,8 +265,7 @@ export class Dashboard {
 
   private pickRandom(arr?: string[]): string | undefined {
     if (!arr || !arr.length) return undefined;
-    const i = Math.floor(Math.random() * arr.length);
-    return arr[i];
+    return arr[Math.floor(Math.random() * arr.length)];
   }
 
   private dateDesc(a?: string | null, b?: string | null): number {
@@ -255,16 +290,6 @@ export class Dashboard {
   get bgUrl(): string {
     const url = this.current?.imageUrl || this.fallbackHero;
     return `url('${url}')`;
-  }
-
-  
-
-  prev(): void {
-    this.advanceSlide(true, -1);
-  }
-
-  next(): void {
-    this.advanceSlide(true, 1);
   }
 
   formatMoney(n?: number | null): string {

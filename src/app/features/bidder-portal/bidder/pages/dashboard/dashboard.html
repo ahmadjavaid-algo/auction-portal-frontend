@@ -1,77 +1,238 @@
 <div class="landing">
-  <!-- HERO -->
+  <!-- HERO SECTION -->
   <section
-    class="hero-banner"
+    class="hero-section"
     [ngClass]="{ 'is-animating': isAnimating }"
-    [ngStyle]="{ '--photo': bgUrl }"
+    [ngStyle]="{ '--hero-bg': bgUrl }"
   >
-    <button
-      class="arrow prev"
-      aria-label="Previous slide"
-      (click)="prev()"
-      *ngIf="slides.length > 1"
-    >
-      <span>&lsaquo;</span>
-    </button>
-    <button
-      class="arrow next"
-      aria-label="Next slide"
-      (click)="next()"
-      *ngIf="slides.length > 1"
-    >
-      <span>&rsaquo;</span>
+    <div class="hero-overlay"></div>
+
+    <button class="nav-arrow prev" aria-label="Previous" (click)="prev()" *ngIf="slides.length > 1">
+      <mat-icon>chevron_left</mat-icon>
     </button>
 
-    <div class="hero-shell">
-      <div class="copy">
-        <div class="kicker">{{ current?.year || '—' }}</div>
+    <button class="nav-arrow next" aria-label="Next" (click)="next()" *ngIf="slides.length > 1">
+      <mat-icon>chevron_right</mat-icon>
+    </button>
 
-        <h1 class="title">
-          <span>{{ current?.make || '—' }}</span>
-          <span>{{ current?.model || '—' }}</span>
-        </h1>
+    <div class="hero-content">
+      <div class="hero-badge">Live Auction</div>
 
-        <p class="starting">
-          Starting bid from
-          <a class="price" href="javascript:void(0)">
-            {{ formatMoney(current?.auction?.auctionStartPrice) }}
-          </a>
-        </p>
+      <div class="hero-year">{{ current?.year || '2024' }}</div>
 
-        <div class="actions">
-          <a
-            class="btn primary"
-            [routerLink]="[
-              '/bidder/auctions',
-              current?.auction?.auctionId,
-              current?.auction?.inventoryAuctionId
-            ]"
-            matTooltip="Place a bid"
-          >
-            Place Bid
-          </a>
+      <h1 class="hero-title">
+        <span class="make">{{ current?.make || 'Premium' }}</span>
+        <span class="model">{{ current?.model || 'Vehicles' }}</span>
+      </h1>
 
-          <a
-            class="btn ghost"
-            [routerLink]="[
-              '/bidder/auctions',
-              current?.auction?.auctionId,
-              current?.auction?.inventoryAuctionId,
-              'details'
-            ]"
-            matTooltip="View car details"
-          >
-            Check Car
-          </a>
-        </div>
+      <div class="hero-price">
+        <span class="label">Starting Bid</span>
+        <span class="amount">{{ formatMoney(current?.auction?.auctionStartPrice) }}</span>
+      </div>
 
+      <div class="hero-actions">
+        <a
+          class="btn-primary"
+          [routerLink]="['/bidder/auctions', current?.auction?.auctionId, current?.auction?.inventoryAuctionId]"
+        >
+          <span>Place Your Bid</span>
+          <mat-icon>arrow_forward</mat-icon>
+        </a>
+
+        <a
+          class="btn-secondary"
+          [routerLink]="[
+            '/bidder/auctions',
+            current?.auction?.auctionId,
+            current?.auction?.inventoryAuctionId,
+            'details'
+          ]"
+        >
+          <span>View Details</span>
+        </a>
+      </div>
+
+      <div class="hero-indicators" *ngIf="slides.length > 1">
+        <button
+          *ngFor="let s of slides; let i = index"
+          [class.active]="i === index"
+          (click)="goTo(i)"
+          aria-label="Go to slide {{ i + 1 }}"
+        ></button>
       </div>
     </div>
   </section>
 
-  <!-- tiny loader / error -->
-  <section class="inline-status">
-    <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
-    <div *ngIf="error && !loading" class="err">{{ error }}</div>
+  <!-- STATS BAR -->
+  <section class="stats-bar">
+    <div class="shell">
+      <div class="stat-item" *ngFor="let stat of stats; let i = index" [style.animation-delay]="(i * 90) + 'ms'">
+        <div class="stat-value"><span>{{ stat.value }}</span></div>
+        <div class="stat-label">{{ stat.label }}</div>
+      </div>
+    </div>
   </section>
+
+  <!-- STORY SECTION -->
+  <section class="story-section">
+    <div class="shell">
+      <div class="story-grid">
+        <div class="story-visual">
+          <div class="visual-card card-1"></div>
+          <div class="visual-card card-2"></div>
+          <div class="accent-circle"></div>
+        </div>
+
+        <div class="story-content">
+          <div class="eyebrow">The Algo Difference</div>
+          <h2 class="section-title">Where Technology Meets Automotive Passion</h2>
+          <p class="story-text">
+            Every auction on Algo is powered by cutting-edge AI that learns your preferences,
+            bids strategically on your behalf, and ensures you never miss the perfect vehicle.
+          </p>
+          <p class="story-text">
+            From verified inspection reports to lightning-fast bid execution, we've eliminated
+            the friction between you and your dream machine.
+          </p>
+          <a routerLink="/bidder/allauctions" class="link-arrow">
+            Explore Platform <mat-icon>arrow_forward</mat-icon>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES GRID -->
+  <section class="features-section">
+    <div class="shell">
+      <div class="section-header">
+        <div class="eyebrow">Core Capabilities</div>
+        <h2 class="section-title">Built For Serious Bidders</h2>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card" *ngFor="let feat of features; let i = index" [style.animation-delay]="(i * 120) + 'ms'">
+          <div class="feature-icon">
+            <mat-icon>{{ feat.icon }}</mat-icon>
+          </div>
+          <h3 class="feature-title">{{ feat.title }}</h3>
+          <p class="feature-desc">{{ feat.desc }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section class="testimonials-section">
+    <div class="shell">
+      <div class="section-header centered">
+        <div class="eyebrow">Trusted Worldwide</div>
+        <h2 class="section-title">What Collectors Say</h2>
+      </div>
+
+      <div class="testimonials-grid">
+        <div class="testimonial-card" *ngFor="let t of testimonials; let i = index" [style.animation-delay]="(i * 90) + 'ms'">
+          <div class="stars">
+            <mat-icon *ngFor="let s of [1,2,3,4,5]">star</mat-icon>
+          </div>
+          <p class="testimonial-text">"{{ t.text }}"</p>
+          <div class="testimonial-author">
+            <div class="author-avatar">{{ t.avatar }}</div>
+            <div class="author-info">
+              <div class="author-name">{{ t.name }}</div>
+              <div class="author-role">{{ t.role }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA SECTION -->
+  <section class="cta-section">
+    <div class="shell">
+      <div class="cta-content">
+        <h2 class="cta-title">Ready to Win Your Next Auction?</h2>
+        <p class="cta-text">
+          Join thousands of collectors and dealers who trust Algo for their automotive investments
+        </p>
+
+        <div class="cta-actions">
+          <a routerLink="/bidder/auctions" class="btn-primary large">
+            <span>Browse Live Auctions</span>
+            <mat-icon>arrow_forward</mat-icon>
+          </a>
+          <a routerLink="/bidder/info" class="btn-outline large">
+            <span>Contact Sales</span>
+          </a>
+        </div>
+
+        <div class="cta-trust">
+          <mat-icon>verified</mat-icon>
+          <span>Bank-grade security • Verified inspections • 24/7 support</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <div class="shell">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div class="footer-logo">
+            <img
+              src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8"
+              alt="Algo"
+            />
+            <span>Algo Auction</span>
+          </div>
+          <p class="footer-tagline">The intelligent way to buy and sell premium vehicles</p>
+        </div>
+
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Platform</h4>
+            <a routerLink="/bidder/auctions">Live Auctions</a>
+            <a routerLink="/bidder/newcars-list">New Inventory</a>
+            <a routerLink="/bidder/allauctions">Browse All</a>
+          </div>
+
+          <div class="footer-col">
+            <h4>Company</h4>
+            <a routerLink="/bidder/info">Contact Us</a>
+            <a routerLink="/bidder/pricing">Pricing</a>
+            <a href="#">About</a>
+          </div>
+
+          <div class="footer-col">
+            <h4>Resources</h4>
+            <a href="#">How It Works</a>
+            <a href="#">Buyer Guide</a>
+            <a href="#">Seller Guide</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2024 Algo Auction. All rights reserved.</p>
+        <div class="footer-legal">
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+          <a href="#">Security</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Loader -->
+  <div class="page-loader" *ngIf="loading">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  </div>
+
+  <!-- Error -->
+  <div class="page-error" *ngIf="error && !loading">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ error }}</span>
+  </div>
 </div>

@@ -1,692 +1,456 @@
-<!-- src/app/pages/bidder/auctions/auctionbid/auctionbid.html -->
-<div class="auction-bid-page" *ngIf="!loading; else busy">
-  <!-- breadcrumbs -->
-  <div class="crumbs">
-    <a routerLink="/bidder/auctions">Auctions</a>
-    <mat-icon>chevron_right</mat-icon>
-    <a *ngIf="auctionId" [routerLink]="['/bidder/auctions', auctionId]">
-      {{ auction?.auctionName || ('Auction #' + auctionId) }}
-    </a>
-    <mat-icon>chevron_right</mat-icon>
-    <span class="current">{{ title }}</span>
-  </div>
+<div class="bidding-theater" *ngIf="!loading; else loadingState">
+  <!-- Hero Gallery Section -->
+  <section class="hero-gallery">
+    <div class="gallery-main" [ngStyle]="{ '--main-img': 'url(' + activeImage + ')' }">
+      <div class="gallery-overlay"></div>
+      
+      <!-- Breadcrumbs -->
+      <div class="breadcrumbs">
+        <a routerLink="/bidder/auctions">Auctions</a>
+        <mat-icon>chevron_right</mat-icon>
+        <a [routerLink]="['/bidder/auctions', auctionId]">{{ auction?.auctionName || 'Auction' }}</a>
+        <mat-icon>chevron_right</mat-icon>
+        <span>{{ title }}</span>
+      </div>
 
-  <div class="err" *ngIf="error">
-    <mat-icon>error_outline</mat-icon>
-    <span>{{ error }}</span>
-  </div>
+      <!-- Countdown Badge (Floating) -->
+      <div class="countdown-float" [ngClass]="auctionState">
+        <mat-icon>schedule</mat-icon>
+        <span>{{ auctionCountdown }}</span>
+      </div>
 
-  <section class="page" *ngIf="!error">
-    <!-- LEFT: vehicle -->
-    <div class="main">
-      <section class="media">
-        <div
-          class="stage"
-          [ngStyle]="{
-            '--photo':
-              'url(' + (activeImage || images[0] || heroUrl) + ')'
-          }"
-        ></div>
-
-        <div class="thumbs" *ngIf="images.length > 1">
-          <button
-            class="thumb"
-            *ngFor="let img of images"
-            [class.active]="img === activeImage"
-            [ngStyle]="{ '--photo': 'url(' + img + ')' }"
-            (click)="selectImage(img)"
-            matTooltip="View"
-          ></button>
-        </div>
-      </section>
-
-      <section class="title-block">
-        <div class="topline">
-          <span class="lot-pill">
-            Lot #{{ lotId }}
-          </span>
-          <span
-            class="status-pill"
-            [class.live]="isLive"
-            [class.ended]="auctionState === 'ended'"
-          >
-            <mat-icon>schedule</mat-icon>
-            <span>{{ auctionCountdown }}</span>
-          </span>
-        </div>
-
-        <h1>{{ title }}</h1>
-        <div class="sub">{{ subtitle }}</div>
-
-        <div class="meta">
-          <div class="chip">
-            <div class="label">Start Price</div>
-            <div class="value">{{ money(lotStartPrice) }}</div>
-          </div>
-
-          <!-- 🔴 Reserve chip (default red) that flips 🟢 when met -->
-          <div class="chip reserve" [class.met]="isReserveMet">
-            <div class="label">
-              Reserve
-              <span class="reserve-badge" *ngIf="lotReservePrice">
-                {{ isReserveMet ? 'Met' : 'Not met' }}
-              </span>
-            </div>
-            <div class="value">{{ money(lotReservePrice) }}</div>
-          </div>
-
-          <div class="chip">
-            <div class="label">Buy Now</div>
-            <div class="value">{{ money(lotBuyNowPrice) }}</div>
-          </div>
-          <div class="chip">
-            <div class="label">Bid Increment</div>
-            <div class="value">{{ money(lotBidIncrement) }}</div>
-          </div>
-          <div class="chip">
-            <div class="label">Auction Window</div>
-            <div class="value">
-              {{
-                formatRange(
-                  auction?.startDateTime || null,
-                  auction?.endDateTime || null
-                )
-              }}
-            </div>
-          </div>
-        </div>
-
-        <div class="your-status">
-          <div class="label">Your status</div>
-          <div
-            class="pill"
-            [ngClass]="yourStatus.toLowerCase().replace(' ', '-')"
-          >
-            <mat-icon *ngIf="yourStatus === 'Winning' || yourStatus === 'Won'">
-              emoji_events
-            </mat-icon>
-            <mat-icon *ngIf="yourStatus === 'Outbid' || yourStatus === 'Lost'">
-              warning
-            </mat-icon>
-            <mat-icon *ngIf="yourStatus === 'No Bids'">person</mat-icon>
-            <span>{{ yourStatus }}</span>
-          </div>
-          <div class="details">
-            <span *ngIf="currentPrice != null">
-              Current price: <strong>{{ money(currentPrice) }}</strong>
-            </span>
-            <span *ngIf="yourMaxBid != null">
-              • Your top bid: <strong>{{ money(yourMaxBid) }}</strong>
-            </span>
-            <span *ngIf="yourMaxBid == null">
-              • You haven't placed a bid yet.
-            </span>
-          </div>
-        </div>
-      </section>
-
-      <!-- 👇 Bid history moved directly under Your status -->
-      <section class="panel history">
-        <div class="head">
-          <div class="titles">
-            <h3>Bid history</h3>
-            <p class="sub">
-              Newest bids at the top. 
-              <span class="ai-highlight">AI bids glow in neon ✨</span>
-            </p>
-          </div>
-          <span class="badge" *ngIf="bids.length">{{ bids.length }} bids</span>
-        </div>
-
-        <div class="empty" *ngIf="bids.length === 0">
-          <mat-icon>info</mat-icon>
-          No bids yet. Be the first to make a move.
-        </div>
-
-        <div class="timeline" *ngIf="bids.length > 0">
-          <div
-            class="item"
-            *ngFor="let b of bids; let i = index"
-            [ngClass]="{ 'ai-bid': b.isAutoBid, 'top-item': i === 0 }"
-          >
-            <div class="dot" [class.top]="i === 0"></div>
-            <div class="line" *ngIf="i < bids.length - 1"></div>
-            <div class="card" [ngClass]="{ 'me': b.isMine, 'ai-card': b.isAutoBid }">
-              <div class="row1">
-                <span class="who" [class.me]="b.isMine">
-                  {{
-                    b.isMine
-                      ? (b.isAutoBid ? 'You (AI bid)' : 'You')
-                      : 'Bidder #' + (b.createdById ?? '—')
-                  }}
-                </span>
-
-                <span class="tag-ai" *ngIf="b.isAutoBid">
-                  🤖 AI bid
-                </span>
-
-                <span class="top-pill" *ngIf="i === 0">
-                  Top bid
-                </span>
-
-                <span class="amount">{{ money(b.amount) }}</span>
-              </div>
-              <div class="row2">
-                <span class="when">{{ formatDate(b.createdDate) }}</span>
-                <span class="caption">
-                  <ng-container *ngIf="b.isAutoBid; else humanCaption">
-                    AI boost: keeping this bid in the spotlight 🤖
-                  </ng-container>
-                  <ng-template #humanCaption>
-                    <ng-container *ngIf="i === 0; else olderCaption">
-                      Fresh move on the board 🔥
-                    </ng-container>
-                    <ng-template #olderCaption>
-                      Logged in the bidding battle history.
-                    </ng-template>
-                  </ng-template>
-                </span>
-                <span class="status" *ngIf="b.statusName">
-                  {{ b.statusName }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel specs">
-        <h3>Vehicle details</h3>
-        <div class="grid">
-          <div class="row" *ngFor="let s of specs">
-            <div class="label">{{ s.label }}</div>
-            <div class="value">{{ s.value || '—' }}</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Inspection Report (Tabbed per inspection type, with images) -->
-      <section class="panel inspection" *ngIf="inventory">
-        <h3>Inspection report</h3>
-
-        <!-- loading state -->
-        <div class="insp-loading" *ngIf="reportLoading">
-          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-          <span>Loading inspection report…</span>
-        </div>
-
-        <!-- content -->
-        <ng-container *ngIf="!reportLoading">
-          <!-- no data -->
-          <ng-container *ngIf="!reportGroups.length; else inspHasData">
-            <div class="insp-empty">
-              <mat-icon>content_paste_search</mat-icon>
-              <div class="copy">
-                <div class="title">No inspection report available yet</div>
-                <div class="sub">
-                  Once the vehicle has been inspected and the checklist is
-                  completed, a read-only report will appear here.
-                </div>
-              </div>
-            </div>
-          </ng-container>
-
-          <!-- has data -->
-          <ng-template #inspHasData>
-            <div class="insp-summary">
-              <div class="tile">
-                <div class="label">Total checkpoints</div>
-                <div class="value">{{ totalCheckpoints }}</div>
-              </div>
-              <div class="tile">
-                <div class="label">Completed</div>
-                <div class="value">{{ totalCompleted }}</div>
-              </div>
-              <div class="tile">
-                <div class="label">Completion</div>
-                <div class="value">
-                  {{ overallProgressPercent }}%
-                  <span
-                    class="status-pill"
-                    [style.border-color]="getCompletionStatusColor()"
-                  >
-                    <span
-                      class="dot"
-                      [style.background]="getCompletionStatusColor()"
-                    ></span>
-                    {{ getCompletionStatus() }}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <mat-divider></mat-divider>
-
-            <div class="insp-tabs-wrap">
-              <mat-tab-group class="insp-tabs" animationDuration="200ms">
-                <mat-tab *ngFor="let group of reportGroups">
-                  <ng-template mat-tab-label>
-                    <span class="insp-tab-title">
-                      {{ group.inspectionTypeName }}
-                    </span>
-                    <span class="insp-tab-sub">
-                      {{ getGroupCompleted(group) }}/{{ getGroupTotal(group) }}
-                      completed
-                    </span>
-                  </ng-template>
-
-                  <section class="insp-group">
-                    <header class="insp-group-header">
-                      <div class="left">
-                        <mat-icon>fact_check</mat-icon>
-                        <span class="name">{{ group.inspectionTypeName }}</span>
-                        <span
-                          class="weight"
-                          *ngIf="
-                            group.weightage != null &&
-                            group.weightage !== undefined
-                          "
-                        >
-                          {{ group.weightage }}%
-                        </span>
-                      </div>
-                      <div class="right">
-                        <span
-                          class="chip"
-                          [class.complete]="
-                            getGroupCompleted(group) === getGroupTotal(group)
-                          "
-                        >
-                          <mat-icon>
-                            {{
-                              getGroupCompleted(group) === getGroupTotal(group)
-                                ? 'check_circle'
-                                : 'pending'
-                            }}
-                          </mat-icon>
-                          {{ getGroupCompleted(group) }}/{{
-                            getGroupTotal(group)
-                          }}
-                          done
-                        </span>
-                      </div>
-                    </header>
-
-                    <div class="insp-checkpoints">
-                      <div
-                        class="insp-row"
-                        *ngFor="let cp of group.checkpoints"
-                        [class.answered]="isRowAnswered(cp)"
-                      >
-                        <div class="insp-main">
-                          <div class="insp-title-row">
-                            <mat-icon class="insp-status-icn">
-                              {{
-                                isRowAnswered(cp)
-                                  ? 'check_circle'
-                                  : 'radio_button_unchecked'
-                              }}
-                            </mat-icon>
-                            <div class="insp-text">
-                              <div class="insp-name">
-                                {{ cp.inspectionCheckpointName }}
-                              </div>
-                              <div class="insp-type">
-                                <span
-                                  *ngIf="
-                                    normalizeInputType(cp.inputType) ===
-                                    'yesno'
-                                  "
-                                >
-                                  Pass / Fail
-                                </span>
-                                <span
-                                  *ngIf="
-                                    normalizeInputType(cp.inputType) ===
-                                    'number'
-                                  "
-                                >
-                                  Numeric value
-                                </span>
-                                <span
-                                  *ngIf="
-                                    normalizeInputType(cp.inputType) ===
-                                    'textarea'
-                                  "
-                                >
-                                  Remarks
-                                </span>
-                                <span
-                                  *ngIf="
-                                    normalizeInputType(cp.inputType) ===
-                                    'text'
-                                  "
-                                >
-                                  Text
-                                </span>
-                                <span
-                                  *ngIf="
-                                    normalizeInputType(cp.inputType) ===
-                                    'image'
-                                  "
-                                >
-                                  Photos
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div class="insp-result">
-                          <ng-container
-                            [ngSwitch]="normalizeInputType(cp.inputType)"
-                          >
-                            <!-- YES/NO -->
-                            <div
-                              *ngSwitchCase="'yesno'"
-                              class="insp-pill"
-                              [class.pass]="cp.resultValue === 'Pass'"
-                              [class.fail]="cp.resultValue === 'Fail'"
-                            >
-                              <mat-icon *ngIf="cp.resultValue === 'Pass'">
-                                check_circle
-                              </mat-icon>
-                              <mat-icon *ngIf="cp.resultValue === 'Fail'">
-                                cancel
-                              </mat-icon>
-                              <span>{{
-                                cp.resultValue || 'Not recorded'
-                              }}</span>
-                            </div>
-
-                            <!-- NUMBER -->
-                            <div *ngSwitchCase="'number'" class="insp-value-box">
-                              <span
-                                class="value"
-                                *ngIf="isAnswered(cp.resultValue); else noNumber"
-                              >
-                                {{ cp.resultValue }}
-                              </span>
-                              <ng-template #noNumber>
-                                <span class="empty">No value recorded</span>
-                              </ng-template>
-                            </div>
-
-                            <!-- IMAGE(S) -->
-                            <div
-                              *ngSwitchCase="'image'"
-                              class="insp-photos-wrap"
-                            >
-                              <ng-container
-                                *ngIf="cp.imageUrls?.length; else noPhotos"
-                              >
-                                <div class="insp-photos">
-                                  <button
-                                    type="button"
-                                    class="insp-photo-thumb"
-                                    *ngFor="
-                                      let img of cp.imageUrls;
-                                      let idx = index
-                                    "
-                                    (click)="openImageViewer(cp.imageUrls!, idx)"
-                                    [ngStyle]="{
-                                      '--photo': 'url(' + img + ')'
-                                    }"
-                                    matTooltip="Open photo"
-                                  ></button>
-                                </div>
-                              </ng-container>
-                              <ng-template #noPhotos>
-                                <span class="empty">No photos uploaded</span>
-                              </ng-template>
-                            </div>
-
-                            <!-- TEXT / TEXTAREA / DEFAULT -->
-                            <div *ngSwitchDefault class="insp-notes">
-                              <span
-                                *ngIf="isAnswered(cp.resultValue); else noNotes"
-                              >
-                                {{ cp.resultValue }}
-                              </span>
-                              <ng-template #noNotes>
-                                <span class="empty">No remarks recorded</span>
-                              </ng-template>
-                            </div>
-                          </ng-container>
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-                </mat-tab>
-              </mat-tab-group>
-            </div>
-          </ng-template>
-        </ng-container>
-      </section>
+      <!-- Vehicle Title Overlay -->
+      <div class="hero-title-card">
+        <div class="lot-number">LOT #{{ lotId }}</div>
+        <h1 class="vehicle-title">{{ title }}</h1>
+        <div class="vehicle-subtitle">{{ subtitle }}</div>
+      </div>
     </div>
 
-    <!-- RIGHT: bidding panel -->
-    <aside class="sidebar">
-      <div class="rail">
-        <section class="bid-panel">
-          <div class="head">
-            <div class="title">
-              <mat-icon>gavel</mat-icon>
-              <span>Live bidding</span>
-            </div>
-            <div class="pill" [ngClass]="auctionState">
-              <span *ngIf="auctionState === 'scheduled'">Scheduled</span>
-              <span *ngIf="auctionState === 'live'">Live</span>
-              <span *ngIf="auctionState === 'ended'">Ended</span>
-              <span *ngIf="auctionState === 'unknown'">—</span>
-            </div>
-          </div>
+    <!-- Thumbnail Strip -->
+    <div class="gallery-thumbs" *ngIf="images.length > 1">
+      <button class="thumb" 
+              *ngFor="let img of images" 
+              [class.active]="img === activeImage"
+              [ngStyle]="{ '--thumb-img': 'url(' + img + ')' }"
+              (click)="selectImage(img)">
+      </button>
+    </div>
+  </section>
 
-          <div class="current">
-            <div class="label">Current price</div>
-            <div class="value">
-              {{ money(currentPrice ?? lotStartPrice) }}
-            </div>
+  <!-- Main Content Grid -->
+  <div class="content-grid">
+    <!-- Left Column: Details -->
+    <div class="left-column">
+      <!-- Status & Price Cards -->
+      <div class="cards-row">
+        <!-- Your Status Card -->
+        <div class="glass-card status-card">
+          <div class="card-label">Your Status</div>
+          <div class="status-badge" [ngClass]="yourStatus.toLowerCase().replace(' ', '-')">
+            <mat-icon *ngIf="yourStatus === 'Winning' || yourStatus === 'Won'">emoji_events</mat-icon>
+            <mat-icon *ngIf="yourStatus === 'Outbid' || yourStatus === 'Lost'">trending_down</mat-icon>
+            <mat-icon *ngIf="yourStatus === 'No Bids'">gavel</mat-icon>
+            <span>{{ yourStatus }}</span>
           </div>
+          <div class="status-details">
+            <span *ngIf="yourMaxBid != null">Your top bid: <strong>{{ money(yourMaxBid) }}</strong></span>
+            <span *ngIf="yourMaxBid == null">Place your first bid below</span>
+          </div>
+        </div>
 
-          <!-- AI bidding status strip (shows when you have any AI-bid history) -->
-          <div class="auto-strip" *ngIf="hasAutoBidHistory">
-            <div class="left">
-              <mat-icon>auto_awesome</mat-icon>
-              <div class="copy">
-                <div class="title">
-                  AI bidding in effect
-                  <span *ngIf="auctionState === 'live'"> (live)</span>
-                  <span *ngIf="auctionState === 'scheduled'"> (queued)</span>
+        <!-- Current Price Card -->
+        <div class="glass-card price-card">
+          <div class="card-label">Current Price</div>
+          <div class="price-value">{{ money(currentPrice ?? lotStartPrice) }}</div>
+          <div class="price-meta">
+            <span class="meta-item">Start: {{ money(lotStartPrice) }}</span>
+            <span class="meta-item" *ngIf="lotBidIncrement">Inc: {{ money(lotBidIncrement) }}</span>
+          </div>
+        </div>
+
+        <!-- Reserve Card -->
+        <div class="glass-card reserve-card" [class.met]="isReserveMet" *ngIf="lotReservePrice">
+          <div class="card-label">Reserve</div>
+          <div class="reserve-badge">
+            <mat-icon>{{ isReserveMet ? 'check_circle' : 'info' }}</mat-icon>
+            <span>{{ isReserveMet ? 'MET' : 'NOT MET' }}</span>
+          </div>
+          <div class="reserve-value">{{ money(lotReservePrice) }}</div>
+        </div>
+      </div>
+
+      <!-- AI Auto-Bid Showcase (Prominent) -->
+      <div class="ai-showcase" *ngIf="hasAutoBidHistory">
+        <div class="ai-header">
+          <div class="ai-icon">
+            <mat-icon>auto_awesome</mat-icon>
+          </div>
+          <div class="ai-text">
+            <div class="ai-title">AI Auto-Bidding Active</div>
+            <div class="ai-subtitle">AlgoX AI is monitoring this auction for you</div>
+          </div>
+        </div>
+        <div class="ai-stats">
+          <div class="ai-stat">
+            <div class="stat-label">Your AI Max</div>
+            <div class="stat-value">{{ money(autoBidCeiling) }}</div>
+          </div>
+          <div class="ai-stat">
+            <div class="stat-label">Status</div>
+            <div class="stat-value active">{{ auctionState === 'live' ? 'LIVE' : 'QUEUED' }}</div>
+          </div>
+        </div>
+        <div class="ai-description">
+          Our AI will automatically place strategic bids on your behalf, keeping you in the lead up to your maximum budget. Sit back and let technology work for you.
+        </div>
+      </div>
+
+      <!-- Bid History Timeline -->
+      <div class="glass-card history-card">
+        <div class="card-header">
+          <div class="header-left">
+            <mat-icon>history</mat-icon>
+            <h2>Bid History</h2>
+          </div>
+          <div class="bid-count">{{ bids.length }} {{ bids.length === 1 ? 'Bid' : 'Bids' }}</div>
+        </div>
+
+        <div class="empty-history" *ngIf="bids.length === 0">
+          <mat-icon>gavel</mat-icon>
+          <span>No bids placed yet. Be the first!</span>
+        </div>
+
+        <div class="bid-timeline" *ngIf="bids.length > 0">
+          <div class="timeline-item" 
+               *ngFor="let bid of bids; let i = index; let isFirst = first"
+               [class.is-top]="isFirst"
+               [class.is-mine]="bid.isMine"
+               [class.is-ai]="bid.isAutoBid">
+            
+            <div class="timeline-dot"></div>
+            <div class="timeline-line" *ngIf="i < bids.length - 1"></div>
+            
+            <div class="bid-card">
+              <div class="bid-header">
+                <div class="bid-user">
+                  <mat-icon>{{ bid.isMine ? 'person' : 'person_outline' }}</mat-icon>
+                  <span>{{ bid.isMine ? 'You' : 'Bidder #' + (bid.createdById || '—') }}</span>
+                  <span class="ai-badge" *ngIf="bid.isAutoBid">
+                    <mat-icon>auto_awesome</mat-icon>
+                    AI BID
+                  </span>
                 </div>
-                <div class="sub">
-                  AlgoX AI will automatically nudge your bid whenever you're
-                  challenged, up to your maximum.
+                <div class="bid-amount">{{ money(bid.amount) }}</div>
+              </div>
+              
+              <div class="bid-footer">
+                <span class="bid-time">{{ formatDate(bid.createdDate) }}</span>
+                <span class="bid-status" *ngIf="isFirst">LEADING BID</span>
+                <span class="bid-status" *ngIf="bid.statusName && !isFirst">{{ bid.statusName }}</span>
+              </div>
+
+              <div class="ai-indicator" *ngIf="bid.isAutoBid">
+                <mat-icon>psychology</mat-icon>
+                <span>AI placed this bid strategically</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vehicle Specifications -->
+      <div class="glass-card specs-card">
+        <div class="card-header">
+          <mat-icon>directions_car</mat-icon>
+          <h2>Vehicle Specifications</h2>
+        </div>
+        <div class="specs-grid">
+          <div class="spec-row" *ngFor="let spec of specs">
+            <div class="spec-label">{{ spec.label }}</div>
+            <div class="spec-value">{{ spec.value || '—' }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inspection Report -->
+      <div class="glass-card inspection-card" *ngIf="inventory">
+        <div class="card-header">
+          <mat-icon>fact_check</mat-icon>
+          <h2>Inspection Report</h2>
+        </div>
+
+        <div class="inspection-loader" *ngIf="reportLoading">
+          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+          <span>Loading inspection data...</span>
+        </div>
+
+        <div class="inspection-empty" *ngIf="!reportLoading && reportGroups.length === 0">
+          <mat-icon>content_paste_off</mat-icon>
+          <div class="empty-text">
+            <strong>No inspection report available</strong>
+            <span>This vehicle hasn't been inspected yet</span>
+          </div>
+        </div>
+
+        <div class="inspection-content" *ngIf="!reportLoading && reportGroups.length > 0">
+          <!-- Summary Stats -->
+          <div class="inspection-summary">
+            <div class="summary-stat">
+              <div class="stat-value">{{ totalCheckpoints }}</div>
+              <div class="stat-label">Total Checks</div>
+            </div>
+            <div class="summary-stat">
+              <div class="stat-value">{{ totalCompleted }}</div>
+              <div class="stat-label">Completed</div>
+            </div>
+            <div class="summary-stat">
+              <div class="stat-value">{{ overallProgressPercent }}%</div>
+              <div class="stat-label">Progress</div>
+            </div>
+            <div class="summary-stat">
+              <div class="stat-badge" [style.border-color]="getCompletionStatusColor()" [style.color]="getCompletionStatusColor()">
+                {{ getCompletionStatus() }}
+              </div>
+            </div>
+          </div>
+
+          <mat-divider></mat-divider>
+
+          <!-- Tabbed Sections -->
+          <mat-tab-group class="inspection-tabs">
+            <mat-tab *ngFor="let group of reportGroups">
+              <ng-template mat-tab-label>
+                <div class="tab-label">
+                  <span class="tab-name">{{ group.inspectionTypeName }}</span>
+                  <span class="tab-progress">{{ getGroupCompleted(group) }}/{{ getGroupTotal(group) }}</span>
+                </div>
+              </ng-template>
+
+              <div class="tab-content">
+                <div class="checkpoint-list">
+                  <div class="checkpoint-item" 
+                       *ngFor="let cp of group.checkpoints"
+                       [class.answered]="isRowAnswered(cp)">
+                    
+                    <div class="checkpoint-main">
+                      <mat-icon class="checkpoint-icon">
+                        {{ isRowAnswered(cp) ? 'check_circle' : 'radio_button_unchecked' }}
+                      </mat-icon>
+                      <div class="checkpoint-text">
+                        <div class="checkpoint-name">{{ cp.inspectionCheckpointName }}</div>
+                        <div class="checkpoint-type">{{ normalizeInputType(cp.inputType) | uppercase }}</div>
+                      </div>
+                    </div>
+
+                    <div class="checkpoint-result">
+                      <!-- Yes/No -->
+                      <div *ngIf="normalizeInputType(cp.inputType) === 'yesno'" 
+                           class="result-badge"
+                           [class.pass]="cp.resultValue === 'Pass'"
+                           [class.fail]="cp.resultValue === 'Fail'">
+                        <mat-icon>{{ cp.resultValue === 'Pass' ? 'check_circle' : 'cancel' }}</mat-icon>
+                        <span>{{ cp.resultValue || 'Not recorded' }}</span>
+                      </div>
+
+                      <!-- Number -->
+                      <div *ngIf="normalizeInputType(cp.inputType) === 'number'" class="result-value">
+                        {{ cp.resultValue || '—' }}
+                      </div>
+
+                      <!-- Images -->
+                      <div *ngIf="normalizeInputType(cp.inputType) === 'image'" class="result-images">
+                        <button class="image-thumb" 
+                                *ngFor="let img of cp.imageUrls; let idx = index"
+                                [ngStyle]="{ '--img': 'url(' + img + ')' }"
+                                (click)="openImageViewer(cp.imageUrls!, idx)">
+                        </button>
+                        <span class="no-images" *ngIf="!cp.imageUrls?.length">No photos</span>
+                      </div>
+
+                      <!-- Text -->
+                      <div *ngIf="normalizeInputType(cp.inputType) === 'text' || normalizeInputType(cp.inputType) === 'textarea'" 
+                           class="result-text">
+                        {{ cp.resultValue || 'No remarks' }}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div class="max" *ngIf="autoBidCeiling != null">
-              Max: <strong>{{ money(autoBidCeiling) }}</strong>
-            </div>
-          </div>
+            </mat-tab>
+          </mat-tab-group>
+        </div>
+      </div>
+    </div>
 
-          <div class="input-row">
-            <label for="bidInput">Your bid</label>
-            <div class="input-wrap">
-              <span class="prefix">$</span>
-              <input
-                id="bidInput"
-                type="number"
-                [(ngModel)]="newBidAmount"
-                [disabled]="!isLive || placingBid"
-              />
-            </div>
-            <div class="hint">
-              <span *ngIf="lotBidIncrement">
-                Min increment: {{ money(lotBidIncrement) }}
-              </span>
-              <span *ngIf="!lotBidIncrement">
-                Enter an amount higher than current price.
-              </span>
-            </div>
-          </div>
-
-          <!-- AI bidding controls -->
-          <div class="auto-row">
-            <button
-              type="button"
-              class="auto-toggle"
-              [class.on]="autoBidEnabled"
-              (click)="toggleAutoBid()"
-              [disabled]="!isLive || placingBid"
-            >
-              <span class="switch"></span>
-              <div class="labels">
-                <div class="label-main">Enable AI bidding</div>
-                <div class="label-sub">
-                  Let AlgoX AI keep you in the lead automatically up to your max.
-                </div>
-              </div>
-            </button>
-
-            <div class="auto-input" *ngIf="autoBidEnabled">
-              <label for="autoMax">AI max budget</label>
-              <div class="input-wrap">
-                <span class="prefix">$</span>
-                <input
-                  id="autoMax"
-                  type="number"
-                  [(ngModel)]="autoBidMaxAmount"
-                  [disabled]="!isLive || placingBid"
-                />
-              </div>
-              <div class="hint">
-                AI bidding will never go beyond this amount.
-              </div>
-            </div>
-          </div>
-
-          <div class="quick-row">
-            <button
-              type="button"
-              class="quick"
-              mat-button
-              (click)="adjustBid((lotBidIncrement || 100) * 1)"
-              [disabled]="!isLive || placingBid"
-            >
-              + 1x Increment
-            </button>
-            <button
-              type="button"
-              class="quick"
-              mat-button
-              (click)="adjustBid((lotBidIncrement || 100) * 2)"
-              [disabled]="!isLive || placingBid"
-            >
-              + 2x Increment
-            </button>
-            <button
-              type="button"
-              class="quick"
-              mat-button
-              (click)="adjustBid((lotBidIncrement || 100) * 5)"
-              [disabled]="!isLive || placingBid"
-            >
-              + 5x Increment
-            </button>
-          </div>
-
-          <button
-            type="button"
-            class="primary-btn"
-            (click)="placeBid()"
-            [disabled]="!isLive || placingBid"
-          >
+    <!-- Right Column: Bidding Panel (Sticky) -->
+    <aside class="right-column">
+      <div class="bidding-panel">
+        <!-- Panel Header -->
+        <div class="panel-header">
+          <div class="header-icon">
             <mat-icon>gavel</mat-icon>
-            <span *ngIf="isLive && !placingBid">Place bid</span>
-            <span *ngIf="placingBid">Placing…</span>
-            <span *ngIf="!isLive && !placingBid">Bidding closed</span>
+          </div>
+          <div class="header-text">
+            <h3>Place Your Bid</h3>
+            <div class="auction-status" [ngClass]="auctionState">
+              <span class="status-dot"></span>
+              <span>{{ auctionState === 'live' ? 'LIVE BIDDING' : auctionState === 'scheduled' ? 'SCHEDULED' : 'ENDED' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bid Amount Input -->
+        <div class="bid-input-group">
+          <label>Your Bid Amount</label>
+          <div class="input-wrapper">
+            <span class="currency">$</span>
+            <input type="number" 
+                   [(ngModel)]="newBidAmount" 
+                   [disabled]="!isLive || placingBid"
+                   placeholder="Enter amount">
+          </div>
+          <div class="input-hint">
+            Minimum increment: {{ money(lotBidIncrement) }}
+          </div>
+        </div>
+
+        <!-- Quick Increment Buttons -->
+        <div class="quick-increments">
+          <button class="increment-btn" 
+                  (click)="adjustBid((lotBidIncrement || 100) * 1)"
+                  [disabled]="!isLive || placingBid">
+            +{{ money((lotBidIncrement || 100) * 1) }}
+          </button>
+          <button class="increment-btn" 
+                  (click)="adjustBid((lotBidIncrement || 100) * 2)"
+                  [disabled]="!isLive || placingBid">
+            +{{ money((lotBidIncrement || 100) * 2) }}
+          </button>
+          <button class="increment-btn" 
+                  (click)="adjustBid((lotBidIncrement || 100) * 5)"
+                  [disabled]="!isLive || placingBid">
+            +{{ money((lotBidIncrement || 100) * 5) }}
+          </button>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <!-- AI Auto-Bid Toggle -->
+        <div class="ai-toggle-section">
+          <button class="ai-toggle" 
+                  [class.enabled]="autoBidEnabled"
+                  (click)="toggleAutoBid()"
+                  [disabled]="!isLive || placingBid">
+            <div class="toggle-switch">
+              <span class="switch-knob"></span>
+            </div>
+            <div class="toggle-text">
+              <div class="toggle-title">
+                <mat-icon>auto_awesome</mat-icon>
+                Enable AI Auto-Bidding
+              </div>
+              <div class="toggle-subtitle">Let our AI bid strategically for you</div>
+            </div>
           </button>
 
-          <div class="footnote">
-            Your bids are binding. Make sure you’ve reviewed the listing
-            details before placing a bid.
+          <!-- AI Max Amount Input (Shows when enabled) -->
+          <div class="ai-max-input" *ngIf="autoBidEnabled">
+            <label>AI Maximum Budget</label>
+            <div class="input-wrapper">
+              <span class="currency">$</span>
+              <input type="number" 
+                     [(ngModel)]="autoBidMaxAmount" 
+                     [disabled]="!isLive || placingBid"
+                     placeholder="Maximum amount">
+            </div>
+            <div class="input-hint ai">
+              <mat-icon>info</mat-icon>
+              AI will never exceed this amount
+            </div>
           </div>
-        </section>
+        </div>
 
-        <section class="meta-panel">
-          <div class="row">
-            <div class="label">Auction</div>
-            <div class="value">
-              {{ auction?.auctionName || ('Auction #' + auctionId) }}
-            </div>
+        <!-- Place Bid Button -->
+        <button class="btn-place-bid" 
+                (click)="placeBid()"
+                [disabled]="!isLive || placingBid">
+          <span class="btn-content">
+            <mat-icon>{{ placingBid ? 'hourglass_empty' : 'gavel' }}</mat-icon>
+            <span *ngIf="!placingBid">{{ autoBidEnabled ? 'ACTIVATE AI BIDDING' : 'PLACE BID' }}</span>
+            <span *ngIf="placingBid">PLACING BID...</span>
+          </span>
+        </button>
+
+        <!-- Disclaimer -->
+        <div class="bid-disclaimer">
+          <mat-icon>info</mat-icon>
+          <span>All bids are binding. Review details carefully before bidding.</span>
+        </div>
+
+        <!-- Auction Meta Info -->
+        <div class="auction-meta">
+          <div class="meta-row">
+            <span class="meta-label">Auction</span>
+            <span class="meta-value">{{ auction?.auctionName || 'Auction #' + auctionId }}</span>
           </div>
-          <div class="row">
-            <div class="label">Schedule</div>
-            <div class="value">
-              {{
-                formatRange(
-                  auction?.startDateTime || null,
-                  auction?.endDateTime || null
-                )
-              }}
-            </div>
+          <div class="meta-row">
+            <span class="meta-label">Duration</span>
+            <span class="meta-value">{{ formatRange(auction?.startDateTime, auction?.endDateTime) }}</span>
           </div>
-          <div class="row">
-            <div class="label">Status</div>
-            <div class="value">
-              {{
-                auction?.auctionStatusName ||
-                  auction?.auctionStatusCode ||
-                  '—'
-              }}
-            </div>
+          <div class="meta-row" *ngIf="lotBuyNowPrice">
+            <span class="meta-label">Buy Now</span>
+            <span class="meta-value highlight">{{ money(lotBuyNowPrice) }}</span>
           </div>
-        </section>
+        </div>
       </div>
     </aside>
-  </section>
+  </div>
 </div>
 
-<ng-template #busy>
-  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+<!-- Loading State -->
+<ng-template #loadingState>
+  <div class="loading-screen">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <span>Loading auction details...</span>
+  </div>
 </ng-template>
 
-<!-- Image Viewer Modal (for inspection photos) -->
-<div class="image-viewer" *ngIf="showImageViewer" (click)="closeImageViewer()">
+<!-- Error State -->
+<div class="error-screen" *ngIf="error && !loading">
+  <mat-icon>error_outline</mat-icon>
+  <h2>{{ error }}</h2>
+  <button class="btn-back" routerLink="/bidder/auctions">
+    <mat-icon>arrow_back</mat-icon>
+    <span>Back to Auctions</span>
+  </button>
+</div>
+
+<!-- Image Viewer Modal -->
+<div class="image-viewer-modal" *ngIf="showImageViewer" (click)="closeImageViewer()">
   <div class="viewer-content" (click)="$event.stopPropagation()">
     <button class="viewer-close" (click)="closeImageViewer()">
       <mat-icon>close</mat-icon>
     </button>
 
-    <button
-      class="viewer-nav prev"
-      (click)="prevImage()"
-      [disabled]="selectedImageIndex === 0"
-    >
+    <button class="viewer-nav prev" 
+            (click)="prevImage()"
+            [disabled]="selectedImageIndex === 0">
       <mat-icon>chevron_left</mat-icon>
     </button>
 
     <div class="viewer-image">
-      <img
-        [src]="selectedImageGallery[selectedImageIndex]"
-        alt="Inspection image"
-      />
+      <img [src]="selectedImageGallery[selectedImageIndex]" alt="Inspection photo">
     </div>
 
-    <button
-      class="viewer-nav next"
-      (click)="nextImage()"
-      [disabled]="
-        selectedImageIndex === selectedImageGallery.length - 1
-      "
-    >
+    <button class="viewer-nav next" 
+            (click)="nextImage()"
+            [disabled]="selectedImageIndex === selectedImageGallery.length - 1">
       <mat-icon>chevron_right</mat-icon>
     </button>
 
     <div class="viewer-counter">
-      {{ selectedImageIndex + 1 }} /
-      {{ selectedImageGallery.length }}
+      {{ selectedImageIndex + 1 }} / {{ selectedImageGallery.length }}
     </div>
   </div>
 </div>

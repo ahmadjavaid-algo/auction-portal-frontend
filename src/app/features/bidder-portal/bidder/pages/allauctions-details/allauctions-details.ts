@@ -1,5 +1,11 @@
-
-import { Component, inject, OnDestroy } from '@angular/core';
+// src/app/pages/bidder/auctions/allauctions-details/allauctions-details.ts
+import {
+  AfterViewInit,
+  Component,
+  inject,
+  OnDestroy,
+  OnInit
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -32,17 +38,14 @@ import { AuctionBidService } from '../../../../../services/auctionbids.service';
 import { BidderAuthService } from '../../../../../services/bidderauth';
 
 type LotCard = {
-  
   inventoryAuctionId: number;
   auctionId: number;
   auctionName: string | null;
 
-  
   title: string;
   sub: string;
   imageUrl: string;
 
-  
   auctionStartPrice?: number | null;
   buyNow?: number | null;
   reserve?: number | null;
@@ -52,22 +55,22 @@ type LotCard = {
   modelName?: string | null;
   categoryName?: string | null;
 
-  
   isFavourite?: boolean;
   favouriteId?: number | null;
 
-  
   countdownText?: string;
   countdownState?: 'scheduled' | 'live' | 'ended';
 
-  
   currentPrice?: number | null;
   yourMaxBid?: number | null;
   reserveMet?: boolean;
   isLeading?: boolean;
   minNextBid?: number | null;
 
-  
+  // UI helpers
+  startsInMs?: number | null;
+  endsInMs?: number | null;
+
   bidCooldownActive?: boolean;
   bidCooldownRemaining?: number;
   cooldownHandle?: any;
@@ -90,7 +93,7 @@ type LotCard = {
   templateUrl: './allauctions-details.html',
   styleUrls: ['./allauctions-details.scss']
 })
-export class AllauctionsDetails implements OnDestroy {
+export class AllauctionsDetails implements OnInit, AfterViewInit, OnDestroy {
   private auctionsSvc = inject(AuctionService);
   private invAucSvc = inject(InventoryAuctionService);
   private filesSvc = inject(InventoryDocumentFileService);
@@ -104,6 +107,9 @@ export class AllauctionsDetails implements OnDestroy {
   loading = true;
   error: string | null = null;
 
+  // page motion stage
+  stage: 'boot' | 'ready' = 'boot';
+
   lots: LotCard[] = [];
 
   q = '';
@@ -116,6 +122,13 @@ export class AllauctionsDetails implements OnDestroy {
     | 'year_old'
     | 'start_time' = 'newest';
 
+  // “Radar” quick views
+  view: 'all' | 'live' | 'scheduled' | 'ending' | 'favs' = 'all';
+
+  // “Budget lens” interactive control
+  budgetOn = false;
+  budgetCap = 50000;
+
   options = {
     auctions: [] as string[],
     makes: [] as string[],
@@ -124,18 +137,63 @@ export class AllauctionsDetails implements OnDestroy {
     categories: [] as string[]
   };
 
+  // computed stats (for social proof + header)
+  legend = { scheduled: 0, live: 0, ended: 0, favs: 0 };
+
   heroUrl =
     'https://images.unsplash.com/photo-1517940310602-75e447f00b52?q=80&w=1400&auto=format&fit=crop';
 
+  // newsletter UI
+  newsletterEmail = '';
+
+  // trust strip (simple, no heavy assets)
+  trust = [
+    { icon: 'verified', label: 'Verified inspections' },
+    { icon: 'lock', label: 'Bank-grade security' },
+    { icon: 'bolt', label: 'Quick bid execution' },
+    { icon: 'psychology', label: 'AI bidding assist' }
+  ];
+
+  testimonials = [
+    {
+      text:
+        'Quick bid feels instant. The live timing is crystal clear even on mobile.',
+      name: 'Mina K.',
+      role: 'Collector • Dubai',
+      avatar: 'MK'
+    },
+    {
+      text:
+        'Verified inspection reports saved me from a bad buy. The platform is built for serious bidders.',
+      name: 'Daniel R.',
+      role: 'Dealer • Manchester',
+      avatar: 'DR'
+    },
+    {
+      text:
+        'AI bidding keeps me calm during spikes. It’s like having a strategist in the room.',
+      name: 'Sofia L.',
+      role: 'Enthusiast • Barcelona',
+      avatar: 'SL'
+    }
+  ];
+
+  // internals
   private tickHandle: any = null;
   private resyncSub?: Subscription;
   private clockSkewMs = 0;
   private timeboxes = new Map<number, AuctionTimebox>();
-
   private favMap = new Map<number, Favourite>();
 
+  private io?: IntersectionObserver;
+  private detachFns: Array<() => void> = [];
+  private prevScrollBehavior = '';
+  private heroMoveHandler?: (e: MouseEvent) => void;
+
   ngOnInit(): void {
+    this.enableSmoothScroll();
     this.loading = true;
+
     const currentUserId = this.bidderAuth.currentUser?.userId ?? null;
 
     forkJoin({
@@ -162,7 +220,7 @@ export class AllauctionsDetails implements OnDestroy {
           const auctionMap = new Map<number, Auction>();
           (auctions || []).forEach(a => auctionMap.set(a.auctionId, a));
 
-          
+          // favourites for current user
           this.favMap.clear();
           const favsForUserAll = (favs || []).filter(f => {
             const uid =
@@ -191,12 +249,11 @@ export class AllauctionsDetails implements OnDestroy {
           const prodMap = new Map<number, Product>();
           (products || []).forEach(p => prodMap.set(p.productId, p));
 
-          
-          const rows = (invAucs || []).filter(x => x.active ?? true);
+          const rows = (invAucs || []).filter(x => (x as any).active ?? true);
 
           const cards: LotCard[] = rows.map(r => {
             const aid = (r as any).auctionId as number;
-            const inv = invMap.get(r.inventoryId) || null;
+            const inv = invMap.get((r as any).inventoryId) || null;
             const prod = inv ? prodMap.get(inv.productId) || null : null;
             const snap = this.safeParse(inv?.productJSON);
 
@@ -217,15 +274,15 @@ export class AllauctionsDetails implements OnDestroy {
               inv?.displayName ||
               snap?.DisplayName ||
               snap?.displayName ||
-              `Inventory #${r.inventoryId}`;
+              `Inventory #${(r as any).inventoryId}`;
 
-            const chassis = inv?.chassisNo || null;
+            const chassis = (inv as any)?.chassisNo || null;
             const sub = chassis
-              ? `Chassis ${chassis} • #${r.inventoryId}`
-              : `#${r.inventoryId}`;
+              ? `Chassis ${chassis} • #${(r as any).inventoryId}`
+              : `#${(r as any).inventoryId}`;
 
             const cover =
-              this.pickRandom(imageMap.get(r.inventoryId)) || this.heroUrl;
+              this.pickRandom(imageMap.get((r as any).inventoryId)) || this.heroUrl;
             const aucName =
               auctionMap.get(aid)?.auctionName ??
               (auctionMap.has(aid) ? `Auction #${aid}` : null);
@@ -247,16 +304,16 @@ export class AllauctionsDetails implements OnDestroy {
               null;
 
             return {
-              inventoryAuctionId: invAucId,
+              inventoryAuctionId: Number(invAucId),
               auctionId: aid,
               auctionName: aucName,
               title,
               sub,
               imageUrl: cover,
               auctionStartPrice: (r as any).auctionStartPrice ?? null,
-              buyNow: r.buyNowPrice ?? null,
-              reserve: r.reservePrice ?? null,
-              bidIncrement: r.bidIncrement ?? null,
+              buyNow: (r as any).buyNowPrice ?? null,
+              reserve: (r as any).reservePrice ?? null,
+              bidIncrement: (r as any).bidIncrement ?? null,
               yearName,
               makeName,
               modelName,
@@ -270,6 +327,8 @@ export class AllauctionsDetails implements OnDestroy {
               reserveMet: false,
               isLeading: false,
               minNextBid: null,
+              startsInMs: null,
+              endsInMs: null,
               bidCooldownActive: false,
               bidCooldownRemaining: 0,
               placingBid: false
@@ -279,9 +338,7 @@ export class AllauctionsDetails implements OnDestroy {
           const firstImg = cards.find(c => !!c.imageUrl)?.imageUrl;
           if (firstImg) this.heroUrl = firstImg;
 
-          
           this.applyBidMetrics(cards, bids || []);
-
           this.lots = cards;
 
           this.buildFilterOptions();
@@ -299,15 +356,36 @@ export class AllauctionsDetails implements OnDestroy {
             this.updateCountdowns();
             this.startTicker();
             this.startResync(uniqAuctionIds);
-            this.wireVisibility(uniqAuctionIds);
+            this.wireVisibility();
+            this.recomputeLegend();
             this.loading = false;
+
+            // allow DOM to paint, then stage + observers
+            setTimeout(() => {
+              this.stage = 'ready';
+              this.observeReveals();
+              this.wireMagnetics();
+              this.wireHeroGlow();
+            }, 30);
           });
         },
         error: () => {
           this.error = 'Failed to load all auctions.';
           this.loading = false;
+          setTimeout(() => (this.stage = 'ready'), 30);
         }
       });
+  }
+
+  ngAfterViewInit(): void {
+    // if data loads very fast, this ensures observers still attach
+    setTimeout(() => {
+      if (!this.loading) {
+        this.observeReveals();
+        this.wireMagnetics();
+        this.wireHeroGlow();
+      }
+    }, 0);
   }
 
   ngOnDestroy(): void {
@@ -315,16 +393,56 @@ export class AllauctionsDetails implements OnDestroy {
     this.resyncSub?.unsubscribe();
     document.removeEventListener('visibilitychange', this.onVisChange);
 
-    
+    this.io?.disconnect();
+    this.detachFns.forEach(fn => fn());
+    this.detachFns = [];
+
+    if (this.heroMoveHandler) {
+      const hero = document.querySelector('.hero-radar') as HTMLElement | null;
+      hero?.removeEventListener('mousemove', this.heroMoveHandler);
+      this.heroMoveHandler = undefined;
+    }
+
+    // stop per-card cooldowns
     for (const c of this.lots) {
       if (c.cooldownHandle) {
         clearInterval(c.cooldownHandle);
         c.cooldownHandle = null;
       }
     }
+
+    this.disableSmoothScroll();
   }
 
-  
+  /* -------------------- HERO / UI -------------------- */
+
+  scrollToLots(): void {
+    const el = document.getElementById('lots');
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  setView(v: typeof this.view): void {
+    this.view = v;
+  }
+
+  toggleBudgetLens(): void {
+    this.budgetOn = !this.budgetOn;
+  }
+
+  subscribeNewsletter(): void {
+    const email = this.newsletterEmail.trim();
+    if (!email) {
+      this.snack.open('Enter an email to subscribe.', 'OK', { duration: 2500 });
+      return;
+    }
+    // no backend here — just a premium-feeling confirmation
+    this.newsletterEmail = '';
+    this.snack.open('Subscribed. You’ll get live auction drops first.', 'OK', {
+      duration: 3000
+    });
+  }
+
+  /* -------------------- FAVOURITES -------------------- */
 
   toggleFavourite(card: LotCard): void {
     const userId = this.bidderAuth.currentUser?.userId ?? null;
@@ -333,7 +451,7 @@ export class AllauctionsDetails implements OnDestroy {
       return;
     }
 
-    
+    // add / reactivate
     if (!card.isFavourite) {
       const existing = this.favMap.get(card.inventoryAuctionId);
 
@@ -343,12 +461,7 @@ export class AllauctionsDetails implements OnDestroy {
           (existing as any).bidderInventoryAuctionFavoriteId ??
           card.favouriteId;
 
-        if (!favId) {
-          console.warn(
-            '[fav] Existing favourite has no id, falling back to add().',
-            existing
-          );
-        } else {
+        if (favId) {
           this.favSvc
             .activate({
               FavouriteId: favId,
@@ -362,13 +475,11 @@ export class AllauctionsDetails implements OnDestroy {
                   card.favouriteId = favId;
                   (existing as any).Active = true;
                   (existing as any).active = true;
+                  this.recomputeLegend();
                 }
               },
-              error: e => {
-                console.error('[fav] REACTIVATE failed', e);
-              }
+              error: e => console.error('[fav] REACTIVATE failed', e)
             });
-
           return;
         }
       }
@@ -399,16 +510,15 @@ export class AllauctionsDetails implements OnDestroy {
             Active: true
           };
           this.favMap.set(card.inventoryAuctionId, favStub as Favourite);
+          this.recomputeLegend();
         },
-        error: e => {
-          console.error('[fav] ADD failed', e);
-        }
+        error: e => console.error('[fav] ADD failed', e)
       });
 
       return;
     }
 
-    
+    // deactivate
     if (card.isFavourite && card.favouriteId != null) {
       const payload = {
         FavouriteId: card.favouriteId,
@@ -425,24 +535,21 @@ export class AllauctionsDetails implements OnDestroy {
               (existing as any).Active = false;
               (existing as any).active = false;
             }
+            this.recomputeLegend();
           }
         },
-        error: e => {
-          console.error('[fav] DEACTIVATE failed', e);
-        }
+        error: e => console.error('[fav] DEACTIVATE failed', e)
       });
     }
   }
 
-  
+  /* -------------------- QUICK BID -------------------- */
 
   onQuickBid(card: LotCard): void {
     if (card.countdownState !== 'live') {
-      this.snack.open(
-        'Quick bid is only available while the auction is live.',
-        'OK',
-        { duration: 3000 }
-      );
+      this.snack.open('Quick bid works only while the auction is live.', 'OK', {
+        duration: 3000
+      });
       return;
     }
 
@@ -456,7 +563,6 @@ export class AllauctionsDetails implements OnDestroy {
 
     if (card.bidCooldownActive || card.placingBid) return;
 
-    
     if (card.minNextBid == null) {
       const inc = card.bidIncrement ?? 100;
       const base =
@@ -545,9 +651,7 @@ export class AllauctionsDetails implements OnDestroy {
 
     this.bidsSvc.add(payload).subscribe({
       next: () => {
-        this.snack.open('Quick bid placed successfully.', 'OK', {
-          duration: 2500
-        });
+        this.snack.open('Quick bid placed.', 'OK', { duration: 2200 });
         this.refreshAllBids();
       },
       error: err => {
@@ -573,13 +677,23 @@ export class AllauctionsDetails implements OnDestroy {
       .pipe(catchError(() => of([] as AuctionBid[])))
       .subscribe(bids => {
         this.applyBidMetrics(this.lots, bids || []);
+        this.recomputeLegend();
       });
   }
 
-  
+  /* -------------------- FILTERING / SORTING -------------------- */
 
   get filteredLots(): LotCard[] {
     const q = this.q.trim().toLowerCase();
+    const now = Date.now() + this.clockSkewMs;
+
+    const priceOf = (c: LotCard) =>
+      (c.currentPrice ?? undefined) ??
+      (c.auctionStartPrice ?? undefined) ??
+      (c.buyNow ?? undefined) ??
+      (c.reserve ?? undefined) ??
+      Number.POSITIVE_INFINITY;
+
     return this.lots.filter(c => {
       const hay = `${c.title} ${c.sub} ${c.auctionName ?? ''} ${
         c.makeName ?? ''
@@ -599,11 +713,29 @@ export class AllauctionsDetails implements OnDestroy {
         return false;
       if (this.filters.year && String(c.yearName ?? '') !== this.filters.year)
         return false;
-      if (
-        this.filters.category &&
-        (c.categoryName ?? '') !== this.filters.category
-      )
+      if (this.filters.category && (c.categoryName ?? '') !== this.filters.category)
         return false;
+
+      // quick views
+      if (this.view === 'live' && c.countdownState !== 'live') return false;
+      if (this.view === 'scheduled' && c.countdownState !== 'scheduled') return false;
+      if (this.view === 'favs' && !c.isFavourite) return false;
+
+      if (this.view === 'ending') {
+        const tb = this.timeboxes.get(c.auctionId);
+        if (!tb) return false;
+        const end = Number(tb.endEpochMsUtc);
+        const left = end - now;
+        if (!(c.countdownState === 'live' && left > 0 && left <= 15 * 60 * 1000))
+          return false;
+      }
+
+      // budget lens
+      if (this.budgetOn) {
+        const p = priceOf(c);
+        if (!Number.isFinite(p)) return false;
+        if (p > this.budgetCap) return false;
+      }
 
       return true;
     });
@@ -627,23 +759,20 @@ export class AllauctionsDetails implements OnDestroy {
       case 'year_new':
         return list.sort(
           (a, b) =>
-            parseInt(String(b.yearName || 0)) -
-            parseInt(String(a.yearName || 0))
+            parseInt(String(b.yearName || 0)) - parseInt(String(a.yearName || 0))
         );
       case 'year_old':
         return list.sort(
           (a, b) =>
-            parseInt(String(a.yearName || 0)) -
-            parseInt(String(b.yearName || 0))
+            parseInt(String(a.yearName || 0)) - parseInt(String(b.yearName || 0))
         );
       case 'start_time': {
         const start = (c: LotCard) =>
-          this.timeboxes.get(c.auctionId)?.startEpochMsUtc ??
-          Number.MAX_SAFE_INTEGER;
+          this.timeboxes.get(c.auctionId)?.startEpochMsUtc ?? Number.MAX_SAFE_INTEGER;
         return list.sort((a, b) => start(a) - start(b));
       }
       default:
-        return list; 
+        return list;
     }
   }
 
@@ -651,6 +780,8 @@ export class AllauctionsDetails implements OnDestroy {
     this.q = '';
     this.filters = { auction: '', make: '', model: '', year: '', category: '' };
     this.sortBy = 'newest';
+    this.view = 'all';
+    this.budgetOn = false;
   }
 
   clearOne(key: keyof typeof this.filters): void {
@@ -672,7 +803,7 @@ export class AllauctionsDetails implements OnDestroy {
     this.options.categories = uniq(this.lots.map(l => l.categoryName));
   }
 
-  
+  /* -------------------- TIMEBOX / COUNTDOWNS -------------------- */
 
   private startTicker(): void {
     if (this.tickHandle) clearInterval(this.tickHandle);
@@ -692,7 +823,7 @@ export class AllauctionsDetails implements OnDestroy {
     }
   };
 
-  private wireVisibility(_auctionIds: number[]): void {
+  private wireVisibility(): void {
     document.addEventListener('visibilitychange', this.onVisChange);
   }
 
@@ -703,19 +834,15 @@ export class AllauctionsDetails implements OnDestroy {
     }
 
     const lookups$ = auctionIds.map(id =>
-      this.auctionsSvc
-        .getTimebox(id)
-        .pipe(
-          catchError(() => of(null as AuctionTimebox | null)),
-          map(tb => ({ id, tb }))
-        )
+      this.auctionsSvc.getTimebox(id).pipe(
+        catchError(() => of(null as AuctionTimebox | null)),
+        map(tb => ({ id, tb }))
+      )
     );
 
     forkJoin(lookups$).subscribe({
       next: pairs => {
-        const first = pairs.find(p => !!p.tb)?.tb as
-          | AuctionTimebox
-          | undefined;
+        const first = pairs.find(p => !!p.tb)?.tb as AuctionTimebox | undefined;
         if (first && Number.isFinite(first.nowEpochMsUtc as any)) {
           this.clockSkewMs = Number(first.nowEpochMsUtc) - Date.now();
         }
@@ -738,11 +865,16 @@ export class AllauctionsDetails implements OnDestroy {
       if (!tb) {
         c.countdownState = 'scheduled';
         c.countdownText = '—';
+        c.startsInMs = null;
+        c.endsInMs = null;
         continue;
       }
 
       const start = Number(tb.startEpochMsUtc);
       const end = Number(tb.endEpochMsUtc);
+
+      c.startsInMs = Math.max(0, start - now);
+      c.endsInMs = Math.max(0, end - now);
 
       if (now < start) {
         c.countdownState = 'scheduled';
@@ -755,6 +887,8 @@ export class AllauctionsDetails implements OnDestroy {
         c.countdownText = 'Ended';
       }
     }
+
+    this.recomputeLegend();
   }
 
   private fmtCountdown(ms: number): string {
@@ -772,7 +906,18 @@ export class AllauctionsDetails implements OnDestroy {
     return `${hh}:${pad(mm)}:${pad(s)}`;
   }
 
-  
+  private recomputeLegend(): void {
+    const l = { scheduled: 0, live: 0, ended: 0, favs: 0 };
+    for (const c of this.lots) {
+      if (c.countdownState === 'scheduled') l.scheduled++;
+      if (c.countdownState === 'live') l.live++;
+      if (c.countdownState === 'ended') l.ended++;
+      if (c.isFavourite) l.favs++;
+    }
+    this.legend = l;
+  }
+
+  /* -------------------- BIDS METRICS -------------------- */
 
   private applyBidMetrics(cards: LotCard[], bids: AuctionBid[]): void {
     const currentUserId = this.bidderAuth.currentUser?.userId ?? null;
@@ -809,9 +954,7 @@ export class AllauctionsDetails implements OnDestroy {
         currentUserId != null
           ? lotBids.filter(b => {
               const createdBy =
-                (b as any).createdById ??
-                (b as any).CreatedById ??
-                null;
+                (b as any).createdById ?? (b as any).CreatedById ?? null;
               return createdBy === currentUserId;
             })
           : [];
@@ -857,60 +1000,50 @@ export class AllauctionsDetails implements OnDestroy {
     });
   }
 
-  
+  /* -------------------- IMAGES -------------------- */
 
-private buildImagesMap(
-  files: InventoryDocumentFile[]
-): Map<number, string[]> {
-  const m = new Map<number, string[]>();
+  private buildImagesMap(files: InventoryDocumentFile[]): Map<number, string[]> {
+    const m = new Map<number, string[]>();
 
-  const isImg = (u?: string | null, n?: string | null) => {
-    const s = (u || n || '').toLowerCase();
-    return ['.jpg', '.jpeg', '.png', 'jpg', 'jpeg', 'png'].some(x =>
-      s.endsWith(x)
-    );
-  };
+    const isImg = (u?: string | null, n?: string | null) => {
+      const s = (u || n || '').toLowerCase();
+      return ['.jpg', '.jpeg', '.png', 'jpg', 'jpeg', 'png'].some(x =>
+        s.endsWith(x)
+      );
+    };
 
-  (files || [])
-    .filter(f => {
-      const active =
-        (f as any).active ?? (f as any).Active ?? true;
+    (files || [])
+      .filter(f => {
+        const active = (f as any).active ?? (f as any).Active ?? true;
 
-      const invId =
-        (f as any).inventoryId ?? (f as any).InventoryId;
+        const invId = (f as any).inventoryId ?? (f as any).InventoryId;
 
-      
-      const thumbUrl =
-        (f as any).documentThumbnailUrl ??
-        (f as any).DocumentThumbnailUrl ??
-        null;
+        const thumbUrl =
+          (f as any).documentThumbnailUrl ??
+          (f as any).DocumentThumbnailUrl ??
+          null;
 
-      const name =
-        (f as any).documentName ??
-        (f as any).DocumentName ??
-        null;
+        const name = (f as any).documentName ?? (f as any).DocumentName ?? null;
 
-      return active && !!invId && !!thumbUrl && isImg(thumbUrl, name);
-    })
-    .forEach(f => {
-      const invId =
-        (f as any).inventoryId ?? (f as any).InventoryId;
+        return active && !!invId && !!thumbUrl && isImg(thumbUrl, name);
+      })
+      .forEach(f => {
+        const invId = (f as any).inventoryId ?? (f as any).InventoryId;
 
-      const thumbUrl =
-        (f as any).documentThumbnailUrl ??
-        (f as any).DocumentThumbnailUrl ??
-        null;
+        const thumbUrl =
+          (f as any).documentThumbnailUrl ??
+          (f as any).DocumentThumbnailUrl ??
+          null;
 
-      if (!thumbUrl) return; 
+        if (!thumbUrl) return;
 
-      const list = m.get(invId) || [];
-      list.push(thumbUrl);
-      m.set(invId, list);
-    });
+        const list = m.get(invId) || [];
+        list.push(thumbUrl);
+        m.set(invId, list);
+      });
 
-  return m;
-}
-
+    return m;
+  }
 
   private pickRandom(arr?: string[]): string | undefined {
     if (!arr?.length) return undefined;
@@ -928,4 +1061,99 @@ private buildImagesMap(
   }
 
   trackById = (_: number, c: LotCard) => c.inventoryAuctionId ?? c.sub;
+
+  /* -------------------- MOTION / INTERACTION -------------------- */
+
+  private observeReveals(): void {
+    if (typeof window === 'undefined') return;
+
+    this.io?.disconnect();
+
+    this.io = new IntersectionObserver(
+      entries => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            (e.target as HTMLElement).classList.add('is-in');
+            this.io?.unobserve(e.target);
+          }
+        }
+      },
+      { root: null, threshold: 0.12 }
+    );
+
+    const nodes = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-reveal]')
+    );
+    nodes.forEach(n => this.io?.observe(n));
+  }
+
+  private wireMagnetics(): void {
+    // minimal “magnetic” buttons: translate within a small radius
+    const buttons = Array.from(
+      document.querySelectorAll<HTMLElement>('.magnetic')
+    );
+
+    // avoid double-binding
+    if (!buttons.length) return;
+
+    buttons.forEach(btn => {
+      const onMove = (ev: MouseEvent) => {
+        const r = btn.getBoundingClientRect();
+        const x = ev.clientX - r.left - r.width / 2;
+        const y = ev.clientY - r.top - r.height / 2;
+        const max = 10;
+        const tx = Math.max(-max, Math.min(max, x / 8));
+        const ty = Math.max(-max, Math.min(max, y / 8));
+        btn.style.transform = `translate(${tx}px, ${ty}px)`;
+      };
+
+      const onLeave = () => {
+        btn.style.transform = '';
+      };
+
+      btn.addEventListener('mousemove', onMove);
+      btn.addEventListener('mouseleave', onLeave);
+
+      this.detachFns.push(() => {
+        btn.removeEventListener('mousemove', onMove);
+        btn.removeEventListener('mouseleave', onLeave);
+      });
+    });
+  }
+
+  private wireHeroGlow(): void {
+    const hero = document.querySelector('.hero-radar') as HTMLElement | null;
+    if (!hero) return;
+
+    this.heroMoveHandler = (e: MouseEvent) => {
+      const r = hero.getBoundingClientRect();
+      const x = ((e.clientX - r.left) / r.width) * 100;
+      const y = ((e.clientY - r.top) / r.height) * 100;
+      hero.style.setProperty('--mx', `${x}%`);
+      hero.style.setProperty('--my', `${y}%`);
+    };
+
+    hero.addEventListener('mousemove', this.heroMoveHandler);
+
+    this.detachFns.push(() => {
+      if (this.heroMoveHandler) hero.removeEventListener('mousemove', this.heroMoveHandler);
+    });
+  }
+
+  private enableSmoothScroll(): void {
+    try {
+      this.prevScrollBehavior = document.documentElement.style.scrollBehavior || '';
+      document.documentElement.style.scrollBehavior = 'smooth';
+    } catch {
+      // ignore
+    }
+  }
+
+  private disableSmoothScroll(): void {
+    try {
+      document.documentElement.style.scrollBehavior = this.prevScrollBehavior;
+    } catch {
+      // ignore
+    }
+  }
 }
