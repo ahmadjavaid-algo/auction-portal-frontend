@@ -1,10 +1,8 @@
 <!-- src/app/pages/bidder/auctions/allauctions-details/allauctions-details.html -->
 <div class="auctions-page" [class.stage-ready]="stage === 'ready'">
-
-
-  <!-- HERO: intrigue + interactive radar -->
+  <!-- HERO: intrigue + interactive radar (FULL WIDTH) -->
   <section
-    class="hero-radar"
+    class="hero-radar hero-full"
     [ngStyle]="{ '--photo': 'url(' + heroUrl + ')' }"
     data-reveal
     style="animation-delay: 120ms"
@@ -17,9 +15,7 @@
         Auction Radar
       </div>
 
-      <h1 class="hero-title">
-        Smart bids. Verified cars. Global auctions.
-      </h1>
+      <h1 class="hero-title">Smart bids. Verified cars. Global auctions.</h1>
 
       <p class="hero-sub">
         See what’s live, what’s about to ignite, and where you’re leading — instantly.
@@ -51,18 +47,18 @@
         <div class="radar-left">
           <div class="label">Quick view</div>
           <div class="pills">
-            <button class="pill" [class.active]="view==='all'" (click)="setView('all')">
-              All
-            </button>
+            <button class="pill" [class.active]="view==='all'" (click)="setView('all')">All</button>
+
             <button class="pill" [class.active]="view==='live'" (click)="setView('live')">
               Live <span class="count">{{ legend.live }}</span>
             </button>
+
             <button class="pill" [class.active]="view==='scheduled'" (click)="setView('scheduled')">
               Scheduled <span class="count">{{ legend.scheduled }}</span>
             </button>
-            <button class="pill" [class.active]="view==='ending'" (click)="setView('ending')">
-              Ending soon
-            </button>
+
+            <button class="pill" [class.active]="view==='ending'" (click)="setView('ending')">Ending soon</button>
+
             <button class="pill" [class.active]="view==='favs'" (click)="setView('favs')">
               Favourites <span class="count">{{ legend.favs }}</span>
             </button>
@@ -81,6 +77,7 @@
             step="1000"
             [(ngModel)]="budgetCap"
             [disabled]="!budgetOn"
+            aria-label="Budget cap"
           />
 
           <div class="hint">
@@ -114,489 +111,462 @@
     </div>
   </section>
 
-  <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+  <!-- CONTENT SHELL (keeps the rest aligned & premium) -->
+  <div class="content-shell">
+    <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
 
-  <div class="err" *ngIf="!loading && error" data-reveal style="animation-delay: 200ms">
-    <mat-icon>error_outline</mat-icon>
-    <span>{{ error }}</span>
-  </div>
+    <div class="err" *ngIf="!loading && error" data-reveal style="animation-delay: 200ms">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error }}</span>
+    </div>
 
-  <!-- TOOLBAR -->
-  <div class="toolbar" *ngIf="!loading && !error" data-reveal style="animation-delay: 340ms">
-    <div class="searchbar">
-      <mat-icon>search</mat-icon>
-      <input
-        type="text"
-        placeholder="Search car, auction, chassis, make, model…"
-        [(ngModel)]="q"
-      />
-      <button *ngIf="q" class="clear" (click)="q = ''" matTooltip="Clear">
-        <mat-icon>close</mat-icon>
+    <!-- TOOLBAR -->
+    <div class="toolbar" *ngIf="!loading && !error" data-reveal style="animation-delay: 340ms">
+      <div class="searchbar">
+        <mat-icon>search</mat-icon>
+        <input type="text" placeholder="Search car, auction, chassis, make, model…" [(ngModel)]="q" />
+        <button *ngIf="q" class="clear" (click)="q = ''" matTooltip="Clear" type="button">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="select">
+        <label>Auction</label>
+        <select [(ngModel)]="filters.auction">
+          <option value="">All</option>
+          <option *ngFor="let a of options.auctions" [value]="a">{{ a }}</option>
+        </select>
+      </div>
+
+      <div class="select">
+        <label>Make</label>
+        <select [(ngModel)]="filters.make">
+          <option value="">All</option>
+          <option *ngFor="let m of options.makes" [value]="m">{{ m }}</option>
+        </select>
+      </div>
+
+      <div class="select">
+        <label>Model</label>
+        <select [(ngModel)]="filters.model">
+          <option value="">All</option>
+          <option *ngFor="let m of options.models" [value]="m">{{ m }}</option>
+        </select>
+      </div>
+
+      <div class="select">
+        <label>Year</label>
+        <select [(ngModel)]="filters.year">
+          <option value="">All</option>
+          <option *ngFor="let y of options.years" [value]="y">{{ y }}</option>
+        </select>
+      </div>
+
+      <div class="select">
+        <label>Category</label>
+        <select [(ngModel)]="filters.category">
+          <option value="">All</option>
+          <option *ngFor="let c of options.categories" [value]="c">{{ c }}</option>
+        </select>
+      </div>
+
+      <div class="select">
+        <label>Sort</label>
+        <select [(ngModel)]="sortBy">
+          <option value="newest">Newest</option>
+          <option value="start_time">Auction Start Time</option>
+          <option value="price_low">Price: Low → High</option>
+          <option value="price_high">Price: High → Low</option>
+          <option value="year_new">Year: Newest</option>
+          <option value="year_old">Year: Oldest</option>
+        </select>
+      </div>
+
+      <button
+        class="clear-all magnetic"
+        type="button"
+        (click)="clearAll()"
+        *ngIf="
+          q ||
+          filters.auction ||
+          filters.make ||
+          filters.model ||
+          filters.year ||
+          filters.category ||
+          sortBy !== 'newest' ||
+          view !== 'all' ||
+          budgetOn
+        "
+      >
+        Clear all
       </button>
     </div>
 
-    <div class="select">
-      <label>Auction</label>
-      <select [(ngModel)]="filters.auction">
-        <option value="">All</option>
-        <option *ngFor="let a of options.auctions" [value]="a">{{ a }}</option>
-      </select>
-    </div>
-
-    <div class="select">
-      <label>Make</label>
-      <select [(ngModel)]="filters.make">
-        <option value="">All</option>
-        <option *ngFor="let m of options.makes" [value]="m">{{ m }}</option>
-      </select>
-    </div>
-
-    <div class="select">
-      <label>Model</label>
-      <select [(ngModel)]="filters.model">
-        <option value="">All</option>
-        <option *ngFor="let m of options.models" [value]="m">{{ m }}</option>
-      </select>
-    </div>
-
-    <div class="select">
-      <label>Year</label>
-      <select [(ngModel)]="filters.year">
-        <option value="">All</option>
-        <option *ngFor="let y of options.years" [value]="y">{{ y }}</option>
-      </select>
-    </div>
-
-    <div class="select">
-      <label>Category</label>
-      <select [(ngModel)]="filters.category">
-        <option value="">All</option>
-        <option *ngFor="let c of options.categories" [value]="c">{{ c }}</option>
-      </select>
-    </div>
-
-    <div class="select">
-      <label>Sort</label>
-      <select [(ngModel)]="sortBy">
-        <option value="newest">Newest</option>
-        <option value="start_time">Auction Start Time</option>
-        <option value="price_low">Price: Low → High</option>
-        <option value="price_high">Price: High → Low</option>
-        <option value="year_new">Year: Newest</option>
-        <option value="year_old">Year: Oldest</option>
-      </select>
-    </div>
-
-    <button
-      class="link clear-all magnetic"
-      (click)="clearAll()"
-      *ngIf="
-        q ||
-        filters.auction ||
-        filters.make ||
-        filters.model ||
-        filters.year ||
-        filters.category ||
-        sortBy !== 'newest' ||
-        view !== 'all' ||
-        budgetOn
-      "
-    >
-      Clear all
-    </button>
-  </div>
-
-  <!-- GRID -->
-  <div class="grid" id="lots" *ngIf="!loading && !error">
-    <article
-      class="lot-card"
-      *ngFor="let c of results; trackBy: trackById"
-      [ngStyle]="{ '--photo': 'url(' + c.imageUrl + ')' }"
-      data-reveal
-    >
-      <div class="photo">
-        <div
-          class="timer-pill"
-          [class.live]="c.countdownState === 'live'"
-          [class.ended]="c.countdownState === 'ended'"
-        >
-          <mat-icon inline>schedule</mat-icon>
-          <span>{{ c.countdownText || '—' }}</span>
-        </div>
-
-        <button
-          type="button"
-          class="fav-btn"
-          [class.is-active]="c.isFavourite"
-          (click)="toggleFavourite(c); $event.stopPropagation()"
-          matTooltip="{{
-            c.isFavourite ? 'Remove from favourites' : 'Add to favourites'
-          }}"
-        >
-          <mat-icon>{{ c.isFavourite ? 'favorite' : 'favorite_border' }}</mat-icon>
-        </button>
-
-        <div class="photo-overlay"></div>
-      </div>
-
-      <div class="body">
-        <div class="top-row">
-          <div class="auction-chip" *ngIf="c.auctionName">
-            <mat-icon>event</mat-icon>
-            <span>{{ c.auctionName }}</span>
-          </div>
-
-          <div
-            class="reserve-pill"
-            *ngIf="c.reserve != null"
-            [class.met]="c.reserveMet"
-            [class.not-met]="!c.reserveMet"
-          >
-            <mat-icon inline>
-              {{ c.reserveMet ? 'check_circle' : 'error_outline' }}
-            </mat-icon>
-            <span>{{ c.reserveMet ? 'Reserve met' : 'Reserve not met' }}</span>
-          </div>
-        </div>
-
-        <h3 class="title">{{ c.title }}</h3>
-        <div class="sub">{{ c.sub }}</div>
-
-        <div class="numbers">
-          <div class="num" *ngIf="c.auctionStartPrice != null">
-            <div class="label">Start</div>
-            <div class="value mono">
-              {{ c.auctionStartPrice | currency:'USD':'symbol':'1.0-0' }}
-            </div>
-          </div>
-          <div class="num" *ngIf="c.buyNow != null">
-            <div class="label">Buy now</div>
-            <div class="value mono">
-              {{ c.buyNow | currency:'USD':'symbol':'1.0-0' }}
-            </div>
-          </div>
-          <div class="num" *ngIf="c.bidIncrement != null">
-            <div class="label">Increment</div>
-            <div class="value mono">
-              {{ c.bidIncrement | currency:'USD':'symbol':'1.0-0' }}
-            </div>
-          </div>
-        </div>
-
-        <div class="bid-row">
-          <div class="col current">
-            <div class="label">Current bid</div>
-            <div class="value-line">
-              <span class="value mono">
-                <ng-container *ngIf="c.currentPrice != null; else noCurrent">
-                  {{ c.currentPrice | currency:'USD':'symbol':'1.0-0' }}
-                </ng-container>
-                <ng-template #noCurrent>—</ng-template>
-              </span>
-
-              <span class="pill leading-pill" *ngIf="c.isLeading && c.currentPrice != null">
-                <mat-icon inline>emoji_events</mat-icon>
-                you’re leading
-              </span>
-            </div>
-          </div>
-
-          <div class="col your-max" *ngIf="c.yourMaxBid != null">
-            <div class="label">Your max</div>
-            <div class="value-line">
-              <span class="value mono" [class.highlight]="c.isLeading">
-                {{ c.yourMaxBid | currency:'USD':'symbol':'1.0-0' }}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div class="quick-bid" *ngIf="c.bidIncrement != null">
-          <ng-container *ngIf="c.countdownState === 'live'; else qbDisabled">
-            <button
-              type="button"
-              class="quick-btn magnetic"
-              [disabled]="c.bidCooldownActive || c.placingBid"
-              (click)="onQuickBid(c)"
-            >
-              <mat-icon>bolt</mat-icon>
-
-              <span *ngIf="!c.bidCooldownActive">
-                Quick bid
-                <ng-container *ngIf="c.minNextBid != null">
-                  • {{ c.minNextBid | currency:'USD':'symbol':'1.0-0' }}
-                </ng-container>
-              </span>
-
-              <span *ngIf="c.bidCooldownActive">
-                Placing in {{ c.bidCooldownRemaining }}s
-              </span>
-            </button>
-
-            <button
-              type="button"
-              class="quick-cancel"
-              *ngIf="c.bidCooldownActive"
-              (click)="cancelQuickBid(c)"
-            >
-              Cancel
-            </button>
-          </ng-container>
-
-          <ng-template #qbDisabled>
-            <div class="quick-disabled">
-              <mat-icon>lock_clock</mat-icon>
-              <span>Quick bid unlocks when live</span>
-            </div>
-          </ng-template>
-        </div>
-
-        <div class="actions">
-          <a
-            class="btn primary magnetic"
-            [routerLink]="['/bidder/auctions', c.auctionId, c.inventoryAuctionId]"
-            matTooltip="Bid on this car"
-          >
-            Place Bid
-            <mat-icon>arrow_forward</mat-icon>
-          </a>
-
-          <a
-            class="btn ghost magnetic"
-            [routerLink]="[
-              '/bidder/auctions',
-              c.auctionId,
-              c.inventoryAuctionId,
-              'details'
-            ]"
-            matTooltip="View details"
-          >
-            View Details
-          </a>
-        </div>
-      </div>
-    </article>
-
-    <div class="empty" *ngIf="results.length === 0" data-reveal>
-      <mat-icon>info</mat-icon>
-      <span>No results match your filters.</span>
-    </div>
-  </div>
-  <!-- STORY: problem/solution narrative -->
-  <section class="story" *ngIf="!loading && !error" data-reveal style="animation-delay: 220ms">
-    <div class="story-grid">
-      <div class="story-copy">
-        <div class="eyebrow">The story</div>
-        <h2 class="h2">Auctions move faster than humans.</h2>
-        <p class="p">
-          When bids spike, attention splits: timing, increments, reserve logic, and “am I even leading?”
-          Algo compresses that chaos into a single surface — so your next move is obvious.
-        </p>
-
-        <div class="timeline">
-          <div class="step">
-            <div class="dot"></div>
-            <div class="txt">
-              <div class="t">Signal</div>
-              <div class="d">Live / scheduled / ending — visible at a glance.</div>
-            </div>
-          </div>
-          <div class="step">
-            <div class="dot"></div>
-            <div class="txt">
-              <div class="t">Proof</div>
-              <div class="d">Verified inspections + reserve status right on the card.</div>
-            </div>
-          </div>
-          <div class="step">
-            <div class="dot"></div>
-            <div class="txt">
-              <div class="t">Action</div>
-              <div class="d">Quick bid with a countdown buffer — no panic clicks.</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="story-visual">
-        <div class="viz-card">
-          <div class="viz-head">
-            <span class="chip"><mat-icon>psychology</mat-icon> AI Assist</span>
-            <span class="chip ghost"><mat-icon>schedule</mat-icon> Live timing</span>
-          </div>
-
-          <div class="viz-body">
-            <div class="pulse"></div>
-            <div class="line l1"></div>
-            <div class="line l2"></div>
-            <div class="line l3"></div>
-
-            <div class="viz-caption">
-              “When it’s loud, the UI should be quiet.”
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- SOCIAL PROOF -->
-  <section class="proof" *ngIf="!loading && !error" data-reveal style="animation-delay: 260ms">
-    <div class="proof-head">
-      <div class="eyebrow">Trusted worldwide</div>
-      <h2 class="h2">Built for collectors, dealers, and first-time bidders.</h2>
-    </div>
-
-    <div class="proof-grid">
-      <div class="stat">
-        <div class="k mono">{{ legend.live }}</div>
-        <div class="l">lots live now</div>
-      </div>
-      <div class="stat">
-        <div class="k mono">{{ legend.scheduled }}</div>
-        <div class="l">scheduled next</div>
-      </div>
-      <div class="stat">
-        <div class="k mono">{{ legend.favs }}</div>
-        <div class="l">favourites saved</div>
-      </div>
-    </div>
-
-    <div class="testimonials">
-      <article class="tcard" *ngFor="let t of testimonials; let i = index"
-        [style.animation-delay]="(i * 120) + 'ms'"
+    <!-- GRID -->
+    <div class="grid" id="lots" *ngIf="!loading && !error">
+      <article
+        class="lot-card"
+        *ngFor="let c of results; trackBy: trackById"
+        [ngStyle]="{ '--photo': 'url(' + c.imageUrl + ')' }"
         data-reveal
       >
-        <div class="stars">
-          <mat-icon *ngFor="let s of [1,2,3,4,5]">star</mat-icon>
+        <div class="photo">
+          <div
+            class="timer-pill"
+            [class.live]="c.countdownState === 'live'"
+            [class.ended]="c.countdownState === 'ended'"
+          >
+            <mat-icon inline>schedule</mat-icon>
+            <span>{{ c.countdownText || '—' }}</span>
+          </div>
+
+          <button
+            type="button"
+            class="fav-btn"
+            [class.is-active]="c.isFavourite"
+            (click)="toggleFavourite(c); $event.stopPropagation()"
+            matTooltip="{{ c.isFavourite ? 'Remove from favourites' : 'Add to favourites' }}"
+          >
+            <mat-icon>{{ c.isFavourite ? 'favorite' : 'favorite_border' }}</mat-icon>
+          </button>
+
+          <div class="photo-overlay"></div>
         </div>
-        <p class="ttext">"{{ t.text }}"</p>
-        <div class="tauthor">
-          <div class="avatar">{{ t.avatar }}</div>
-          <div class="who">
-            <div class="name">{{ t.name }}</div>
-            <div class="role">{{ t.role }}</div>
+
+        <div class="body">
+          <div class="top-row">
+            <div class="auction-chip" *ngIf="c.auctionName">
+              <mat-icon>event</mat-icon>
+              <span>{{ c.auctionName }}</span>
+            </div>
+
+            <div
+              class="reserve-pill"
+              *ngIf="c.reserve != null"
+              [class.met]="c.reserveMet"
+              [class.not-met]="!c.reserveMet"
+            >
+              <mat-icon inline>{{ c.reserveMet ? 'check_circle' : 'error_outline' }}</mat-icon>
+              <span>{{ c.reserveMet ? 'Reserve met' : 'Reserve not met' }}</span>
+            </div>
+          </div>
+
+          <h3 class="title">{{ c.title }}</h3>
+          <div class="sub">{{ c.sub }}</div>
+
+          <div class="numbers">
+            <div class="num" *ngIf="c.auctionStartPrice != null">
+              <div class="label">Start</div>
+              <div class="value mono">{{ c.auctionStartPrice | currency:'USD':'symbol':'1.0-0' }}</div>
+            </div>
+            <div class="num" *ngIf="c.buyNow != null">
+              <div class="label">Buy now</div>
+              <div class="value mono">{{ c.buyNow | currency:'USD':'symbol':'1.0-0' }}</div>
+            </div>
+            <div class="num" *ngIf="c.bidIncrement != null">
+              <div class="label">Increment</div>
+              <div class="value mono">{{ c.bidIncrement | currency:'USD':'symbol':'1.0-0' }}</div>
+            </div>
+          </div>
+
+          <div class="bid-row">
+            <div class="col current">
+              <div class="label">Current bid</div>
+              <div class="value-line">
+                <span class="value mono">
+                  <ng-container *ngIf="c.currentPrice != null; else noCurrent">
+                    {{ c.currentPrice | currency:'USD':'symbol':'1.0-0' }}
+                  </ng-container>
+                  <ng-template #noCurrent>—</ng-template>
+                </span>
+
+                <span class="pill leading-pill" *ngIf="c.isLeading && c.currentPrice != null">
+                  <mat-icon inline>emoji_events</mat-icon>
+                  you’re leading
+                </span>
+              </div>
+            </div>
+
+            <div class="col your-max" *ngIf="c.yourMaxBid != null">
+              <div class="label">Your max</div>
+              <div class="value-line">
+                <span class="value mono" [class.highlight]="c.isLeading">
+                  {{ c.yourMaxBid | currency:'USD':'symbol':'1.0-0' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="quick-bid" *ngIf="c.bidIncrement != null">
+            <ng-container *ngIf="c.countdownState === 'live'; else qbDisabled">
+              <button
+                type="button"
+                class="quick-btn magnetic"
+                [disabled]="c.bidCooldownActive || c.placingBid"
+                (click)="onQuickBid(c)"
+              >
+                <mat-icon>bolt</mat-icon>
+
+                <span *ngIf="!c.bidCooldownActive">
+                  Quick bid
+                  <ng-container *ngIf="c.minNextBid != null">
+                    • {{ c.minNextBid | currency:'USD':'symbol':'1.0-0' }}
+                  </ng-container>
+                </span>
+
+                <span *ngIf="c.bidCooldownActive">Placing in {{ c.bidCooldownRemaining }}s</span>
+              </button>
+
+              <button
+                type="button"
+                class="quick-cancel"
+                *ngIf="c.bidCooldownActive"
+                (click)="cancelQuickBid(c)"
+              >
+                Cancel
+              </button>
+            </ng-container>
+
+            <ng-template #qbDisabled>
+              <div class="quick-disabled">
+                <mat-icon>lock_clock</mat-icon>
+                <span>Quick bid unlocks when live</span>
+              </div>
+            </ng-template>
+          </div>
+
+          <div class="actions">
+            <a
+              class="btn primary magnetic"
+              [routerLink]="['/bidder/auctions', c.auctionId, c.inventoryAuctionId]"
+              matTooltip="Bid on this car"
+            >
+              Place Bid
+              <mat-icon>arrow_forward</mat-icon>
+            </a>
+
+            <a
+              class="btn ghost magnetic"
+              [routerLink]="['/bidder/auctions', c.auctionId, c.inventoryAuctionId, 'details']"
+              matTooltip="View details"
+            >
+              View Details
+            </a>
           </div>
         </div>
       </article>
-    </div>
-  </section>
 
-  <!-- TECH DIFFERENTIATORS -->
-  <section class="diff" *ngIf="!loading && !error" data-reveal style="animation-delay: 300ms">
-    <div class="diff-head">
-      <div class="eyebrow">Technical differentiators</div>
-      <h2 class="h2">Less noise. More signal. Safer execution.</h2>
-    </div>
-
-    <div class="diff-grid">
-      <div class="dcard">
-        <div class="dtitle"><mat-icon>bolt</mat-icon> Quick Bid Buffer</div>
-        <p class="dtext">
-          A short, visible countdown before placing — reduces accidental double taps.
-        </p>
-      </div>
-
-      <div class="dcard">
-        <div class="dtitle"><mat-icon>verified</mat-icon> Verified Inspections</div>
-        <p class="dtext">
-          Clear trust markers that travel with the lot — not hidden behind clicks.
-        </p>
-      </div>
-
-      <div class="dcard">
-        <div class="dtitle"><mat-icon>lock</mat-icon> Security & Compliance</div>
-        <p class="dtext">
-          Session-safe actions and consistent UI affordances across devices.
-        </p>
-
-        <div class="badges">
-          <span class="badge">TLS</span>
-          <span class="badge">Audit Logs</span>
-          <span class="badge">Role-based</span>
-        </div>
-      </div>
-
-      <div class="compare">
-        <div class="row head">
-          <div></div>
-          <div>Algo</div>
-          <div>Typical</div>
-        </div>
-        <div class="row">
-          <div>Reserve visibility</div>
-          <div><mat-icon>check</mat-icon></div>
-          <div><mat-icon>remove</mat-icon></div>
-        </div>
-        <div class="row">
-          <div>Live timing clarity</div>
-          <div><mat-icon>check</mat-icon></div>
-          <div><mat-icon>remove</mat-icon></div>
-        </div>
-        <div class="row">
-          <div>Quick bid guardrail</div>
-          <div><mat-icon>check</mat-icon></div>
-          <div><mat-icon>remove</mat-icon></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-
-  <!-- FOOTER -->
-  <footer class="page-footer" *ngIf="!loading && !error" data-reveal style="animation-delay: 80ms">
-    <div class="footer-grid">
-      <div class="brand">
-        <div class="logo">
-          <img
-            src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8"
-            alt="Algo"
-          />
-          <span>Algo Auction</span>
-        </div>
-        <p class="tag">Minimal UI. Maximum signal.</p>
-      </div>
-
-      <div class="links">
-        <div class="col">
-          <h4>Platform</h4>
-          <a routerLink="/bidder/auctions">Live Auctions</a>
-          <a routerLink="/bidder/allauctions">Browse All</a>
-          <a routerLink="/bidder/newcars-list">New Inventory</a>
-        </div>
-        <div class="col">
-          <h4>Company</h4>
-          <a routerLink="/bidder/info">Contact</a>
-          <a routerLink="/bidder/pricing">Pricing</a>
-          <a href="#">Security</a>
-        </div>
-      </div>
-
-      <div class="newsletter">
-        <h4>Newsletter</h4>
-        <p>Get live drops + ending-soon alerts.</p>
-        <div class="nl-row">
-          <input
-            type="email"
-            placeholder="you@domain.com"
-            [(ngModel)]="newsletterEmail"
-          />
-          <button class="nl-btn magnetic" type="button" (click)="subscribeNewsletter()">
-            Subscribe
-          </button>
-        </div>
-        <div class="fine">
-          <mat-icon>lock</mat-icon> No spam. Unsubscribe anytime.
-        </div>
+      <div class="empty" *ngIf="results.length === 0" data-reveal>
+        <mat-icon>info</mat-icon>
+        <span>No results match your filters.</span>
       </div>
     </div>
 
-    <div class="bottom">
-      <span>© 2025 Algo Auction</span>
-      <div class="legal">
-        <a href="#">Privacy</a>
-        <a href="#">Terms</a>
+    <!-- STORY -->
+    <section class="story" *ngIf="!loading && !error" data-reveal style="animation-delay: 220ms">
+      <div class="story-grid">
+        <div class="story-copy">
+          <div class="eyebrow">The story</div>
+          <h2 class="h2">Auctions move faster than humans.</h2>
+          <p class="p">
+            When bids spike, attention splits: timing, increments, reserve logic, and “am I even leading?”
+            Algo compresses that chaos into a single surface — so your next move is obvious.
+          </p>
+
+          <div class="timeline">
+            <div class="step">
+              <div class="dot"></div>
+              <div class="txt">
+                <div class="t">Signal</div>
+                <div class="d">Live / scheduled / ending — visible at a glance.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="dot"></div>
+              <div class="txt">
+                <div class="t">Proof</div>
+                <div class="d">Verified inspections + reserve status right on the card.</div>
+              </div>
+            </div>
+            <div class="step">
+              <div class="dot"></div>
+              <div class="txt">
+                <div class="t">Action</div>
+                <div class="d">Quick bid with a countdown buffer — no panic clicks.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="story-visual">
+          <div class="viz-card">
+            <div class="viz-head">
+              <span class="chip"><mat-icon>psychology</mat-icon> AI Assist</span>
+              <span class="chip ghost"><mat-icon>schedule</mat-icon> Live timing</span>
+            </div>
+
+            <div class="viz-body">
+              <div class="pulse"></div>
+              <div class="line l1"></div>
+              <div class="line l2"></div>
+              <div class="line l3"></div>
+
+              <div class="viz-caption">“When it’s loud, the UI should be quiet.”</div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  </footer>
+    </section>
+
+    <!-- SOCIAL PROOF -->
+    <section class="proof" *ngIf="!loading && !error" data-reveal style="animation-delay: 260ms">
+      <div class="proof-head">
+        <div class="eyebrow">Trusted worldwide</div>
+        <h2 class="h2">Built for collectors, dealers, and first-time bidders.</h2>
+      </div>
+
+      <div class="proof-grid">
+        <div class="stat">
+          <div class="k mono">{{ legend.live }}</div>
+          <div class="l">lots live now</div>
+        </div>
+        <div class="stat">
+          <div class="k mono">{{ legend.scheduled }}</div>
+          <div class="l">scheduled next</div>
+        </div>
+        <div class="stat">
+          <div class="k mono">{{ legend.favs }}</div>
+          <div class="l">favourites saved</div>
+        </div>
+      </div>
+
+      <div class="testimonials">
+        <article
+          class="tcard"
+          *ngFor="let t of testimonials; let i = index"
+          [style.animation-delay]="(i * 120) + 'ms'"
+          data-reveal
+        >
+          <div class="stars">
+            <mat-icon *ngFor="let s of [1,2,3,4,5]">star</mat-icon>
+          </div>
+          <p class="ttext">"{{ t.text }}"</p>
+          <div class="tauthor">
+            <div class="avatar">{{ t.avatar }}</div>
+            <div class="who">
+              <div class="name">{{ t.name }}</div>
+              <div class="role">{{ t.role }}</div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- TECH DIFFERENTIATORS -->
+    <section class="diff" *ngIf="!loading && !error" data-reveal style="animation-delay: 300ms">
+      <div class="diff-head">
+        <div class="eyebrow">Technical differentiators</div>
+        <h2 class="h2">Less noise. More signal. Safer execution.</h2>
+      </div>
+
+      <div class="diff-grid">
+        <div class="dcard">
+          <div class="dtitle"><mat-icon>bolt</mat-icon> Quick Bid Buffer</div>
+          <p class="dtext">A short, visible countdown before placing — reduces accidental double taps.</p>
+        </div>
+
+        <div class="dcard">
+          <div class="dtitle"><mat-icon>verified</mat-icon> Verified Inspections</div>
+          <p class="dtext">Clear trust markers that travel with the lot — not hidden behind clicks.</p>
+        </div>
+
+        <div class="dcard">
+          <div class="dtitle"><mat-icon>lock</mat-icon> Security & Compliance</div>
+          <p class="dtext">Session-safe actions and consistent UI affordances across devices.</p>
+
+          <div class="badges">
+            <span class="badge">TLS</span>
+            <span class="badge">Audit Logs</span>
+            <span class="badge">Role-based</span>
+          </div>
+        </div>
+
+        <div class="compare">
+          <div class="row head">
+            <div></div>
+            <div>Algo</div>
+            <div>Typical</div>
+          </div>
+          <div class="row">
+            <div>Reserve visibility</div>
+            <div><mat-icon>check</mat-icon></div>
+            <div><mat-icon>remove</mat-icon></div>
+          </div>
+          <div class="row">
+            <div>Live timing clarity</div>
+            <div><mat-icon>check</mat-icon></div>
+            <div><mat-icon>remove</mat-icon></div>
+          </div>
+          <div class="row">
+            <div>Quick bid guardrail</div>
+            <div><mat-icon>check</mat-icon></div>
+            <div><mat-icon>remove</mat-icon></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="page-footer" *ngIf="!loading && !error" data-reveal style="animation-delay: 80ms">
+      <div class="footer-grid">
+        <div class="brand">
+          <div class="logo">
+            <img
+              src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8"
+              alt="Algo"
+            />
+            <span>Algo Auction</span>
+          </div>
+          <p class="tag">Minimal UI. Maximum signal.</p>
+        </div>
+
+        <div class="links">
+          <div class="col">
+            <h4>Platform</h4>
+            <a routerLink="/bidder/auctions">Live Auctions</a>
+            <a routerLink="/bidder/allauctions">Browse All</a>
+            <a routerLink="/bidder/newcars-list">New Inventory</a>
+          </div>
+          <div class="col">
+            <h4>Company</h4>
+            <a routerLink="/bidder/info">Contact</a>
+            <a routerLink="/bidder/pricing">Pricing</a>
+            <a href="#">Security</a>
+          </div>
+        </div>
+
+        <div class="newsletter">
+          <h4>Newsletter</h4>
+          <p>Get live drops + ending-soon alerts.</p>
+          <div class="nl-row">
+            <input type="email" placeholder="you@domain.com" [(ngModel)]="newsletterEmail" />
+            <button class="nl-btn magnetic" type="button" (click)="subscribeNewsletter()">
+              Subscribe
+            </button>
+          </div>
+          <div class="fine">
+            <mat-icon>lock</mat-icon> No spam. Unsubscribe anytime.
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom">
+        <span>© 2025 Algo Auction</span>
+        <div class="legal">
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+        </div>
+      </div>
+    </footer>
+  </div>
 </div>

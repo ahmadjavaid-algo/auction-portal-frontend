@@ -94,19 +94,23 @@ export class Pricing {
     }
   ];
 
-  switchTo(b: Billing) { this.billing = b; }
+  switchTo(b: Billing) {
+    this.billing = b;
+  }
+
+  priceValue(p: Plan): number {
+    return this.billing === 'monthly' ? p.monthly : p.yearly;
+  }
 
   priceLabel(p: Plan): string {
-    const isFree = (this.billing === 'monthly' ? p.monthly : p.yearly) === 0;
-    if (isFree) return '$0';
-    const amt = this.billing === 'monthly' ? p.monthly : p.yearly;
-    return `$${amt}`;
+    const amt = this.priceValue(p);
+    return amt === 0 ? '$0' : `$${amt}`;
   }
 
   priceSuffix(p: Plan): string {
-    const isFree = (this.billing === 'monthly' ? p.monthly : p.yearly) === 0;
-    const cycle = '/month';
-    return isFree ? 'Free forever' : cycle + (this.billing === 'yearly' ? ' (billed yearly)' : '');
+    const amt = this.priceValue(p);
+    if (amt === 0) return 'Free forever';
+    return this.billing === 'yearly' ? '/month (billed yearly)' : '/month';
   }
 
   saveBadge(p: Plan): string | null {
@@ -119,6 +123,12 @@ export class Pricing {
     return `Save ${pct}%`;
   }
 
+  ctaVariant(p: Plan): 'primary' | 'secondary' | 'outline' {
+    if (p.popular) return 'primary';
+    if (p.id === 'free') return 'outline';
+    return 'secondary';
+  }
+
   get compareRows() {
     return [
       { label: 'Auctions / month', free: this.plans[0].limits.auctionsPerMonth, pro: this.plans[1].limits.auctionsPerMonth, business: this.plans[2].limits.auctionsPerMonth },
@@ -126,5 +136,9 @@ export class Pricing {
       { label: 'API access',       free: this.plans[0].limits.api,              pro: this.plans[1].limits.api,              business: this.plans[2].limits.api },
       { label: 'SLA & support',    free: this.plans[0].limits.sla,              pro: this.plans[1].limits.sla,              business: this.plans[2].limits.sla },
     ];
+  }
+
+  trackByPlanId(_: number, p: Plan) {
+    return p.id;
   }
 }

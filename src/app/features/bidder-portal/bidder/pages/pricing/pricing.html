@@ -1,29 +1,67 @@
-<div class="pricing">
+<div class="pricing-page">
   <!-- HERO -->
   <header class="hero">
+    <div class="eyebrow">Pricing</div>
     <h1>Pick a plan that scales with you</h1>
+    <p class="sub">
+      Mission-control tooling for serious bidders. Start free — upgrade when you need more power.
+    </p>
 
     <div class="toggle" role="tablist" aria-label="Billing period">
-      <button class="pill" [class.active]="billing==='monthly'" (click)="switchTo('monthly')" role="tab" aria-selected="{{billing==='monthly'}}">Monthly</button>
-      <button class="pill" [class.active]="billing==='yearly'" (click)="switchTo('yearly')" role="tab" aria-selected="{{billing==='yearly'}}">Yearly</button>
+      <button
+        class="pill"
+        [class.active]="billing==='monthly'"
+        (click)="switchTo('monthly')"
+        role="tab"
+        [attr.aria-selected]="billing==='monthly'"
+      >
+        Monthly
+      </button>
+
+      <button
+        class="pill"
+        [class.active]="billing==='yearly'"
+        (click)="switchTo('yearly')"
+        role="tab"
+        [attr.aria-selected]="billing==='yearly'"
+      >
+        Yearly
+      </button>
     </div>
 
-    <div class="value-props">
-      <div class="chip"><span class="title">Unlimited auctions</span><span class="hint">Pro & above</span></div>
-      <div class="chip"><span class="title">Team roles</span><span class="hint">Business & Enterprise</span></div>
-      <div class="chip"><span class="title">API & webhooks</span><span class="hint">Business & Enterprise</span></div>
-      <div class="chip"><span class="title">SLA support</span><span class="hint">Business & Enterprise</span></div>
+    <div class="hero-chips">
+      <div class="chip">
+        <span class="k">Unlimited auctions</span>
+        <span class="v">Pro+</span>
+      </div>
+      <div class="chip">
+        <span class="k">Team roles</span>
+        <span class="v">Pro+</span>
+      </div>
+      <div class="chip">
+        <span class="k">API & webhooks</span>
+        <span class="v">Business</span>
+      </div>
+      <div class="chip">
+        <span class="k">SLA support</span>
+        <span class="v">Business</span>
+      </div>
     </div>
   </header>
 
   <!-- PLANS -->
   <section class="plans">
-    <article class="card" *ngFor="let p of plans" [class.popular]="p.popular">
+    <article class="card" *ngFor="let p of plans; trackBy: trackByPlanId" [class.popular]="p.popular">
       <div class="cap">
         <div class="name-row">
           <h2 class="name">{{ p.name }}</h2>
-          <div class="badge" *ngIf="p.popular">Popular</div>
+
+          <div class="badges">
+            <span class="badge popular" *ngIf="p.popular">Popular</span>
+            <span class="badge save" *ngIf="saveBadge(p)">{{ saveBadge(p) }}</span>
+          </div>
         </div>
+
         <p class="tagline">{{ p.tagline }}</p>
 
         <div class="price">
@@ -31,16 +69,24 @@
           <div class="per">{{ priceSuffix(p) }}</div>
         </div>
 
-        <div class="save" *ngIf="saveBadge(p)">{{ saveBadge(p) }}</div>
-
-        <button class="cta">{{ p.cta }}</button>
+        <button class="btn"
+          [ngClass]="{
+            'primary': ctaVariant(p) === 'primary',
+            'secondary': ctaVariant(p) === 'secondary',
+            'outline': ctaVariant(p) === 'outline'
+          }"
+        >
+          {{ p.cta }}
+        </button>
       </div>
 
       <ul class="features">
         <li *ngFor="let f of p.features">
-          <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M20.285 6.709a1 1 0 0 1 0 1.414l-9.193 9.193a1 1 0 0 1-1.414 0L3.715 11.35a1 1 0 1 1 1.414-1.414l5.25 5.25 8.486-8.477a1 1 0 0 1 1.42-.001Z"/>
-          </svg>
+          <span class="check" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24">
+              <path d="M20.285 6.709a1 1 0 0 1 0 1.414l-9.193 9.193a1 1 0 0 1-1.414 0L3.715 11.35a1 1 0 1 1 1.414-1.414l5.25 5.25 8.486-8.477a1 1 0 0 1 1.42-.001Z"/>
+            </svg>
+          </span>
           <span>{{ f }}</span>
         </li>
       </ul>
@@ -49,7 +95,11 @@
 
   <!-- COMPARISON -->
   <section class="compare">
-    <h3>Compare plans</h3>
+    <div class="section-head">
+      <h3>Compare plans</h3>
+      <p>Clear limits, clean upgrade path. No surprises.</p>
+    </div>
+
     <div class="table">
       <div class="thead">
         <div class="col label"></div>
@@ -57,6 +107,7 @@
         <div class="col">Pro</div>
         <div class="col">Business</div>
       </div>
+
       <div class="row" *ngFor="let r of compareRows">
         <div class="col label">{{ r.label }}</div>
         <div class="col">{{ r.free }}</div>
@@ -68,38 +119,42 @@
 
   <!-- FAQ -->
   <section class="faq">
-    <h3>Frequently asked questions</h3>
+    <div class="section-head">
+      <h3>Frequently asked questions</h3>
+      <p>Fast answers for fast operators.</p>
+    </div>
 
     <details>
       <summary>Can I switch plans later?</summary>
-      <p>Yes. You can upgrade or downgrade any time; changes take effect at the next billing cycle. Pro-rated credits are automatically applied.</p>
+      <p>Yes. Upgrade or downgrade anytime. Changes apply at the next billing cycle; prorations are handled automatically.</p>
     </details>
 
     <details>
       <summary>Do you offer discounts for yearly billing?</summary>
-      <p>Yes. Yearly plans include built-in savings that show as a lower per-month rate when billed annually.</p>
+      <p>Yes. Yearly billing is discounted and displayed as a lower effective monthly price.</p>
     </details>
 
     <details>
       <summary>What payment methods do you accept?</summary>
-      <p>All major cards via Stripe. Business & Enterprise can request invoicing and purchase orders.</p>
+      <p>All major cards via Stripe. Business can request invoicing and POs.</p>
     </details>
 
     <details>
       <summary>Is there a free trial?</summary>
-      <p>Starter is free forever. Pro includes a 14-day free trial—no credit card required.</p>
+      <p>Starter is free forever. Pro can be offered as a trial depending on rollout — if enabled, it will appear at checkout.</p>
     </details>
   </section>
 
   <!-- FINAL CTA -->
   <section class="cta-strip">
     <div class="stack">
-      <h3>Ready to launch your next auction?</h3>
-      <p>Join teams running thousands of successful auctions every month.</p>
+      <h3>Ready to run your next auction with confidence?</h3>
+      <p>Move from manual bidding to precision systems — in minutes.</p>
     </div>
+
     <div class="actions">
       <a class="btn primary" href="#">Get started</a>
-      <a class="btn ghost" href="#">Talk to sales</a>
+      <a class="btn outline" href="#">Talk to sales</a>
     </div>
   </section>
 </div>

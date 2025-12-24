@@ -1,4 +1,3 @@
-// src/app/pages/bidder/auctions/allauctions-details/allauctions-details.ts
 import {
   AfterViewInit,
   Component,
@@ -190,6 +189,51 @@ export class AllauctionsDetails implements OnInit, AfterViewInit, OnDestroy {
   private prevScrollBehavior = '';
   private heroMoveHandler?: (e: MouseEvent) => void;
 
+  // ===================== DASHBOARD-LIKE HERO COMPUTED =====================
+  get featured(): LotCard | null {
+    const list = this.results || [];
+    if (!list.length) return null;
+
+    // prefer live, then scheduled, then first
+    const live = list.find(x => x.countdownState === 'live');
+    if (live) return live;
+
+    const scheduled = list.find(x => x.countdownState === 'scheduled');
+    if (scheduled) return scheduled;
+
+    return list[0];
+  }
+
+  get heroYear(): string {
+    const y = this.featured?.yearName;
+    return (y != null && String(y).trim()) ? String(y) : String(new Date().getFullYear());
+  }
+
+  get heroMake(): string {
+    return this.featured?.makeName || 'Premium';
+  }
+
+  get heroModel(): string {
+    return this.featured?.modelName || 'Auctions';
+  }
+
+  get heroStartPrice(): number | null {
+    const c = this.featured;
+    if (!c) return null;
+    // dashboard shows "Starting Bid" – we’ll prefer auctionStartPrice then currentPrice
+    return (c.auctionStartPrice ?? null) ?? (c.currentPrice ?? null);
+  }
+
+  formatMoney(n?: number | null): string {
+    if (n == null) return '$0';
+    return n.toLocaleString(undefined, {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0
+    });
+  }
+  // =======================================================================
+
   ngOnInit(): void {
     this.enableSmoothScroll();
     this.loading = true;
@@ -335,6 +379,7 @@ export class AllauctionsDetails implements OnInit, AfterViewInit, OnDestroy {
             };
           });
 
+          // Use the first available image as hero background
           const firstImg = cards.find(c => !!c.imageUrl)?.imageUrl;
           if (firstImg) this.heroUrl = firstImg;
 
@@ -378,7 +423,6 @@ export class AllauctionsDetails implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    // if data loads very fast, this ensures observers still attach
     setTimeout(() => {
       if (!this.loading) {
         this.observeReveals();
@@ -398,12 +442,11 @@ export class AllauctionsDetails implements OnInit, AfterViewInit, OnDestroy {
     this.detachFns = [];
 
     if (this.heroMoveHandler) {
-      const hero = document.querySelector('.hero-radar') as HTMLElement | null;
+      const hero = document.querySelector('.hero-section') as HTMLElement | null;
       hero?.removeEventListener('mousemove', this.heroMoveHandler);
       this.heroMoveHandler = undefined;
     }
 
-    // stop per-card cooldowns
     for (const c of this.lots) {
       if (c.cooldownHandle) {
         clearInterval(c.cooldownHandle);
@@ -435,7 +478,6 @@ export class AllauctionsDetails implements OnInit, AfterViewInit, OnDestroy {
       this.snack.open('Enter an email to subscribe.', 'OK', { duration: 2500 });
       return;
     }
-    // no backend here — just a premium-feeling confirmation
     this.newsletterEmail = '';
     this.snack.open('Subscribed. You’ll get live auction drops first.', 'OK', {
       duration: 3000
@@ -451,7 +493,6 @@ export class AllauctionsDetails implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    // add / reactivate
     if (!card.isFavourite) {
       const existing = this.favMap.get(card.inventoryAuctionId);
 
@@ -518,7 +559,6 @@ export class AllauctionsDetails implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    // deactivate
     if (card.isFavourite && card.favouriteId != null) {
       const payload = {
         FavouriteId: card.favouriteId,
@@ -716,7 +756,6 @@ export class AllauctionsDetails implements OnInit, AfterViewInit, OnDestroy {
       if (this.filters.category && (c.categoryName ?? '') !== this.filters.category)
         return false;
 
-      // quick views
       if (this.view === 'live' && c.countdownState !== 'live') return false;
       if (this.view === 'scheduled' && c.countdownState !== 'scheduled') return false;
       if (this.view === 'favs' && !c.isFavourite) return false;
@@ -730,7 +769,6 @@ export class AllauctionsDetails implements OnInit, AfterViewInit, OnDestroy {
           return false;
       }
 
-      // budget lens
       if (this.budgetOn) {
         const p = priceOf(c);
         if (!Number.isFinite(p)) return false;
@@ -889,6 +927,10 @@ export class AllauctionsDetails implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.recomputeLegend();
+
+    // keep hero feeling “dashboard-like” by updating bg when results change
+    const f = this.featured?.imageUrl;
+    if (f) this.heroUrl = f;
   }
 
   private fmtCountdown(ms: number): string {
@@ -1088,12 +1130,9 @@ export class AllauctionsDetails implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private wireMagnetics(): void {
-    // minimal “magnetic” buttons: translate within a small radius
     const buttons = Array.from(
       document.querySelectorAll<HTMLElement>('.magnetic')
     );
-
-    // avoid double-binding
     if (!buttons.length) return;
 
     buttons.forEach(btn => {
@@ -1122,7 +1161,7 @@ export class AllauctionsDetails implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private wireHeroGlow(): void {
-    const hero = document.querySelector('.hero-radar') as HTMLElement | null;
+    const hero = document.querySelector('.hero-section') as HTMLElement | null;
     if (!hero) return;
 
     this.heroMoveHandler = (e: MouseEvent) => {
@@ -1136,13 +1175,15 @@ export class AllauctionsDetails implements OnInit, AfterViewInit, OnDestroy {
     hero.addEventListener('mousemove', this.heroMoveHandler);
 
     this.detachFns.push(() => {
-      if (this.heroMoveHandler) hero.removeEventListener('mousemove', this.heroMoveHandler);
+      if (this.heroMoveHandler)
+        hero.removeEventListener('mousemove', this.heroMoveHandler);
     });
   }
 
   private enableSmoothScroll(): void {
     try {
-      this.prevScrollBehavior = document.documentElement.style.scrollBehavior || '';
+      this.prevScrollBehavior =
+        document.documentElement.style.scrollBehavior || '';
       document.documentElement.style.scrollBehavior = 'smooth';
     } catch {
       // ignore

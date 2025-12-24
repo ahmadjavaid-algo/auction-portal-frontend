@@ -1,318 +1,299 @@
-<div class="favourites">
-  <!-- breadcrumbs -->
-  <div class="crumbs">
-    <a routerLink="/bidder/dashboard">Home</a>
-    <mat-icon>chevron_right</mat-icon>
-    <span class="current">Favourites</span>
-    <span class="count" *ngIf="!loading">({{ results.length }} lots)</span>
-  </div>
+<div class="auctions-grid-page">
+  <!-- Hero Banner -->
+  <section
+    class="hero-banner"
+    [ngStyle]="{ '--hero-img': 'url(' + heroUrl + ')' }"
+  >
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="breadcrumbs">
+        <a routerLink="/bidder/dashboard">Dashboard</a>
+        <mat-icon>chevron_right</mat-icon>
+        <span>Favourites</span>
+      </div>
 
-  <!-- hero -->
-  <section class="hero" [ngStyle]="{ '--photo': 'url(' + heroUrl + ')' }">
-    <div class="overlay">
-      <h1>Your Favourites</h1>
-      <div class="meta">
-        <div class="lots">
+      <h1 class="hero-title">Favourites</h1>
+
+      <div class="hero-meta">
+        <div class="meta-item">
           <mat-icon>favorite</mat-icon>
-          <span>{{ results.length }} saved lots</span>
+          <span>{{ results.length }} Saved Vehicles</span>
+        </div>
+
+        <div class="meta-item">
+          <mat-icon>inventory_2</mat-icon>
+          <span>{{ results.length }} Vehicles</span>
+        </div>
+
+        <div class="meta-item status-live" *ngIf="isLive">
+          <span class="pulse-dot"></span>
+          <span>LIVE BIDDING</span>
         </div>
       </div>
     </div>
   </section>
 
-  <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
+  <!-- Loading -->
+  <div class="loader-wrap" *ngIf="loading">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <span>Loading your favourites...</span>
+  </div>
 
-  <div class="err" *ngIf="!loading && error">
+  <!-- Error -->
+  <div class="error-banner" *ngIf="!loading && error">
     <mat-icon>error_outline</mat-icon>
     <span>{{ error }}</span>
   </div>
 
-  <!-- toolbar -->
-  <div class="toolbar" *ngIf="!loading && !error">
-    <div class="searchbar">
-      <mat-icon>search</mat-icon>
-      <input
-        type="text"
-        placeholder="Search car, auction, chassis, make, model…"
-        [(ngModel)]="q"
-      />
-      <button
-        *ngIf="q"
-        class="clear"
-        (click)="q = ''"
-        matTooltip="Clear"
-      >
-        <mat-icon>close</mat-icon>
-      </button>
-    </div>
-
-    <div class="select">
-      <label>Auction</label>
-      <select [(ngModel)]="filters.auction">
-        <option value="">All</option>
-        <option *ngFor="let a of options.auctions" [value]="a">
-          {{ a }}
-        </option>
-      </select>
-    </div>
-
-    <div class="select">
-      <label>Make</label>
-      <select [(ngModel)]="filters.make">
-        <option value="">All</option>
-        <option *ngFor="let m of options.makes" [value]="m">
-          {{ m }}
-        </option>
-      </select>
-    </div>
-
-    <div class="select">
-      <label>Model</label>
-      <select [(ngModel)]="filters.model">
-        <option value="">All</option>
-        <option *ngFor="let m of options.models" [value]="m">
-          {{ m }}
-        </option>
-      </select>
-    </div>
-
-    <div class="select">
-      <label>Year</label>
-      <select [(ngModel)]="filters.year">
-        <option value="">All</option>
-        <option *ngFor="let y of options.years" [value]="y">
-          {{ y }}
-        </option>
-      </select>
-    </div>
-
-    <div class="select">
-      <label>Category</label>
-      <select [(ngModel)]="filters.category">
-        <option value="">All</option>
-        <option *ngFor="let c of options.categories" [value]="c">
-          {{ c }}
-        </option>
-      </select>
-    </div>
-
-    <div class="select">
-      <label>Sort</label>
-      <select [(ngModel)]="sortBy">
-        <option value="newest">Newest</option>
-        <option value="start_time">Auction Start Time</option>
-        <option value="price_low">Price: Low → High</option>
-        <option value="price_high">Price: High → Low</option>
-        <option value="year_new">Year: Newest</option>
-        <option value="year_old">Year: Oldest</option>
-      </select>
-    </div>
-
-    <button
-      class="link clear-all"
-      (click)="clearAll()"
-      *ngIf="
-        q ||
-        filters.auction ||
-        filters.make ||
-        filters.model ||
-        filters.year ||
-        filters.category ||
-        sortBy !== 'newest'
-      "
-    >
-      Clear all
-    </button>
-  </div>
-
-  <!-- grid -->
-  <div class="grid" *ngIf="!loading && !error">
-    <article
-      class="lot-card"
-      *ngFor="let c of results; trackBy: trackById"
-      [ngStyle]="{ '--photo': 'url(' + c.imageUrl + ')' }"
-    >
-      <div class="photo">
-        <!-- countdown pill -->
-        <div
-          class="timer-pill"
-          [class.live]="c.countdownState === 'live'"
-          [class.ended]="c.countdownState === 'ended'"
-        >
-          <mat-icon inline>schedule</mat-icon>
-          <span>{{ c.countdownText || '—' }}</span>
-        </div>
-
-        <!-- favourite toggle -->
+  <!-- Main Content -->
+  <div class="main-content" *ngIf="!loading && !error">
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search-bar">
+        <mat-icon>search</mat-icon>
+        <input
+          type="text"
+          placeholder="Search by make, model, year, chassis..."
+          [(ngModel)]="q"
+        />
         <button
-          class="fav-pill"
-          [class.active]="c.isFavourite"
-          (click)="toggleFavourite(c)"
-          matTooltip="{{
-            c.isFavourite ? 'Remove from favourites' : 'Add to favourites'
-          }}"
-          type="button"
+          *ngIf="q"
+          class="clear-btn"
+          (click)="q = ''"
+          matTooltip="Clear search"
         >
-          <mat-icon>{{
-            c.isFavourite ? 'favorite' : 'favorite_border'
-          }}</mat-icon>
+          <mat-icon>close</mat-icon>
         </button>
       </div>
 
-      <div class="body">
-        <div class="auction-chip" *ngIf="c.auctionName">
-          <mat-icon>event</mat-icon>
-          <span>{{ c.auctionName }}</span>
+      <div class="filters-row">
+        <div class="filter-group">
+          <label>Make</label>
+          <select [(ngModel)]="filters.make">
+            <option value="">All Makes</option>
+            <option *ngFor="let m of options.makes" [value]="m">{{ m }}</option>
+          </select>
         </div>
 
-        <h3 class="title">{{ c.title }}</h3>
-        <div class="sub">{{ c.sub }}</div>
-
-        <div class="numbers">
-          <div class="num" *ngIf="c.auctionStartPrice != null">
-            <div class="label">Start Price</div>
-            <div class="value">
-              {{ c.auctionStartPrice | currency: 'USD':'symbol':'1.0-0' }}
-            </div>
-          </div>
-          <div class="num" *ngIf="c.reserve != null">
-            <div class="label">Reserve</div>
-            <div class="value">
-              {{ c.reserve | currency: 'USD':'symbol':'1.0-0' }}
-            </div>
-          </div>
-          <div class="num" *ngIf="c.buyNow != null">
-            <div class="label">Buy Now</div>
-            <div class="value">
-              {{ c.buyNow | currency: 'USD':'symbol':'1.0-0' }}
-            </div>
-          </div>
-          <div class="num" *ngIf="c.bidIncrement != null">
-            <div class="label">Bid Increment</div>
-            <div class="value">
-              {{ c.bidIncrement | currency: 'USD':'symbol':'1.0-0' }}
-            </div>
-          </div>
+        <div class="filter-group">
+          <label>Model</label>
+          <select [(ngModel)]="filters.model">
+            <option value="">All Models</option>
+            <option *ngFor="let m of options.models" [value]="m">{{ m }}</option>
+          </select>
         </div>
 
-        <!-- bidding metrics like auctions-details card -->
-        <div class="bid-metrics">
-          <div class="metric">
-            <div class="label">Current Bid</div>
-            <div class="value">
-              <ng-container *ngIf="c.currentPrice != null; else noCurrent">
-                {{ c.currentPrice | currency: 'USD':'symbol':'1.0-0' }}
-              </ng-container>
-              <ng-template #noCurrent>—</ng-template>
-            </div>
-          </div>
-
-          <div class="metric">
-            <div class="label">Your Max</div>
-            <div
-              class="value"
-              [class.outbid]="
-                c.yourMaxBid != null &&
-                c.currentPrice != null &&
-                c.yourMaxBid < c.currentPrice
-              "
-            >
-              <ng-container *ngIf="c.yourMaxBid != null; else noYourMax">
-                {{ c.yourMaxBid | currency: 'USD':'symbol':'1.0-0' }}
-              </ng-container>
-              <ng-template #noYourMax>—</ng-template>
-            </div>
-
-            <div class="tag" *ngIf="c.yourMaxBid != null">
-              <ng-container
-                *ngIf="
-                  c.currentPrice != null && c.yourMaxBid >= c.currentPrice;
-                  else outbidTag
-                "
-              >
-                <span class="pill winning">
-                  <span class="dot"></span>
-                  Winning
-                </span>
-              </ng-container>
-              <ng-template #outbidTag>
-                <span class="pill outbid">
-                  <span class="dot"></span>
-                  Outbid
-                </span>
-              </ng-template>
-            </div>
-          </div>
-
-          <div class="metric reserve" *ngIf="c.reserve != null">
-            <div class="label">Reserve Status</div>
-            <div
-              class="pill"
-              [class.met]="c.reserveMet"
-              [class.not-met]="!c.reserveMet"
-            >
-              <span class="dot"></span>
-              <span>{{ c.reserveMet ? 'Reserve met' : 'Reserve not met' }}</span>
-            </div>
-          </div>
+        <div class="filter-group">
+          <label>Year</label>
+          <select [(ngModel)]="filters.year">
+            <option value="">All Years</option>
+            <option *ngFor="let y of options.years" [value]="y">{{ y }}</option>
+          </select>
         </div>
 
-        <div class="actions">
-          <!-- quick bid button -->
-          <button
-            type="button"
-            class="btn primary quick"
-            (click)="onQuickBid(c)"
-            [disabled]="
-              c.bidCooldownActive ||
-              c.placingBid ||
-              c.countdownState !== 'live'
-            "
-            matTooltip="Place a quick bid on this lot"
-          >
-            <mat-icon *ngIf="!c.bidCooldownActive && !c.placingBid">
-              bolt
-            </mat-icon>
-            <mat-icon *ngIf="c.placingBid">hourglass_top</mat-icon>
-
-            <span *ngIf="!c.bidCooldownActive && !c.placingBid">
-              Quick bid
-            </span>
-            <span *ngIf="c.bidCooldownActive && !c.placingBid">
-              Confirm ({{ c.bidCooldownRemaining }}s)
-            </span>
-            <span *ngIf="c.placingBid">Placing…</span>
-          </button>
-
-          <!-- cancel quick bid -->
-          <button
-            type="button"
-            class="btn ghost"
-            *ngIf="c.bidCooldownActive && !c.placingBid"
-            (click)="cancelQuickBid(c)"
-          >
-            Cancel
-          </button>
-
-          <!-- view details -->
-          <a
-            class="btn ghost"
-            [routerLink]="[
-              '/bidder/auctions',
-              c.auctionId,
-              c.inventoryAuctionId
-            ]"
-            matTooltip="View full details & place a custom bid"
-          >
-            View details
-          </a>
+        <div class="filter-group">
+          <label>Category</label>
+          <select [(ngModel)]="filters.category">
+            <option value="">All Categories</option>
+            <option *ngFor="let c of options.categories" [value]="c">{{ c }}</option>
+          </select>
         </div>
+
+        <div class="filter-group">
+          <label>Sort By</label>
+          <select [(ngModel)]="sortBy">
+            <option value="newest">Newest First</option>
+            <option value="price_low">Price: Low to High</option>
+            <option value="price_high">Price: High to Low</option>
+            <option value="year_new">Year: Newest</option>
+            <option value="year_old">Year: Oldest</option>
+          </select>
+        </div>
+
+        <button
+          class="reset-btn"
+          *ngIf="
+            q ||
+            filters.make ||
+            filters.model ||
+            filters.year ||
+            filters.category ||
+            sortBy !== 'newest'
+          "
+          (click)="clearAll()"
+        >
+          <mat-icon>refresh</mat-icon>
+          <span>Reset All</span>
+        </button>
       </div>
-    </article>
+    </div>
 
-    <div class="empty" *ngIf="results.length === 0">
-      <mat-icon>info</mat-icon>
-      <span>You haven’t favourited any lots yet.</span>
+    <!-- Results Count -->
+    <div class="results-header">
+      <h2>
+        {{ results.length }} Vehicle{{ results.length !== 1 ? 's' : '' }} Saved
+      </h2>
+      <div class="view-toggle">
+        <mat-icon>grid_view</mat-icon>
+      </div>
+    </div>
+
+    <!-- Vehicle Grid -->
+    <div class="vehicle-grid" *ngIf="results.length > 0">
+      <article
+        class="vehicle-card"
+        *ngFor="let car of results; trackBy: trackById"
+      >
+        <!-- Image -->
+        <div
+          class="card-image"
+          [ngStyle]="{ '--car-img': 'url(' + car.imageUrl + ')' }"
+        >
+          <div class="image-overlay"></div>
+
+          <!-- Countdown Badge -->
+          <div class="countdown-badge" [ngClass]="car.countdownState">
+            <mat-icon>schedule</mat-icon>
+            <span>{{ car.countdownText }}</span>
+          </div>
+
+          <!-- Favorite Button -->
+          <button
+            class="fav-btn"
+            [class.active]="car.isFavourite"
+            (click)="toggleFavourite(car); $event.stopPropagation()"
+            matTooltip="Remove from favorites"
+          >
+            <mat-icon>favorite</mat-icon>
+          </button>
+
+          <!-- Reserve Met Badge -->
+          <div
+            class="reserve-badge"
+            *ngIf="car.reserve != null"
+            [class.met]="car.reserveMet"
+          >
+            <mat-icon>{{ car.reserveMet ? 'check_circle' : 'info' }}</mat-icon>
+            <span>{{ car.reserveMet ? 'Reserve Met' : 'Reserve Not Met' }}</span>
+          </div>
+        </div>
+
+        <!-- Card Body -->
+        <div class="card-body">
+          <h3 class="car-title">{{ car.title }}</h3>
+          <div class="car-subtitle">{{ car.sub }}</div>
+
+          <!-- Price Grid -->
+          <div class="price-grid">
+            <!-- Current Bid (Hero) -->
+            <div class="price-hero" *ngIf="car.currentPrice != null">
+              <div class="label">Current Bid</div>
+              <div class="value">{{ money(car.currentPrice) }}</div>
+              <div class="your-bid" *ngIf="car.yourMaxBid != null">
+                Your max: <strong>{{ money(car.yourMaxBid) }}</strong>
+              </div>
+            </div>
+
+            <!-- Start Price -->
+            <div class="price-item" *ngIf="car.auctionStartPrice != null">
+              <div class="label">Start Price</div>
+              <div class="value">{{ money(car.auctionStartPrice) }}</div>
+            </div>
+
+            <!-- Buy Now -->
+            <div class="price-item" *ngIf="car.buyNow != null">
+              <div class="label">Buy Now</div>
+              <div class="value">{{ money(car.buyNow) }}</div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="card-actions">
+            <!-- Quick Bid (Primary CTA) -->
+            <button
+              class="btn-quick-bid"
+              [disabled]="
+                car.countdownState !== 'live' ||
+                car.placingBid ||
+                car.bidCooldownActive
+              "
+              (click)="onQuickBid(car)"
+              matTooltip="Quick bid: Add one increment to current price"
+            >
+              <span class="btn-inner">
+                <mat-icon>flash_on</mat-icon>
+                <span *ngIf="!car.bidCooldownActive && !car.placingBid"
+                  >QUICK BID</span
+                >
+                <span *ngIf="car.bidCooldownActive"
+                  >PENDING {{ car.bidCooldownRemaining }}s</span
+                >
+                <span *ngIf="car.placingBid">PLACING...</span>
+              </span>
+            </button>
+
+            <!-- Secondary Actions -->
+            <div class="btn-group">
+              <a
+                class="btn-details"
+                [routerLink]="[
+                  '/bidder/auctions',
+                  car.auctionId,
+                  car.invAuc.inventoryAuctionId,
+                  'details'
+                ]"
+                matTooltip="View full details"
+              >
+                <mat-icon>description</mat-icon>
+                <span>Details</span>
+              </a>
+
+              <a
+                class="btn-open"
+                [routerLink]="[
+                  '/bidder/auctions',
+                  car.auctionId,
+                  car.invAuc.inventoryAuctionId
+                ]"
+                matTooltip="Open bidding page"
+              >
+                <mat-icon>gavel</mat-icon>
+                <span>Bid</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Cooldown Popup -->
+          <div class="cooldown-popup" *ngIf="car.bidCooldownActive">
+            <div class="cooldown-content">
+              <div class="cooldown-text">
+                <strong>Placing bid in {{ car.bidCooldownRemaining }}s</strong>
+                <span>Click cancel if you've changed your mind</span>
+              </div>
+              <button class="btn-cancel" (click)="cancelQuickBid(car)">
+                Cancel
+              </button>
+            </div>
+            <div class="cooldown-progress">
+              <div
+                class="progress-fill"
+                [style.width.%]="(car.bidCooldownRemaining || 0) * 20"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="results.length === 0">
+      <mat-icon>favorite_border</mat-icon>
+      <h3>You have no saved vehicles</h3>
+      <p>Browse auctions and tap the heart icon to add favourites</p>
+      <button class="btn-reset" routerLink="/bidder/auctions">
+        <mat-icon>search</mat-icon>
+        <span>Browse Auctions</span>
+      </button>
     </div>
   </div>
 </div>

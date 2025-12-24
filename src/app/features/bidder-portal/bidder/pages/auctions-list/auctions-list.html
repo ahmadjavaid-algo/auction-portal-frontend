@@ -1,61 +1,254 @@
-<div class="auctions-page">
-  <!-- top breadcrumb / title -->
-  <div class="crumbs">
-    <a routerLink="/bidder/dashboard">Home</a>
-    <mat-icon>chevron_right</mat-icon>
-    <span class="current">Auctions</span>
-    <span class="count" *ngIf="!loading">({{ cards.length }})</span>
+<div class="landing auctions-landing">
+  <!-- DASHBOARD-LIKE FULL BLEED HERO -->
+  <section class="hero-section" [ngStyle]="{ '--hero-bg': 'url(' + heroUrl + ')' }">
+    <div class="hero-overlay"></div>
+
+    <div class="hero-content shell">
+      <div class="hero-breadcrumbs">
+        <a routerLink="/bidder/dashboard" class="crumb">
+          <span class="dot"></span>
+          Home
+        </a>
+        <mat-icon>chevron_right</mat-icon>
+        <span class="current">Auctions</span>
+      </div>
+
+      <div class="hero-badge">Marketplace</div>
+
+      <h1 class="hero-title">
+        <span class="make">Live</span>
+        <span class="model">Auctions</span>
+      </h1>
+
+      <div class="hero-meta">
+        <div class="meta-pill">
+          <mat-icon>inventory_2</mat-icon>
+          <span>{{ results.length }} Auction{{ results.length !== 1 ? 's' : '' }}</span>
+        </div>
+
+        <div class="meta-pill live" *ngIf="liveCount > 0">
+          <span class="pulse-dot"></span>
+          <span>{{ liveCount }} LIVE</span>
+        </div>
+
+        <div class="meta-pill" *ngIf="scheduledCount > 0">
+          <mat-icon>schedule</mat-icon>
+          <span>{{ scheduledCount }} Scheduled</span>
+        </div>
+
+        <div class="meta-pill muted" *ngIf="endedCount > 0">
+          <mat-icon>flag</mat-icon>
+          <span>{{ endedCount }} Ended</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DASHBOARD-LIKE STATS BAR (lightweight, same scroll rhythm) -->
+  <section class="stats-bar" *ngIf="!loading && !error">
+    <div class="shell stats-grid">
+      <div class="stat-item">
+        <div class="stat-value"><span>{{ results.length }}</span></div>
+        <div class="stat-label">Visible Auctions</div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-value"><span>{{ liveCount }}</span></div>
+        <div class="stat-label">Live</div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-value"><span>{{ scheduledCount }}</span></div>
+        <div class="stat-label">Scheduled</div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-value"><span>{{ endedCount }}</span></div>
+        <div class="stat-label">Ended</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN CONTENT (kept as-is, just placed inside shell like dashboard) -->
+  <section class="content-section">
+    <div class="shell">
+      <!-- Loading (kept) -->
+      <div class="loader-wrap" *ngIf="loading">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        <span>Loading auctions...</span>
+      </div>
+
+      <!-- Error (kept) -->
+      <div class="error-banner" *ngIf="!loading && error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error }}</span>
+      </div>
+
+      <!-- Main Content -->
+      <div class="main-content" *ngIf="!loading && !error">
+        <!-- Toolbar (unchanged) -->
+        <div class="toolbar">
+          <div class="search-bar">
+            <mat-icon>search</mat-icon>
+            <input
+              type="text"
+              placeholder="Search auctions by name, status..."
+              [(ngModel)]="q"
+            />
+            <button
+              *ngIf="q"
+              class="clear-btn"
+              (click)="q = ''"
+              matTooltip="Clear search"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+
+          <div class="filters-row">
+            <div class="filter-group">
+              <label>Status</label>
+              <select [(ngModel)]="statusFilter">
+                <option value="all">All</option>
+                <option value="live">Live</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="ended">Ended</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label>Sort By</label>
+              <select [(ngModel)]="sortBy">
+                <option value="newest">Newest First</option>
+                <option value="starting_soon">Starting Soon</option>
+                <option value="ending_soon">Ending Soon</option>
+                <option value="lots_high">Most Lots</option>
+              </select>
+            </div>
+
+            <button
+              class="reset-btn"
+              *ngIf="q || statusFilter !== 'all' || sortBy !== 'newest'"
+              (click)="clearAll()"
+            >
+              <mat-icon>refresh</mat-icon>
+              <span>Reset All</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Results Header (unchanged) -->
+        <div class="results-header">
+          <h2>{{ results.length }} Auction{{ results.length !== 1 ? 's' : '' }} Available</h2>
+          <div class="view-toggle">
+            <mat-icon>grid_view</mat-icon>
+          </div>
+        </div>
+
+        <!-- Grid (unchanged) -->
+        <div class="vehicle-grid" *ngIf="results.length > 0">
+          <article class="vehicle-card" *ngFor="let c of results; trackBy: trackByAuction">
+            <div class="card-image" [ngStyle]="{ '--car-img': 'url(' + c.coverUrl + ')' }">
+              <div class="image-overlay"></div>
+
+              <div class="countdown-badge" [ngClass]="c.countdownState">
+                <mat-icon>schedule</mat-icon>
+                <span>{{ c.countdownText }}</span>
+              </div>
+
+              <div class="reserve-badge" *ngIf="c.status" [class.met]="(c.status || '').toLowerCase() === 'live'">
+                <mat-icon>{{ (c.status || '').toLowerCase() === 'live' ? 'bolt' : 'info' }}</mat-icon>
+                <span>{{ c.status }}</span>
+              </div>
+            </div>
+
+            <div class="card-body">
+              <h3 class="car-title">
+                {{ c.auction.auctionName || ('Auction #' + c.auction.auctionId) }}
+              </h3>
+
+              <div class="car-subtitle">
+                {{ formatRange(c.start, c.end) }} • {{ c.lots }} lot{{ c.lots !== 1 ? 's' : '' }}
+              </div>
+
+              <div class="price-grid">
+                <div class="price-hero">
+                  <div class="label">LOTS AVAILABLE</div>
+                  <div class="value">{{ c.lots }}</div>
+                  <div class="your-bid">
+                    Status:
+                    <strong>{{ c.status || '—' }}</strong>
+                  </div>
+                </div>
+
+                <div class="price-item">
+                  <div class="label">Start</div>
+                  <div class="value">{{ c.start ? (c.start | date:'medium') : '—' }}</div>
+                </div>
+
+                <div class="price-item">
+                  <div class="label">End</div>
+                  <div class="value">{{ c.end ? (c.end | date:'medium') : '—' }}</div>
+                </div>
+              </div>
+
+              <div class="card-actions">
+                <a
+                  class="btn-quick-bid"
+                  [routerLink]="['/bidder/auctions', c.auction.auctionId]"
+                  matTooltip="Open auction"
+                >
+                  <span class="btn-inner">
+                    <mat-icon>gavel</mat-icon>
+                    <span>BROWSE CARS</span>
+                  </span>
+                </a>
+
+                <div class="btn-group">
+                  <a
+                    class="btn-details"
+                    [routerLink]="['/bidder/auctions', c.auction.auctionId]"
+                    matTooltip="View lots"
+                  >
+                    <mat-icon>inventory_2</mat-icon>
+                    <span>Lots</span>
+                  </a>
+
+                  <a
+                    class="btn-open"
+                    [routerLink]="['/bidder/auctions', c.auction.auctionId]"
+                    matTooltip="Enter auction"
+                  >
+                    <mat-icon>arrow_forward</mat-icon>
+                    <span>Enter</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <!-- Empty State (unchanged) -->
+        <div class="empty-state" *ngIf="results.length === 0">
+          <mat-icon>search_off</mat-icon>
+          <h3>No auctions match your filters</h3>
+          <p>Try adjusting your search criteria or clearing all filters</p>
+          <button class="btn-reset" (click)="clearAll()">
+            <mat-icon>refresh</mat-icon>
+            <span>Reset Filters</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DASHBOARD-LIKE FIXED LOADER/ERROR (scroll behavior match) -->
+  <div class="page-loader" *ngIf="loading">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
   </div>
 
-  <!-- tiny loader -->
-  <mat-progress-bar *ngIf="loading" mode="indeterminate"></mat-progress-bar>
-
-  <!-- error -->
-  <div class="err" *ngIf="!loading && error">
+  <div class="page-error" *ngIf="error && !loading">
     <mat-icon>error_outline</mat-icon>
     <span>{{ error }}</span>
   </div>
-
-  <!-- cards grid -->
-  <section class="grid" *ngIf="!loading && !error">
-    <article
-      class="auction-card"
-      *ngFor="let c of cards"
-      [ngStyle]="{ '--photo': 'url(' + c.coverUrl + ')' }"
-    >
-      <div class="card-photo"></div>
-
-      <div class="card-body">
-        <div class="status" [class.live]="(c.status||'').toLowerCase()==='live'">
-          {{ c.status || '—' }}
-        </div>
-
-        <h2 class="name">{{ c.auction.auctionName || ('Auction #' + c.auction.auctionId) }}</h2>
-
-        <div class="meta">
-          <div class="when">
-            <mat-icon>schedule</mat-icon>
-            <span>{{ formatRange(c.start, c.end) }}</span>
-          </div>
-          <div class="lots">
-            <mat-icon>inventory_2</mat-icon>
-            <span>{{ c.lots }} lots</span>
-          </div>
-        </div>
-
-        <div class="actions">
-          <a class="btn primary"
-             [routerLink]="['/bidder/auctions', c.auction.auctionId]"
-             matTooltip="View auction and place bids">
-            Browse Cars
-          </a>
-        </div>
-      </div>
-    </article>
-
-    <div class="empty" *ngIf="cards.length===0">
-      <mat-icon>info</mat-icon>
-      <span>No auctions are available right now.</span>
-    </div>
-  </section>
 </div>

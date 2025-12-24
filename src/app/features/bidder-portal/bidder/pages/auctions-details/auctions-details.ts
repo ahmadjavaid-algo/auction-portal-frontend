@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -79,7 +79,7 @@ type LotCard = {
   templateUrl: './auctions-details.html',
   styleUrls: ['./auctions-details.scss']
 })
-export class AuctionsDetails implements OnDestroy {
+export class AuctionsDetails implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private snack = inject(MatSnackBar);
 
@@ -98,13 +98,16 @@ export class AuctionsDetails implements OnDestroy {
   auctionId!: number;
   auction: Auction | null = null;
 
-  heroUrl = 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1920';
+  // Hero background (will be replaced by first lot image when available)
+  heroUrl =
+    'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1920';
 
   lots: LotCard[] = [];
 
   q = '';
   filters = { make: '', model: '', year: '', category: '' };
-  sortBy: 'newest' | 'price_low' | 'price_high' | 'year_new' | 'year_old' = 'newest';
+  sortBy: 'newest' | 'price_low' | 'price_high' | 'year_new' | 'year_old' =
+    'newest';
   options = {
     makes: [] as string[],
     models: [] as string[],
@@ -114,6 +117,7 @@ export class AuctionsDetails implements OnDestroy {
 
   private tickHandle: any = null;
   private resyncSub?: Subscription;
+
   private auctionStartUtcMs: number | null = null;
   private auctionEndUtcMs: number | null = null;
   private clockSkewMs = 0;
@@ -125,6 +129,7 @@ export class AuctionsDetails implements OnDestroy {
       this.route.snapshot.paramMap.get('auctionId') ||
         this.route.snapshot.paramMap.get('id')
     );
+
     if (!this.auctionId) {
       this.error = 'Invalid auction id.';
       this.loading = false;
@@ -132,21 +137,39 @@ export class AuctionsDetails implements OnDestroy {
     }
 
     this.loading = true;
+    this.error = null;
 
     const currentUserId = this.bidderAuth.currentUser?.userId ?? null;
 
     forkJoin({
-      timebox: this.auctionsSvc.getTimebox(this.auctionId).pipe(catchError(() => of(null as AuctionTimebox | null))),
-      auctions: this.auctionsSvc.getList().pipe(catchError(() => of([] as Auction[]))),
-      invAucs: this.invAucSvc.getList().pipe(catchError(() => of([] as InventoryAuction[]))),
-      files: this.filesSvc.getList().pipe(catchError(() => of([] as InventoryDocumentFile[]))),
-      invs: this.invSvc.getList().pipe(catchError(() => of([] as Inventory[]))),
-      products: this.productsSvc.getList().pipe(catchError(() => of([] as Product[]))),
-      bids: this.bidsSvc.getList().pipe(catchError(() => of([] as AuctionBid[]))),
-      favs: this.favSvc.getList().pipe(catchError(() => of([] as Favourite[])))
+      timebox: this.auctionsSvc
+        .getTimebox(this.auctionId)
+        .pipe(catchError(() => of(null as AuctionTimebox | null))),
+      auctions: this.auctionsSvc
+        .getList()
+        .pipe(catchError(() => of([] as Auction[]))),
+      invAucs: this.invAucSvc
+        .getList()
+        .pipe(catchError(() => of([] as InventoryAuction[]))),
+      files: this.filesSvc
+        .getList()
+        .pipe(catchError(() => of([] as InventoryDocumentFile[]))),
+      invs: this.invSvc
+        .getList()
+        .pipe(catchError(() => of([] as Inventory[]))),
+      products: this.productsSvc
+        .getList()
+        .pipe(catchError(() => of([] as Product[]))),
+      bids: this.bidsSvc
+        .getList()
+        .pipe(catchError(() => of([] as AuctionBid[]))),
+      favs: this.favSvc
+        .getList()
+        .pipe(catchError(() => of([] as Favourite[])))
     })
       .pipe(
         map(({ timebox, auctions, invAucs, files, invs, products, bids, favs }) => {
+          // time sync
           if (timebox) {
             this.auctionStartUtcMs = Number(timebox.startEpochMsUtc);
             this.auctionEndUtcMs = Number(timebox.endEpochMsUtc);
@@ -157,54 +180,91 @@ export class AuctionsDetails implements OnDestroy {
             this.clockSkewMs = 0;
           }
 
-          this.auction = (auctions || []).find(a => a.auctionId === this.auctionId) || null;
+          // auction info
+          this.auction =
+            (auctions || []).find(a => a.auctionId === this.auctionId) || null;
 
+          // favourites map for this user
           this.favMap.clear();
           const favsForUserAll = (favs || []).filter(f => {
-            const uid = (f as any).userId ?? (f as any).UserId ?? (f as any).userID ?? (f as any).userid;
+            const uid =
+              (f as any).userId ??
+              (f as any).UserId ??
+              (f as any).userID ??
+              (f as any).userid;
             return uid === currentUserId;
           });
 
           favsForUserAll.forEach(f => {
-            const invAucIdFromFav = (f as any).inventoryAuctionId ?? (f as any).InventoryAuctionId ?? (f as any).inventoryauctionId;
+            const invAucIdFromFav =
+              (f as any).inventoryAuctionId ??
+              (f as any).InventoryAuctionId ??
+              (f as any).inventoryauctionId;
             if (invAucIdFromFav != null) {
               this.favMap.set(Number(invAucIdFromFav), f);
             }
           });
 
-          const rows = (invAucs || []).filter(x => (x as any).auctionId === this.auctionId && (x.active ?? true));
+          const rows = (invAucs || []).filter(
+            x => (x as any).auctionId === this.auctionId && ((x as any).active ?? true)
+          );
+
           const imageMap = this.buildImagesMap(files);
 
           const invMap = new Map<number, Inventory>();
-          (invs || []).forEach(i => invMap.set(i.inventoryId, i));
+          (invs || []).forEach(i => invMap.set((i as any).inventoryId, i));
 
           const prodMap = new Map<number, Product>();
-          (products || []).forEach(p => prodMap.set(p.productId, p));
+          (products || []).forEach(p => prodMap.set((p as any).productId, p));
 
           const cards: LotCard[] = rows.map(r => {
-            const inv = invMap.get(r.inventoryId) || null;
-            const prod = inv ? prodMap.get(inv.productId) || null : null;
-            const snap = this.safeParse(inv?.productJSON);
+            const inv = invMap.get((r as any).inventoryId) || null;
+            const prod = inv ? prodMap.get((inv as any).productId) || null : null;
+            const snap = this.safeParse((inv as any)?.productJSON);
 
-            const yearName = (prod?.yearName ?? snap?.Year ?? snap?.year) ?? null;
-            const makeName = (prod?.makeName ?? snap?.Make ?? snap?.make) ?? null;
-            const modelName = (prod?.modelName ?? snap?.Model ?? snap?.model) ?? null;
-            const categoryName = (prod?.categoryName ?? snap?.Category ?? snap?.category) ?? null;
+            const yearName =
+              ((prod as any)?.yearName ?? snap?.Year ?? snap?.year) ?? null;
+            const makeName =
+              ((prod as any)?.makeName ?? snap?.Make ?? snap?.make) ?? null;
+            const modelName =
+              ((prod as any)?.modelName ?? snap?.Model ?? snap?.model) ?? null;
+            const categoryName =
+              ((prod as any)?.categoryName ?? snap?.Category ?? snap?.category) ??
+              null;
 
-            const titleFromMeta = [yearName, makeName, modelName].filter(Boolean).join(' ');
-            const title = titleFromMeta || inv?.displayName || snap?.DisplayName || snap?.displayName || `Inventory #${r.inventoryId}`;
+            const titleFromMeta = [yearName, makeName, modelName]
+              .filter(Boolean)
+              .join(' ');
+            const title =
+              titleFromMeta ||
+              (inv as any)?.displayName ||
+              snap?.DisplayName ||
+              snap?.displayName ||
+              `Inventory #${(r as any).inventoryId}`;
 
-            const chassis = inv?.chassisNo || null;
-            const sub = chassis ? `Chassis ${chassis} • #${r.inventoryId}` : `#${r.inventoryId}`;
+            const chassis = (inv as any)?.chassisNo || null;
+            const sub = chassis
+              ? `Chassis ${chassis} • #${(r as any).inventoryId}`
+              : `#${(r as any).inventoryId}`;
 
-            const cover = this.pickRandom(imageMap.get(r.inventoryId)) || this.heroUrl;
+            const cover =
+              this.pickRandom(imageMap.get((r as any).inventoryId)) || this.heroUrl;
 
-            const invAucId = (r as any).inventoryAuctionId ?? (r as any).InventoryAuctionId ?? (r as any).inventoryauctionId;
+            const invAucId =
+              (r as any).inventoryAuctionId ??
+              (r as any).InventoryAuctionId ??
+              (r as any).inventoryauctionId;
 
             const favRecord = this.favMap.get(invAucId);
-            const isActive = (favRecord as any)?.active ?? (favRecord as any)?.Active ?? favRecord?.active;
+            const isActive =
+              (favRecord as any)?.active ??
+              (favRecord as any)?.Active ??
+              (favRecord as any)?.active;
             const isFav = !!favRecord && isActive !== false;
-            const favId = (favRecord as any)?.BidderInventoryAuctionFavoriteId ?? (favRecord as any)?.bidderInventoryAuctionFavoriteId ?? null;
+            const favId =
+              (favRecord as any)?.BidderInventoryAuctionFavoriteId ??
+              (favRecord as any)?.bidderInventoryAuctionFavoriteId ??
+              null;
 
             return {
               invAuc: r,
@@ -213,9 +273,9 @@ export class AuctionsDetails implements OnDestroy {
               sub,
               imageUrl: cover,
               auctionStartPrice: (r as any).auctionStartPrice ?? null,
-              buyNow: r.buyNowPrice ?? null,
-              reserve: r.reservePrice ?? null,
-              bidIncrement: r.bidIncrement ?? null,
+              buyNow: (r as any).buyNowPrice ?? null,
+              reserve: (r as any).reservePrice ?? null,
+              bidIncrement: (r as any).bidIncrement ?? null,
               yearName,
               makeName,
               modelName,
@@ -234,13 +294,17 @@ export class AuctionsDetails implements OnDestroy {
             };
           });
 
+          // pick hero (same behavior as auctions-list)
           const firstImg = cards.find(c => !!c.imageUrl)?.imageUrl;
           if (firstImg) this.heroUrl = firstImg;
 
           this.applyBidMetrics(cards, bids || []);
 
           this.lots = cards.sort((a, b) =>
-            this.dateDesc((a.inventory?.modifiedDate || a.inventory?.createdDate) ?? null, (b.inventory?.modifiedDate || b.inventory?.createdDate) ?? null)
+            this.dateDesc(
+              ((a.inventory as any)?.modifiedDate || (a.inventory as any)?.createdDate) ?? null,
+              ((b.inventory as any)?.modifiedDate || (b.inventory as any)?.createdDate) ?? null
+            )
           );
 
           this.buildFilterOptions();
@@ -275,6 +339,17 @@ export class AuctionsDetails implements OnDestroy {
     }
   }
 
+  // ===== Dashboard-like counts for hero/stats (mirrors auctions-list behavior) =====
+  get liveCount(): number {
+    return this.results.filter(x => x.countdownState === 'live').length;
+  }
+  get scheduledCount(): number {
+    return this.results.filter(x => x.countdownState === 'scheduled').length;
+  }
+  get endedCount(): number {
+    return this.results.filter(x => x.countdownState === 'ended').length;
+  }
+
   get isLive(): boolean {
     if (!this.auctionStartUtcMs || !this.auctionEndUtcMs) return false;
     const now = Date.now() + this.clockSkewMs;
@@ -288,7 +363,10 @@ export class AuctionsDetails implements OnDestroy {
       return;
     }
 
-    const invAucId = (card.invAuc as any).inventoryAuctionId ?? (card.invAuc as any).InventoryAuctionId ?? (card.invAuc as any).inventoryauctionId;
+    const invAucId =
+      (card.invAuc as any).inventoryAuctionId ??
+      (card.invAuc as any).InventoryAuctionId ??
+      (card.invAuc as any).inventoryauctionId;
 
     if (invAucId == null) {
       console.warn('[fav] inventoryAuctionId missing on card.invAuc', card);
@@ -299,24 +377,29 @@ export class AuctionsDetails implements OnDestroy {
       const existing = this.favMap.get(invAucId);
 
       if (existing) {
-        const favId = (existing as any).BidderInventoryAuctionFavoriteId ?? (existing as any).bidderInventoryAuctionFavoriteId ?? card.favouriteId;
+        const favId =
+          (existing as any).BidderInventoryAuctionFavoriteId ??
+          (existing as any).bidderInventoryAuctionFavoriteId ??
+          card.favouriteId;
 
         if (!favId) {
           console.warn('[fav] Existing favourite has no id, falling back to add().', existing);
         } else {
-          this.favSvc.activate({ FavouriteId: favId, Active: true, ModifiedById: userId }).subscribe({
-            next: ok => {
-              if (ok) {
-                card.isFavourite = true;
-                card.favouriteId = favId;
-                (existing as any).Active = true;
-                (existing as any).active = true;
+          this.favSvc
+            .activate({ FavouriteId: favId, Active: true, ModifiedById: userId })
+            .subscribe({
+              next: ok => {
+                if (ok) {
+                  card.isFavourite = true;
+                  card.favouriteId = favId;
+                  (existing as any).Active = true;
+                  (existing as any).active = true;
+                }
+              },
+              error: e => {
+                console.error('[fav] REACTIVATE failed', e);
               }
-            },
-            error: e => {
-              console.error('[fav] REACTIVATE failed', e);
-            }
-          });
+            });
 
           return;
         }
@@ -358,7 +441,11 @@ export class AuctionsDetails implements OnDestroy {
     }
 
     if (card.isFavourite && card.favouriteId != null) {
-      const payload = { FavouriteId: card.favouriteId, Active: false, ModifiedById: userId };
+      const payload = {
+        FavouriteId: card.favouriteId,
+        Active: false,
+        ModifiedById: userId
+      };
 
       this.favSvc.activate(payload).subscribe({
         next: ok => {
@@ -381,7 +468,8 @@ export class AuctionsDetails implements OnDestroy {
   get filteredLots(): LotCard[] {
     const q = this.q.trim().toLowerCase();
     return this.lots.filter(c => {
-      const hay = `${c.title} ${c.sub} ${c.makeName ?? ''} ${c.modelName ?? ''} ${c.yearName ?? ''} ${c.categoryName ?? ''}`.toLowerCase();
+      const hay =
+        `${c.title} ${c.sub} ${c.makeName ?? ''} ${c.modelName ?? ''} ${c.yearName ?? ''} ${c.categoryName ?? ''}`.toLowerCase();
       if (q && !hay.includes(q)) return false;
 
       if (this.filters.make && (c.makeName ?? '') !== this.filters.make) return false;
@@ -396,7 +484,11 @@ export class AuctionsDetails implements OnDestroy {
   get results(): LotCard[] {
     const list = [...this.filteredLots];
 
-    const priceOf = (c: LotCard) => (c.auctionStartPrice ?? undefined) ?? (c.buyNow ?? undefined) ?? (c.reserve ?? undefined) ?? Number.POSITIVE_INFINITY;
+    const priceOf = (c: LotCard) =>
+      (c.auctionStartPrice ?? undefined) ??
+      (c.buyNow ?? undefined) ??
+      (c.reserve ?? undefined) ??
+      Number.POSITIVE_INFINITY;
 
     switch (this.sortBy) {
       case 'price_low':
@@ -404,11 +496,20 @@ export class AuctionsDetails implements OnDestroy {
       case 'price_high':
         return list.sort((a, b) => priceOf(b) - priceOf(a));
       case 'year_new':
-        return list.sort((a, b) => parseInt(String(b.yearName || 0)) - parseInt(String(a.yearName || 0)));
+        return list.sort(
+          (a, b) => parseInt(String(b.yearName || 0)) - parseInt(String(a.yearName || 0))
+        );
       case 'year_old':
-        return list.sort((a, b) => parseInt(String(a.yearName || 0)) - parseInt(String(b.yearName || 0)));
+        return list.sort(
+          (a, b) => parseInt(String(a.yearName || 0)) - parseInt(String(b.yearName || 0))
+        );
       default:
-        return list.sort((a, b) => this.dateDesc((a.inventory?.modifiedDate || a.inventory?.createdDate) ?? null, (b.inventory?.modifiedDate || b.inventory?.createdDate) ?? null));
+        return list.sort((a, b) =>
+          this.dateDesc(
+            ((a.inventory as any)?.modifiedDate || (a.inventory as any)?.createdDate) ?? null,
+            ((b.inventory as any)?.modifiedDate || (b.inventory as any)?.createdDate) ?? null
+          )
+        );
     }
   }
 
@@ -423,7 +524,8 @@ export class AuctionsDetails implements OnDestroy {
   }
 
   private buildFilterOptions(): void {
-    const uniq = (arr: (string | null | undefined)[]) => Array.from(new Set(arr.filter(Boolean) as string[])).sort((a, b) => a.localeCompare(b));
+    const uniq = (arr: (string | null | undefined)[]) =>
+      Array.from(new Set(arr.filter(Boolean) as string[])).sort((a, b) => a.localeCompare(b));
 
     this.options.makes = uniq(this.lots.map(l => l.makeName));
     this.options.models = uniq(this.lots.map(l => l.modelName));
@@ -515,41 +617,72 @@ export class AuctionsDetails implements OnDestroy {
     const currentUserId = this.bidderAuth.currentUser?.userId ?? null;
 
     cards.forEach(card => {
-      const lotId = (card.invAuc as any).inventoryAuctionId ?? (card.invAuc as any).InventoryAuctionId ?? (card.invAuc as any).inventoryauctionId;
+      const lotId =
+        (card.invAuc as any).inventoryAuctionId ??
+        (card.invAuc as any).InventoryAuctionId ??
+        (card.invAuc as any).inventoryauctionId;
 
       const lotBids = (bids || []).filter(b => {
-        const iaId = (b as any).inventoryAuctionId ?? (b as any).InventoryAuctionId ?? (b as any).inventoryauctionId;
-        const aucId = (b as any).auctionId ?? (b as any).AuctionId ?? (b as any).auctionID;
+        const iaId =
+          (b as any).inventoryAuctionId ??
+          (b as any).InventoryAuctionId ??
+          (b as any).inventoryauctionId;
+        const aucId =
+          (b as any).auctionId ?? (b as any).AuctionId ?? (b as any).auctionID;
         return iaId === lotId && aucId === this.auctionId;
       });
 
-      const highestBid = lotBids.length ? Math.max(...lotBids.map(b => Number((b as any).bidAmount ?? (b as any).BidAmount ?? (b as any).Amount ?? 0))) : null;
+      const highestBid = lotBids.length
+        ? Math.max(
+            ...lotBids.map(b =>
+              Number((b as any).bidAmount ?? (b as any).BidAmount ?? (b as any).Amount ?? 0)
+            )
+          )
+        : null;
 
-      const yourBids = currentUserId != null ? lotBids.filter(b => {
-        const createdBy = (b as any).createdById ?? (b as any).CreatedById ?? null;
-        return createdBy === currentUserId;
-      }) : [];
+      const yourBids =
+        currentUserId != null
+          ? lotBids.filter(b => {
+              const createdBy = (b as any).createdById ?? (b as any).CreatedById ?? null;
+              return createdBy === currentUserId;
+            })
+          : [];
 
-      const yourHighest = yourBids.length ? Math.max(...yourBids.map(b => Number((b as any).bidAmount ?? (b as any).BidAmount ?? (b as any).Amount ?? 0))) : null;
+      const yourHighest = yourBids.length
+        ? Math.max(
+            ...yourBids.map(b =>
+              Number((b as any).bidAmount ?? (b as any).BidAmount ?? (b as any).Amount ?? 0)
+            )
+          )
+        : null;
 
       const startPrice = card.auctionStartPrice ?? null;
       card.currentPrice = highestBid != null ? highestBid : startPrice;
       card.yourMaxBid = yourHighest;
 
       const reserve = card.reserve ?? null;
-      card.reserveMet = reserve != null && reserve > 0 && card.currentPrice != null && card.currentPrice >= reserve;
+      card.reserveMet =
+        reserve != null &&
+        reserve > 0 &&
+        card.currentPrice != null &&
+        card.currentPrice >= reserve;
     });
   }
 
   private refreshAllBids(): void {
-    this.bidsSvc.getList().pipe(catchError(() => of([] as AuctionBid[]))).subscribe(bids => {
-      this.applyBidMetrics(this.lots, bids || []);
-    });
+    this.bidsSvc
+      .getList()
+      .pipe(catchError(() => of([] as AuctionBid[])))
+      .subscribe(bids => {
+        this.applyBidMetrics(this.lots, bids || []);
+      });
   }
 
   onQuickBid(card: LotCard): void {
     if (!this.isLive) {
-      this.snack.open('Bidding is only available while the auction is live.', 'OK', { duration: 3000 });
+      this.snack.open('Bidding is only available while the auction is live.', 'OK', {
+        duration: 3000
+      });
       return;
     }
 
@@ -559,12 +692,11 @@ export class AuctionsDetails implements OnDestroy {
       return;
     }
 
-    if (card.bidCooldownActive || card.placingBid) {
-      return;
-    }
+    if (card.bidCooldownActive || card.placingBid) return;
 
     const inc = card.bidIncrement ?? 100;
-    const base = card.currentPrice ?? card.auctionStartPrice ?? card.buyNow ?? card.reserve ?? 0;
+    const base =
+      card.currentPrice ?? card.auctionStartPrice ?? card.buyNow ?? card.reserve ?? 0;
     const amount = base + (inc > 0 ? inc : 0);
 
     if (!Number.isFinite(amount) || amount <= 0) {
@@ -614,10 +746,15 @@ export class AuctionsDetails implements OnDestroy {
     }
 
     card.bidCooldownActive = false;
+
     const userId = this.bidderAuth.currentUser?.userId ?? null;
     if (!userId) return;
 
-    const lotId = (card.invAuc as any).inventoryAuctionId ?? (card.invAuc as any).InventoryAuctionId ?? (card.invAuc as any).inventoryauctionId ?? 0;
+    const lotId =
+      (card.invAuc as any).inventoryAuctionId ??
+      (card.invAuc as any).InventoryAuctionId ??
+      (card.invAuc as any).inventoryauctionId ??
+      0;
 
     const amount = Number((card as any).__pendingAmount ?? 0);
     delete (card as any).__pendingAmount;
@@ -646,7 +783,12 @@ export class AuctionsDetails implements OnDestroy {
         this.refreshAllBids();
       },
       error: err => {
-        const msg = err && err.error ? typeof err.error === 'string' ? err.error : JSON.stringify(err.error) : 'Unknown error';
+        const msg =
+          err && err.error
+            ? typeof err.error === 'string'
+              ? err.error
+              : JSON.stringify(err.error)
+            : 'Unknown error';
         this.snack.open('Failed to place bid: ' + msg, 'OK', { duration: 5000 });
       },
       complete: () => {
@@ -667,14 +809,16 @@ export class AuctionsDetails implements OnDestroy {
       .filter(f => {
         const active = (f as any).active ?? (f as any).Active ?? true;
         const invId = (f as any).inventoryId ?? (f as any).InventoryId;
-        const thumbUrl = (f as any).documentThumbnailUrl ?? (f as any).DocumentThumbnailUrl ?? null;
+        const thumbUrl =
+          (f as any).documentThumbnailUrl ?? (f as any).DocumentThumbnailUrl ?? null;
         const name = (f as any).documentName ?? (f as any).DocumentName ?? null;
 
         return active && !!invId && !!thumbUrl && isImg(thumbUrl, name);
       })
       .forEach(f => {
         const invId = (f as any).inventoryId ?? (f as any).InventoryId;
-        const thumbUrl = (f as any).documentThumbnailUrl ?? (f as any).DocumentThumbnailUrl ?? null;
+        const thumbUrl =
+          (f as any).documentThumbnailUrl ?? (f as any).DocumentThumbnailUrl ?? null;
 
         if (!thumbUrl) return;
 
@@ -710,14 +854,20 @@ export class AuctionsDetails implements OnDestroy {
   formatRange(a?: string | Date | null, b?: string | Date | null): string {
     const s = a ? new Date(a) : null;
     const e = b ? new Date(b) : null;
-    const fmt = (d: Date) => new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(d);
+    const fmt = (d: Date) =>
+      new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(d);
     return `${s ? fmt(s) : '—'} → ${e ? fmt(e) : '—'}`;
   }
 
   money(n?: number | null): string {
     if (n == null) return '—';
-    return n.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+    return n.toLocaleString(undefined, {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0
+    });
   }
 
-  trackById = (_: number, c: LotCard) => (c.invAuc as any).inventoryAuctionId ?? c.sub;
+  trackById = (_: number, c: LotCard) =>
+    (c.invAuc as any).inventoryAuctionId ?? (c.invAuc as any).InventoryAuctionId ?? c.sub;
 }
