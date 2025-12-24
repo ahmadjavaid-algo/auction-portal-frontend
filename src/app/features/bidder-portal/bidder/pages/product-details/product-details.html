@@ -1,488 +1,459 @@
-<div class="product-details" *ngIf="!loading; else busy">
-  <!-- crumbs -->
-  <div class="crumbs">
-    <a routerLink="/bidder/auctions">Auctions</a>
-    <mat-icon>chevron_right</mat-icon>
-    <a *ngIf="auctionId" [routerLink]="['/bidder/auctions', auctionId]">
-      {{ auction?.auctionName || ('Auction #' + auctionId) }}
-    </a>
-    <mat-icon>chevron_right</mat-icon>
-    <span class="current">{{ title }}</span>
-  </div>
+<!-- src/app/pages/bidder/products/product-details/product-details.html -->
+<div class="landing details-landing">
+  <!-- ✅ FULL BLEED HERO (auctions-list parity) -->
+  <section class="hero-section" [ngStyle]="{ '--hero-bg': 'url(' + heroUrl + ')' }">
+    <div class="hero-overlay"></div>
 
-  <div class="err" *ngIf="error">
-    <mat-icon>error_outline</mat-icon>
-    <span>{{ error }}</span>
-  </div>
-
-  <section class="page" *ngIf="!error">
-    <!-- LEFT -->
-    <div class="main">
-      <div class="media">
-        <div
-          class="stage"
-          [ngStyle]="{ '--photo': 'url(' + (activeImage || images[0]) + ')' }"
-        ></div>
-
-        <div class="thumbs" *ngIf="images.length > 1">
-          <button
-            class="thumb"
-            *ngFor="let img of images"
-            [class.active]="img === activeImage"
-            [ngStyle]="{ '--photo': 'url(' + img + ')' }"
-            (click)="selectImage(img)"
-            matTooltip="View"
-          ></button>
-        </div>
+    <div class="hero-content shell">
+      <div class="hero-breadcrumbs">
+        <a routerLink="/bidder/dashboard" class="crumb">
+          <span class="dot"></span>
+          Home
+        </a>
+        <mat-icon>chevron_right</mat-icon>
+        <a routerLink="/bidder/auctions" class="crumb">Auctions</a>
+        <mat-icon>chevron_right</mat-icon>
+        <a *ngIf="auctionId" class="crumb" [routerLink]="['/bidder/auctions', auctionId]">
+          {{ auction?.auctionName || ('Auction #' + auctionId) }}
+        </a>
+        <mat-icon>chevron_right</mat-icon>
+        <span class="current">{{ title }}</span>
       </div>
 
-      <div class="title-block">
-        <h1>{{ title }}</h1>
-        <div class="sub">{{ subtitle }}</div>
+      <div class="hero-badge">Listing</div>
 
-        <div class="meta">
-          <div class="chip">
-            <span class="label">Start Price</span>
-            <span class="value">
-              {{ money(lot?.auctionStartPrice ?? null) }}
-            </span>
-          </div>
-          <div class="chip">
-            <span class="label">Reserve</span>
-            <span class="value">
-              {{ money(lot?.reservePrice ?? null) }}
-            </span>
-          </div>
-          <div class="chip">
-            <span class="label">Buy Now</span>
-            <span class="value">
-              {{ money(lot?.buyNowPrice ?? null) }}
-            </span>
-          </div>
-          <div class="chip">
-            <span class="label">Bid Increment</span>
-            <span class="value">
-              {{ money(lot?.bidIncrement ?? null) }}
-            </span>
-          </div>
-          <div class="chip">
-            <span class="label">Auction Window</span>
-            <span class="value">
-              {{
-                formatRange(
-                  auction?.startDateTime || null,
-                  auction?.endDateTime || null
-                )
-              }}
-            </span>
-          </div>
-        </div>
+      <h1 class="hero-title">
+        <span class="make">Vehicle</span>
+        <span class="model">{{ title }}</span>
+      </h1>
 
-        <div class="cta-row">
-          <a
-            class="btn primary"
-            [routerLink]="['/bidder/auctions', auctionId, lotId]"
-            matTooltip="Place your bid"
-          >
-            <mat-icon>gavel</mat-icon>
-            Place Bid
-          </a>
-          <a
-            class="btn ghost"
-            [routerLink]="['/bidder/auctions', auctionId, lotId]"
-            matTooltip="See bidding activity"
-          >
-            <mat-icon>visibility</mat-icon>
-            View Auction
-          </a>
-        </div>
+      <div class="hero-sub">
+        {{ subtitle }}
       </div>
 
-      <div class="panel specs">
-        <h3>Vehicle details</h3>
-        <div class="grid">
-          <div class="row" *ngFor="let s of specs">
-            <div class="label">{{ s.label }}</div>
-            <div class="value">{{ s.value || '—' }}</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel" *ngIf="inventory?.description">
-        <h3>Description</h3>
-        <p class="desc">{{ inventory?.description }}</p>
-      </div>
-
-      <!-- Inspection Report (Tabbed per inspection type) -->
-      <div class="panel inspection" *ngIf="inventory">
-        <h3>Inspection report</h3>
-
-        <!-- loading state -->
-        <div class="insp-loading" *ngIf="reportLoading">
-          <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-          <span>Loading inspection report…</span>
+      <div class="hero-meta" *ngIf="!loading && !error">
+        <div class="meta-pill">
+          <mat-icon>sell</mat-icon>
+          <span>Start {{ money(lot?.auctionStartPrice ?? null) }}</span>
         </div>
 
-        <!-- content -->
-        <ng-container *ngIf="!reportLoading">
-          <!-- no data -->
-          <ng-container *ngIf="!reportGroups.length; else inspHasData">
-            <div class="insp-empty">
-              <mat-icon>content_paste_search</mat-icon>
-              <div class="copy">
-                <div class="title">No inspection report available yet</div>
-                <div class="sub">
-                  Once the vehicle has been inspected and the checklist is
-                  completed, a read-only report will appear here.
-                </div>
-              </div>
+        <div class="meta-pill" *ngIf="auction?.auctionStatusName || auction?.auctionStatusCode">
+          <mat-icon>schedule</mat-icon>
+          <span>{{ auction?.auctionStatusName || auction?.auctionStatusCode }}</span>
+        </div>
+
+        <div class="meta-pill live" *ngIf="overallProgressPercent > 0">
+          <span class="pulse-dot"></span>
+          <span>Inspection {{ overallProgressPercent }}%</span>
+        </div>
+
+        <div class="meta-pill muted" *ngIf="lotId != null">
+          <mat-icon>confirmation_number</mat-icon>
+          <span>Lot #{{ lotId }}</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ✅ STATS BAR (auctions-list parity) -->
+  <section class="stats-bar" *ngIf="!loading && !error">
+    <div class="shell stats-grid">
+      <div class="stat-item">
+        <div class="stat-value"><span>{{ money(lot?.auctionStartPrice ?? null) }}</span></div>
+        <div class="stat-label">Start Price</div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-value"><span>{{ money(lot?.reservePrice ?? null) }}</span></div>
+        <div class="stat-label">Reserve</div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-value"><span>{{ money(lot?.buyNowPrice ?? null) }}</span></div>
+        <div class="stat-label">Buy Now</div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-value"><span>{{ overallProgressPercent }}%</span></div>
+        <div class="stat-label">Inspection Completion</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ✅ CONTENT SECTION (dashboard rhythm) -->
+  <section class="content-section">
+    <div class="shell">
+      <!-- Loading -->
+      <div class="loader-wrap" *ngIf="loading">
+        <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+        <span>Loading listing…</span>
+      </div>
+
+      <!-- Error -->
+      <div class="error-banner" *ngIf="!loading && error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error }}</span>
+      </div>
+
+      <!-- Main -->
+      <div class="details-grid" *ngIf="!loading && !error">
+        <!-- LEFT -->
+        <div class="main">
+          <!-- Media -->
+          <div class="card media-card">
+            <div
+              class="stage"
+              [ngStyle]="{ '--photo': 'url(' + (activeImage || images[0] || heroUrl) + ')' }"
+            >
+              <div class="stage-overlay"></div>
             </div>
-          </ng-container>
 
-          <!-- has data -->
-          <ng-template #inspHasData>
-            <div class="insp-summary">
-              <div class="tile">
-                <div class="label">Total checkpoints</div>
-                <div class="value">{{ totalCheckpoints }}</div>
+            <div class="thumbs" *ngIf="images.length > 1">
+              <button
+                class="thumb"
+                *ngFor="let img of images"
+                [class.active]="img === activeImage"
+                [ngStyle]="{ '--photo': 'url(' + img + ')' }"
+                (click)="selectImage(img)"
+                matTooltip="View"
+              ></button>
+            </div>
+
+            <div class="cta-row">
+              <a
+                class="btn primary"
+                [routerLink]="['/bidder/auctions', auctionId, lotId]"
+                matTooltip="Place your bid"
+              >
+                <mat-icon>gavel</mat-icon>
+                Place Bid
+              </a>
+
+              <a
+                class="btn ghost"
+                [routerLink]="['/bidder/auctions', auctionId, lotId]"
+                matTooltip="View auction"
+              >
+                <mat-icon>visibility</mat-icon>
+                View Auction
+              </a>
+            </div>
+          </div>
+
+          <!-- Specs -->
+          <div class="card panel">
+            <div class="panel-head">
+              <div class="h">
+                <mat-icon>fact_check</mat-icon>
+                <span>Vehicle Details</span>
               </div>
-              <div class="tile">
-                <div class="label">Completed</div>
-                <div class="value">{{ totalCompleted }}</div>
-              </div>
-              <div class="tile">
-                <div class="label">Completion</div>
-                <div class="value">
-                  {{ overallProgressPercent }}%
-                  <span
-                    class="status-pill"
-                    [style.border-color]="getCompletionStatusColor()"
-                  >
-                    <span
-                      class="dot"
-                      [style.background]="getCompletionStatusColor()"
-                    ></span>
-                    {{ getCompletionStatus() }}
-                  </span>
-                </div>
+              <div class="pill">
+                <mat-icon>schedule</mat-icon>
+                <span>{{ formatRange(auction?.startDateTime || null, auction?.endDateTime || null) }}</span>
               </div>
             </div>
 
-            <mat-divider></mat-divider>
+            <div class="specs-grid">
+              <div class="spec-row" *ngFor="let s of specs">
+                <div class="label">{{ s.label }}</div>
+                <div class="value">{{ s.value || '—' }}</div>
+              </div>
+            </div>
+          </div>
 
-            <div class="insp-tabs-wrap">
-              <mat-tab-group class="insp-tabs" animationDuration="200ms">
-                <mat-tab *ngFor="let group of reportGroups">
-                  <ng-template mat-tab-label>
-                    <span class="insp-tab-title">
-                      {{ group.inspectionTypeName }}
-                    </span>
-                    <span class="insp-tab-sub">
-                      {{ getGroupCompleted(group) }}/{{ getGroupTotal(group) }}
-                      completed
-                    </span>
-                  </ng-template>
+          <!-- Description -->
+          <div class="card panel" *ngIf="inventory?.description">
+            <div class="panel-head">
+              <div class="h">
+                <mat-icon>subject</mat-icon>
+                <span>Description</span>
+              </div>
+            </div>
+            <p class="desc">{{ inventory?.description }}</p>
+          </div>
 
-                  <section class="insp-group">
-                    <header class="insp-group-header">
-                      <div class="left">
-                        <mat-icon>fact_check</mat-icon>
-                        <span class="name">{{ group.inspectionTypeName }}</span>
-                        <span
-                          class="weight"
-                          *ngIf="group.weightage != null && group.weightage !== undefined"
-                        >
-                          {{ group.weightage }}%
+          <!-- Inspection Report -->
+          <div class="card panel inspection" *ngIf="inventory">
+            <div class="panel-head">
+              <div class="h">
+                <mat-icon>assignment_turned_in</mat-icon>
+                <span>Inspection Report</span>
+              </div>
+
+              <div class="pill" [style.border-color]="getCompletionStatusColor()">
+                <span class="dot" [style.background]="getCompletionStatusColor()"></span>
+                <span>{{ getCompletionStatus() }}</span>
+                <span class="muted">{{ overallProgressPercent }}%</span>
+              </div>
+            </div>
+
+            <div class="insp-loading" *ngIf="reportLoading">
+              <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+              <span>Loading inspection report…</span>
+            </div>
+
+            <ng-container *ngIf="!reportLoading">
+              <ng-container *ngIf="!reportGroups.length; else inspHasData">
+                <div class="empty-soft">
+                  <mat-icon>content_paste_search</mat-icon>
+                  <div class="copy">
+                    <div class="t">No inspection report yet</div>
+                    <div class="s">
+                      Once the vehicle is inspected, the read-only checklist will appear here.
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+
+              <ng-template #inspHasData>
+                <div class="insp-summary">
+                  <div class="mini">
+                    <div class="k">Total</div>
+                    <div class="v">{{ totalCheckpoints }}</div>
+                  </div>
+                  <div class="mini">
+                    <div class="k">Completed</div>
+                    <div class="v">{{ totalCompleted }}</div>
+                  </div>
+                  <div class="mini">
+                    <div class="k">Progress</div>
+                    <div class="v">{{ overallProgressPercent }}%</div>
+                  </div>
+                </div>
+
+                <mat-divider></mat-divider>
+
+                <div class="insp-tabs-wrap">
+                  <mat-tab-group class="insp-tabs" animationDuration="200ms">
+                    <mat-tab *ngFor="let group of reportGroups">
+                      <ng-template mat-tab-label>
+                        <span class="insp-tab-title">{{ group.inspectionTypeName }}</span>
+                        <span class="insp-tab-sub">
+                          {{ getGroupCompleted(group) }}/{{ getGroupTotal(group) }} done
                         </span>
-                      </div>
-                      <div class="right">
-                        <span
-                          class="chip"
-                          [class.complete]="
-                            getGroupCompleted(group) === getGroupTotal(group)
-                          "
-                        >
-                          <mat-icon>
-                            {{
-                              getGroupCompleted(group) === getGroupTotal(group)
-                                ? 'check_circle'
-                                : 'pending'
-                            }}
-                          </mat-icon>
-                          {{ getGroupCompleted(group) }}/{{
-                            getGroupTotal(group)
-                          }}
-                          done
-                        </span>
-                      </div>
-                    </header>
+                      </ng-template>
 
-                    <div class="insp-checkpoints">
-                      <div
-                        class="insp-row"
-                        *ngFor="let cp of group.checkpoints"
-                        [class.answered]="isRowAnswered(cp)"
-                      >
-                        <div class="insp-main">
-                          <div class="insp-title-row">
-                            <mat-icon class="insp-status-icn">
+                      <section class="insp-group">
+                        <header class="insp-group-header">
+                          <div class="left">
+                            <mat-icon>fact_check</mat-icon>
+                            <span class="name">{{ group.inspectionTypeName }}</span>
+                            <span class="weight" *ngIf="group.weightage != null">
+                              {{ group.weightage }}%
+                            </span>
+                          </div>
+
+                          <span
+                            class="chip"
+                            [class.complete]="getGroupCompleted(group) === getGroupTotal(group)"
+                          >
+                            <mat-icon>
                               {{
-                                isRowAnswered(cp)
+                                getGroupCompleted(group) === getGroupTotal(group)
                                   ? 'check_circle'
-                                  : 'radio_button_unchecked'
+                                  : 'pending'
                               }}
                             </mat-icon>
-                            <div class="insp-text">
-                              <div class="insp-name">
-                                {{ cp.inspectionCheckpointName }}
+                            {{ getGroupCompleted(group) }}/{{ getGroupTotal(group) }}
+                          </span>
+                        </header>
+
+                        <div class="insp-checkpoints">
+                          <div
+                            class="insp-row"
+                            *ngFor="let cp of group.checkpoints"
+                            [class.answered]="isRowAnswered(cp)"
+                          >
+                            <div class="insp-main">
+                              <div class="insp-title-row">
+                                <mat-icon class="insp-status-icn">
+                                  {{
+                                    isRowAnswered(cp)
+                                      ? 'check_circle'
+                                      : 'radio_button_unchecked'
+                                  }}
+                                </mat-icon>
+                                <div class="insp-text">
+                                  <div class="insp-name">{{ cp.inspectionCheckpointName }}</div>
+                                  <div class="insp-type">
+                                    <span *ngIf="normalizeInputType(cp.inputType) === 'yesno'">
+                                      Pass / Fail
+                                    </span>
+                                    <span *ngIf="normalizeInputType(cp.inputType) === 'number'">
+                                      Numeric value
+                                    </span>
+                                    <span *ngIf="normalizeInputType(cp.inputType) === 'textarea'">
+                                      Remarks
+                                    </span>
+                                    <span *ngIf="normalizeInputType(cp.inputType) === 'text'">
+                                      Text
+                                    </span>
+                                    <span *ngIf="normalizeInputType(cp.inputType) === 'image'">
+                                      Photos
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
-                              <div class="insp-type">
-                                <span
-                                  *ngIf="
-                                    normalizeInputType(cp.inputType) ===
-                                    'yesno'
-                                  "
+                            </div>
+
+                            <div class="insp-result">
+                              <ng-container [ngSwitch]="normalizeInputType(cp.inputType)">
+                                <div
+                                  *ngSwitchCase="'yesno'"
+                                  class="insp-pill"
+                                  [class.pass]="cp.resultValue === 'Pass'"
+                                  [class.fail]="cp.resultValue === 'Fail'"
                                 >
-                                  Pass / Fail
-                                </span>
-                                <span
-                                  *ngIf="
-                                    normalizeInputType(cp.inputType) ===
-                                    'number'
-                                  "
-                                >
-                                  Numeric value
-                                </span>
-                                <span
-                                  *ngIf="
-                                    normalizeInputType(cp.inputType) ===
-                                    'textarea'
-                                  "
-                                >
-                                  Remarks
-                                </span>
-                                <span
-                                  *ngIf="
-                                    normalizeInputType(cp.inputType) ===
-                                    'text'
-                                  "
-                                >
-                                  Text
-                                </span>
-                                <span
-                                  *ngIf="
-                                    normalizeInputType(cp.inputType) ===
-                                    'image'
-                                  "
-                                >
-                                  Photos
-                                </span>
-                              </div>
+                                  <mat-icon *ngIf="cp.resultValue === 'Pass'">check_circle</mat-icon>
+                                  <mat-icon *ngIf="cp.resultValue === 'Fail'">cancel</mat-icon>
+                                  <span>{{ cp.resultValue || 'Not recorded' }}</span>
+                                </div>
+
+                                <div *ngSwitchCase="'number'" class="insp-value-box">
+                                  <span class="value" *ngIf="isAnswered(cp.resultValue); else noNumber">
+                                    {{ cp.resultValue }}
+                                  </span>
+                                  <ng-template #noNumber>
+                                    <span class="empty">No value recorded</span>
+                                  </ng-template>
+                                </div>
+
+                                <div *ngSwitchCase="'image'" class="insp-photos-wrap">
+                                  <ng-container *ngIf="cp.imageUrls?.length; else noPhotos">
+                                    <div class="insp-photos">
+                                      <button
+                                        type="button"
+                                        class="insp-photo-thumb"
+                                        *ngFor="let img of cp.imageUrls; let idx = index"
+                                        (click)="openImageViewer(cp.imageUrls!, idx)"
+                                        [ngStyle]="{ '--photo': 'url(' + img + ')' }"
+                                        matTooltip="Open photo"
+                                      ></button>
+                                    </div>
+                                  </ng-container>
+                                  <ng-template #noPhotos>
+                                    <span class="empty">No photos uploaded</span>
+                                  </ng-template>
+                                </div>
+
+                                <div *ngSwitchDefault class="insp-notes">
+                                  <span *ngIf="isAnswered(cp.resultValue); else noNotes">
+                                    {{ cp.resultValue }}
+                                  </span>
+                                  <ng-template #noNotes>
+                                    <span class="empty">No remarks recorded</span>
+                                  </ng-template>
+                                </div>
+                              </ng-container>
                             </div>
                           </div>
                         </div>
-
-                        <div class="insp-result">
-                          <ng-container
-                            [ngSwitch]="normalizeInputType(cp.inputType)"
-                          >
-                            <!-- YES/NO -->
-                            <div
-                              *ngSwitchCase="'yesno'"
-                              class="insp-pill"
-                              [class.pass]="cp.resultValue === 'Pass'"
-                              [class.fail]="cp.resultValue === 'Fail'"
-                            >
-                              <mat-icon *ngIf="cp.resultValue === 'Pass'">
-                                check_circle
-                              </mat-icon>
-                              <mat-icon *ngIf="cp.resultValue === 'Fail'">
-                                cancel
-                              </mat-icon>
-                              <span>{{
-                                cp.resultValue || 'Not recorded'
-                              }}</span>
-                            </div>
-
-                            <!-- NUMBER -->
-                            <div *ngSwitchCase="'number'" class="insp-value-box">
-                              <span
-                                class="value"
-                                *ngIf="isAnswered(cp.resultValue); else noNumber"
-                              >
-                                {{ cp.resultValue }}
-                              </span>
-                              <ng-template #noNumber>
-                                <span class="empty">No value recorded</span>
-                              </ng-template>
-                            </div>
-
-                            <!-- IMAGE(S) -->
-                            <div *ngSwitchCase="'image'" class="insp-photos-wrap">
-                              <ng-container *ngIf="cp.imageUrls?.length; else noPhotos">
-                                <div class="insp-photos">
-                                  <button
-                                    type="button"
-                                    class="insp-photo-thumb"
-                                    *ngFor="let img of cp.imageUrls; let idx = index"
-                                    (click)="openImageViewer(cp.imageUrls!, idx)"
-                                    [ngStyle]="{ '--photo': 'url(' + img + ')' }"
-                                    matTooltip="Open photo"
-                                  ></button>
-                                </div>
-                              </ng-container>
-                              <ng-template #noPhotos>
-                                <span class="empty">No photos uploaded</span>
-                              </ng-template>
-                            </div>
-
-                            <!-- TEXT / TEXTAREA / DEFAULT -->
-                            <div *ngSwitchDefault class="insp-notes">
-                              <span
-                                *ngIf="isAnswered(cp.resultValue); else noNotes"
-                              >
-                                {{ cp.resultValue }}
-                              </span>
-                              <ng-template #noNotes>
-                                <span class="empty">No remarks recorded</span>
-                              </ng-template>
-                            </div>
-                          </ng-container>
-                        </div>
-                      </div>
-                    </div>
-                  </section>
-                </mat-tab>
-              </mat-tab-group>
-            </div>
-          </ng-template>
-        </ng-container>
-      </div>
-    </div>
-
-    <!-- RIGHT rail -->
-    <aside class="sidebar">
-      <div class="rail">
-        <!-- auction status / schedule -->
-        <section class="status">
-          <div class="status-top">
-            <div class="icon">
-              <mat-icon>schedule</mat-icon>
-            </div>
-            <div class="labels">
-              <div class="kicker">Auction status</div>
-              <div class="state">
-                {{
-                  auction?.auctionStatusName ||
-                    auction?.auctionStatusCode ||
-                    '—'
-                }}
-              </div>
-            </div>
+                      </section>
+                    </mat-tab>
+                  </mat-tab-group>
+                </div>
+              </ng-template>
+            </ng-container>
           </div>
+        </div>
 
-          <div class="timegrid">
-            <div class="tblock">
-              <div class="tlabel">Starts</div>
-              <div class="tvalue">
-                {{
-                  auction?.startDateTime
-                    ? (auction?.startDateTime | date: 'medium')
-                    : '—'
-                }}
-              </div>
-            </div>
-            <div class="tblock">
-              <div class="tlabel">Ends</div>
-              <div class="tvalue">
-                {{
-                  auction?.endDateTime
-                    ? (auction?.endDateTime | date: 'medium')
-                    : '—'
-                }}
-              </div>
-            </div>
-          </div>
-
-          <a class="rail-cta" [routerLink]="['/bidder/auctions', auctionId, lotId]">
-            <mat-icon>gavel</mat-icon>
-            Bid on this car
-          </a>
-        </section>
-
-        <!-- related auctions list -->
-        <section class="related-rail">
-          <div class="r-head">
-            <span>Related auctions</span>
-          </div>
-
-          <div class="tiles">
-            <a class="tile" *ngFor="let r of related" [routerLink]="r.link">
-              <div
-                class="thumb"
-                [ngStyle]="{ '--photo': 'url(' + r.imageUrl + ')' }"
-              ></div>
-              <div class="copy">
-                <div class="title">{{ r.title }}</div>
-                <div class="sub">{{ r.sub }}</div>
-                <div class="money">
-                  <span *ngIf="r.auctionStartPrice != null">
-                    Start {{ money(r.auctionStartPrice) }}
-                  </span>
-                  <span *ngIf="r.reserve != null">
-                    <ng-container *ngIf="r.auctionStartPrice != null">
-                      •
-                    </ng-container>
-                    Reserve {{ money(r.reserve) }}
-                  </span>
-                  <span *ngIf="r.buyNow != null">
-                    <ng-container
-                      *ngIf="
-                        r.reserve != null || r.auctionStartPrice != null
-                      "
-                    >
-                      •
-                    </ng-container>
-                    Buy {{ money(r.buyNow) }}
-                  </span>
+        <!-- RIGHT -->
+        <aside class="sidebar">
+          <div class="rail card">
+            <section class="rail-block">
+              <div class="rail-head">
+                <div class="icn">
+                  <mat-icon>schedule</mat-icon>
+                </div>
+                <div class="txt">
+                  <div class="k">Auction status</div>
+                  <div class="v">
+                    {{ auction?.auctionStatusName || auction?.auctionStatusCode || '—' }}
+                  </div>
                 </div>
               </div>
-            </a>
 
-            <div class="empty" *ngIf="related.length === 0">
-              No related listings found.
-            </div>
+              <div class="timegrid">
+                <div class="tblock">
+                  <div class="tlabel">Starts</div>
+                  <div class="tvalue">
+                    {{ auction?.startDateTime ? (auction?.startDateTime | date: 'medium') : '—' }}
+                  </div>
+                </div>
+                <div class="tblock">
+                  <div class="tlabel">Ends</div>
+                  <div class="tvalue">
+                    {{ auction?.endDateTime ? (auction?.endDateTime | date: 'medium') : '—' }}
+                  </div>
+                </div>
+              </div>
+
+              <a class="rail-cta" [routerLink]="['/bidder/auctions', auctionId, lotId]">
+                <mat-icon>gavel</mat-icon>
+                Bid on this car
+              </a>
+            </section>
+
+            <section class="rail-block">
+              <div class="r-head">
+                <span>Related listings</span>
+              </div>
+
+              <div class="tiles">
+                <a class="tile" *ngFor="let r of related" [routerLink]="r.link">
+                  <div class="thumb" [ngStyle]="{ '--photo': 'url(' + r.imageUrl + ')' }"></div>
+                  <div class="copy">
+                    <div class="title">{{ r.title }}</div>
+                    <div class="sub">{{ r.sub }}</div>
+                    <div class="money">
+                      <span *ngIf="r.auctionStartPrice != null">Start {{ money(r.auctionStartPrice) }}</span>
+                      <span *ngIf="r.reserve != null">
+                        <ng-container *ngIf="r.auctionStartPrice != null"> • </ng-container>
+                        Reserve {{ money(r.reserve) }}
+                      </span>
+                      <span *ngIf="r.buyNow != null">
+                        <ng-container *ngIf="r.reserve != null || r.auctionStartPrice != null"> • </ng-container>
+                        Buy {{ money(r.buyNow) }}
+                      </span>
+                    </div>
+                  </div>
+                </a>
+
+                <div class="empty" *ngIf="related.length === 0">
+                  No related listings found.
+                </div>
+              </div>
+            </section>
           </div>
-        </section>
+        </aside>
       </div>
-    </aside>
+    </div>
   </section>
+
+  <!-- ✅ fixed loader/error (auctions-list parity) -->
+  <div class="page-loader" *ngIf="loading">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  </div>
+
+  <div class="page-error" *ngIf="error && !loading">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ error }}</span>
+  </div>
 </div>
 
-<ng-template #busy>
-  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-</ng-template>
-
-<!-- Image Viewer Modal (for inspection photos) -->
+<!-- Image Viewer Modal -->
 <div class="image-viewer" *ngIf="showImageViewer" (click)="closeImageViewer()">
   <div class="viewer-content" (click)="$event.stopPropagation()">
     <button class="viewer-close" (click)="closeImageViewer()">
       <mat-icon>close</mat-icon>
     </button>
 
-    <button
-      class="viewer-nav prev"
-      (click)="prevImage()"
-      [disabled]="selectedImageIndex === 0"
-    >
+    <button class="viewer-nav prev" (click)="prevImage()" [disabled]="selectedImageIndex === 0">
       <mat-icon>chevron_left</mat-icon>
     </button>
 
     <div class="viewer-image">
-      <img
-        [src]="selectedImageGallery[selectedImageIndex]"
-        alt="Inspection image"
-      />
+      <img [src]="selectedImageGallery[selectedImageIndex]" alt="Inspection image" />
     </div>
 
     <button

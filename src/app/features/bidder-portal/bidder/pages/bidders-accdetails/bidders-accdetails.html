@@ -1,122 +1,305 @@
-<!-- Loading -->
-<div class="center" *ngIf="loading">
-  <mat-progress-spinner mode="indeterminate" diameter="44"></mat-progress-spinner>
-</div>
+<!-- src/app/features/bidder-portal/bidder/pages/bidders-accdetails/bidders-accdetails.html -->
 
-<!-- Error -->
-<div class="error" *ngIf="!loading && error">
-  <mat-icon>error_outline</mat-icon>
-  <span>{{ error }}</span>
-  <button mat-stroked-button color="primary" (click)="refresh()">Retry</button>
-</div>
+<div class="landing account-landing">
+  <!-- ✅ FULL-BLEED HERO (auctions-list rhythm) -->
+  <section
+    class="hero-section"
+    [ngStyle]="{ '--hero-bg': 'url(' + heroUrl + ')' }"
+    *ngIf="!loading && !error && user"
+  >
+    <div class="hero-overlay"></div>
 
-<!-- Content -->
-<section class="account" *ngIf="!loading && !error && user">
-  <!-- Header strip -->
-  <div class="page-crumbs">
-    <span>My Account</span>
-    <mat-icon>chevron_right</mat-icon>
-    <span class="current">Profile</span>
-  </div>
-
-  <!-- Hero/profile header -->
-  <div class="hero">
-    <div class="avatar">{{ initials }}</div>
-    <div class="who">
-      <!-- in the hero header name line -->
-      <h2 class="name">
-        {{ user.firstName }} {{ user.lastName }}
-        <span class="verified" *ngIf="user.emailConfirmed">Verified</span>
-      </h2>
-      <div class="email">{{ user.email || '—' }}</div>
-    </div>
-
-    <div class="hero-actions">
-      <button class="btn ghost" (click)="refresh()">
-        <mat-icon>refresh</mat-icon><span>Refresh</span>
-      </button>
-      <button class="btn primary" (click)="changePassword()">
-        <mat-icon>lock_reset</mat-icon><span>Change Password</span>
-      </button>
-      <button class="btn ghost warn" (click)="logout()">
-        <mat-icon>logout</mat-icon><span>Logout</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- Two top cards (like the screenshot) -->
-  <div class="cards two-col">
-    <!-- Personal details -->
-    <mat-card class="panel">
-      <div class="panel-title">Personal details</div>
-      <div class="rows">
-        <div class="row"><div class="label">Full name:</div><div class="val">{{ user.firstName }} {{ user.lastName }}</div></div>
-        <div class="row"><div class="label">Address:</div><div class="val">{{ user.address1 || '—' }}</div></div>
-        <div class="row"><div class="label">Phone Number:</div><div class="val selectable">{{ user.phoneNumber || '—' }}</div></div>
-        <div class="row"><div class="label">Email:</div><div class="val selectable">{{ user.email || '—' }}</div></div>
-        <div class="row"><div class="label">Postal Code:</div><div class="val">{{ user.postalCode || '—' }}</div></div>
+    <div class="hero-content shell">
+      <div class="hero-breadcrumbs">
+        <a routerLink="/bidder/dashboard" class="crumb">
+          <span class="dot"></span>
+          Home
+        </a>
+        <mat-icon>chevron_right</mat-icon>
+        <span class="current">My Account</span>
       </div>
-    </mat-card>
 
-    <!-- Account details -->
-    <mat-card class="panel">
-      <div class="panel-title">Account details</div>
-      <div class="rows">
-        <div class="row"><div class="label">User Name:</div><div class="val selectable">{{ user.userName }}</div></div>
-        <div class="row"><div class="label">Account Created:</div><div class="val">{{ user.createdDate | date:'medium' }}</div></div>
-        <div class="row"><div class="label">Last Login:</div><div class="val">{{ user.loginDate | date:'medium' }}</div></div>
-        <div class="row"><div class="label">Identification #:</div><div class="val selectable">{{ user.identificationNumber || '—' }}</div></div>
+      <div class="hero-badge">Profile</div>
 
-        <!-- Account Verification row -->
-        <div class="row">
-          <div class="label">Account Verification:</div>
-          <div class="val">
-            <span class="badge verified" *ngIf="user.emailConfirmed">Verified</span>
-            <span class="badge" *ngIf="!user.emailConfirmed">Unverified</span>
+      <div class="hero-identity">
+        <div class="avatar">{{ initials }}</div>
+
+        <div class="identity-copy">
+          <h1 class="hero-title">
+            <span class="make">{{ displayName }}</span>
+            <span class="model">Account</span>
+          </h1>
+
+          <div class="subline">
+            <span class="email">{{ user.email || '—' }}</span>
+            <span class="sep">•</span>
+            <span class="uname">{{ user.userName || '—' }}</span>
+          </div>
+
+          <div class="hero-meta">
+            <div class="meta-pill">
+              <mat-icon>badge</mat-icon>
+              <span>ID {{ user.userId }}</span>
+            </div>
+
+            <div class="meta-pill" [class.live]="user.emailConfirmed">
+              <span class="pulse-dot" *ngIf="user.emailConfirmed"></span>
+              <span>{{ verificationText }}</span>
+            </div>
+
+            <div class="meta-pill muted">
+              <mat-icon>shield</mat-icon>
+              <span>{{ statusText }}</span>
+            </div>
           </div>
         </div>
 
-        <div class="row">
-          <div class="label">Status:</div>
-          <div class="val">
-            <span class="dot" [class.on]="user.active"></span>
-            <span>{{ user.active ? 'Active' : 'Inactive' }}</span>
-          </div>
+        <div class="hero-actions">
+          <button class="btn ghost" (click)="refresh()">
+            <mat-icon>refresh</mat-icon><span>Refresh</span>
+          </button>
+
+          <button class="btn primary" (click)="changePassword()">
+            <mat-icon>lock_reset</mat-icon><span>Change Password</span>
+          </button>
+
+          <button class="btn ghost warn" (click)="logout()">
+            <mat-icon>logout</mat-icon><span>Logout</span>
+          </button>
         </div>
-        <div class="row"><div class="label">Security Stamp:</div><div class="val">{{ user.securityStamp || '—' }}</div></div>
-        <div class="row"><div class="label">User ID:</div><div class="val">ID {{ user.userId }}</div></div>
       </div>
-    </mat-card>
+    </div>
+  </section>
+
+  <!-- ✅ STATS BAR (same as auctions-list) -->
+  <section class="stats-bar" *ngIf="!loading && !error && user">
+    <div class="shell stats-grid">
+      <div class="stat-item">
+        <div class="stat-value">
+          <span>{{ user.userId }}</span>
+        </div>
+        <div class="stat-label">User ID</div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-value">
+          <span>{{ user.active ? '1' : '0' }}</span>
+        </div>
+        <div class="stat-label">Active</div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-value">
+          <span>{{ user.emailConfirmed ? '1' : '0' }}</span>
+        </div>
+        <div class="stat-label">Verified</div>
+      </div>
+
+      <div class="stat-item">
+        <div class="stat-value">
+          <span>{{ (user.createdDate | date:'yyyy') || '—' }}</span>
+        </div>
+        <div class="stat-label">Member Since</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ✅ CONTENT (shell + glass cards) -->
+  <section class="content-section">
+    <div class="shell">
+      <!-- Loading (dashboard-like) -->
+      <div class="center" *ngIf="loading">
+        <mat-progress-spinner mode="indeterminate" diameter="44"></mat-progress-spinner>
+        <div class="loading-text">Loading account…</div>
+      </div>
+
+      <!-- Error (dashboard-like banner) -->
+      <div class="error-banner" *ngIf="!loading && error">
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ error }}</span>
+        <button class="btn tiny" (click)="refresh()">
+          <mat-icon>refresh</mat-icon>
+          <span>Retry</span>
+        </button>
+      </div>
+
+      <!-- Main -->
+      <div class="main-content" *ngIf="!loading && !error && user">
+        <div class="cards two-col">
+          <!-- Personal details -->
+          <mat-card class="panel">
+            <div class="panel-head">
+              <div class="panel-title">Personal Details</div>
+              <div class="panel-chip">
+                <mat-icon>person</mat-icon>
+                <span>Identity</span>
+              </div>
+            </div>
+
+            <div class="rows">
+              <div class="row">
+                <div class="label">Full name</div>
+                <div class="val">{{ user.firstName }} {{ user.lastName }}</div>
+              </div>
+              <div class="row">
+                <div class="label">Address</div>
+                <div class="val">{{ user.address1 || '—' }}</div>
+              </div>
+              <div class="row">
+                <div class="label">Phone</div>
+                <div class="val selectable">{{ user.phoneNumber || '—' }}</div>
+              </div>
+              <div class="row">
+                <div class="label">Email</div>
+                <div class="val selectable">{{ user.email || '—' }}</div>
+              </div>
+              <div class="row">
+                <div class="label">Postal Code</div>
+                <div class="val">{{ user.postalCode || '—' }}</div>
+              </div>
+            </div>
+          </mat-card>
+
+          <!-- Account details -->
+          <mat-card class="panel">
+            <div class="panel-head">
+              <div class="panel-title">Account Details</div>
+              <div class="panel-chip accent">
+                <mat-icon>verified_user</mat-icon>
+                <span>Trust</span>
+              </div>
+            </div>
+
+            <div class="rows">
+              <div class="row">
+                <div class="label">User Name</div>
+                <div class="val selectable">{{ user.userName || '—' }}</div>
+              </div>
+              <div class="row">
+                <div class="label">Account Created</div>
+                <div class="val">{{ user.createdDate | date:'medium' }}</div>
+              </div>
+              <div class="row">
+                <div class="label">Last Login</div>
+                <div class="val">{{ user.loginDate | date:'medium' }}</div>
+              </div>
+              <div class="row">
+                <div class="label">Identification #</div>
+                <div class="val selectable">{{ user.identificationNumber || '—' }}</div>
+              </div>
+
+              <div class="row">
+                <div class="label">Verification</div>
+                <div class="val">
+                  <span class="badge verified" *ngIf="user.emailConfirmed">
+                    <mat-icon>verified</mat-icon>
+                    Verified
+                  </span>
+                  <span class="badge" *ngIf="!user.emailConfirmed">
+                    <mat-icon>info</mat-icon>
+                    Unverified
+                  </span>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="label">Status</div>
+                <div class="val">
+                  <span class="status-dot" [class.on]="user.active"></span>
+                  <span>{{ statusText }}</span>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="label">Security Stamp</div>
+                <div class="val selectable">{{ user.securityStamp || '—' }}</div>
+              </div>
+              <div class="row">
+                <div class="label">User ID</div>
+                <div class="val">ID {{ user.userId }}</div>
+              </div>
+            </div>
+          </mat-card>
+        </div>
+
+        <div class="cards two-col">
+          <!-- Security Settings -->
+          <mat-card class="panel">
+            <div class="panel-head">
+              <div class="panel-title">Security Settings</div>
+              <div class="panel-chip">
+                <mat-icon>security</mat-icon>
+                <span>Protection</span>
+              </div>
+            </div>
+
+            <div class="rows">
+              <div class="row">
+                <div class="label">Password Last Changed</div>
+                <div class="val">—</div>
+              </div>
+              <div class="row">
+                <div class="label">Two-Factor Authentication</div>
+                <div class="val"><span class="badge">Disabled</span></div>
+              </div>
+              <div class="row">
+                <div class="label">Login Notifications</div>
+                <div class="val"><span class="badge">Disabled</span></div>
+              </div>
+              <div class="row">
+                <div class="label">Recent Account Activity</div>
+                <div class="val">—</div>
+              </div>
+            </div>
+          </mat-card>
+
+          <!-- Preferences -->
+          <mat-card class="panel">
+            <div class="panel-head">
+              <div class="panel-title">Preferences</div>
+              <div class="panel-chip accent2">
+                <mat-icon>tune</mat-icon>
+                <span>Comfort</span>
+              </div>
+            </div>
+
+            <div class="rows">
+              <div class="row">
+                <div class="label">Email Notifications</div>
+                <div class="val"><span class="badge">Subscribed</span></div>
+              </div>
+              <div class="row">
+                <div class="label">Default Dashboard View</div>
+                <div class="val">—</div>
+              </div>
+              <div class="row">
+                <div class="label">Dark Mode</div>
+                <div class="val">Enabled</div>
+              </div>
+              <div class="row">
+                <div class="label">Language</div>
+                <div class="val">—</div>
+              </div>
+            </div>
+          </mat-card>
+        </div>
+
+        <div class="footer">
+          <button class="btn ghost" (click)="back()">
+            <mat-icon>arrow_back</mat-icon><span>Back to Dashboard</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ✅ fixed loader/error like auctions-list -->
+  <div class="page-loader" *ngIf="loading">
+    <div class="loader-line"></div>
   </div>
 
-  <!-- Lower cards -->
-  <div class="cards two-col">
-    <!-- Security Settings -->
-    <mat-card class="panel">
-      <div class="panel-title">Security Settings</div>
-      <div class="rows">
-        <div class="row"><div class="label">Password Last Changed:</div><div class="val">—</div></div>
-        <div class="row"><div class="label">Two-Factor Authentication:</div><div class="val"><span class="badge">Disabled</span></div></div>
-        <div class="row"><div class="label">Login Notifications:</div><div class="val"><span class="badge">Disabled</span></div></div>
-        <div class="row"><div class="label">Recent Account Activity:</div><div class="val">—</div></div>
-      </div>
-    </mat-card>
-
-    <!-- Preferences -->
-    <mat-card class="panel">
-      <div class="panel-title">Preferences</div>
-      <div class="rows">
-        <div class="row"><div class="label">Email Notifications:</div><div class="val"><span class="badge">Subscribed</span></div></div>
-        <div class="row"><div class="label">Default Dashboard View:</div><div class="val">—</div></div>
-        <div class="row"><div class="label">Dark Mode:</div><div class="val">—</div></div>
-        <div class="row"><div class="label">Language for Content:</div><div class="val">—</div></div>
-      </div>
-    </mat-card>
+  <div class="page-error" *ngIf="error && !loading">
+    <mat-icon>error_outline</mat-icon>
+    <span>{{ error }}</span>
   </div>
-
-  <div class="footer">
-    <button class="btn ghost" (click)="back()">
-      <mat-icon>arrow_back</mat-icon><span>Back to Dashboard</span>
-    </button>
-  </div>
-</section>
+</div>

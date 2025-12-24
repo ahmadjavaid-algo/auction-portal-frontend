@@ -1,4 +1,5 @@
-import { Component, inject } from '@angular/core';
+// src/app/pages/bidder/products/product-details/product-details.ts
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -50,7 +51,6 @@ interface InspectionCheckpointRow {
   inspectionCheckpointName: string;
   inputType?: string | null;
   resultValue: string;
-  
   imageUrls?: string[];
 }
 
@@ -78,7 +78,7 @@ interface InspectionTypeGroupForUI {
   templateUrl: './product-details.html',
   styleUrls: ['./product-details.scss']
 })
-export class ProductDetails {
+export class ProductDetails implements OnInit {
   private route = inject(ActivatedRoute);
 
   private auctionsSvc = inject(AuctionService);
@@ -105,8 +105,13 @@ export class ProductDetails {
   images: string[] = [];
   activeImage = '';
 
+  // Auctions-list parity (hero)
+  heroUrl =
+    'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1920';
+
   title = 'Listing';
   subtitle = '';
+
   money = (n?: number | null) =>
     n == null
       ? '—'
@@ -119,14 +124,12 @@ export class ProductDetails {
   specs: SpecRow[] = [];
   related: RelatedCard[] = [];
 
-  
   allTypes: InspectionType[] = [];
   allCheckpoints: InspectionCheckpoint[] = [];
   reportGroups: InspectionTypeGroupForUI[] = [];
   reportLoading = false;
   reportLoaded = false;
 
-  
   selectedImageGallery: string[] = [];
   selectedImageIndex = 0;
   showImageViewer = false;
@@ -134,10 +137,7 @@ export class ProductDetails {
   ngOnInit(): void {
     this.route.paramMap.subscribe(pm => {
       this.auctionId = Number(pm.get('auctionId') || 0);
-      this.inventoryAuctionId = Number(
-        pm.get('inventoryAuctionId') ?? pm.get('id')
-      );
-
+      this.inventoryAuctionId = Number(pm.get('inventoryAuctionId') ?? pm.get('id'));
       this.load();
     });
   }
@@ -151,18 +151,20 @@ export class ProductDetails {
 
     this.loading = true;
     this.error = null;
+
     this.images = [];
     this.activeImage = '';
     this.related = [];
     this.specs = [];
+
     this.title = 'Listing';
     this.subtitle = '';
+
     this.auction = null;
     this.lot = null;
     this.inventory = null;
     this.product = null;
 
-    
     this.reportGroups = [];
     this.reportLoaded = false;
     this.reportLoading = false;
@@ -176,55 +178,52 @@ export class ProductDetails {
     })
       .pipe(
         map(({ auctions, invAucs, files, invs, products }) => {
-          
+          // locate listing
           this.lot =
             (invAucs || []).find(
               a =>
-                ((a as any).inventoryAuctionId ??
-                  (a as any).inventoryauctionId) === this.inventoryAuctionId
+                ((a as any).inventoryAuctionId ?? (a as any).inventoryauctionId) ===
+                this.inventoryAuctionId
             ) || null;
+
           if (!this.lot) throw new Error('Listing not found');
 
-          
+          // auction
           const currentAuctionId = (this.lot as any).auctionId ?? this.auctionId;
           this.auctionId = currentAuctionId;
-          this.auction =
-            (auctions || []).find(a => a.auctionId === currentAuctionId) ||
-            null;
 
-          
+          this.auction =
+            (auctions || []).find(a => a.auctionId === currentAuctionId) || null;
+
+          // inventory + product
           this.inventory =
-            (invs || []).find(i => i.inventoryId === this.lot!.inventoryId) ||
-            null;
+            (invs || []).find(i => i.inventoryId === this.lot!.inventoryId) || null;
+
           this.product = this.inventory
-            ? (products || []).find(
-                p => p.productId === this.inventory!.productId
-              ) || null
+            ? (products || []).find(p => p.productId === this.inventory!.productId) || null
             : null;
 
+          // title/subtitle
           const snap = this.safeParse(this.inventory?.productJSON);
           const year = this.product?.yearName ?? snap?.Year ?? snap?.year;
           const make = this.product?.makeName ?? snap?.Make ?? snap?.make;
           const model = this.product?.modelName ?? snap?.Model ?? snap?.model;
+
           this.title =
             [year, make, model].filter(Boolean).join(' ') ||
             (this.inventory?.displayName ?? 'Listing');
 
-          const chassis =
-            this.inventory?.chassisNo || snap?.Chassis || snap?.chassis;
+          const chassis = this.inventory?.chassisNo || snap?.Chassis || snap?.chassis;
           this.subtitle = chassis
-            ? `Chassis ${chassis} • Lot #${
-                (this.lot as any).inventoryAuctionId ?? ''
-              }`
+            ? `Chassis ${chassis} • Lot #${(this.lot as any).inventoryAuctionId ?? ''}`
             : `Lot #${(this.lot as any).inventoryAuctionId ?? ''}`;
 
-          
+          // images
           const isImg = (u?: string | null, n?: string | null) => {
             const s = (u || n || '').toLowerCase();
-            return ['.jpg', '.jpeg', '.png', '.webp'].some(x =>
-              s.endsWith(x)
-            );
+            return ['.jpg', '.jpeg', '.png', '.webp'].some(x => s.endsWith(x));
           };
+
           this.images = (files || [])
             .filter(
               f =>
@@ -235,16 +234,18 @@ export class ProductDetails {
             )
             .map(f => f.documentUrl!)
             .slice(0, 32);
+
           if (this.images.length) this.activeImage = this.images[0];
 
-          
-          const colorExterior =
-            snap?.ExteriorColor ?? snap?.exteriorColor ?? null;
-          const colorInterior =
-            snap?.InteriorColor ?? snap?.interiorColor ?? null;
+          // HERO parity with auctions-list (use listing cover if available)
+          const bestHero = this.activeImage || this.images[0] || this.heroUrl;
+          if (bestHero) this.heroUrl = bestHero;
+
+          // specs
+          const colorExterior = snap?.ExteriorColor ?? snap?.exteriorColor ?? null;
+          const colorInterior = snap?.InteriorColor ?? snap?.interiorColor ?? null;
           const drivetrain = snap?.Drivetrain ?? snap?.drivetrain ?? null;
-          const transmission =
-            snap?.Transmission ?? snap?.transmission ?? null;
+          const transmission = snap?.Transmission ?? snap?.transmission ?? null;
           const bodyStyle = snap?.BodyStyle ?? snap?.bodyStyle ?? null;
           const engine = snap?.Engine ?? snap?.engine ?? null;
           const mileage = snap?.Mileage ?? snap?.mileage ?? null;
@@ -252,12 +253,9 @@ export class ProductDetails {
           const titleStatus = snap?.TitleStatus ?? snap?.titleStatus ?? null;
           const sellerType = snap?.SellerType ?? snap?.sellerType ?? null;
           const categoryName =
-            this.product?.categoryName ??
-            snap?.Category ??
-            snap?.category ??
-            null;
+            this.product?.categoryName ?? snap?.Category ?? snap?.category ?? null;
 
-          const rows: SpecRow[] = [
+          this.specs = [
             { label: 'Make', value: make || this.product?.makeName || '—' },
             { label: 'Model', value: model || this.product?.modelName || '—' },
             { label: 'Year', value: year || this.product?.yearName || '—' },
@@ -274,21 +272,18 @@ export class ProductDetails {
             { label: 'Title Status', value: titleStatus || '—' },
             { label: 'Seller Type', value: sellerType || '—' }
           ];
-          this.specs = rows;
 
-          
+          // related (same logic, just UI changes)
           const allLots = (invAucs || []).filter(x => x.active ?? true);
           const makeName = this.product?.makeName ?? make ?? '';
           const catName = categoryName ?? '';
+
           const byScore = (x: InventoryAuction) => {
-            const inv =
-              (invs || []).find(i => i.inventoryId === x.inventoryId) || null;
+            const inv = (invs || []).find(i => i.inventoryId === x.inventoryId) || null;
             const prod = inv
-              ? (products || []).find(p => p.productId === inv.productId) ||
-                null
+              ? (products || []).find(p => p.productId === inv.productId) || null
               : null;
-            const sameAuction =
-              ((x as any).auctionId ?? 0) === currentAuctionId ? 2 : 0;
+            const sameAuction = ((x as any).auctionId ?? 0) === currentAuctionId ? 2 : 0;
             const sameMake = (prod?.makeName ?? '') === makeName ? 2 : 0;
             const sameCat = (prod?.categoryName ?? '') === catName ? 1 : 0;
             return sameAuction + sameMake + sameCat;
@@ -305,40 +300,36 @@ export class ProductDetails {
           this.related = allLots
             .filter(
               x =>
-                ((x as any).inventoryAuctionId ??
-                  (x as any).inventoryauctionId) !== this.inventoryAuctionId
+                ((x as any).inventoryAuctionId ?? (x as any).inventoryauctionId) !==
+                this.inventoryAuctionId
             )
             .map(x => {
-              const inv =
-                (invs || []).find(i => i.inventoryId === x.inventoryId) ||
-                null;
+              const inv = (invs || []).find(i => i.inventoryId === x.inventoryId) || null;
               const prod = inv
-                ? (products || []).find(
-                    p => p.productId === inv.productId
-                  ) || null
+                ? (products || []).find(p => p.productId === inv.productId) || null
                 : null;
               const snap2 = this.safeParse(inv?.productJSON);
               const yy = prod?.yearName ?? snap2?.Year ?? '';
               const mk = prod?.makeName ?? snap2?.Make ?? '';
               const md = prod?.modelName ?? snap2?.Model ?? '';
               const title2 =
-                [yy, mk, md].filter(Boolean).join(' ') ||
-                (inv?.displayName ?? 'Listing');
+                [yy, mk, md].filter(Boolean).join(' ') || (inv?.displayName ?? 'Listing');
+
               const img =
                 (imageMap.get(x.inventoryId) || [])[0] ||
-                (this.images[0] || '');
+                this.images[0] ||
+                this.heroUrl;
+
               const chassis2 = inv?.chassisNo || snap2?.Chassis || '';
               const sub = chassis2
-                ? `Chassis ${chassis2} • #${
-                    (x as any).inventoryAuctionId ?? ''
-                  }`
+                ? `Chassis ${chassis2} • #${(x as any).inventoryAuctionId ?? ''}`
                 : `#${(x as any).inventoryAuctionId ?? ''}`;
+
               return {
                 link: [
                   '/bidder/auctions',
                   (x as any).auctionId ?? currentAuctionId,
-                  (x as any).inventoryAuctionId ??
-                    (x as any).inventoryauctionId
+                  (x as any).inventoryAuctionId ?? (x as any).inventoryauctionId
                 ],
                 title: title2,
                 imageUrl: img,
@@ -353,7 +344,7 @@ export class ProductDetails {
             .slice(0, 6)
             .map(({ _score, ...rest }: any) => rest as RelatedCard);
 
-          
+          // report
           this.loadInspectionReport();
 
           try {
@@ -370,8 +361,6 @@ export class ProductDetails {
       });
   }
 
-  
-
   private loadInspectionReport(): void {
     if (!this.inventory || !this.inventory.inventoryId) {
       this.reportLoaded = true;
@@ -386,12 +375,8 @@ export class ProductDetails {
     const inventoryId = this.inventory.inventoryId;
 
     forkJoin({
-      types: this.inspTypesSvc.getList().pipe(
-        catchError(() => of([] as InspectionType[]))
-      ),
-      checkpoints: this.cpSvc.getList().pipe(
-        catchError(() => of([] as InspectionCheckpoint[]))
-      ),
+      types: this.inspTypesSvc.getList().pipe(catchError(() => of([] as InspectionType[]))),
+      checkpoints: this.cpSvc.getList().pipe(catchError(() => of([] as InspectionCheckpoint[]))),
       inspections: this.inspectionsSvc.getByInventory(inventoryId).pipe(
         catchError(() => of([] as Inspection[]))
       )
@@ -399,14 +384,9 @@ export class ProductDetails {
       next: ({ types, checkpoints, inspections }) => {
         this.allTypes = types ?? [];
         this.allCheckpoints = checkpoints ?? [];
-        this.reportGroups = this.buildGroupsForInventory(
-          this.inventory!,
-          inspections ?? []
-        );
+        this.reportGroups = this.buildGroupsForInventory(this.inventory!, inspections ?? []);
       },
-      error: err => {
-        console.error('Failed to load inspection report', err);
-      },
+      error: err => console.error('Failed to load inspection report', err),
       complete: () => {
         this.reportLoading = false;
         this.reportLoaded = true;
@@ -415,25 +395,16 @@ export class ProductDetails {
   }
 
   private isActiveInspection(i: Inspection): boolean {
-    const raw =
-      (i as any).active ??
-      (i as any).Active ??
-      (i as any).isActive ??
-      true;
+    const raw = (i as any).active ?? (i as any).Active ?? (i as any).isActive ?? true;
     return raw !== false && raw !== 0;
   }
 
-  private buildGroupsForInventory(
-    inventory: Inventory,
-    existing: Inspection[]
-  ): InspectionTypeGroupForUI[] {
+  private buildGroupsForInventory(inventory: Inventory, existing: Inspection[]): InspectionTypeGroupForUI[] {
     if (!inventory) return [];
 
     const groups: InspectionTypeGroupForUI[] = [];
     const activeTypes = (this.allTypes ?? []).filter(t => t.active !== false);
-    const activeInspections = (existing ?? []).filter(i =>
-      this.isActiveInspection(i)
-    );
+    const activeInspections = (existing ?? []).filter(i => this.isActiveInspection(i));
 
     activeTypes.forEach(t => {
       const cps = (this.allCheckpoints ?? []).filter(
@@ -447,8 +418,7 @@ export class ProductDetails {
 
       const rows: InspectionCheckpointRow[] = cps.map(cp => {
         const cpId =
-          (cp as any).inspectionCheckpointId ??
-          (cp as any).inspectioncheckpointId;
+          (cp as any).inspectionCheckpointId ?? (cp as any).inspectioncheckpointId;
 
         const cpInspectionsAll = activeInspections.filter(
           i =>
@@ -465,7 +435,6 @@ export class ProductDetails {
         let imageUrls: string[] | undefined;
 
         if (norm === 'image') {
-          
           imageUrls = cpInspectionsAll
             .flatMap(i => this.extractImageUrls(i.result ?? ''))
             .filter(u => !!u);
@@ -482,9 +451,7 @@ export class ProductDetails {
           inspectionTypeName: t.inspectionTypeName,
           inspectionCheckpointId: cpId,
           inspectionCheckpointName:
-            (cp as any).inspectionCheckpointName ??
-            (cp as any).inspectioncheckpointName ??
-            '',
+            (cp as any).inspectionCheckpointName ?? (cp as any).inspectioncheckpointName ?? '',
           inputType,
           resultValue,
           imageUrls: imageUrls ?? []
@@ -504,10 +471,6 @@ export class ProductDetails {
     return groups;
   }
 
-  /**
-   * Normalize inputType for display/render logic.
-   * Now includes 'image' for photo checkpoints.
-   */
   normalizeInputType(
     inputType?: string | null
   ): 'text' | 'textarea' | 'number' | 'yesno' | 'image' {
@@ -515,8 +478,7 @@ export class ProductDetails {
     if (v === 'textarea' || v === 'multiline') return 'textarea';
     if (v === 'number' || v === 'numeric' || v === 'score') return 'number';
     if (v === 'yesno' || v === 'boolean' || v === 'bool') return 'yesno';
-    if (v === 'image' || v === 'photo' || v === 'picture' || v === 'file')
-      return 'image';
+    if (v === 'image' || v === 'photo' || v === 'picture' || v === 'file') return 'image';
     return 'text';
   }
 
@@ -526,34 +488,23 @@ export class ProductDetails {
 
   isRowAnswered(row: InspectionCheckpointRow): boolean {
     const t = this.normalizeInputType(row.inputType);
-    if (t === 'image') {
-      return !!(row.imageUrls && row.imageUrls.length);
-    }
+    if (t === 'image') return !!(row.imageUrls && row.imageUrls.length);
     return this.isAnswered(row.resultValue);
   }
 
   getGroupCompleted(group: InspectionTypeGroupForUI): number {
     return group.checkpoints.filter(r => this.isRowAnswered(r)).length;
   }
-
   getGroupTotal(group: InspectionTypeGroupForUI): number {
     return group.checkpoints.length;
   }
 
   get totalCheckpoints(): number {
-    return this.reportGroups.reduce(
-      (sum, g) => sum + g.checkpoints.length,
-      0
-    );
+    return this.reportGroups.reduce((sum, g) => sum + g.checkpoints.length, 0);
   }
-
   get totalCompleted(): number {
-    return this.reportGroups.reduce(
-      (sum, g) => sum + this.getGroupCompleted(g),
-      0
-    );
+    return this.reportGroups.reduce((sum, g) => sum + this.getGroupCompleted(g), 0);
   }
-
   get overallProgressPercent(): number {
     if (!this.totalCheckpoints) return 0;
     return Math.round((this.totalCompleted / this.totalCheckpoints) * 100);
@@ -568,31 +519,24 @@ export class ProductDetails {
   getCompletionStatusColor(): string {
     switch (this.getCompletionStatus()) {
       case 'Completed':
-        return '#16a34a';
+        return '#22c55e';
       case 'In Progress':
         return '#f59e0b';
       default:
-        return '#9ca3af';
+        return '#94a3b8';
     }
   }
 
   selectImage(url: string): void {
     this.activeImage = url;
+    if (url) this.heroUrl = url; // keep hero in sync (auctions-list vibe)
   }
 
-  /**
-   * Parse Inspection.result into an array of image URLs.
-   * Supports:
-   * - JSON array: '["url1","url2"]'
-   * - Pipe/comma/semicolon separated: 'url1|url2' or 'url1,url2'
-   * - Single URL string
-   */
   private extractImageUrls(val?: string | null): string[] {
     if (!val) return [];
     const trimmed = val.trim();
     if (!trimmed) return [];
 
-    
     if (trimmed.startsWith('[')) {
       try {
         const parsed = JSON.parse(trimmed);
@@ -601,12 +545,9 @@ export class ProductDetails {
             .map(x => (typeof x === 'string' ? x.trim() : ''))
             .filter(x => !!x);
         }
-      } catch {
-        
-      }
+      } catch {}
     }
 
-    
     const parts = trimmed.split(/[|,;]/g).map(x => x.trim());
     const urls = parts.filter(p => !!p);
 
@@ -617,26 +558,18 @@ export class ProductDetails {
         lower.startsWith('https://') ||
         lower.startsWith('blob:') ||
         lower.startsWith('data:image/')
-      ) {
+      )
         return true;
-      }
-      return ['.jpg', '.jpeg', '.png', '.webp', '.gif'].some(ext =>
-        lower.includes(ext)
-      );
+      return ['.jpg', '.jpeg', '.png', '.webp', '.gif'].some(ext => lower.includes(ext));
     };
 
     return urls.filter(looksLikeImage);
   }
 
-  
-
   openImageViewer(images: string[], startIndex: number = 0): void {
     if (!images || !images.length) return;
     this.selectedImageGallery = images;
-    this.selectedImageIndex = Math.min(
-      Math.max(startIndex, 0),
-      images.length - 1
-    );
+    this.selectedImageIndex = Math.min(Math.max(startIndex, 0), images.length - 1);
     this.showImageViewer = true;
   }
 
@@ -647,15 +580,10 @@ export class ProductDetails {
   }
 
   nextImage(): void {
-    if (this.selectedImageIndex < this.selectedImageGallery.length - 1) {
-      this.selectedImageIndex++;
-    }
+    if (this.selectedImageIndex < this.selectedImageGallery.length - 1) this.selectedImageIndex++;
   }
-
   prevImage(): void {
-    if (this.selectedImageIndex > 0) {
-      this.selectedImageIndex--;
-    }
+    if (this.selectedImageIndex > 0) this.selectedImageIndex--;
   }
 
   private safeParse(json?: string | null): any | null {
@@ -676,10 +604,7 @@ export class ProductDetails {
     const s = a ? new Date(a) : null;
     const e = b ? new Date(b) : null;
     const fmt = (d: Date) =>
-      new Intl.DateTimeFormat(undefined, {
-        dateStyle: 'medium',
-        timeStyle: 'short'
-      }).format(d);
+      new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(d);
     return `${s ? fmt(s) : '—'} → ${e ? fmt(e) : '—'}`;
   }
 }
