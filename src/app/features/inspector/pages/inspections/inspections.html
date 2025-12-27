@@ -1,252 +1,383 @@
 <!-- src/app/pages/inspector/inspections/inspections.html -->
 <div class="inspections-page">
+
+  <!-- Full-Width Hero Section -->
+  <section class="hero-fullwidth" *ngIf="!loading && !error">
+    
+    <!-- Ambient Background Effects -->
+    <div class="hero-ambient">
+      <div class="gradient-orb orb-1"></div>
+      <div class="gradient-orb orb-2"></div>
+      <div class="gradient-orb orb-3"></div>
+      <div class="noise-overlay"></div>
+    </div>
+
+    <!-- Hero Content Container -->
+    <div class="hero-content-wrapper animate-on-scroll" style="animation-delay: 0ms">
+      
+      <!-- Hero Header -->
+      <div class="hero-header-section">
+        <div class="eyebrow-badge">
+          <span class="badge-dot"></span>
+          <span class="badge-text">Inspector Portal</span>
+          <span class="badge-dot"></span>
+        </div>
+
+        <h1 class="hero-display-title">
+          <span class="title-line">Premium Vehicle</span>
+          <span class="title-line title-gradient">Inspections</span>
+        </h1>
+
+        <p class="hero-lead">
+          Precision engineering meets meticulous craftsmanship—delivering world-class inspection reports for the most discerning collectors
+        </p>
+      </div>
+
+      <!-- Stats Grid -->
+      <div class="hero-stats-grid" *ngIf="blocks.length">
+        
+        <!-- Assigned Vehicles Stat -->
+        <div class="hero-stat-card animate-on-scroll" style="animation-delay: 100ms">
+          <div class="stat-decoration">
+            <div class="decoration-ring"></div>
+            <div class="decoration-pulse"></div>
+          </div>
+          <div class="stat-icon-container" style="--stat-gradient: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)">
+            <mat-icon>directions_car</mat-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ blocks.length }}</div>
+            <div class="stat-label">Assigned Vehicles</div>
+            <div class="stat-description">Active inspection queue</div>
+          </div>
+        </div>
+
+        <!-- Completed Checkpoints Stat -->
+        <div class="hero-stat-card animate-on-scroll" style="animation-delay: 200ms">
+          <div class="stat-decoration">
+            <div class="decoration-ring"></div>
+            <div class="decoration-pulse"></div>
+          </div>
+          <div class="stat-icon-container" style="--stat-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%)">
+            <mat-icon>task_alt</mat-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ totalCompleted }}</div>
+            <div class="stat-label">Checkpoints Complete</div>
+            <div class="stat-description">Quality assessments logged</div>
+          </div>
+        </div>
+
+        <!-- Remaining Tasks Stat -->
+        <div class="hero-stat-card animate-on-scroll" style="animation-delay: 300ms">
+          <div class="stat-decoration">
+            <div class="decoration-ring"></div>
+            <div class="decoration-pulse"></div>
+          </div>
+          <div class="stat-icon-container" style="--stat-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%)">
+            <mat-icon>pending</mat-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ totalCheckpoints - totalCompleted }}</div>
+            <div class="stat-label">Remaining Tasks</div>
+            <div class="stat-description">Pending documentation</div>
+          </div>
+        </div>
+
+        <!-- Overall Progress Stat (Featured) -->
+        <div class="hero-stat-card hero-stat-featured animate-on-scroll" style="animation-delay: 400ms">
+          <div class="stat-decoration">
+            <div class="decoration-ring"></div>
+            <div class="decoration-pulse"></div>
+          </div>
+          
+          <!-- Circular Progress -->
+          <div class="circular-progress-wrapper">
+            <svg class="circular-progress" viewBox="0 0 200 200">
+              <defs>
+                <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+                  <stop offset="50%" style="stop-color:#0ea5e9;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#06b6d4;stop-opacity:1" />
+                </linearGradient>
+              </defs>
+              <circle class="progress-bg" cx="100" cy="100" r="85"></circle>
+              <circle
+                class="progress-bar"
+                cx="100"
+                cy="100"
+                r="85"
+                [style.strokeDashoffset]="534.07 - (534.07 * (totalCheckpoints ? (totalCompleted / totalCheckpoints) : 0))"
+              ></circle>
+            </svg>
+            
+            <div class="progress-value">
+              <span class="value-number">{{ (totalCheckpoints ? (totalCompleted / totalCheckpoints) * 100 : 0) | number:'1.0-0' }}</span>
+              <span class="value-unit">%</span>
+            </div>
+          </div>
+
+          <div class="stat-content">
+            <div class="stat-label">Overall Progress</div>
+            <div class="stat-description">Portfolio completion</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Quick Action Pills -->
+      <div class="hero-actions animate-on-scroll" style="animation-delay: 500ms">
+        <div class="action-divider">
+          <span class="divider-line"></span>
+          <span class="divider-text">Quick Access</span>
+          <span class="divider-line"></span>
+        </div>
+
+        <div class="action-pills-container">
+          <button
+            type="button"
+            class="action-pill"
+            *ngFor="let block of blocks | slice:0:5; let i = index"
+            (click)="scrollToInventory(block.inventory.inventoryId)"
+            [style.animation-delay]="(600 + i * 50) + 'ms'"
+          >
+            <div class="pill-avatar" *ngIf="block.images?.length; else pillAvatarPlaceholder">
+              <img [src]="block.images[0]" [alt]="block.productName" />
+              <div class="avatar-shine"></div>
+            </div>
+            <ng-template #pillAvatarPlaceholder>
+              <div class="pill-avatar pill-avatar-empty">
+                <mat-icon>directions_car</mat-icon>
+              </div>
+            </ng-template>
+
+            <div class="pill-info">
+              <span class="pill-name">{{ block.productName }}</span>
+              <span class="pill-badge">{{ block.registrationNo }}</span>
+            </div>
+
+            <div class="pill-progress">
+              <div class="progress-mini-ring">
+                <svg viewBox="0 0 36 36">
+                  <circle cx="18" cy="18" r="16" class="mini-ring-bg"></circle>
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="16"
+                    class="mini-ring-fill"
+                    [style.strokeDashoffset]="100.53 - (100.53 * (getBlockProgressPercent(block) / 100))"
+                  ></circle>
+                </svg>
+                <span class="progress-mini-value">{{ getBlockProgressPercent(block) }}%</span>
+              </div>
+            </div>
+
+            <mat-icon class="pill-arrow">arrow_forward</mat-icon>
+          </button>
+
+          <button
+            type="button"
+            class="action-pill action-pill-view-all"
+            *ngIf="blocks.length > 5"
+            style="animation-delay: 850ms"
+          >
+            <div class="pill-avatar pill-avatar-gradient">
+              <mat-icon>grid_view</mat-icon>
+            </div>
+            <div class="pill-info">
+              <span class="pill-name">View All Vehicles</span>
+              <span class="pill-badge">{{ blocks.length }} total assignments</span>
+            </div>
+            <mat-icon class="pill-arrow">expand_more</mat-icon>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
   <!-- Loading State -->
   <div class="loading-state" *ngIf="loading">
-    <mat-spinner diameter="48"></mat-spinner>
-    <span>Loading your inspections...</span>
+    <div class="loader-container">
+      <div class="luxury-loader">
+        <div class="loader-ring"></div>
+        <div class="loader-ring"></div>
+        <div class="loader-ring"></div>
+      </div>
+      <p class="loading-text">Curating your inspection portfolio</p>
+    </div>
   </div>
 
   <!-- Error State -->
-  <div class="error-state" *ngIf="!loading && error">
-    <mat-icon>error_outline</mat-icon>
+  <div class="error-state animate-on-scroll" *ngIf="!loading && error">
+    <div class="error-icon">
+      <mat-icon>warning_amber</mat-icon>
+    </div>
     <div class="error-content">
-      <h3>Something went wrong</h3>
+      <h3>Unable to Load Inspections</h3>
       <p>{{ error }}</p>
     </div>
   </div>
 
   <!-- Main Content -->
   <ng-container *ngIf="!loading && !error">
-    <!-- Page Header -->
-    <header class="page-header">
-      <div class="header-content">
-        <div class="header-badge">
-          <span class="badge-dot"></span>
-          <span>Inspector Workspace</span>
+
+    <!-- Empty State -->
+    <div class="empty-state animate-on-scroll" *ngIf="!blocks.length">
+      <div class="empty-illustration">
+        <div class="illustration-circle">
+          <mat-icon>inventory_2</mat-icon>
         </div>
-        <h1>Vehicle Inspections</h1>
-        <p class="header-subtitle">
-          Complete detailed inspections for all assigned vehicles
-        </p>
+        <div class="illustration-glow"></div>
       </div>
+      <h2>No Vehicles Assigned</h2>
+      <p>Your inspection queue is currently empty. New assignments will appear here automatically.</p>
+    </div>
 
-      <div class="header-stats" *ngIf="blocks.length">
-        <div class="stat-box">
-          <div class="stat-icon" style="background: #3b82f6;">
-            <mat-icon>directions_car</mat-icon>
-          </div>
-          <div class="stat-content">
-            <span class="stat-value">{{ blocks.length }}</span>
-            <span class="stat-label">Vehicles</span>
-          </div>
-        </div>
+    <!-- Vehicles Grid -->
+    <div class="vehicles-grid" *ngIf="blocks.length">
+      <article
+        class="vehicle-card animate-on-scroll"
+        [class.expanded]="block.expanded"
+        *ngFor="let block of blocks; let i = index"
+        [attr.id]="'inv-' + block.inventory.inventoryId"
+        [style.animation-delay]="(700 + i * 100) + 'ms'"
+      >
 
-        <div class="stat-box">
-          <div class="stat-icon" style="background: #22c55e;">
-            <mat-icon>fact_check</mat-icon>
-          </div>
-          <div class="stat-content">
-            <span class="stat-value">{{ totalCompleted }}</span>
-            <span class="stat-label">Completed</span>
-          </div>
-        </div>
-
-        <div class="stat-box">
-          <div class="stat-icon" style="background: #f59e0b;">
-            <mat-icon>pending_actions</mat-icon>
-          </div>
-          <div class="stat-content">
-            <span class="stat-value">{{ totalCheckpoints - totalCompleted }}</span>
-            <span class="stat-label">Remaining</span>
-          </div>
-        </div>
-
-        <div class="stat-box gradient">
-          <div class="progress-circle">
-            <svg viewBox="0 0 36 36">
-              <path
-                class="circle-bg"
-                d="M18 2.0845
-                  a 15.9155 15.9155 0 0 1 0 31.831
-                  a 15.9155 15.9155 0 0 1 0 -31.831"
-              ></path>
-              <path
-                class="circle-progress"
-                [attr.stroke-dasharray]="(totalCheckpoints ? (totalCompleted / totalCheckpoints) * 100 : 0) + ', 100'"
-                d="M18 2.0845
-                  a 15.9155 15.9155 0 0 1 0 31.831
-                  a 15.9155 15.9155 0 0 1 0 -31.831"
-              ></path>
-            </svg>
-            <div class="progress-text">
-              {{ (totalCheckpoints ? (totalCompleted / totalCheckpoints) * 100 : 0) | number:'1.0-0' }}%
-            </div>
-          </div>
-          <span class="stat-label">Overall Progress</span>
-        </div>
-      </div>
-    </header>
-
-    <!-- Inventory Quick Shortcuts -->
-    <section
-      class="inventory-shortcuts"
-      *ngIf="blocks.length"
-    >
-      <div class="shortcuts-label">
-        <mat-icon>view_carousel</mat-icon>
-        <span>Quick access to assigned vehicles</span>
-      </div>
-
-      <div class="shortcuts-row">
-        <button
-          type="button"
-          class="shortcut-card"
-          *ngFor="let block of blocks"
-          (click)="scrollToInventory(block.inventory.inventoryId)"
-          matTooltip="Jump to {{ block.productName }}"
-        >
-          <div class="shortcut-image-wrapper">
-            <ng-container *ngIf="block.images && block.images.length; else noImageThumb">
-              <div class="shortcut-image">
-                <img [src]="block.images[0]" [alt]="block.productName" />
-              </div>
+        <!-- Card Image Header -->
+        <div class="card-image-header">
+          <div class="image-container">
+            <ng-container *ngIf="block.images?.length; else noImage">
+              <img [src]="block.images[0]" [alt]="block.productName" class="vehicle-image" />
+              <div class="image-overlay"></div>
             </ng-container>
-            <ng-template #noImageThumb>
-              <div class="shortcut-placeholder">
+            <ng-template #noImage>
+              <div class="image-placeholder">
                 <mat-icon>directions_car</mat-icon>
               </div>
             </ng-template>
           </div>
-          <div class="shortcut-text">
-            <span class="shortcut-name">
-              {{ block.productName }}
-            </span>
-            <span class="shortcut-meta">
-              {{ block.registrationNo }}
-            </span>
-          </div>
-        </button>
-      </div>
-    </section>
 
-    <!-- Empty State -->
-    <div class="empty-state" *ngIf="!blocks.length">
-      <div class="empty-icon">
-        <mat-icon>inventory_2</mat-icon>
-      </div>
-      <h3>No Vehicles Assigned</h3>
-      <p>You don't have any vehicles assigned for inspection yet. Check back later or contact your administrator.</p>
-    </div>
-
-    <!-- Vehicle Cards -->
-    <div class="vehicles-grid" *ngIf="blocks.length">
-      <article
-        class="vehicle-card"
-        *ngFor="let block of blocks"
-        [attr.id]="'inv-' + block.inventory.inventoryId"
-      >
-        <!-- Card Header -->
-        <div class="card-header">
-          <div class="header-top">
-            <div class="vehicle-info">
-              <span class="inventory-badge">
-                INV-{{ block.inventory.inventoryId }}
-              </span>
-              <h2 class="vehicle-title">{{ block.productName }}</h2>
-              <p class="vehicle-meta">{{ block.productMeta }}</p>
-            </div>
-
-            <div class="status-badge" [style.background]="getStatusColor(getBlockStatus(block))">
-              <span class="status-dot"></span>
-              <span>{{ getBlockStatus(block) }}</span>
+          <div class="image-badge-cluster">
+            <div class="inventory-tag">INV-{{ block.inventory.inventoryId }}</div>
+            <div class="status-pill" [style.background]="getStatusColor(getBlockStatus(block))">
+              <span class="pulse-dot"></span>
+              {{ getBlockStatus(block) }}
             </div>
           </div>
+        </div>
 
-          <!-- Vehicle Details -->
-          <div class="vehicle-details">
-            <div class="detail-item">
-              <mat-icon>confirmation_number</mat-icon>
-              <div class="detail-content">
-                <span class="detail-label">Registration</span>
+        <!-- Card Content -->
+        <div class="card-content">
+
+          <!-- Vehicle Identity -->
+          <div class="vehicle-identity">
+            <h2 class="vehicle-name">{{ block.productName }}</h2>
+            <p class="vehicle-spec">{{ block.productMeta }}</p>
+          </div>
+
+          <!-- Vehicle Details Grid -->
+          <div class="details-grid">
+            <div class="detail-cell">
+              <div class="detail-icon">
+                <mat-icon>confirmation_number</mat-icon>
+              </div>
+              <div class="detail-info">
+                <span class="detail-key">Registration</span>
                 <span class="detail-value">{{ block.registrationNo }}</span>
               </div>
             </div>
 
-            <div class="detail-item">
-              <mat-icon>pin</mat-icon>
-              <div class="detail-content">
-                <span class="detail-label">Chassis</span>
+            <div class="detail-cell">
+              <div class="detail-icon">
+                <mat-icon>pin</mat-icon>
+              </div>
+              <div class="detail-info">
+                <span class="detail-key">Chassis</span>
                 <span class="detail-value">{{ block.chassisNo }}</span>
               </div>
             </div>
+          </div>
 
-            <div class="detail-item">
-              <mat-icon>check_circle</mat-icon>
-              <div class="detail-content">
-                <span class="detail-label">Progress</span>
-                <span class="detail-value">{{ getBlockCompleted(block) }}/{{ getBlockTotal(block) }} Checks</span>
+          <!-- Progress Indicator -->
+          <div class="progress-section">
+            <div class="progress-header">
+              <span class="progress-label">Inspection Progress</span>
+              <span class="progress-count">{{ getBlockCompleted(block) }}/{{ getBlockTotal(block) }}</span>
+            </div>
+
+            <div class="progress-track-modern">
+              <div
+                class="progress-fill-modern"
+                [style.width.%]="getBlockProgressPercent(block)"
+              >
+                <div class="progress-shimmer"></div>
               </div>
             </div>
+
+            <span class="progress-percentage">{{ getBlockProgressPercent(block) }}% Complete</span>
           </div>
 
-          <!-- Progress Bar -->
-          <div class="progress-bar">
-            <div class="progress-track">
-              <div
-                class="progress-fill"
-                [style.width.%]="getBlockProgressPercent(block)"
-              ></div>
-            </div>
-            <span class="progress-label">{{ getBlockProgressPercent(block) }}% Complete</span>
-          </div>
-
-          <!-- Image Gallery -->
-          <div class="image-gallery" *ngIf="block.images && block.images.length">
-            <div class="gallery-label">
-              <mat-icon>photo_library</mat-icon>
-              <span>{{ block.images.length }} Photos Available</span>
+          <!-- Photo Gallery Preview -->
+          <div class="gallery-preview" *ngIf="block.images?.length">
+            <div class="gallery-header">
+              <mat-icon>collections</mat-icon>
+              <span>{{ block.images.length }} Documentation Photos</span>
             </div>
 
-            <div class="gallery-grid">
+            <div class="gallery-thumbnails">
               <div
-                class="gallery-item"
-                *ngFor="let img of block.images | slice:0:4; let i = index"
-                (click)="openImageGallery(block.images, i)"
+                class="thumbnail"
+                *ngFor="let img of block.images | slice:0:3; let idx = index"
+                (click)="openImageGallery(block.images, idx)"
               >
                 <img [src]="img" [alt]="block.productName" />
-                <div class="gallery-overlay" *ngIf="i === 3 && block.images.length > 4">
+                <div class="thumbnail-hover">
+                  <mat-icon>zoom_in</mat-icon>
+                </div>
+              </div>
+
+              <div
+                class="thumbnail thumbnail-more"
+                *ngIf="block.images.length > 3"
+                (click)="openImageGallery(block.images, 3)"
+              >
+                <div class="more-overlay">
                   <mat-icon>add</mat-icon>
-                  <span>{{ block.images.length - 4 }} more</span>
+                  <span>{{ block.images.length - 3 }}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Action Buttons -->
-          <div class="card-actions">
-            <button
-              mat-stroked-button
-              class="expand-btn"
-              (click)="toggleExpanded(block)"
-            >
+          <!-- Action Button -->
+          <button
+            class="expand-toggle magnetic-btn"
+            (click)="toggleExpanded(block)"
+          >
+            <span class="btn-icon">
               <mat-icon>{{ block.expanded ? 'expand_less' : 'expand_more' }}</mat-icon>
-              <span>{{ block.expanded ? 'Hide' : 'Show' }} Inspection Form</span>
-            </button>
-
-            <span class="completion-badge">
-              <mat-icon>checklist</mat-icon>
-              {{ getBlockCompleted(block) }}/{{ getBlockTotal(block) }}
             </span>
-          </div>
+            <span class="btn-text">{{ block.expanded ? 'Close' : 'Begin' }} Inspection</span>
+            <div class="btn-shine"></div>
+          </button>
         </div>
 
-        <!-- Inspection Form -->
-        <div class="card-body" *ngIf="block.expanded">
-          <div class="form-header">
-            <mat-icon>rule</mat-icon>
-            <div class="form-header-text">
-              <h3>Inspection Checklist</h3>
-              <p>Complete all checkpoints for this vehicle</p>
+        <!-- Expanded Inspection Form -->
+        <div class="inspection-form" *ngIf="block.expanded">
+
+          <div class="form-divider">
+            <span class="divider-ornament"></span>
+          </div>
+
+          <!-- Form Header -->
+          <div class="form-intro">
+            <div class="intro-icon">
+              <mat-icon>fact_check</mat-icon>
+            </div>
+            <div class="intro-text">
+              <h3>Comprehensive Inspection Checklist</h3>
+              <p>Complete all checkpoints to ensure thorough documentation and accurate assessment</p>
             </div>
           </div>
 
@@ -254,80 +385,80 @@
           <div class="inspection-groups">
             <div
               class="inspection-group"
-              *ngFor="let group of block.groups"
+              *ngFor="let group of block.groups; let gi = index"
             >
+
+              <!-- Group Header -->
               <div class="group-header">
-                <div class="group-title">
-                  <mat-icon>category</mat-icon>
-                  <span>{{ group.inspectionTypeName }}</span>
-                  <span class="group-weight" *ngIf="group.weightage">{{ group.weightage }}%</span>
+                <div class="group-title-section">
+                  <div class="group-icon">
+                    <mat-icon>category</mat-icon>
+                  </div>
+                  <div class="group-title-wrapper">
+                    <h4 class="group-title">{{ group.inspectionTypeName }}</h4>
+                    <span class="group-subtitle">{{ group.checkpoints.length }} checkpoints</span>
+                  </div>
+                  <span class="weightage-tag" *ngIf="group.weightage">{{ group.weightage }}%</span>
                 </div>
 
-                <div class="group-progress">
-                  <span
-                    class="progress-chip"
-                    [class.complete]="getGroupCompleted(group) === group.checkpoints.length"
-                  >
-                    <mat-icon>{{ getGroupCompleted(group) === group.checkpoints.length ? 'check_circle' : 'pending' }}</mat-icon>
+                <div class="group-completion">
+                  <div class="completion-indicator" [class.complete]="getGroupCompleted(group) === group.checkpoints.length">
+                    <mat-icon>{{ getGroupCompleted(group) === group.checkpoints.length ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
                     <span>{{ getGroupCompleted(group) }}/{{ group.checkpoints.length }}</span>
-                  </span>
+                  </div>
                 </div>
               </div>
 
               <!-- Checkpoints -->
-              <div class="checkpoints-list">
+              <div class="checkpoints-container">
                 <div
-                  class="checkpoint-item"
-                  *ngFor="let row of group.checkpoints"
-                  [class.answered]="isRowAnswered(row)"
+                  class="checkpoint"
+                  [class.completed]="isRowAnswered(row)"
+                  *ngFor="let row of group.checkpoints; let ci = index"
                 >
-                  <div class="checkpoint-label">
-                    <div class="label-main">
-                      <mat-icon class="check-icon">
-                        {{ isRowAnswered(row) ? 'check_circle' : 'radio_button_unchecked' }}
-                      </mat-icon>
-                      <span>{{ row.inspectionCheckpointName }}</span>
+
+                  <div class="checkpoint-header">
+                    <div class="checkpoint-icon">
+                      <mat-icon>{{ isRowAnswered(row) ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
                     </div>
-                    <span class="label-hint" *ngIf="normalizeInputType(row.inputType) === 'yesno'">
-                      Select Pass or Fail
-                    </span>
-                    <span class="label-hint" *ngIf="normalizeInputType(row.inputType) === 'number'">
-                      Enter numeric value
-                    </span>
-                    <span class="label-hint" *ngIf="normalizeInputType(row.inputType) === 'textarea'">
-                      Provide detailed notes
-                    </span>
-                    <span class="label-hint" *ngIf="normalizeInputType(row.inputType) === 'image'">
-                      Upload clear images (multiple allowed)
-                    </span>
+                    <div class="checkpoint-title-section">
+                      <h5 class="checkpoint-name">{{ row.inspectionCheckpointName }}</h5>
+                      <p class="checkpoint-hint" *ngIf="normalizeInputType(row.inputType) === 'yesno'">Pass/Fail assessment</p>
+                      <p class="checkpoint-hint" *ngIf="normalizeInputType(row.inputType) === 'number'">Numeric measurement</p>
+                      <p class="checkpoint-hint" *ngIf="normalizeInputType(row.inputType) === 'textarea'">Detailed observations required</p>
+                      <p class="checkpoint-hint" *ngIf="normalizeInputType(row.inputType) === 'image'">Photographic documentation</p>
+                    </div>
                   </div>
 
+                  <!-- Input Fields -->
                   <div class="checkpoint-input">
                     <ng-container [ngSwitch]="normalizeInputType(row.inputType)">
 
                       <!-- Textarea -->
-                      <textarea
-                        *ngSwitchCase="'textarea'"
-                        [(ngModel)]="row.resultValue"
-                        rows="3"
-                        placeholder="Enter detailed observations..."
-                        class="form-textarea"
-                      ></textarea>
+                      <div class="input-wrapper" *ngSwitchCase="'textarea'">
+                        <textarea
+                          [(ngModel)]="row.resultValue"
+                          rows="4"
+                          placeholder="Enter detailed observations and findings..."
+                          class="luxury-textarea"
+                        ></textarea>
+                      </div>
 
-                      <!-- Number ONLY (InputType = Number) -->
-                      <input
-                        *ngSwitchCase="'number'"
-                        type="number"
-                        [(ngModel)]="row.resultValue"
-                        placeholder="Enter value..."
-                        class="form-input"
-                      />
+                      <!-- Number -->
+                      <div class="input-wrapper" *ngSwitchCase="'number'">
+                        <input
+                          type="number"
+                          [(ngModel)]="row.resultValue"
+                          placeholder="Enter numeric value"
+                          class="luxury-input"
+                        />
+                      </div>
 
-                      <!-- Yes/No Toggle -->
-                      <div *ngSwitchCase="'yesno'" class="yesno-buttons">
+                      <!-- Yes/No -->
+                      <div class="toggle-group" *ngSwitchCase="'yesno'">
                         <button
                           type="button"
-                          class="yesno-btn pass"
+                          class="toggle-option pass"
                           [class.active]="row.resultValue === 'Pass'"
                           (click)="setYesNo(row, 'Pass')"
                         >
@@ -336,7 +467,7 @@
                         </button>
                         <button
                           type="button"
-                          class="yesno-btn fail"
+                          class="toggle-option fail"
                           [class.active]="row.resultValue === 'Fail'"
                           (click)="setYesNo(row, 'Fail')"
                         >
@@ -345,103 +476,106 @@
                         </button>
                       </div>
 
-                    <!-- IMAGE upload (InputType = Image) -->
-<div *ngSwitchCase="'image'" class="checkpoint-image-field">
-  <label class="image-upload-btn">
-    <input
-      type="file"
-      accept="image/*"
-      multiple
-      (change)="uploadCheckpointImages(block, group, row, $event)"
-    />
-    <div class="upload-icon">
-      <mat-icon>cloud_upload</mat-icon>
-    </div>
-    <div class="upload-text">
-      <span class="upload-title">Upload inspection photos</span>
-      <span class="upload-subtitle">Click to add or replace images</span>
-    </div>
-  </label>
+                      <!-- Image Upload -->
+                      <div class="image-upload-section" *ngSwitchCase="'image'">
+                        <label class="upload-trigger">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            (change)="uploadCheckpointImages(block, group, row, $event)"
+                          />
+                          <div class="upload-visual">
+                            <div class="upload-icon-circle">
+                              <mat-icon>add_photo_alternate</mat-icon>
+                            </div>
+                            <div class="upload-text">
+                              <span class="upload-primary">Upload Documentation</span>
+                              <span class="upload-secondary">Drag & drop or click to browse</span>
+                            </div>
+                          </div>
+                        </label>
 
-  <div class="checkpoint-gallery" *ngIf="row.imageUrls?.length">
-    <div
-      class="gallery-item"
-      *ngFor="let img of row.imageUrls; let idx = index"
-      (click)="openImageGallery(row.imageUrls!, idx)"
-    >
-      <img [src]="img" [alt]="row.inspectionCheckpointName" />
+                        <!-- Uploaded Images -->
+                        <div class="uploaded-images" *ngIf="row.imageUrls?.length">
+                          <div
+                            class="uploaded-image"
+                            *ngFor="let img of row.imageUrls; let imgIdx = index"
+                            (click)="openImageGallery(row.imageUrls!, imgIdx)"
+                          >
+                            <img [src]="img" [alt]="row.inspectionCheckpointName" />
+                            <div class="image-actions">
+                              <button
+                                type="button"
+                                class="image-remove"
+                                (click)="removeCheckpointImage(row, imgIdx, $event)"
+                                matTooltip="Remove image"
+                              >
+                                <mat-icon>close</mat-icon>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
 
-      <!-- Small remove icon (deactivate image) -->
-      <button
-        type="button"
-        class="image-remove-btn"
-        matTooltip="Remove this image from inspection"
-        (click)="removeCheckpointImage(row, idx, $event)"
-      >
-        <mat-icon>close</mat-icon>
-      </button>
-    </div>
-  </div>
-</div>
-
-
-                      <!-- Default Text (InputType = Text)  - numbers also allowed -->
-                      <input
-                        *ngSwitchDefault
-                        type="text"
-                        [(ngModel)]="row.resultValue"
-                        placeholder="Enter result..."
-                        class="form-input"
-                      />
+                      <!-- Default Text -->
+                      <div class="input-wrapper" *ngSwitchDefault>
+                        <input
+                          type="text"
+                          [(ngModel)]="row.resultValue"
+                          placeholder="Enter inspection result..."
+                          class="luxury-input"
+                        />
+                      </div>
                     </ng-container>
                   </div>
+
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Form Footer -->
-          <div class="form-footer">
-            <div class="footer-info">
+          <!-- Form Actions -->
+          <div class="form-actions">
+            <div class="actions-info">
               <mat-icon>info</mat-icon>
               <span>{{ getBlockCompleted(block) }} of {{ getBlockTotal(block) }} checkpoints completed</span>
             </div>
 
-            <div class="footer-actions">
-              <button
-                mat-stroked-button
-                class="cancel-btn"
-                (click)="toggleExpanded(block)"
-              >
-                Cancel
-              </button>
+            <div class="actions-buttons">
+              <button class="btn-secondary" (click)="toggleExpanded(block)">Cancel</button>
 
               <button
-                mat-raised-button
-                class="save-btn"
+                class="btn-primary magnetic-btn"
                 [disabled]="block.saving"
                 (click)="saveInventory(block)"
               >
                 <mat-progress-spinner
                   *ngIf="block.saving"
-                  diameter="20"
+                  diameter="18"
                   mode="indeterminate"
                 ></mat-progress-spinner>
                 <ng-container *ngIf="!block.saving">
                   <mat-icon>save</mat-icon>
                   <span>Save Inspection</span>
                 </ng-container>
+                <div class="btn-shine"></div>
               </button>
             </div>
           </div>
+
         </div>
       </article>
     </div>
+
   </ng-container>
 
-  <!-- Image Viewer Modal (shared) -->
-  <div class="image-viewer" *ngIf="showImageViewer" (click)="closeImageViewer()">
-    <div class="viewer-content" (click)="$event.stopPropagation()">
+  <!-- Image Viewer Modal -->
+  <div class="image-viewer-modal" *ngIf="showImageViewer" (click)="closeImageViewer()">
+    <div class="viewer-backdrop"></div>
+
+    <div class="viewer-container" (click)="$event.stopPropagation()">
+
       <button class="viewer-close" (click)="closeImageViewer()">
         <mat-icon>close</mat-icon>
       </button>
@@ -454,8 +588,12 @@
         <mat-icon>chevron_left</mat-icon>
       </button>
 
-      <div class="viewer-image">
-        <img [src]="selectedImageGallery[selectedImageIndex]" alt="Vehicle image" />
+      <div class="viewer-stage">
+        <img
+          [src]="selectedImageGallery[selectedImageIndex]"
+          alt="Inspection photo"
+          class="viewer-image"
+        />
       </div>
 
       <button
@@ -467,8 +605,11 @@
       </button>
 
       <div class="viewer-counter">
-        {{ selectedImageIndex + 1 }} / {{ selectedImageGallery.length }}
+        <span>{{ selectedImageIndex + 1 }}</span>
+        <span class="counter-divider">/</span>
+        <span>{{ selectedImageGallery.length }}</span>
       </div>
     </div>
   </div>
+
 </div>

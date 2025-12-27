@@ -1,5 +1,14 @@
-
-import { Component, OnInit, inject } from '@angular/core';
+// src/app/pages/inspector/inspections/inspections.ts
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  inject
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -12,8 +21,8 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 
 import { ActivatedRoute } from '@angular/router';
 
-import { forkJoin, of } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { forkJoin, of, Subject } from 'rxjs';
+import { catchError, finalize, map, switchMap, take, takeUntil, tap } from 'rxjs/operators';
 
 import { Inventory } from '../../../../models/inventory.model';
 import { InventoryInspector } from '../../../../models/inventoryinspector.model';
@@ -45,8 +54,8 @@ interface InspectionCheckpointRow {
   inspectionCheckpointName: string;
   inputType?: string | null;
   resultValue: string;
-  imageUrls?: string[];           
-  imageItems?: ImageItem[];       
+  imageUrls?: string[];
+  imageItems?: ImageItem[];
 }
 
 interface InspectionTypeGroupForUI {
@@ -84,7 +93,7 @@ interface InspectorInventoryBlock {
   templateUrl: './inspections.html',
   styleUrls: ['./inspections.scss']
 })
-export class Inspections implements OnInit {
+export class Inspections implements OnInit, AfterViewInit, OnDestroy {
   private invSvc = inject(InventoryService);
   private invInspectorSvc = inject(InventoryInspectorService);
   private inspTypesSvc = inject(InspectionTypesService);
@@ -95,6 +104,9 @@ export class Inspections implements OnInit {
   private snack = inject(MatSnackBar);
   private dialog = inject(MatDialog);
   private route = inject(ActivatedRoute);
+  private elementRef = inject(ElementRef);
+  private cdr = inject(ChangeDetectorRef);
+  private ngZone = inject(NgZone);
 
   loading = true;
   error: string | null = null;
@@ -107,32 +119,146 @@ export class Inspections implements OnInit {
   selectedImageIndex = 0;
   showImageViewer = false;
 
-  
   private targetInventoryId: number | null = null;
   private hasScrolledToTarget = false;
 
-  ngOnInit(): void {
-    
-    this.route.queryParamMap.subscribe(params => {
-      const id = params.get('inventoryId');
-      this.targetInventoryId = id ? +id : null;
+  // Scroll-reveal (IntersectionObserver) must re-bind after async render
+  private io?: IntersectionObserver;
+  private observedEls = new WeakSet<Element>();
 
-      
-      if (!this.loading && this.blocks.length && this.targetInventoryId) {
-        this.scrollToTargetInventory();
-      }
-    });
+  // Effects cleanup
+  private destroy$ = new Subject<void>();
+  private removeFns: Array<() => void> = [];
+  private cursorEl?: HTMLElement;
+  private cursorDotEl?: HTMLElement;
+
+  ngOnInit(): void {
+    // react to query params
+    this.route.queryParamMap
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(params => {
+        const id = params.get('inventoryId');
+        this.targetInventoryId = id ? +id : null;
+
+        // if already loaded, attempt scroll after render
+        if (!this.loading && this.blocks.length && this.targetInventoryId) {
+          this.queueAfterRender(() => this.scrollToTargetInventory());
+        }
+      });
 
     this.loadData();
   }
 
-  
+  ngAfterViewInit(): void {
+    // Create observer ONCE and keep it for the component lifetime
+    this.ensureIntersectionObserver();
+    // Might be empty on first call (loading), but harmless
+    this.observeAnimatedElements();
+
+    // Effects
+    this.initCursorEffects();
+    this.initScrollAnimations();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+
+    // Disconnect IntersectionObserver
+    try {
+      this.io?.disconnect();
+    } catch {}
+
+    // Remove event listeners
+    this.removeFns.forEach(fn => {
+      try {
+        fn();
+      } catch {}
+    });
+    this.removeFns = [];
+
+    // Remove custom cursor nodes (avoid duplicates on route nav)
+    if (this.cursorEl?.parentNode) this.cursorEl.parentNode.removeChild(this.cursorEl);
+    if (this.cursorDotEl?.parentNode) this.cursorDotEl.parentNode.removeChild(this.cursorDotEl);
+    this.cursorEl = undefined;
+    this.cursorDotEl = undefined;
+  }
+
+  // ---------------------------------------------------------------------------
+  // FIX: bind scroll-reveal to elements AFTER async blocks render
+  // ---------------------------------------------------------------------------
+
+  private ensureIntersectionObserver(): void {
+    if (this.io) return;
+
+    this.io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in-view');
+            // once revealed, no need to keep observing
+            try {
+              this.io?.unobserve(entry.target);
+            } catch {}
+          }
+        });
+      },
+      {
+        threshold: 0.12,
+        rootMargin: '0px 0px -80px 0px'
+      }
+    );
+  }
+
+  private observeAnimatedElements(): void {
+    if (!this.io) return;
+
+    const root: HTMLElement = this.elementRef.nativeElement as HTMLElement;
+    const elements = root.querySelectorAll('.animate-on-scroll');
+
+    elements.forEach((el: Element) => {
+      if (this.observedEls.has(el)) return;
+      this.observedEls.add(el);
+      try {
+        this.io!.observe(el);
+      } catch {}
+    });
+  }
+
+  private queueAfterRender(fn: () => void): void {
+    // Ensure Angular has applied bindings and painted DOM nodes
+    // This is the key to preventing "reload twice" when content is async.
+    this.ngZone.onStable
+      .pipe(take(1), takeUntil(this.destroy$))
+      .subscribe(() => {
+        try {
+          fn();
+        } catch {}
+      });
+  }
+
+  private postDataRenderTasks(): void {
+    // Force the view to update immediately, then run after it stabilizes
+    this.cdr.detectChanges();
+    this.queueAfterRender(() => {
+      // Re-bind observer to newly created elements
+      this.ensureIntersectionObserver();
+      this.observeAnimatedElements();
+
+      // Scroll to target (if any) after DOM is real
+      this.scrollToTargetInventory();
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Data loading
+  // ---------------------------------------------------------------------------
 
   loadData(): void {
     this.loading = true;
     this.error = null;
     this.blocks = [];
-    this.hasScrolledToTarget = false; 
+    this.hasScrolledToTarget = false;
 
     const currentUserId = this.auth.currentUser?.userId ?? null;
     if (!currentUserId) {
@@ -149,6 +275,7 @@ export class Inspections implements OnInit {
       docs: this.invDocSvc.getList()
     })
       .pipe(
+        takeUntil(this.destroy$),
         switchMap(({ inventory, mappings, types, checkpoints, docs }) => {
           this.allTypes = types ?? [];
           this.allCheckpoints = checkpoints ?? [];
@@ -176,7 +303,7 @@ export class Inspections implements OnInit {
           );
 
           return forkJoin(calls).pipe(
-            map(results => {
+            tap(results => {
               const blocks: InspectorInventoryBlock[] = myInventory.map(
                 (inv, idx) => ({
                   inventory: inv,
@@ -192,28 +319,25 @@ export class Inspections implements OnInit {
               );
 
               this.blocks = blocks;
-              return null;
-            })
+            }),
+            map(() => null)
           );
         }),
         catchError(err => {
           console.error('Failed to load assigned inspections', err);
-          this.error =
-            err?.error?.message || 'Failed to load assigned inspections.';
+          this.error = err?.error?.message || 'Failed to load assigned inspections.';
           this.blocks = [];
           return of(null);
+        }),
+        finalize(() => {
+          this.loading = false;
+          // IMPORTANT: run reveal + scroll only after the async DOM exists
+          this.postDataRenderTasks();
         })
       )
-      .subscribe({
-        complete: () => {
-          this.loading = false;
-          
-          this.scrollToTargetInventory();
-        }
-      });
+      .subscribe();
   }
 
-  
   private buildImagesMap(files: InventoryDocumentFile[]): Map<number, string[]> {
     const map = new Map<number, string[]>();
 
@@ -248,8 +372,6 @@ export class Inspections implements OnInit {
     return map;
   }
 
-  
-
   private isActiveInspection(i: Inspection): boolean {
     const raw =
       (i as any).active ??
@@ -259,7 +381,6 @@ export class Inspections implements OnInit {
     return raw !== false && raw !== 0;
   }
 
-  
   private buildGroupsForInventory(
     inventory: Inventory,
     existing: Inspection[]
@@ -276,9 +397,7 @@ export class Inspections implements OnInit {
           cp.active !== false
       );
 
-      if (!cps.length) {
-        return;
-      }
+      if (!cps.length) return;
 
       const rows: InspectionCheckpointRow[] = cps.map(cp => {
         const cpId =
@@ -349,8 +468,6 @@ export class Inspections implements OnInit {
     return groups;
   }
 
-  
-
   getProductName(i: Inventory): string {
     if (i.displayName) return i.displayName;
     const pj = this.safeParseProductJSON(i.productJSON);
@@ -386,19 +503,29 @@ export class Inspections implements OnInit {
     }
   }
 
-  
-
   toggleExpanded(block: InspectorInventoryBlock): void {
     block.expanded = !block.expanded;
+
+    if (block.expanded) {
+      // wait for expand DOM to render, then ensure reveal + scroll works
+      this.cdr.detectChanges();
+      this.queueAfterRender(() => {
+        this.observeAnimatedElements();
+        const el = document.getElementById(`inv-${block.inventory.inventoryId}`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    }
   }
 
+  // FIX: correct normalization (you had yes/no UI but never returned 'yesno')
   normalizeInputType(inputType?: string | null): NormalizedInputType {
-    const v = (inputType || '').toLowerCase();
-    if (v === 'text' || v === 'multiline') return 'textarea';
-    if (v === 'number' || v === 'numeric' || v === 'score') return 'number';
-    if (v === 'image' || v === 'photo' || v === 'picture' || v === 'file')
-      return 'image';
-    
+    const v = (inputType || '').toLowerCase().trim();
+
+    if (v === 'textarea' || v === 'multiline' || v === 'longtext') return 'textarea';
+    if (v === 'number' || v === 'numeric' || v === 'score' || v === 'qty') return 'number';
+    if (v === 'yesno' || v === 'yes/no' || v === 'boolean' || v === 'passfail' || v === 'pass/fail') return 'yesno';
+    if (v === 'image' || v === 'photo' || v === 'picture' || v === 'file') return 'image';
+
     return 'text';
   }
 
@@ -423,17 +550,11 @@ export class Inspections implements OnInit {
   }
 
   getBlockCompleted(block: InspectorInventoryBlock): number {
-    return block.groups.reduce(
-      (sum, g) => sum + this.getGroupCompleted(g),
-      0
-    );
+    return block.groups.reduce((sum, g) => sum + this.getGroupCompleted(g), 0);
   }
 
   getBlockTotal(block: InspectorInventoryBlock): number {
-    return block.groups.reduce(
-      (sum, g) => sum + g.checkpoints.length,
-      0
-    );
+    return block.groups.reduce((sum, g) => sum + g.checkpoints.length, 0);
   }
 
   get totalCheckpoints(): number {
@@ -446,59 +567,46 @@ export class Inspections implements OnInit {
 
   getBlockProgressPercent(block: InspectorInventoryBlock): number {
     const total = this.getBlockTotal(block);
-    if (!total) {
-      return 0;
-    }
+    if (!total) return 0;
     return Math.round((this.getBlockCompleted(block) / total) * 100);
   }
 
   getBlockStatus(block: InspectorInventoryBlock): 'Not Started' | 'In Progress' | 'Completed' {
     const total = this.getBlockTotal(block);
     const done = this.getBlockCompleted(block);
-    if (!total || !done) {
-      return 'Not Started';
-    }
-    if (done < total) {
-      return 'In Progress';
-    }
+    if (!total || !done) return 'Not Started';
+    if (done < total) return 'In Progress';
     return 'Completed';
   }
 
   getStatusColor(status: string): string {
     switch (status) {
       case 'Completed':
-        return '#22c55e';
+        return '#10b981';
       case 'In Progress':
         return '#f59e0b';
       default:
-        return '#94a3b8';
+        return '#64748b';
     }
   }
 
-  
-
   private scrollToTargetInventory(): void {
-    if (!this.targetInventoryId || this.hasScrolledToTarget || !this.blocks.length) {
-      return;
-    }
+    if (!this.targetInventoryId || this.hasScrolledToTarget || !this.blocks.length) return;
     this.hasScrolledToTarget = true;
     this.scrollToInventory(this.targetInventoryId);
   }
 
   scrollToInventory(inventoryId: number): void {
-    const el = document.getElementById(`inv-${inventoryId}`);
     const block = this.blocks.find(b => b.inventory.inventoryId === inventoryId);
+    if (block) block.expanded = true;
 
-    if (block) {
-      block.expanded = true;
-    }
-
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    this.cdr.detectChanges();
+    this.queueAfterRender(() => {
+      this.observeAnimatedElements();
+      const el = document.getElementById(`inv-${inventoryId}`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
   }
-
-  
 
   openImageGallery(images: string[], startIndex: number = 0): void {
     this.selectedImageGallery = images;
@@ -524,8 +632,6 @@ export class Inspections implements OnInit {
     }
   }
 
-  
-
   uploadCheckpointImages(
     block: InspectorInventoryBlock,
     group: InspectionTypeGroupForUI,
@@ -538,15 +644,11 @@ export class Inspections implements OnInit {
 
     const currentUserId = this.auth.currentUser?.userId ?? null;
     if (!currentUserId) {
-      this.snack.open('Session expired. Please sign in again.', 'Dismiss', {
-        duration: 3000
-      });
+      this.snack.open('Session expired. Please sign in again.', 'Dismiss', { duration: 3000 });
       return;
     }
 
-    
     const documentTypeId = 1;
-
     block.saving = true;
 
     const calls = files.map(file =>
@@ -567,44 +669,40 @@ export class Inspections implements OnInit {
         )
     );
 
-    forkJoin(calls).subscribe({
-      next: ids => {
-        const successCount = (ids || []).filter(id => id && id > 0).length;
-        if (successCount) {
-          this.snack.open(
-            `${successCount} image(s) uploaded for "${row.inspectionCheckpointName}".`,
-            'OK',
-            { duration: 3500 }
-          );
-          
-          this.refreshInventoryBlock(block);
-        } else {
-          this.snack.open(
-            'Failed to upload images for this checkpoint.',
-            'Dismiss',
-            { duration: 3500 }
-          );
+    forkJoin(calls)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: ids => {
+          const successCount = (ids || []).filter(id => id && id > 0).length;
+          if (successCount) {
+            this.snack.open(`${successCount} image(s) uploaded for "${row.inspectionCheckpointName}".`, 'OK', {
+              duration: 3500
+            });
+            this.refreshInventoryBlock(block);
+          } else {
+            this.snack.open('Failed to upload images for this checkpoint.', 'Dismiss', { duration: 3500 });
+          }
+        },
+        complete: () => {
+          block.saving = false;
+          if (input) input.value = '';
         }
-      },
-      complete: () => {
-        block.saving = false;
-        if (input) {
-          input.value = '';
-        }
-      }
-    });
+      });
   }
 
   private refreshInventoryBlock(block: InspectorInventoryBlock): void {
     this.inspectionsSvc
       .getByInventory(block.inventory.inventoryId)
-      .pipe(catchError(() => of([] as Inspection[])))
+      .pipe(
+        takeUntil(this.destroy$),
+        catchError(() => of([] as Inspection[]))
+      )
       .subscribe(list => {
         block.groups = this.buildGroupsForInventory(block.inventory, list ?? []);
+        // Re-bind animations for any newly rendered rows
+        this.postDataRenderTasks();
       });
   }
-
-  
 
   removeCheckpointImage(
     row: InspectionCheckpointRow,
@@ -616,16 +714,12 @@ export class Inspections implements OnInit {
 
     const currentUserId = this.auth.currentUser?.userId ?? null;
     if (!currentUserId) {
-      this.snack.open('Session expired. Please sign in again.', 'Dismiss', {
-        duration: 3000
-      });
+      this.snack.open('Session expired. Please sign in again.', 'Dismiss', { duration: 3000 });
       return;
     }
 
     const item = row.imageItems?.[index];
-    if (!item || !item.inspectionId) {
-      return;
-    }
+    if (!item || !item.inspectionId) return;
 
     this.inspectionsSvc
       .activate({
@@ -634,37 +728,26 @@ export class Inspections implements OnInit {
         ModifiedById: currentUserId
       })
       .pipe(
+        takeUntil(this.destroy$),
         catchError(err => {
           console.error('Failed to deactivate inspection image', err);
-          this.snack.open(
-            'Failed to remove image. Please try again.',
-            'Dismiss',
-            { duration: 3000 }
-          );
+          this.snack.open('Failed to remove image. Please try again.', 'Dismiss', { duration: 3000 });
           return of(false);
         })
       )
       .subscribe(success => {
         if (success) {
-          
           row.imageItems = (row.imageItems ?? []).filter((_, i) => i !== index);
           row.imageUrls = (row.imageUrls ?? []).filter((_, i) => i !== index);
-
-          this.snack.open('Image removed from checkpoint.', 'OK', {
-            duration: 2500
-          });
+          this.snack.open('Image removed from checkpoint.', 'OK', { duration: 2500 });
         }
       });
   }
 
-  
-
   saveInventory(block: InspectorInventoryBlock): void {
     const currentUserId = this.auth.currentUser?.userId ?? null;
     if (!currentUserId) {
-      this.snack.open('Session expired. Please sign in again.', 'Dismiss', {
-        duration: 3000
-      });
+      this.snack.open('Session expired. Please sign in again.', 'Dismiss', { duration: 3000 });
       return;
     }
 
@@ -680,20 +763,13 @@ export class Inspections implements OnInit {
       group.checkpoints.forEach(row => {
         const normType = this.normalizeInputType(row.inputType);
 
-        
-        if (normType === 'image') {
-          return;
-        }
+        if (normType === 'image') return;
 
         const trimmed = row.resultValue?.toString().trim() ?? '';
 
-        
-        if (!row.inspectionId && !trimmed) {
-          return;
-        }
+        if (!row.inspectionId && !trimmed) return;
 
         if (row.inspectionId && row.inspectionId > 0) {
-          
           const payload: Inspection = {
             inspectionId: row.inspectionId,
             inspectionTypeId: group.inspectionTypeId,
@@ -710,13 +786,8 @@ export class Inspections implements OnInit {
             modifiedById: currentUserId
           };
 
-          calls.push(
-            this.inspectionsSvc
-              .update(payload)
-              .pipe(catchError(() => of(false)))
-          );
+          calls.push(this.inspectionsSvc.update(payload).pipe(catchError(() => of(false))));
         } else {
-          
           const payload: Inspection = {
             inspectionId: 0,
             inspectionTypeId: group.inspectionTypeId,
@@ -734,24 +805,20 @@ export class Inspections implements OnInit {
           };
 
           calls.push(
-            this.inspectionsSvc
-              .add(payload)
-              .pipe(
-                map(id => {
-                  row.inspectionId = id;
-                  return true;
-                }),
-                catchError(() => of(false))
-              )
+            this.inspectionsSvc.add(payload).pipe(
+              map(id => {
+                row.inspectionId = id;
+                return true;
+              }),
+              catchError(() => of(false))
+            )
           );
         }
       });
     });
 
     if (!calls.length) {
-      this.snack.open('Nothing to save for this inventory.', 'Dismiss', {
-        duration: 2500
-      });
+      this.snack.open('Nothing to save for this inventory.', 'Dismiss', { duration: 2500 });
       return;
     }
 
@@ -759,34 +826,131 @@ export class Inspections implements OnInit {
 
     forkJoin(calls)
       .pipe(
+        takeUntil(this.destroy$),
         catchError(err => {
           console.error('Failed to save inspection', err);
-          this.snack.open(
-            'Failed to save inspection for this inventory.',
-            'Dismiss',
-            { duration: 3000 }
-          );
+          this.snack.open('Failed to save inspection for this inventory.', 'Dismiss', { duration: 3000 });
           return of([]);
+        }),
+        finalize(() => {
+          block.saving = false;
+          // After save (and possible UI changes), ensure new content is revealed
+          this.postDataRenderTasks();
         })
       )
       .subscribe({
         next: results => {
-          const okCount = (results || []).filter(
-            x => x === true || x === 1
-          ).length;
+          const okCount = (results || []).filter(x => x === true || x === 1).length;
           if (okCount) {
-            this.snack.open('Inspection saved successfully!', 'OK', {
-              duration: 2500
-            });
+            this.snack.open('Inspection saved successfully!', 'OK', { duration: 2500 });
           } else {
-            this.snack.open('No changes could be saved.', 'Dismiss', {
-              duration: 3000
-            });
+            this.snack.open('No changes could be saved.', 'Dismiss', { duration: 3000 });
           }
-        },
-        complete: () => {
-          block.saving = false;
         }
       });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Effects (cursor + parallax) with cleanup to avoid duplicates
+  // ---------------------------------------------------------------------------
+
+  private initCursorEffects(): void {
+    if (window.innerWidth < 1024) return;
+
+    // prevent duplicate cursors when navigating back to this route
+    if (document.querySelector('.custom-cursor') || document.querySelector('.custom-cursor-dot')) return;
+
+    const cursor = document.createElement('div');
+    cursor.className = 'custom-cursor';
+    document.body.appendChild(cursor);
+    this.cursorEl = cursor;
+
+    const cursorDot = document.createElement('div');
+    cursorDot.className = 'custom-cursor-dot';
+    document.body.appendChild(cursorDot);
+    this.cursorDotEl = cursorDot;
+
+    let mouseX = 0;
+    let mouseY = 0;
+    let cursorX = 0;
+    let cursorY = 0;
+
+    const onMove = (e: MouseEvent) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      cursorDot.style.left = mouseX + 'px';
+      cursorDot.style.top = mouseY + 'px';
+    };
+
+    document.addEventListener('mousemove', onMove);
+    this.removeFns.push(() => document.removeEventListener('mousemove', onMove));
+
+    const animateCursor = () => {
+      if (!this.cursorEl || !this.cursorDotEl) return; // destroyed
+      const dx = mouseX - cursorX;
+      const dy = mouseY - cursorY;
+      cursorX += dx * 0.15;
+      cursorY += dy * 0.15;
+      cursor.style.left = cursorX + 'px';
+      cursor.style.top = cursorY + 'px';
+      requestAnimationFrame(animateCursor);
+    };
+    animateCursor();
+
+    const bindHoverTargets = () => {
+      const interactiveElements = this.elementRef.nativeElement.querySelectorAll(
+        'button, a, .vehicle-card, .shortcut-card, .gallery-item'
+      );
+
+      interactiveElements.forEach((el: Element) => {
+        const enter = () => {
+          cursor.classList.add('cursor-hover');
+          cursorDot.classList.add('cursor-hover');
+        };
+        const leave = () => {
+          cursor.classList.remove('cursor-hover');
+          cursorDot.classList.remove('cursor-hover');
+        };
+
+        el.addEventListener('mouseenter', enter);
+        el.addEventListener('mouseleave', leave);
+
+        this.removeFns.push(() => el.removeEventListener('mouseenter', enter));
+        this.removeFns.push(() => el.removeEventListener('mouseleave', leave));
+      });
+    };
+
+    // bind now + after data renders (new DOM nodes)
+    bindHoverTargets();
+    this.queueAfterRender(() => bindHoverTargets());
+  }
+
+  private initScrollAnimations(): void {
+    let ticking = false;
+    let scrollPos = 0;
+
+    const onScroll = () => {
+      scrollPos = window.scrollY;
+
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          this.updateParallax(scrollPos);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    this.removeFns.push(() => window.removeEventListener('scroll', onScroll));
+  }
+
+  private updateParallax(scrollPos: number): void {
+    const parallaxElements = this.elementRef.nativeElement.querySelectorAll('.parallax');
+    parallaxElements.forEach((el: HTMLElement) => {
+      const speed = parseFloat(el.dataset['speed'] || '0.5');
+      const yPos = -(scrollPos * speed);
+      el.style.transform = `translateY(${yPos}px)`;
+    });
   }
 }
