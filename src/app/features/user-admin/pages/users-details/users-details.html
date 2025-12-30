@@ -1,145 +1,274 @@
-<div class="page details-theme">
-  <!-- Back -->
-  <button mat-button class="back" (click)="back()">
-    <mat-icon>arrow_back</mat-icon>
-    Back to Users
-  </button>
+<div class="user-details-page">
+  <!-- Back Button -->
+  <div class="page-header reveal-on-scroll">
+    <button mat-button class="back-btn" (click)="back()">
+      <mat-icon>arrow_back</mat-icon>
+      <span>Back to Users</span>
+    </button>
+  </div>
 
-  <!-- Loading -->
+  <!-- Loading State -->
   <ng-container *ngIf="loading">
-    <div class="busy">
-      <mat-spinner diameter="40"></mat-spinner>
-      <span>Loading user…</span>
+    <div class="loading-container">
+      <div class="loading-spinner">
+        <mat-spinner diameter="48"></mat-spinner>
+      </div>
+      <p class="loading-text">Loading user details...</p>
     </div>
   </ng-container>
 
-  <!-- Error -->
+  <!-- Error State -->
   <ng-container *ngIf="!loading && error">
-    <mat-card class="error-card">
-      <mat-card-title>Error</mat-card-title>
-      <mat-card-content>{{ error }}</mat-card-content>
-      <mat-card-actions align="end">
-        <button mat-stroked-button color="primary" (click)="back()">OK</button>
-      </mat-card-actions>
-    </mat-card>
+    <div class="error-container reveal-on-scroll">
+      <div class="error-icon">
+        <mat-icon>error_outline</mat-icon>
+      </div>
+      <h2 class="error-title">Oops! Something went wrong</h2>
+      <p class="error-message">{{ error }}</p>
+      <button mat-flat-button class="error-action" (click)="back()">
+        <mat-icon>arrow_back</mat-icon>
+        Go Back
+      </button>
+    </div>
   </ng-container>
 
-  <!-- Profile -->
+  <!-- User Profile -->
   <ng-container *ngIf="!loading && user">
-    <section class="profile-card mat-elevation-z2">
-      <!-- Hero -->
-      <div class="hero">
-        <div class="hero-left">
-          <div class="avatar">{{ initials }}</div>
-          <div class="title">
-            <h1>
-              {{ user.firstName }}<span *ngIf="user.lastName"> {{ user.lastName }}</span>
-            </h1>
-            <div class="subtitle">@{{ user.userName }}</div>
+    <!-- Hero Section -->
+    <section class="profile-hero reveal-on-scroll">
+      <div class="hero-background">
+        <div class="hero-gradient"></div>
+        <div class="hero-pattern"></div>
+      </div>
 
-            <div class="pills">
-              <span class="pill" [class.ok]="user.active" [class.no]="!user.active">
-                <mat-icon class="pill-icn">{{ user.active ? 'check_circle' : 'pause_circle' }}</mat-icon>
+      <div class="hero-content">
+        <div class="hero-left">
+          <div class="profile-avatar">
+            <span class="avatar-text">{{ initials }}</span>
+            <div class="avatar-ring"></div>
+          </div>
+
+          <div class="profile-info">
+            <h1 class="profile-name">{{ fullName }}</h1>
+            <p class="profile-username">@{{ user.userName }}</p>
+
+            <div class="profile-badges">
+              <span
+                class="status-badge"
+                [class.active]="user.active"
+                [class.inactive]="!user.active"
+              >
+                <mat-icon>{{ user.active ? 'check_circle' : 'pause_circle' }}</mat-icon>
                 {{ user.active ? 'Active' : 'Inactive' }}
               </span>
 
-              <span class="pill" [class.ok]="user.emailConfirmed" [class.no]="!user.emailConfirmed">
-                <mat-icon class="pill-icn">{{ user.emailConfirmed ? 'mark_email_read' : 'mark_email_unread' }}</mat-icon>
-                {{ user.emailConfirmed ? 'Email verified' : 'Email not confirmed' }}
+              <span
+                class="status-badge"
+                [class.verified]="user.emailConfirmed"
+                [class.unverified]="!user.emailConfirmed"
+              >
+                <mat-icon>{{ user.emailConfirmed ? 'verified' : 'pending' }}</mat-icon>
+                {{ user.emailConfirmed ? 'Verified' : 'Unverified' }}
               </span>
 
-              <span class="pill muted">
-                <mat-icon class="pill-icn">fingerprint</mat-icon>
+              <span class="status-badge id-badge">
+                <mat-icon>fingerprint</mat-icon>
                 ID {{ user.userId }}
               </span>
             </div>
           </div>
         </div>
 
-        <ul class="meta">
-          <li>
-            <div class="meta-label">Last login</div>
-            <div class="meta-value">
-              {{ user.loginDate ? (user.loginDate | date:'yyyy-MM-dd HH:mm') : '—' }}
-            </div>
-          </li>
-          <li>
-            <div class="meta-label">Roles</div>
-            <div class="meta-value roles">
-              <ng-container *ngIf="hasRoles; else noRoles">
-                <!-- show whatever you have; roleIds or roleNames -->
-                <span class="role-chip" *ngFor="let rid of roleIds">#{{ rid }}</span>
-              </ng-container>
-              <ng-template #noRoles>—</ng-template>
-            </div>
-          </li>
-        </ul>
-      </div>
-
-      <!-- Sections -->
-      <div class="sections">
-        <div class="section">
-          <h3><mat-icon>contact_mail</mat-icon> Contact</h3>
-          <div class="grid">
-            <div class="item">
-              <div class="label">Email</div>
-              <div class="value">{{ user.email }}</div>
-            </div>
-            <div class="item">
-              <div class="label">Phone</div>
-              <div class="value">{{ user.phoneNumber || '—' }}</div>
-            </div>
-            <div class="item">
-              <div class="label">Address</div>
-              <div class="value">{{ user.address1 || '—' }}</div>
-            </div>
-            <div class="item">
-              <div class="label">Postal code</div>
-              <div class="value">{{ user.postalCode || '—' }}</div>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <mat-icon class="stat-icon">schedule</mat-icon>
+            <div class="stat-content">
+              <div class="stat-label">Last Activity</div>
+              <div class="stat-value">{{ formatLastLogin(user.loginDate) }}</div>
             </div>
           </div>
-        </div>
 
-        <div class="section">
-          <h3><mat-icon>badge</mat-icon> Account</h3>
-          <div class="grid">
-            <div class="item">
-              <div class="label">Identification #</div>
-              <div class="value">{{ user.identificationNumber || '—' }}</div>
-            </div>
-            <div class="item">
-              <div class="label">Security stamp</div>
-              <div class="value">{{ user.securityStamp || '—' }}</div>
-            </div>
-            <div class="item">
-              <div class="label">Code</div>
-              <div class="value">{{ user.code || '—' }}</div>
-            </div>
-            <div class="item">
-              <div class="label">Created</div>
-              <div class="value">{{ user.createdDate ? (user.createdDate | date:'medium') : '—' }}</div>
-            </div>
-            <div class="item">
-              <div class="label">Modified</div>
-              <div class="value">{{ user.modifiedDate ? (user.modifiedDate | date:'medium') : '—' }}</div>
+          <div class="stat-item">
+            <mat-icon class="stat-icon">calendar_today</mat-icon>
+            <div class="stat-content">
+              <div class="stat-label">Account Age</div>
+              <div class="stat-value">{{ getAccountAge() }}</div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Footer / Audit -->
-      <div class="footer">
-        <div class="audit">
-          <div>Created by <strong>{{ user.createdById ?? '—' }}</strong></div>
-          <div>Modified by <strong>{{ user.modifiedById ?? '—' }}</strong></div>
-        </div>
-        <div class="buttons">
-          <button mat-stroked-button color="primary" (click)="back()">
-            <mat-icon>arrow_back</mat-icon>
-            Back
-          </button>
+          <div class="stat-item" *ngIf="hasRoles">
+            <mat-icon class="stat-icon">badge</mat-icon>
+            <div class="stat-content">
+              <div class="stat-label">Roles</div>
+              <div class="stat-value">
+                <span class="role-chip" *ngFor="let rid of roleIds; trackBy: trackByRole">
+                  #{{ rid }}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
+
+    <!-- Details Grid -->
+    <div class="details-grid">
+      <!-- Contact Information -->
+      <section class="detail-card reveal-on-scroll">
+        <div class="card-header">
+          <div class="card-title">
+            <mat-icon>contact_mail</mat-icon>
+            <h2>Contact Information</h2>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="detail-item">
+            <div class="detail-icon">
+              <mat-icon>mail</mat-icon>
+            </div>
+            <div class="detail-content">
+              <div class="detail-label">Email Address</div>
+              <div class="detail-value">{{ user.email || '—' }}</div>
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-icon">
+              <mat-icon>phone</mat-icon>
+            </div>
+            <div class="detail-content">
+              <div class="detail-label">Phone Number</div>
+              <div class="detail-value">{{ user.phoneNumber || '—' }}</div>
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-icon">
+              <mat-icon>location_on</mat-icon>
+            </div>
+            <div class="detail-content">
+              <div class="detail-label">Address</div>
+              <div class="detail-value">{{ user.address1 || '—' }}</div>
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-icon">
+              <mat-icon>markunread_mailbox</mat-icon>
+            </div>
+            <div class="detail-content">
+              <div class="detail-label">Postal Code</div>
+              <div class="detail-value">{{ user.postalCode || '—' }}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Account Details -->
+      <section class="detail-card reveal-on-scroll">
+        <div class="card-header">
+          <div class="card-title">
+            <mat-icon>account_circle</mat-icon>
+            <h2>Account Details</h2>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="detail-item">
+            <div class="detail-icon">
+              <mat-icon>badge</mat-icon>
+            </div>
+            <div class="detail-content">
+              <div class="detail-label">Identification Number</div>
+              <div class="detail-value mono">{{ user.identificationNumber || '—' }}</div>
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-icon">
+              <mat-icon>security</mat-icon>
+            </div>
+            <div class="detail-content">
+              <div class="detail-label">Security Stamp</div>
+              <div class="detail-value mono">{{ user.securityStamp || '—' }}</div>
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-icon">
+              <mat-icon>qr_code</mat-icon>
+            </div>
+            <div class="detail-content">
+              <div class="detail-label">User Code</div>
+              <div class="detail-value mono">{{ user.code || '—' }}</div>
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-icon">
+              <mat-icon>event</mat-icon>
+            </div>
+            <div class="detail-content">
+              <div class="detail-label">Created Date</div>
+              <div class="detail-value">{{ formatDate(user.createdDate) }}</div>
+            </div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-icon">
+              <mat-icon>update</mat-icon>
+            </div>
+            <div class="detail-content">
+              <div class="detail-label">Last Modified</div>
+              <div class="detail-value">{{ formatDate(user.modifiedDate) }}</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Audit Information -->
+      <section class="detail-card audit-card reveal-on-scroll">
+        <div class="card-header">
+          <div class="card-title">
+            <mat-icon>history</mat-icon>
+            <h2>Audit Trail</h2>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="audit-grid">
+            <div class="audit-item">
+              <mat-icon class="audit-icon">person_add</mat-icon>
+              <div class="audit-content">
+                <div class="audit-label">Created By</div>
+                <div class="audit-value">User ID {{ user.createdById || '—' }}</div>
+              </div>
+            </div>
+
+            <div class="audit-item">
+              <mat-icon class="audit-icon">edit</mat-icon>
+              <div class="audit-content">
+                <div class="audit-label">Modified By</div>
+                <div class="audit-value">User ID {{ user.modifiedById || '—' }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Action Footer -->
+    <div class="action-footer reveal-on-scroll">
+      <button mat-stroked-button class="footer-btn secondary" (click)="back()">
+        <mat-icon>arrow_back</mat-icon>
+        <span>Back to List</span>
+      </button>
+
+      <button mat-flat-button class="footer-btn primary" (click)="editUser()">
+        <mat-icon>edit</mat-icon>
+        <span>Edit User</span>
+      </button>
+    </div>
   </ng-container>
 </div>

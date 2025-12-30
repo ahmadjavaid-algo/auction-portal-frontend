@@ -1,6 +1,6 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -8,11 +8,14 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { User } from '../../../../models/user.model';
 import { Role } from '../../../../models/role.model';
 import { RolesService } from '../../../../services/roles.service';
 import { AuthService } from '../../../../services/auth';
+import { MatTooltip } from '@angular/material/tooltip';
 
 type Mode = 'create' | 'edit';
 
@@ -32,17 +35,23 @@ export type UserFormResult =
     MatButtonModule,
     MatCardModule,
     MatSlideToggleModule,
-    MatDialogModule
+    MatDialogModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatTooltip
   ],
   templateUrl: './users-form.html',
   styleUrls: ['./users-form.scss']
 })
-export class UsersForm implements OnInit {
+export class UsersForm implements OnInit, AfterViewInit {
   form!: FormGroup;
   mode: Mode;
 
   roles: Role[] = [];
   rolesLoading = false;
+  
+  // Password visibility toggle
+  passwordVisible = false;
 
   constructor(
     private fb: FormBuilder,
@@ -57,27 +66,23 @@ export class UsersForm implements OnInit {
   ngOnInit(): void {
     this.form = this.fb.group({
       userId: [0],
-      userName: ['', [Validators.required, Validators.maxLength(100)]],
+      userName: ['', [Validators.required, Validators.maxLength(100), this.noWhitespaceValidator]],
       firstName: ['', [Validators.required, Validators.maxLength(100)]],
-      lastName: [''],
+      lastName: ['', [Validators.maxLength(100)]],
 
-      identificationNumber: [''],
-      address1: [''],
-      postalCode: [''],
+      identificationNumber: ['', [Validators.maxLength(50)]],
+      address1: ['', [Validators.maxLength(200)]],
+      postalCode: ['', [Validators.maxLength(20)]],
 
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', [Validators.required, Validators.email, Validators.maxLength(200)]],
       emailConfirmed: [false],
-      phoneNumber: [''],
+      phoneNumber: ['', [Validators.maxLength(20)]],
 
-    
       roleIds: [[] as number[]],
-
-    
       passwordHash: [''],
       active: [true]
     });
 
-   
     if (this.mode === 'edit' && this.data.initialData) {
       const u = this.data.initialData;
       this.form.patchValue({
@@ -90,18 +95,39 @@ export class UsersForm implements OnInit {
         postalCode: u.postalCode ?? '',
         email: u.email,
         emailConfirmed: u.emailConfirmed ?? false,
-        phoneNumber: u.phoneNumber ?? ''
+        phoneNumber: u.phoneNumber ?? '',
+        active: u.active ?? true
       });
 
-     
       const fromServer: number[] = Array.isArray(u.roleId) ? u.roleId : [];
       this.form.patchValue({ roleIds: fromServer }, { emitEvent: false });
     } else {
-      this.form.get('passwordHash')?.setValidators([Validators.required, Validators.minLength(6)]);
+      this.form.get('passwordHash')?.setValidators([
+        Validators.required,
+        Validators.minLength(6),
+        Validators.maxLength(100)
+      ]);
       this.form.get('passwordHash')?.updateValueAndValidity();
     }
 
     this.loadRoles();
+  }
+
+  ngAfterViewInit(): void {
+    // Add staggered reveal animation to form fields
+    setTimeout(() => {
+      const fields = document.querySelectorAll('.form-field');
+      fields.forEach((field, index) => {
+        (field as HTMLElement).style.animationDelay = `${index * 0.05}s`;
+        field.classList.add('field-reveal');
+      });
+    }, 100);
+  }
+
+  private noWhitespaceValidator(control: AbstractControl): { [key: string]: any } | null {
+    const isWhitespace = (control.value || '').trim().length === 0;
+    const isValid = !isWhitespace;
+    return isValid ? null : { whitespace: true };
   }
 
   private loadRoles(): void {
@@ -115,14 +141,24 @@ export class UsersForm implements OnInit {
         if (validSelection.length !== selected.length) {
           this.form.patchValue({ roleIds: validSelection }, { emitEvent: false });
         }
+        this.rolesLoading = false;
       },
-      error: () => { this.roles = []; },
-      complete: () => { this.rolesLoading = false; }
+      error: () => {
+        this.roles = [];
+        this.rolesLoading = false;
+      }
     });
   }
 
+  togglePasswordVisibility(): void {
+    this.passwordVisible = !this.passwordVisible;
+  }
+
   onSubmit(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
 
     const v = this.form.getRawValue();
     const currentUserId = this.auth.currentUser?.userId ?? null;
@@ -138,13 +174,13 @@ export class UsersForm implements OnInit {
       postalCode: v.postalCode?.trim() || null,
       email: v.email?.trim(),
       emailConfirmed: !!v.emailConfirmed,
-      passwordHash: v.passwordHash || null,   
+      passwordHash: v.passwordHash || null,
       securityStamp: null,
       phoneNumber: v.phoneNumber?.trim() || null,
       loginDate: null,
       code: null,
+      active: !!v.active,
 
-      
       roleId: selectedRoleIds,
 
       createdById: this.mode === 'create' ? currentUserId : null,
@@ -153,7 +189,6 @@ export class UsersForm implements OnInit {
       modifiedDate: null
     };
 
-    
     if (this.mode === 'edit' && !payload.passwordHash) {
       delete (payload as any).passwordHash;
     }
@@ -167,5 +202,32 @@ export class UsersForm implements OnInit {
 
   onCancel(): void {
     this.dialogRef.close();
+  }
+
+  get dialogTitle(): string {
+    return this.mode === 'edit' ? 'Edit User' : 'Create New User';
+  }
+
+  get submitButtonText(): string {
+    return this.mode === 'edit' ? 'Update User' : 'Create User';
+  }
+
+  getErrorMessage(fieldName: string): string {
+    const control = this.form.get(fieldName);
+    if (!control || !control.errors || !control.touched) return '';
+
+    if (control.hasError('required')) return 'This field is required';
+    if (control.hasError('email')) return 'Please enter a valid email address';
+    if (control.hasError('minlength')) {
+      const minLength = control.errors['minlength'].requiredLength;
+      return `Must be at least ${minLength} characters`;
+    }
+    if (control.hasError('maxlength')) {
+      const maxLength = control.errors['maxlength'].requiredLength;
+      return `Must not exceed ${maxLength} characters`;
+    }
+    if (control.hasError('whitespace')) return 'Cannot be only whitespace';
+
+    return 'Invalid value';
   }
 }

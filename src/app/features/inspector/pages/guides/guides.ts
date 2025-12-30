@@ -1,4 +1,4 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, ElementRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 
@@ -9,27 +9,67 @@ import { MatIconModule } from '@angular/material/icon';
   templateUrl: './guides.html',
   styleUrl: './guides.scss'
 })
-export class Guides {
+export class Guides implements OnInit, AfterViewInit, OnDestroy {
+  private elementRef = inject(ElementRef);
 
-  
-  activeSection: string = 'intro';
+  private io?: IntersectionObserver;
+  private observedEls = new WeakSet<Element>();
 
-  @HostListener('window:scroll', [])
-  onScroll() {
-    const sections = document.querySelectorAll('[data-section]');
-    let current = 'intro';
-
-    sections.forEach((sec: any) => {
-      const top = sec.offsetTop - 120;
-      if (window.scrollY >= top) {
-        current = sec.getAttribute('data-section');
-      }
-    });
-
-    this.activeSection = current;
+  ngOnInit(): void {
+    // Component initialization
   }
 
-  scrollTo(id: string) {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  ngAfterViewInit(): void {
+    this.initScrollAnimations();
+    this.observeAnimatedElements();
+  }
+
+  ngOnDestroy(): void {
+    try {
+      this.io?.disconnect();
+    } catch {}
+  }
+
+  private initScrollAnimations(): void {
+    this.io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in-view');
+            // Keep observing for potential scroll-out effects
+            // Or unobserve if you want one-time animation
+            try {
+              this.io?.unobserve(entry.target);
+            } catch {}
+          }
+        });
+      },
+      {
+        threshold: 0.15,
+        rootMargin: '0px 0px -80px 0px'
+      }
+    );
+  }
+
+  private observeAnimatedElements(): void {
+    if (!this.io) return;
+
+    const root: HTMLElement = this.elementRef.nativeElement as HTMLElement;
+    const elements = root.querySelectorAll('.animate-on-scroll');
+
+    elements.forEach((el: Element) => {
+      if (this.observedEls.has(el)) return;
+      this.observedEls.add(el);
+      try {
+        this.io!.observe(el);
+      } catch {}
+    });
+  }
+
+  scrollTo(id: string): void {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 }

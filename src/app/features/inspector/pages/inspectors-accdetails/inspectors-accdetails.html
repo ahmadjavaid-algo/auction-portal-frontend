@@ -1,65 +1,67 @@
-<!-- Loader -->
-<div class="loader" *ngIf="loading">
-  <mat-progress-spinner diameter="50" mode="indeterminate"></mat-progress-spinner>
-</div>
-
-<!-- Error -->
-<div class="err-box" *ngIf="!loading && error">
-  <mat-icon>error_outline</mat-icon>
-  <span>{{ error }}</span>
-  <button mat-raised-button color="primary" (click)="refresh()">Retry</button>
-</div>
-
-<!-- PROFILE PAGE -->
-<div class="profile-wrapper" *ngIf="!loading && !error && user">
-
-  <!-- Page header -->
-  <div class="page-header">
-    <h1>Profile</h1>
-    <button mat-stroked-button class="back-btn" (click)="back()">
-      <mat-icon>arrow_back</mat-icon>
-      Dashboard
-    </button>
+<!-- Loading State -->
+<div class="loading-state" *ngIf="loading">
+  <div class="loading-container">
+    <mat-progress-spinner diameter="64" color="primary"></mat-progress-spinner>
+    <h3>Loading Profile</h3>
+    <p>Preparing your account details...</p>
   </div>
+</div>
 
-  <!-- HERO CARD -->
-  <section class="hero-card">
-    <div class="hero-left">
+<!-- Error State -->
+<div class="error-state" *ngIf="!loading && error">
+  <div class="error-icon">
+    <mat-icon>error_outline</mat-icon>
+  </div>
+  <div class="error-content">
+    <h3>Unable to Load Profile</h3>
+    <p>{{ error }}</p>
+    <button mat-flat-button color="primary" (click)="refresh()">Retry</button>
+  </div>
+</div>
 
-      <!-- Animated avatar orbit -->
-      <div class="avatar-orbit">
-        <div class="orbit-ring"></div>
+<!-- Profile Page -->
+<div class="profile-page" *ngIf="!loading && !error && user">
+
+
+  <!-- Hero Card -->
+  <section class="hero-card animate-on-scroll" style="animation-delay: 100ms">
+    <div class="hero-content">
+
+      <!-- Animated Avatar -->
+      <div class="avatar-wrapper">
+        <div class="avatar-ring"></div>
         <div class="avatar-circle">
           <span>{{ initials }}</span>
         </div>
       </div>
 
-      <div class="hero-info">
+      <!-- User Info -->
+      <div class="user-info">
         <h2>{{ user.firstName }} {{ user.lastName }}</h2>
         <p class="email">{{ user.email }}</p>
 
-        <div class="tags">
-          <span class="tag role">Inspector</span>
-          <span class="tag verified" *ngIf="user.emailConfirmed">
+        <div class="badges">
+          <span class="badge role">Inspector</span>
+          <span class="badge verified" *ngIf="user.emailConfirmed">
             <mat-icon>verified</mat-icon>
-            Verified
+            <span>Verified</span>
           </span>
         </div>
 
         <div class="actions">
-          <button class="act-btn" (click)="changePassword()">
+          <button mat-stroked-button class="action-btn" (click)="changePassword()">
             <mat-icon>lock_reset</mat-icon>
-            Change Password
+            <span>Change Password</span>
           </button>
 
-          <button class="act-btn" (click)="refresh()">
+          <button mat-stroked-button class="action-btn" (click)="refresh()">
             <mat-icon>refresh</mat-icon>
-            Refresh
+            <span>Refresh</span>
           </button>
 
-          <button class="act-btn danger" (click)="logout()">
+          <button mat-stroked-button class="action-btn danger" (click)="logout()">
             <mat-icon>logout</mat-icon>
-            Logout
+            <span>Logout</span>
           </button>
         </div>
       </div>
@@ -67,136 +69,174 @@
     </div>
   </section>
 
-  <!-- TABS -->
-  <nav class="tabs">
+  <!-- Tabs Navigation -->
+  <nav class="tabs-nav animate-on-scroll" style="animation-delay: 200ms">
     <button
       type="button"
+      class="tab-btn"
       [class.active]="activeTab === 'overview'"
       (click)="setTab('overview')"
     >
       <mat-icon>dashboard</mat-icon>
-      Overview
+      <span>Overview</span>
     </button>
 
     <button
       type="button"
+      class="tab-btn"
       [class.active]="activeTab === 'activity'"
       (click)="setTab('activity')"
     >
       <mat-icon>timeline</mat-icon>
-      Activity
+      <span>Activity</span>
     </button>
 
     <button
       type="button"
+      class="tab-btn"
       [class.active]="activeTab === 'security'"
       (click)="setTab('security')"
     >
       <mat-icon>shield</mat-icon>
-      Security
+      <span>Security</span>
     </button>
   </nav>
 
-  <!-- TAB PANELS -->
-  <section class="tab-panels">
+  <!-- Tab Content -->
+  <div class="tab-content">
 
-    <!-- OVERVIEW TAB -->
-    <section class="tab-section" *ngIf="activeTab === 'overview'">
+    <!-- Overview Tab -->
+    <section class="tab-panel" *ngIf="activeTab === 'overview'">
 
-      <!-- Stats row -->
-      <section class="stats-row">
-        <div class="stat-box">
-          <mat-icon>badge</mat-icon>
-          <label>User ID</label>
-          <p>{{ user.userId }}</p>
+      <!-- Stats Grid -->
+      <div class="stats-grid">
+        <div class="stat-card animate-on-scroll" style="animation-delay: 300ms">
+          <div class="stat-icon">
+            <mat-icon>badge</mat-icon>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">User ID</span>
+            <span class="stat-value">{{ user.userId }}</span>
+          </div>
         </div>
 
-        <div class="stat-box">
-          <mat-icon>event</mat-icon>
-          <label>Joined</label>
-          <p>{{ user.createdDate | date: 'mediumDate' }}</p>
+        <div class="stat-card animate-on-scroll" style="animation-delay: 350ms">
+          <div class="stat-icon">
+            <mat-icon>event</mat-icon>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">Joined</span>
+            <span class="stat-value">{{ user.createdDate | date: 'mediumDate' }}</span>
+          </div>
         </div>
 
-        <div class="stat-box">
-          <mat-icon>login</mat-icon>
-          <label>Last Login</label>
-          <p>{{ user.loginDate | date: 'medium' }}</p>
+        <div class="stat-card animate-on-scroll" style="animation-delay: 400ms">
+          <div class="stat-icon">
+            <mat-icon>login</mat-icon>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">Last Login</span>
+            <span class="stat-value">{{ user.loginDate | date: 'short' }}</span>
+          </div>
         </div>
 
-        <div class="stat-box">
-          <mat-icon>check_circle</mat-icon>
-          <label>Status</label>
-          <p>{{ user.active ? 'Active' : 'Inactive' }}</p>
+        <div class="stat-card animate-on-scroll" style="animation-delay: 450ms">
+          <div class="stat-icon" [class.active]="user.active">
+            <mat-icon>{{ user.active ? 'check_circle' : 'cancel' }}</mat-icon>
+          </div>
+          <div class="stat-content">
+            <span class="stat-label">Status</span>
+            <span class="stat-value">{{ user.active ? 'Active' : 'Inactive' }}</span>
+          </div>
         </div>
-      </section>
+      </div>
 
-      <!-- Detail cards -->
-      <section class="detail-grid">
-        <mat-card class="detail-card">
-          <h2>Personal Details</h2>
+      <!-- Details Grid -->
+      <div class="details-grid">
+        <div class="detail-card animate-on-scroll" style="animation-delay: 500ms">
+          <div class="card-header">
+            <mat-icon>person</mat-icon>
+            <h3>Personal Details</h3>
+          </div>
 
-          <div class="row">
-            <span>Name</span>
-            <strong>{{ user.firstName }} {{ user.lastName }}</strong>
+          <div class="detail-row">
+            <span class="label">Name</span>
+            <span class="value">{{ user.firstName }} {{ user.lastName }}</span>
           </div>
-          <div class="row">
-            <span>Email</span>
-            <strong>{{ user.email }}</strong>
+          <div class="detail-row">
+            <span class="label">Email</span>
+            <span class="value">{{ user.email }}</span>
           </div>
-          <div class="row">
-            <span>Phone</span>
-            <strong>{{ user.phoneNumber || '—' }}</strong>
+          <div class="detail-row">
+            <span class="label">Phone</span>
+            <span class="value">{{ user.phoneNumber || '—' }}</span>
           </div>
-          <div class="row">
-            <span>Address</span>
-            <strong>{{ user.address1 || '—' }}</strong>
+          <div class="detail-row">
+            <span class="label">Address</span>
+            <span class="value">{{ user.address1 || '—' }}</span>
           </div>
-        </mat-card>
+        </div>
 
-        <mat-card class="detail-card">
-          <h2>Account Details</h2>
+        <div class="detail-card animate-on-scroll" style="animation-delay: 550ms">
+          <div class="card-header">
+            <mat-icon>account_box</mat-icon>
+            <h3>Account Details</h3>
+          </div>
 
-          <div class="row">
-            <span>Username</span>
-            <strong>{{ user.userName }}</strong>
+          <div class="detail-row">
+            <span class="label">Username</span>
+            <span class="value">{{ user.userName }}</span>
           </div>
-          <div class="row">
-            <span>Verified</span>
-            <strong>{{ user.emailConfirmed ? 'Yes' : 'No' }}</strong>
+          <div class="detail-row">
+            <span class="label">Verified</span>
+            <span class="value" [class.verified]="user.emailConfirmed">
+              {{ user.emailConfirmed ? 'Yes' : 'No' }}
+            </span>
           </div>
-          <div class="row">
-            <span>ID #</span>
-            <strong>{{ user.identificationNumber || '—' }}</strong>
+          <div class="detail-row">
+            <span class="label">ID Number</span>
+            <span class="value">{{ user.identificationNumber || '—' }}</span>
           </div>
-          <div class="row">
-            <span>Security Stamp</span>
-            <strong>{{ user.securityStamp }}</strong>
+          <div class="detail-row">
+            <span class="label">Security Stamp</span>
+            <span class="value stamp">{{ user.securityStamp }}</span>
           </div>
-        </mat-card>
-      </section>
+        </div>
+      </div>
     </section>
 
-    <!-- ACTIVITY TAB -->
-    <section class="tab-section" *ngIf="activeTab === 'activity'">
-      <div class="timeline-card">
-        <h2>Recent Activity</h2>
-        <p class="timeline-sub">
-          A quick snapshot of important events on your inspector account.
-        </p>
+    <!-- Activity Tab -->
+    <section class="tab-panel" *ngIf="activeTab === 'activity'">
+      <div class="activity-card animate-on-scroll" style="animation-delay: 300ms">
+        <div class="card-header">
+          <mat-icon>timeline</mat-icon>
+          <div>
+            <h3>Recent Activity</h3>
+            <p>Important events on your inspector account</p>
+          </div>
+        </div>
 
-        <ul class="timeline">
-          <li *ngFor="let item of activity">
-            <div class="timeline-dot" [class.success]="item.kind === 'success'"
-                                     [class.info]="item.kind === 'info'"
-                                     [class.warn]="item.kind === 'warn'"></div>
+        <div class="timeline">
+          <div
+            class="timeline-item"
+            *ngFor="let item of activity; let i = index"
+            [class.animate-on-scroll]="true"
+            [style.animation-delay]="(350 + i * 50) + 'ms'"
+          >
+            <div
+              class="timeline-dot"
+              [class.success]="item.kind === 'success'"
+              [class.info]="item.kind === 'info'"
+              [class.warn]="item.kind === 'warn'"
+            ></div>
 
             <div class="timeline-line"></div>
 
             <div class="timeline-content">
               <div class="timeline-header">
-                <span class="label">{{ item.label }}</span>
+                <span class="title">{{ item.label }}</span>
                 <span
-                  class="badge"
+                  class="timeline-badge"
                   *ngIf="item.badge"
                   [class.success]="item.kind === 'success'"
                   [class.info]="item.kind === 'info'"
@@ -205,57 +245,70 @@
                   {{ item.badge }}
                 </span>
               </div>
-              <p class="meta">{{ item.meta }}</p>
+              <p class="description">{{ item.meta }}</p>
             </div>
-          </li>
-        </ul>
+          </div>
+        </div>
       </div>
     </section>
 
-    <!-- SECURITY TAB -->
-    <section class="tab-section" *ngIf="activeTab === 'security'">
+    <!-- Security Tab -->
+    <section class="tab-panel" *ngIf="activeTab === 'security'">
       <div class="security-grid">
 
-        <mat-card class="security-card">
-          <h2>Password & Login</h2>
-          <p class="desc">
+        <div class="security-card animate-on-scroll" style="animation-delay: 300ms">
+          <div class="card-header">
+            <mat-icon>lock</mat-icon>
+            <h3>Password & Login</h3>
+          </div>
+
+          <p class="description">
             Change your password regularly and avoid reusing passwords across different platforms.
           </p>
 
-          <div class="sec-row">
-            <span>Last login</span>
-            <strong>{{ user.loginDate | date:'medium' }}</strong>
+          <div class="info-row">
+            <span class="label">Last login</span>
+            <span class="value">{{ user.loginDate | date:'medium' }}</span>
           </div>
 
-          <button mat-raised-button color="primary" (click)="changePassword()">
+          <button mat-flat-button color="primary" (click)="changePassword()">
             <mat-icon>lock_reset</mat-icon>
-            Change Password
+            <span>Change Password</span>
           </button>
-        </mat-card>
+        </div>
 
-        <mat-card class="security-card">
-          <h2>Account Safety</h2>
-          <p class="desc">
-            Email verification helps us keep your account safe and send important inspection updates.
+        <div class="security-card animate-on-scroll" style="animation-delay: 350ms">
+          <div class="card-header">
+            <mat-icon>shield</mat-icon>
+            <h3>Account Safety</h3>
+          </div>
+
+          <p class="description">
+            Email verification helps keep your account safe and send important inspection updates.
           </p>
 
-          <div class="sec-row">
-            <span>Email verified</span>
-            <strong>{{ user.emailConfirmed ? 'Yes' : 'No' }}</strong>
+          <div class="info-row">
+            <span class="label">Email verified</span>
+            <span class="value" [class.verified]="user.emailConfirmed">
+              {{ user.emailConfirmed ? 'Yes' : 'No' }}
+            </span>
           </div>
 
-          <div class="sec-row">
-            <span>Status</span>
-            <strong>{{ user.active ? 'Active' : 'Inactive' }}</strong>
+          <div class="info-row">
+            <span class="label">Account status</span>
+            <span class="value" [class.active]="user.active">
+              {{ user.active ? 'Active' : 'Inactive' }}
+            </span>
           </div>
 
-          <div class="sec-hint">
-            Keep your login details private and log out after finishing inspections on shared systems.
+          <div class="security-hint">
+            <mat-icon>info</mat-icon>
+            <span>Keep your login details private and log out after finishing inspections on shared systems.</span>
           </div>
-        </mat-card>
+        </div>
 
       </div>
     </section>
 
-  </section>
+  </div>
 </div>

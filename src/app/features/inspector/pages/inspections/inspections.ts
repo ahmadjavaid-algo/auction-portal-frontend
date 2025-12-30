@@ -122,25 +122,19 @@ export class Inspections implements OnInit, AfterViewInit, OnDestroy {
   private targetInventoryId: number | null = null;
   private hasScrolledToTarget = false;
 
-  // Scroll-reveal (IntersectionObserver) must re-bind after async render
   private io?: IntersectionObserver;
   private observedEls = new WeakSet<Element>();
 
-  // Effects cleanup
   private destroy$ = new Subject<void>();
   private removeFns: Array<() => void> = [];
-  private cursorEl?: HTMLElement;
-  private cursorDotEl?: HTMLElement;
 
   ngOnInit(): void {
-    // react to query params
     this.route.queryParamMap
       .pipe(takeUntil(this.destroy$))
       .subscribe(params => {
         const id = params.get('inventoryId');
         this.targetInventoryId = id ? +id : null;
 
-        // if already loaded, attempt scroll after render
         if (!this.loading && this.blocks.length && this.targetInventoryId) {
           this.queueAfterRender(() => this.scrollToTargetInventory());
         }
@@ -150,43 +144,25 @@ export class Inspections implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    // Create observer ONCE and keep it for the component lifetime
     this.ensureIntersectionObserver();
-    // Might be empty on first call (loading), but harmless
     this.observeAnimatedElements();
-
-    // Effects
-    this.initCursorEffects();
-    this.initScrollAnimations();
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
 
-    // Disconnect IntersectionObserver
     try {
       this.io?.disconnect();
     } catch {}
 
-    // Remove event listeners
     this.removeFns.forEach(fn => {
       try {
         fn();
       } catch {}
     });
     this.removeFns = [];
-
-    // Remove custom cursor nodes (avoid duplicates on route nav)
-    if (this.cursorEl?.parentNode) this.cursorEl.parentNode.removeChild(this.cursorEl);
-    if (this.cursorDotEl?.parentNode) this.cursorDotEl.parentNode.removeChild(this.cursorDotEl);
-    this.cursorEl = undefined;
-    this.cursorDotEl = undefined;
   }
-
-  // ---------------------------------------------------------------------------
-  // FIX: bind scroll-reveal to elements AFTER async blocks render
-  // ---------------------------------------------------------------------------
 
   private ensureIntersectionObserver(): void {
     if (this.io) return;
@@ -196,7 +172,6 @@ export class Inspections implements OnInit, AfterViewInit, OnDestroy {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add('in-view');
-            // once revealed, no need to keep observing
             try {
               this.io?.unobserve(entry.target);
             } catch {}
@@ -226,8 +201,6 @@ export class Inspections implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private queueAfterRender(fn: () => void): void {
-    // Ensure Angular has applied bindings and painted DOM nodes
-    // This is the key to preventing "reload twice" when content is async.
     this.ngZone.onStable
       .pipe(take(1), takeUntil(this.destroy$))
       .subscribe(() => {
@@ -238,21 +211,13 @@ export class Inspections implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private postDataRenderTasks(): void {
-    // Force the view to update immediately, then run after it stabilizes
     this.cdr.detectChanges();
     this.queueAfterRender(() => {
-      // Re-bind observer to newly created elements
       this.ensureIntersectionObserver();
       this.observeAnimatedElements();
-
-      // Scroll to target (if any) after DOM is real
       this.scrollToTargetInventory();
     });
   }
-
-  // ---------------------------------------------------------------------------
-  // Data loading
-  // ---------------------------------------------------------------------------
 
   loadData(): void {
     this.loading = true;
@@ -331,7 +296,6 @@ export class Inspections implements OnInit, AfterViewInit, OnDestroy {
         }),
         finalize(() => {
           this.loading = false;
-          // IMPORTANT: run reveal + scroll only after the async DOM exists
           this.postDataRenderTasks();
         })
       )
@@ -507,7 +471,6 @@ export class Inspections implements OnInit, AfterViewInit, OnDestroy {
     block.expanded = !block.expanded;
 
     if (block.expanded) {
-      // wait for expand DOM to render, then ensure reveal + scroll works
       this.cdr.detectChanges();
       this.queueAfterRender(() => {
         this.observeAnimatedElements();
@@ -517,7 +480,6 @@ export class Inspections implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  // FIX: correct normalization (you had yes/no UI but never returned 'yesno')
   normalizeInputType(inputType?: string | null): NormalizedInputType {
     const v = (inputType || '').toLowerCase().trim();
 
@@ -582,11 +544,11 @@ export class Inspections implements OnInit, AfterViewInit, OnDestroy {
   getStatusColor(status: string): string {
     switch (status) {
       case 'Completed':
-        return '#10b981';
+        return '#27ae60';
       case 'In Progress':
-        return '#f59e0b';
+        return '#f39c12';
       default:
-        return '#64748b';
+        return '#95a5a6';
     }
   }
 
@@ -699,7 +661,6 @@ export class Inspections implements OnInit, AfterViewInit, OnDestroy {
       )
       .subscribe(list => {
         block.groups = this.buildGroupsForInventory(block.inventory, list ?? []);
-        // Re-bind animations for any newly rendered rows
         this.postDataRenderTasks();
       });
   }
@@ -834,7 +795,6 @@ export class Inspections implements OnInit, AfterViewInit, OnDestroy {
         }),
         finalize(() => {
           block.saving = false;
-          // After save (and possible UI changes), ensure new content is revealed
           this.postDataRenderTasks();
         })
       )
@@ -848,109 +808,5 @@ export class Inspections implements OnInit, AfterViewInit, OnDestroy {
           }
         }
       });
-  }
-
-  // ---------------------------------------------------------------------------
-  // Effects (cursor + parallax) with cleanup to avoid duplicates
-  // ---------------------------------------------------------------------------
-
-  private initCursorEffects(): void {
-    if (window.innerWidth < 1024) return;
-
-    // prevent duplicate cursors when navigating back to this route
-    if (document.querySelector('.custom-cursor') || document.querySelector('.custom-cursor-dot')) return;
-
-    const cursor = document.createElement('div');
-    cursor.className = 'custom-cursor';
-    document.body.appendChild(cursor);
-    this.cursorEl = cursor;
-
-    const cursorDot = document.createElement('div');
-    cursorDot.className = 'custom-cursor-dot';
-    document.body.appendChild(cursorDot);
-    this.cursorDotEl = cursorDot;
-
-    let mouseX = 0;
-    let mouseY = 0;
-    let cursorX = 0;
-    let cursorY = 0;
-
-    const onMove = (e: MouseEvent) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      cursorDot.style.left = mouseX + 'px';
-      cursorDot.style.top = mouseY + 'px';
-    };
-
-    document.addEventListener('mousemove', onMove);
-    this.removeFns.push(() => document.removeEventListener('mousemove', onMove));
-
-    const animateCursor = () => {
-      if (!this.cursorEl || !this.cursorDotEl) return; // destroyed
-      const dx = mouseX - cursorX;
-      const dy = mouseY - cursorY;
-      cursorX += dx * 0.15;
-      cursorY += dy * 0.15;
-      cursor.style.left = cursorX + 'px';
-      cursor.style.top = cursorY + 'px';
-      requestAnimationFrame(animateCursor);
-    };
-    animateCursor();
-
-    const bindHoverTargets = () => {
-      const interactiveElements = this.elementRef.nativeElement.querySelectorAll(
-        'button, a, .vehicle-card, .shortcut-card, .gallery-item'
-      );
-
-      interactiveElements.forEach((el: Element) => {
-        const enter = () => {
-          cursor.classList.add('cursor-hover');
-          cursorDot.classList.add('cursor-hover');
-        };
-        const leave = () => {
-          cursor.classList.remove('cursor-hover');
-          cursorDot.classList.remove('cursor-hover');
-        };
-
-        el.addEventListener('mouseenter', enter);
-        el.addEventListener('mouseleave', leave);
-
-        this.removeFns.push(() => el.removeEventListener('mouseenter', enter));
-        this.removeFns.push(() => el.removeEventListener('mouseleave', leave));
-      });
-    };
-
-    // bind now + after data renders (new DOM nodes)
-    bindHoverTargets();
-    this.queueAfterRender(() => bindHoverTargets());
-  }
-
-  private initScrollAnimations(): void {
-    let ticking = false;
-    let scrollPos = 0;
-
-    const onScroll = () => {
-      scrollPos = window.scrollY;
-
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          this.updateParallax(scrollPos);
-          ticking = false;
-        });
-        ticking = true;
-      }
-    };
-
-    window.addEventListener('scroll', onScroll, { passive: true });
-    this.removeFns.push(() => window.removeEventListener('scroll', onScroll));
-  }
-
-  private updateParallax(scrollPos: number): void {
-    const parallaxElements = this.elementRef.nativeElement.querySelectorAll('.parallax');
-    parallaxElements.forEach((el: HTMLElement) => {
-      const speed = parseFloat(el.dataset['speed'] || '0.5');
-      const yPos = -(scrollPos * speed);
-      el.style.transform = `translateY(${yPos}px)`;
-    });
   }
 }

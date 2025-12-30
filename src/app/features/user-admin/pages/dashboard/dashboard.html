@@ -1,390 +1,417 @@
-<div class="dashboard-page">
-  <!-- Hero -->
-  <section class="hero">
-    <div class="hero-left">
-      <div class="wave">
-        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
-      </div>
-      <div class="title">
-        <h1>Welcome back, {{ adminName }}</h1>
-        <p class="sub">
-          Your car auctions at a glance — live traffic, bids and verifications.
+<div class="dashboard-container">
+  <!-- Hero Section -->
+  <section class="hero-banner reveal-on-scroll">
+    <div class="hero-background">
+      <div class="hero-gradient"></div>
+      <div class="hero-pattern"></div>
+    </div>
+    
+    <div class="hero-content">
+      <div class="hero-text">
+        <div class="hero-greeting">
+          <span class="greeting-label">Welcome back,</span>
+          <h1 class="admin-name">{{ adminName }}</h1>
+        </div>
+        <p class="hero-description">
+          Your luxury auction command center — Real-time insights and performance metrics at a glance
         </p>
-      </div>
-    </div>
-
-    <div class="hero-actions">
-      <button
-        mat-stroked-button
-        class="ghost"
-        matTooltip="Schedule a new auction"
-      >
-        <mat-icon>calendar_month</mat-icon>
-        Schedule Auction
-      </button>
-      <button
-        mat-flat-button
-        class="cta"
-        matTooltip="List a new vehicle"
-      >
-        <mat-icon>add_circle</mat-icon>
-        Add Vehicle
-      </button>
-    </div>
-  </section>
-
-  <!-- KPI Tiles -->
-  <section class="stats-grid">
-    <div
-      class="stat-card"
-      *ngFor="let s of stats; let i = index"
-      [style.--i]="i"
-    >
-      <div class="icon-wrap"><mat-icon>{{ s.icon }}</mat-icon></div>
-      <div class="meta">
-        <div class="value">
-          <span class="count-up" [attr.data-value]="s.value || 0">
-            {{ s.value || 0 }}
+        <div class="hero-meta">
+          <span class="meta-item">
+            <mat-icon>schedule</mat-icon>
+            Live Data
+          </span>
+          <span class="meta-separator">·</span>
+          <span class="meta-item">
+            <mat-icon>verified</mat-icon>
+            {{ liveAuctionCount }} Active Auctions
+          </span>
+          <span class="meta-separator">·</span>
+          <span class="meta-item">
+            <mat-icon>trending_up</mat-icon>
+            {{ bidsToday }} Bids Today
           </span>
         </div>
-        <div class="label">{{ s.label }}</div>
       </div>
-      <div class="trend" [class.up]="s.up" [class.down]="!s.up">
-        <mat-icon>{{ s.up ? 'trending_up' : 'trending_down' }}</mat-icon>
-        <span>{{ s.delta }}</span>
+      
+      <div class="hero-actions">
+        <button mat-flat-button class="hero-btn primary">
+          <mat-icon>add_circle</mat-icon>
+          <span>List New Vehicle</span>
+        </button>
+        <button mat-stroked-button class="hero-btn secondary">
+          <mat-icon>event_note</mat-icon>
+          <span>Schedule Auction</span>
+        </button>
       </div>
-
-      <svg
-        class="spark"
-        viewBox="0 0 100 32"
-        preserveAspectRatio="none"
-        aria-hidden="true"
-      >
-        <defs>
-          <linearGradient id="g" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stop-color="var(--brand-500)" />
-            <stop offset="1" stop-color="var(--teal-500)" />
-          </linearGradient>
-        </defs>
-        <path
-          d="M0,22 L12,18 L22,24 L32,12 L42,16 L55,10 L68,14 L82,8 L100,12"
-          stroke="url(#g)"
-          fill="none"
-          stroke-width="2"
-        />
-      </svg>
+    </div>
+    
+    <div class="hero-stats-bar">
+      <div class="quick-stat">
+        <mat-icon class="stat-icon">local_fire_department</mat-icon>
+        <div class="stat-data">
+          <span class="stat-value">{{ liveAuctionCount }}</span>
+          <span class="stat-label">Live Now</span>
+        </div>
+      </div>
+      
+      <div class="stat-divider"></div>
+      
+      <div class="quick-stat">
+        <mat-icon class="stat-icon">attach_money</mat-icon>
+        <div class="stat-data">
+          <span class="stat-value">${{ (totalRevenue / 1000) | number:'1.0-0' }}K</span>
+          <span class="stat-label">Total Revenue</span>
+        </div>
+      </div>
+      
+      <div class="stat-divider"></div>
+      
+      <div class="quick-stat">
+        <mat-icon class="stat-icon">groups</mat-icon>
+        <div class="stat-data">
+          <span class="stat-value">{{ totalBidders }}</span>
+          <span class="stat-label">Registered Bidders</span>
+        </div>
+      </div>
+      
+      <div class="stat-divider"></div>
+      
+      <div class="quick-stat success">
+        <mat-icon class="stat-icon">trending_up</mat-icon>
+        <div class="stat-data">
+          <span class="stat-value">+{{ revenueChangePercent }}%</span>
+          <span class="stat-label">Growth</span>
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- Main Grid -->
-  <section class="main-grid">
-    <!-- Left column: Auctions at a Glance -->
-    <div class="panel live-auctions">
-      <div class="panel-h">
-        <h3>
-          <mat-icon>local_fire_department</mat-icon>
-          Auctions at a Glance
-        </h3>
+  <!-- Primary KPI Grid -->
+  <section class="kpi-grid reveal-on-scroll">
+    <div class="kpi-card" *ngFor="let s of stats; let i = index" [style.--delay]="i * 0.05 + 's'">
+      <div class="kpi-header">
+        <div class="kpi-icon-wrapper">
+          <mat-icon [class.pulse]="s.key === 'Live Auction'">{{ s.icon }}</mat-icon>
+        </div>
+        <span class="kpi-change" [class.positive]="s.up" [class.negative]="!s.up">
+          <mat-icon>{{ s.up ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+          {{ s.delta }}
+        </span>
+      </div>
+      
+      <div class="kpi-body">
+        <div class="kpi-value count-up" [attr.data-value]="s.value">{{ s.value }}</div>
+        <div class="kpi-label">{{ s.label }}</div>
+      </div>
+    </div>
+  </section>
 
-        <!-- Only show toggle if there are more than 5 rows -->
-        <button
-          mat-stroked-button
-          class="mini"
-          *ngIf="liveAuctions.length > 5"
-          (click)="toggleGlance()"
-        >
-          <mat-icon>visibility</mat-icon>
-          {{ glanceExpanded ? 'Collapse' : 'View all' }}
+  <!-- Analytics Grid -->
+  <section class="analytics-grid">
+    <!-- Revenue Chart -->
+    <div class="chart-panel revenue-panel reveal-on-scroll">
+      <div class="panel-header">
+        <div>
+          <h3>Revenue Trend</h3>
+          <p class="panel-subtitle">Last 12 months performance</p>
+        </div>
+        <div class="header-metrics">
+          <div class="metric-pill positive">
+            <mat-icon>trending_up</mat-icon>
+            <span>+{{ revenueChangePercent }}%</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="chart-container">
+        <canvas #revenueCanvas width="800" height="300"></canvas>
+      </div>
+      
+      <div class="chart-footer">
+        <div class="footer-stat">
+          <span class="label">Current Month</span>
+          <span class="value">${{ revenueToday | number : '1.0-0' }}</span>
+        </div>
+        <div class="footer-stat">
+          <span class="label">Average</span>
+          <span class="value">${{ (totalRevenue / 12) | number : '1.0-0' }}</span>
+        </div>
+        <div class="footer-stat">
+          <span class="label">Projected</span>
+          <span class="value">${{ (totalRevenue * 1.15) | number : '1.0-0' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bids Chart -->
+    <div class="chart-panel bids-panel reveal-on-scroll">
+      <div class="panel-header">
+        <div>
+          <h3>Bid Activity</h3>
+          <p class="panel-subtitle">Monthly bid volume</p>
+        </div>
+        <div class="header-metrics">
+          <div class="metric-pill info">
+            <mat-icon>gavel</mat-icon>
+            <span>{{ bidsToday }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="chart-container">
+        <canvas #bidsCanvas width="400" height="250"></canvas>
+      </div>
+      
+      <div class="chart-stats">
+        <div class="stat-item">
+          <span class="stat-value">{{ (bidsToday / liveAuctionCount) | number : '1.0-0' }}</span>
+          <span class="stat-label">Avg per Auction</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value">{{ bidsChangePercent }}%</span>
+          <span class="stat-label">Growth Rate</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Auctions Table -->
+    <div class="data-panel auctions-panel reveal-on-scroll">
+      <div class="panel-header">
+        <div>
+          <h3>Active Auctions</h3>
+          <p class="panel-subtitle">{{ liveAuctions.length }} live · Real-time updates</p>
+        </div>
+        <button mat-icon-button *ngIf="liveAuctions.length > 6" (click)="toggleGlance()">
+          <mat-icon>{{ glanceExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
         </button>
       </div>
-
-      <div class="busy" *ngIf="glanceLoading">
+      
+      <div class="panel-loader" *ngIf="glanceLoading">
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       </div>
-
-      <!-- rows: AU-xx | Make+Count | Live/Scheduled -->
-      <ul
-        class="auction-list"
-        *ngIf="!glanceLoading && liveAuctions.length; else noGlance"
-      >
-        <li *ngFor="let a of visibleGlanceAuctions">
-          <!-- Auction number -->
-          <div class="id mono">{{ a.lot }}</div>
-
-          <!-- Make + car icon + count (single line) -->
-          <div class="make-col">
-            <span class="car">{{ a.make }}</span>
-            <span class="bids">
-              <mat-icon>directions_car</mat-icon>
-              <span>{{ a.count }}</span>
-            </span>
-          </div>
-
-          <!-- Status pill: Live / Scheduled (single line) -->
-          <div
-            class="status"
-            [class.live]="a.status === 'Live'"
-            [class.scheduled]="a.status === 'Scheduled'"
-          >
-            {{ a.status }}
-          </div>
-        </li>
-      </ul>
-
-      <ng-template #noGlance>
-        <div class="notif-empty" style="padding: 16px">
-          <mat-icon>notifications_none</mat-icon>
-          <span>No auctions to show yet.</span>
-        </div>
-      </ng-template>
+      
+      <div class="data-table" *ngIf="!glanceLoading && liveAuctions.length">
+        <table>
+          <thead>
+            <tr>
+              <th>LOT ID</th>
+              <th>MANUFACTURER</th>
+              <th>UNITS</th>
+              <th>STATUS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let a of visibleGlanceAuctions" class="table-row">
+              <td class="mono-cell">{{ a.lot }}</td>
+              <td class="bold-cell">{{ a.make }}</td>
+              <td class="number-cell">
+                <span class="unit-badge">{{ a.count }}</span>
+              </td>
+              <td>
+                <span class="status-badge" 
+                      [class.live]="a.status === 'Live'"
+                      [class.scheduled]="a.status === 'Scheduled'">
+                  {{ a.status }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div *ngIf="!glanceLoading && !liveAuctions.length" class="empty-panel">
+        <mat-icon>event_busy</mat-icon>
+        <span>No active auctions</span>
+      </div>
     </div>
 
-    <!-- Performance -->
-    <div class="panel performance">
-      <div class="panel-h">
-        <h3><mat-icon>insights</mat-icon> Revenue Performance</h3>
-      </div>
-      <div class="perf-grid">
-        <div class="big-number">
-          <div class="caption">Total Revenue</div>
-          <div class="num">
-            {{ totalRevenue | number : '1.0-0' }}
-          </div>
-
-          <div class="chip" [class.up]="revenueTodaySharePercent > 0">
-            <mat-icon>
-              {{ revenueTodaySharePercent > 0 ? 'north_east' : 'horizontal_rule' }}
-            </mat-icon>
-            <ng-container
-              *ngIf="totalRevenue > 0 && revenueToday > 0; else noRevChip"
-            >
-              {{ revenueTodaySharePercent }}% of total today
-            </ng-container>
-            <ng-template #noRevChip>
-              No revenue yet today
-            </ng-template>
-          </div>
+    <!-- Distribution Chart -->
+    <div class="chart-panel distribution-panel reveal-on-scroll">
+      <div class="panel-header">
+        <div>
+          <h3>Inventory Distribution</h3>
+          <p class="panel-subtitle">By manufacturer</p>
         </div>
-
-        <svg
-          class="big-spark"
-          viewBox="0 0 220 80"
-          preserveAspectRatio="none"
-        >
-          <defs>
-            <linearGradient id="gg" x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0" stop-color="var(--brand-500)" />
-              <stop offset="1" stop-color="var(--teal-500)" />
-            </linearGradient>
-          </defs>
-          <path
-            d="M0,60 L24,56 L44,62 L64,40 L84,46 L110,30 L136,42 L168,28 L220,36"
-            stroke="url(#gg)"
-            fill="none"
-            stroke-width="3"
-          />
-        </svg>
-
-        <div class="mini-kpis">
-          <div class="mini">
-            <div class="label">Revenue Today</div>
-            <div class="val">{{ revenueToday | number : '1.0-0' }}</div>
-          </div>
-          <div class="mini">
-            <div class="label">Bids Today (1d) </div>
-            <div class="val">{{ bidsToday | number : '1.0-0' }}</div>
-          </div>
-          <div class="mini">
-            <div class="label">Live Auctions</div>
-            <div class="val">{{ liveAuctionCount | number : '1.0-0' }}</div>
-          </div>
+      </div>
+      
+      <div class="chart-container donut-container">
+        <canvas #distributionCanvas width="300" height="300"></canvas>
+      </div>
+      
+      <div class="legend-list">
+        <div class="legend-item" *ngFor="let item of auctionMakeSummary.slice(0, 5); let i = index">
+          <span class="legend-color" [style.background]="['#D4AF37', '#1e3a8a', '#059669', '#dc2626', '#7c3aed'][i]"></span>
+          <span class="legend-label">{{ item.make }}</span>
+          <span class="legend-value">{{ item.count }}</span>
         </div>
       </div>
     </div>
 
-    <!-- Right column: Verification Queue -->
-    <div class="panel kyc">
-      <div class="panel-h">
-        <h3><mat-icon>pending_actions</mat-icon> Verification Queue</h3>
-        <button
-          mat-stroked-button
-          class="mini"
-          (click)="loadUnverifiedBidders()"
-          matTooltip="Refresh"
-        >
+    <!-- Verification Queue -->
+    <div class="data-panel verification-panel reveal-on-scroll">
+      <div class="panel-header">
+        <div>
+          <h3>KYC Verification</h3>
+          <p class="panel-subtitle">{{ unverifiedBidders.length }} pending review</p>
+        </div>
+        <button mat-icon-button (click)="loadUnverifiedBidders()" matTooltip="Refresh">
           <mat-icon>refresh</mat-icon>
-          Refresh
         </button>
       </div>
-
-      <div class="busy" *ngIf="kycLoading">
+      
+      <div class="panel-loader" *ngIf="kycLoading">
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       </div>
-
-      <ul
-        class="queue"
-        *ngIf="!kycLoading && unverifiedBidders.length; else emptyQueue"
-      >
-        <li *ngFor="let u of unverifiedBidders">
-          <div
-            class="avatar"
-            [style.background]="
-              'linear-gradient(135deg, var(--brand-500), var(--teal-500))'
-            "
-          >
-            {{ getFullName(u) | slice : 0 : 1 }}
+      
+      <div class="verification-list" *ngIf="!kycLoading && unverifiedBidders.length">
+        <div class="verification-item" *ngFor="let u of unverifiedBidders.slice(0, 5)">
+          <div class="user-avatar">{{ getFullName(u) | slice:0:1 }}</div>
+          <div class="user-details">
+            <div class="user-name">{{ getFullName(u) }}</div>
+            <div class="user-email">{{ u.email || u.userName }}</div>
           </div>
-          <div class="who">
-            <div class="name">{{ getFullName(u) }}</div>
-            <div class="sub">{{ u.email || u.userName }}</div>
-          </div>
-
-          <div
-            class="age muted"
-            [title]="u.createdDate ? (u.createdDate | date: 'yyyy-MM-dd HH:mm') : ''"
-          >
-            {{ u.createdDate ? toRelative(u.createdDate) : '—' }}
-          </div>
-        </li>
-      </ul>
-
-      <ng-template #emptyQueue>
-        <div class="notif-empty" style="padding: 16px">
-          <mat-icon>verified_user</mat-icon>
-          <span>Great! No unverified bidders.</span>
+          <span class="time-badge">{{ toRelative(u.createdDate) }}</span>
         </div>
-      </ng-template>
+      </div>
+      
+      <div class="verification-stats" *ngIf="!kycLoading && totalBidders > 0">
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" [style.width.%]="verificationRate"></div>
+        </div>
+        <div class="stats-row">
+          <span class="stat"><strong>{{ verificationRate }}%</strong> Verified</span>
+          <span class="stat">{{ verifiedBidders }}/{{ totalBidders }}</span>
+        </div>
+      </div>
+      
+      <div *ngIf="!kycLoading && !unverifiedBidders.length" class="empty-panel success">
+        <mat-icon>verified</mat-icon>
+        <span>All verified</span>
+      </div>
     </div>
 
     <!-- Top Bidders -->
-    <div class="panel bidders">
-      <div class="panel-h">
-        <h3><mat-icon>leaderboard</mat-icon> Top Bidders Today</h3>
+    <div class="data-panel bidders-panel reveal-on-scroll">
+      <div class="panel-header">
+        <div>
+          <h3>Top Bidders Today</h3>
+          <p class="panel-subtitle">Most active participants</p>
+        </div>
       </div>
-
-      <!-- loading state -->
-      <div class="busy" *ngIf="topBiddersLoading">
+      
+      <div class="panel-loader" *ngIf="topBiddersLoading">
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       </div>
-
-      <!-- list -->
-      <ul
-        class="tops"
-        *ngIf="!topBiddersLoading && topBidders.length; else noTopBidders"
-      >
-        <li *ngFor="let b of topBidders; let i = index">
-          <div class="rank">#{{ i + 1 }}</div>
-          <div class="dot" [style.background]="b.color"></div>
-          <div class="who">
-            <div class="name">{{ b.name }}</div>
-            <div class="sub">{{ b.handle }}</div>
+      
+      <div class="leaderboard" *ngIf="!topBiddersLoading && topBidders.length">
+        <div class="leaderboard-item" *ngFor="let b of topBidders; let i = index">
+          <div class="rank-badge" [class.gold]="i === 0" [class.silver]="i === 1" [class.bronze]="i === 2">
+            {{ i + 1 }}
           </div>
-          <div class="bcount chip">
+          <div class="bidder-info">
+            <div class="bidder-name">{{ b.name }}</div>
+            <div class="bidder-handle">{{ b.handle }}</div>
+          </div>
+          <div class="bid-count">
             <mat-icon>gavel</mat-icon>
-            {{ b.bids }}
+            <span>{{ b.bids }}</span>
           </div>
-        </li>
-      </ul>
-
-      <ng-template #noTopBidders>
-        <div class="notif-empty" style="padding: 16px">
-          <mat-icon>gavel</mat-icon>
-          <span>No bids placed today yet.</span>
         </div>
-      </ng-template>
+      </div>
+      
+      <div *ngIf="!topBiddersLoading && !topBidders.length" class="empty-panel">
+        <mat-icon>emoji_events</mat-icon>
+        <span>No bids today</span>
+      </div>
     </div>
 
     <!-- Recent Activity -->
-    <div class="panel activity">
-      <div class="panel-h">
-        <h3><mat-icon>history</mat-icon> Recent Activity</h3>
-        <button
-          mat-stroked-button
-          class="mini"
-          (click)="toggleRecentActivity()"
-          [attr.aria-expanded]="!activityCollapsed"
-        >
-          <mat-icon>
-            {{ activityCollapsed ? 'unfold_more' : 'unfold_less' }}
-          </mat-icon>
-          {{ activityCollapsed ? 'Show all' : 'Show less' }}
+    <div class="data-panel activity-panel reveal-on-scroll">
+      <div class="panel-header">
+        <div>
+          <h3>Activity Feed</h3>
+          <p class="panel-subtitle">Real-time updates</p>
+        </div>
+        <button mat-icon-button (click)="toggleRecentActivity()">
+          <mat-icon>{{ activityCollapsed ? 'unfold_more' : 'unfold_less' }}</mat-icon>
         </button>
       </div>
-
-      <div class="busy" *ngIf="activityLoading">
+      
+      <div class="panel-loader" *ngIf="activityLoading">
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       </div>
-
-      <ul
-        class="timeline"
-        *ngIf="!activityLoading && activity.length; else noActivity"
-      >
-        <li *ngFor="let a of (activityCollapsed ? activity.slice(0, 3) : activity)">
-          <div class="bullet"><mat-icon>{{ a.icon }}</mat-icon></div>
-          <div class="text">{{ a.text }}</div>
-          <div class="time muted">{{ a.time }}</div>
-        </li>
-      </ul>
-
-      <ng-template #noActivity>
-        <div class="notif-empty" style="padding: 16px">
-          <mat-icon>history</mat-icon>
-          <span>No recent activity yet.</span>
+      
+      <div class="activity-feed" *ngIf="!activityLoading && activity.length">
+        <div class="activity-item" *ngFor="let a of (activityCollapsed ? activity.slice(0, 5) : activity)">
+          <div class="activity-icon">
+            <mat-icon>{{ a.icon }}</mat-icon>
+          </div>
+          <div class="activity-content">
+            <p class="activity-text">{{ a.text }}</p>
+            <span class="activity-time">{{ a.time }}</span>
+          </div>
         </div>
-      </ng-template>
+      </div>
+      
+      <div *ngIf="!activityLoading && !activity.length" class="empty-panel">
+        <mat-icon>notifications_none</mat-icon>
+        <span>No recent activity</span>
+      </div>
     </div>
 
-    <!-- Bidder Funnel (replaces System Health) -->
-    <div class="panel bidder-funnel">
-      <div class="panel-h">
-        <h3><mat-icon>groups</mat-icon> Bidder Funnel</h3>
-      </div>
-
-      <div class="funnel-grid" *ngIf="totalBidders > 0; else noBiddersState">
-        <div class="funnel-main">
-          <div class="funnel-number">
-            <div class="caption">Verified Bidders</div>
-            <div class="num">
-              {{ verifiedBidders | number : '1.0-0' }}
-            </div>
-          </div>
-
-          <div class="funnel-meter">
-            <div class="meter-bg">
-              <div
-                class="meter-fill"
-                [style.width.%]="verificationRate"
-              ></div>
-            </div>
-            <div class="meter-label">
-              {{ verificationRate }}% verified of
-              {{ totalBidders | number : '1.0-0' }}
-            </div>
-          </div>
-        </div>
-
-        <div class="funnel-side">
-          <div class="mini">
-            <div class="label">Pending KYC</div>
-            <div class="value">
-              {{ unverifiedBidders.length | number : '1.0-0' }}
-            </div>
-          </div>
-          <div class="mini">
-            <div class="label">New Signups (7d)</div>
-            <div class="value">
-              {{ recentSignups7d | number : '1.0-0' }}
-            </div>
-          </div>
+    <!-- Bidder Funnel -->
+    <div class="data-panel funnel-panel reveal-on-scroll">
+      <div class="panel-header">
+        <div>
+          <h3>User Funnel</h3>
+          <p class="panel-subtitle">Registration to verification</p>
         </div>
       </div>
-
-      <ng-template #noBiddersState>
-        <div class="notif-empty small">
-          <mat-icon>person_add</mat-icon>
-          <span>No bidders registered yet.</span>
+      
+      <div class="funnel-content" *ngIf="totalBidders > 0">
+        <div class="funnel-stage">
+          <div class="stage-bar">
+            <div class="stage-fill" [style.width.%]="100"></div>
+          </div>
+          <div class="stage-info">
+            <span class="stage-label">Total Registrations</span>
+            <span class="stage-value">{{ totalBidders }}</span>
+          </div>
         </div>
-      </ng-template>
+        
+        <div class="funnel-stage">
+          <div class="stage-bar verified">
+            <div class="stage-fill" [style.width.%]="verificationRate"></div>
+          </div>
+          <div class="stage-info">
+            <span class="stage-label">Verified Users</span>
+            <span class="stage-value">{{ verifiedBidders }}</span>
+          </div>
+        </div>
+        
+        <div class="funnel-metrics-grid">
+          <div class="metric-box">
+            <mat-icon class="pending">pending</mat-icon>
+            <div>
+              <div class="metric-number">{{ unverifiedBidders.length }}</div>
+              <div class="metric-text">Pending</div>
+            </div>
+          </div>
+          
+          <div class="metric-box">
+            <mat-icon class="new">person_add</mat-icon>
+            <div>
+              <div class="metric-number">{{ recentSignups7d }}</div>
+              <div class="metric-text">New (7d)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div *ngIf="totalBidders === 0" class="empty-panel">
+        <mat-icon>group_add</mat-icon>
+        <span>No users yet</span>
+      </div>
     </div>
   </section>
 </div>

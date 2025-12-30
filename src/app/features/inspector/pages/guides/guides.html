@@ -1,105 +1,382 @@
 <div class="guides-page">
-  <!-- Header -->
-  <header class="guides-header">
-    <div>
-      <div class="header-badge">
-        <span class="dot"></span>
-        Inspection Knowledge Base
+  
+  <!-- Hero Header -->
+  <header class="hero-header animate-on-scroll" style="animation-delay: 0ms">
+    <div class="hero-content">
+      <div class="eyebrow-badge">
+        <span class="badge-dot"></span>
+        <span>Inspection Knowledge Base</span>
       </div>
-      <h1>Vehicle Inspection Guides</h1>
-      <p class="subtitle">
-        Learn expert-level guidelines for conducting accurate, safe, and standardized inspections.
+
+      <h1 class="hero-title">
+        <span class="title-line">Vehicle Inspection</span>
+        <span class="title-line title-accent">Guidelines</span>
+      </h1>
+
+      <p class="hero-subtitle">
+        Learn expert-level guidelines for conducting accurate, safe, and standardized inspections with professional precision.
       </p>
     </div>
-    <mat-icon class="header-icon">library_books</mat-icon>
+
+    <div class="hero-icon animate-on-scroll" style="animation-delay: 100ms">
+      <mat-icon>library_books</mat-icon>
+    </div>
   </header>
 
-  <!-- Sections Wrapper -->
-  <section class="guides-sections">
-    <!-- Overview -->
-    <article class="guide-card fade-in">
-      <div class="card-icon"><mat-icon>info</mat-icon></div>
-      <h2>General Inspection Principles</h2>
-      <p>
+  <!-- Quick Stats -->
+  <section class="stats-overview animate-on-scroll" style="animation-delay: 200ms">
+    <div class="stat-item">
+      <div class="stat-icon">
+        <mat-icon>fact_check</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">6</span>
+        <span class="stat-label">Key Areas</span>
+      </div>
+    </div>
+
+    <div class="stat-item">
+      <div class="stat-icon">
+        <mat-icon>workspace_premium</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">Professional</span>
+        <span class="stat-label">Standards</span>
+      </div>
+    </div>
+
+    <div class="stat-item">
+      <div class="stat-icon">
+        <mat-icon>verified</mat-icon>
+      </div>
+      <div class="stat-content">
+        <span class="stat-value">100%</span>
+        <span class="stat-label">Compliance</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Guide Cards Grid -->
+  <section class="guides-grid">
+    
+    <!-- General Principles -->
+    <article class="guide-card animate-on-scroll" id="general" style="animation-delay: 300ms">
+      <div class="card-header">
+        <div class="card-icon primary">
+          <mat-icon>info</mat-icon>
+        </div>
+        <div class="card-title">
+          <h2>General Inspection Principles</h2>
+          <span class="card-badge">Foundation</span>
+        </div>
+      </div>
+
+      <p class="card-description">
         Follow a consistent, structured inspection flow to ensure accuracy, safety, and objectivity.
         Always document issues clearly and capture supporting photos.
       </p>
 
-      <ul class="guide-list">
-        <li><mat-icon>check_circle</mat-icon> Maintain a neutral, unbiased inspection mindset.</li>
-        <li><mat-icon>check_circle</mat-icon> Follow the predefined inspection order.</li>
-        <li><mat-icon>check_circle</mat-icon> Verify VIN/chassis before starting.</li>
-        <li><mat-icon>check_circle</mat-icon> Capture clear photos of all required angles.</li>
+      <ul class="checklist">
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Maintain a neutral, unbiased inspection mindset</span>
+        </li>
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Follow the predefined inspection order</span>
+        </li>
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Verify VIN/chassis before starting</span>
+        </li>
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Capture clear photos of all required angles</span>
+        </li>
       </ul>
     </article>
 
     <!-- Exterior -->
-    <article class="guide-card slide-up">
-      <div class="card-icon blue"><mat-icon>directions_car</mat-icon></div>
-      <h2>Exterior Checklist</h2>
-      <p>Inspect all outer areas of the vehicle with proper angles and lighting.</p>
+    <article class="guide-card animate-on-scroll" id="exterior" style="animation-delay: 350ms">
+      <div class="card-header">
+        <div class="card-icon blue">
+          <mat-icon>directions_car</mat-icon>
+        </div>
+        <div class="card-title">
+          <h2>Exterior Checklist</h2>
+          <span class="card-badge blue">Essential</span>
+        </div>
+      </div>
 
-      <ul class="guide-list">
-        <li><mat-icon>check_circle</mat-icon> Body panels: dents, scratches, paint mismatch.</li>
-        <li><mat-icon>check_circle</mat-icon> Glass: cracks, chips, tint damage.</li>
-        <li><mat-icon>check_circle</mat-icon> Tires: tread depth, uneven wear.</li>
-        <li><mat-icon>check_circle</mat-icon> Lights: headlamps, indicators, brake lights.</li>
+      <p class="card-description">
+        Inspect all outer areas of the vehicle with proper angles and lighting conditions.
+      </p>
+
+      <ul class="checklist">
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Body panels: dents, scratches, paint mismatch</span>
+        </li>
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Glass: cracks, chips, tint damage</span>
+        </li>
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Tires: tread depth, uneven wear patterns</span>
+        </li>
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Lights: headlamps, indicators, brake lights</span>
+        </li>
       </ul>
     </article>
 
     <!-- Interior -->
-    <article class="guide-card fade-in delay1">
-      <div class="card-icon orange"><mat-icon>event_seat</mat-icon></div>
-      <h2>Interior Assessment</h2>
-      <p>Thoroughly evaluate the cabin for usability, wear, and operational correctness.</p>
+    <article class="guide-card animate-on-scroll" id="interior" style="animation-delay: 400ms">
+      <div class="card-header">
+        <div class="card-icon orange">
+          <mat-icon>event_seat</mat-icon>
+        </div>
+        <div class="card-title">
+          <h2>Interior Assessment</h2>
+          <span class="card-badge orange">Critical</span>
+        </div>
+      </div>
 
-      <ul class="guide-list">
-        <li><mat-icon>check_circle</mat-icon> Seat condition, stains, tears.</li>
-        <li><mat-icon>check_circle</mat-icon> Dashboard indicators functioning.</li>
-        <li><mat-icon>check_circle</mat-icon> AC/heater performance.</li>
-        <li><mat-icon>check_circle</mat-icon> Odor or leakage signs.</li>
+      <p class="card-description">
+        Thoroughly evaluate the cabin for usability, wear, and operational correctness.
+      </p>
+
+      <ul class="checklist">
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Seat condition, stains, tears, adjustments</span>
+        </li>
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Dashboard indicators functioning properly</span>
+        </li>
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>AC/heater performance and controls</span>
+        </li>
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Odor or leakage signs inside cabin</span>
+        </li>
       </ul>
     </article>
 
     <!-- Engine -->
-    <article class="guide-card slide-up delay2">
-      <div class="card-icon green"><mat-icon>build_circle</mat-icon></div>
-      <h2>Engine & Mechanical</h2>
-      <p>Ensure the vehicle’s mechanical components are performing correctly.</p>
+    <article class="guide-card animate-on-scroll" id="engine" style="animation-delay: 450ms">
+      <div class="card-header">
+        <div class="card-icon green">
+          <mat-icon>build_circle</mat-icon>
+        </div>
+        <div class="card-title">
+          <h2>Engine & Mechanical</h2>
+          <span class="card-badge green">Technical</span>
+        </div>
+      </div>
 
-      <ul class="guide-list">
-        <li><mat-icon>check_circle</mat-icon> Engine noise, vibration, starting behavior.</li>
-        <li><mat-icon>check_circle</mat-icon> Oil, coolant levels and leaks.</li>
-        <li><mat-icon>check_circle</mat-icon> Belts, hoses, radiator condition.</li>
-        <li><mat-icon>check_circle</mat-icon> Exhaust smoke color.</li>
+      <p class="card-description">
+        Ensure the vehicle's mechanical components are performing correctly and safely.
+      </p>
+
+      <ul class="checklist">
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Engine noise, vibration, starting behavior</span>
+        </li>
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Oil, coolant levels and visible leaks</span>
+        </li>
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Belts, hoses, radiator condition</span>
+        </li>
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Exhaust smoke color and emissions</span>
+        </li>
       </ul>
     </article>
 
-    <!-- Test Drive -->
-    <article class="guide-card fade-in delay3">
-      <div class="card-icon purple"><mat-icon>speed</mat-icon></div>
-      <h2>Road Test Guidelines</h2>
-      <p>Evaluate real-world performance, handling, and driving behavior.</p>
+    <!-- Road Test -->
+    <article class="guide-card animate-on-scroll" id="roadtest" style="animation-delay: 500ms">
+      <div class="card-header">
+        <div class="card-icon purple">
+          <mat-icon>speed</mat-icon>
+        </div>
+        <div class="card-title">
+          <h2>Road Test Guidelines</h2>
+          <span class="card-badge purple">Performance</span>
+        </div>
+      </div>
 
-      <ul class="guide-list">
-        <li><mat-icon>check_circle</mat-icon> Acceleration smoothness.</li>
-        <li><mat-icon>check_circle</mat-icon> Brake responsiveness.</li>
-        <li><mat-icon>check_circle</mat-icon> Steering alignment.</li>
-        <li><mat-icon>check_circle</mat-icon> Transmission shifting.</li>
+      <p class="card-description">
+        Evaluate real-world performance, handling, and driving behavior on the road.
+      </p>
+
+      <ul class="checklist">
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Acceleration smoothness and power delivery</span>
+        </li>
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Brake responsiveness and pedal feel</span>
+        </li>
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Steering alignment and wheel balance</span>
+        </li>
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Transmission shifting and gear changes</span>
+        </li>
       </ul>
     </article>
 
     <!-- Documentation -->
-    <article class="guide-card slide-up delay4">
-      <div class="card-icon dark"><mat-icon>description</mat-icon></div>
-      <h2>Documentation & Compliance</h2>
-      <p>Verify all legal documentation, authenticity, and ownership details.</p>
+    <article class="guide-card animate-on-scroll" id="documentation" style="animation-delay: 550ms">
+      <div class="card-header">
+        <div class="card-icon dark">
+          <mat-icon>description</mat-icon>
+        </div>
+        <div class="card-title">
+          <h2>Documentation & Compliance</h2>
+          <span class="card-badge dark">Legal</span>
+        </div>
+      </div>
 
-      <ul class="guide-list">
-        <li><mat-icon>check_circle</mat-icon> Registration papers validity.</li>
-        <li><mat-icon>check_circle</mat-icon> Token tax and ownership history.</li>
-        <li><mat-icon>check_circle</mat-icon> Chassis and engine number match.</li>
+      <p class="card-description">
+        Verify all legal documentation, authenticity, and ownership details thoroughly.
+      </p>
+
+      <ul class="checklist">
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Registration papers validity and expiration</span>
+        </li>
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Token tax and ownership history records</span>
+        </li>
+        <li>
+          <div class="check-icon">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+          <span>Chassis and engine number match verification</span>
+        </li>
       </ul>
     </article>
+
   </section>
+
+  <!-- Best Practices Section -->
+  <section class="best-practices animate-on-scroll" style="animation-delay: 600ms">
+    <div class="practices-header">
+      <mat-icon>lightbulb</mat-icon>
+      <h3>Best Practices</h3>
+    </div>
+
+    <div class="practices-grid">
+      <div class="practice-item">
+        <div class="practice-icon">
+          <mat-icon>photo_camera</mat-icon>
+        </div>
+        <div class="practice-content">
+          <h4>Clear Documentation</h4>
+          <p>Take high-quality photos from multiple angles in good lighting</p>
+        </div>
+      </div>
+
+      <div class="practice-item">
+        <div class="practice-icon">
+          <mat-icon>notes</mat-icon>
+        </div>
+        <div class="practice-content">
+          <h4>Detailed Notes</h4>
+          <p>Record observations immediately while fresh in memory</p>
+        </div>
+      </div>
+
+      <div class="practice-item">
+        <div class="practice-icon">
+          <mat-icon>verified_user</mat-icon>
+        </div>
+        <div class="practice-content">
+          <h4>Safety First</h4>
+          <p>Always prioritize personal safety during inspections</p>
+        </div>
+      </div>
+
+      <div class="practice-item">
+        <div class="practice-icon">
+          <mat-icon>timeline</mat-icon>
+        </div>
+        <div class="practice-content">
+          <h4>Consistent Process</h4>
+          <p>Follow the same inspection sequence every time</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer CTA -->
+  <section class="footer-cta animate-on-scroll" style="animation-delay: 650ms">
+    <div class="cta-content">
+      <mat-icon>school</mat-icon>
+      <h3>Ready to Start Inspecting?</h3>
+      <p>Apply these guidelines in your next vehicle inspection for professional results.</p>
+    </div>
+  </section>
+
 </div>

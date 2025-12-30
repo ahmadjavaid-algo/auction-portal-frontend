@@ -1,205 +1,363 @@
-<!-- src/app/pages/inspector/dashboard/dashboard.html -->
-<div class="inspector-dashboard">
+<!-- Premium Inspector Dashboard - Light Luxury Design with Animations -->
+<div class="luxury-dashboard">
+
   <!-- Loading State -->
-  <div class="loading-overlay" *ngIf="loading">
-    <mat-spinner diameter="48"></mat-spinner>
-    <span>Loading dashboard...</span>
+  <div class="loading-state" *ngIf="loading">
+    <div class="loading-content">
+      <mat-spinner diameter="64" color="primary"></mat-spinner>
+      <h3>Loading Dashboard</h3>
+      <p>Preparing your inspection portal...</p>
+    </div>
   </div>
 
   <!-- Error State -->
-  <div class="error-banner" *ngIf="!loading && error">
-    <mat-icon>error_outline</mat-icon>
-    <span>{{ error }}</span>
+  <div class="error-state" *ngIf="!loading && error">
+    <div class="error-card">
+      <mat-icon>error</mat-icon>
+      <h3>Unable to Load Dashboard</h3>
+      <p>{{ error }}</p>
+      <button mat-flat-button color="primary" (click)="load()">Retry</button>
+    </div>
   </div>
 
-  <!-- Main Content (no sidebar/top-layout here, outer layout handles that) -->
-  <div class="content-grid" *ngIf="!loading && !error">
-    <!-- Left Column -->
-    <div class="left-column">
-      <!-- Upcoming Appointment Hero -->
-      <article class="appointment-hero" *ngIf="upcoming">
-        <div class="appointment-content">
-          <p class="appointment-label">Upcoming Appointment</p>
-          <h2 class="appointment-title">{{ upcoming.title }}</h2>
+  <!-- Main Dashboard -->
+  <div class="dashboard-content" *ngIf="!loading && !error">
 
-          <div class="appointment-details">
-            <div class="detail-item">
+<header class="dashboard-header animate-on-scroll" style="animation-delay: 0ms">
+  <div class="header-left">
+    <div class="inspector-profile">
+      <div class="profile-avatar">
+        <ng-container *ngIf="inspector.avatarUrl; else initialsTpl">
+          <img
+            [src]="inspector.avatarUrl"
+            [alt]="inspector.name"
+            (error)="onAvatarError()"
+            loading="lazy"
+            decoding="async"
+          />
+        </ng-container>
+
+        <ng-template #initialsTpl>
+          <span>{{ initials }}</span>
+        </ng-template>
+      </div>
+
+      <div class="profile-info">
+        <h1>{{ inspector.name }}</h1>
+        <p>
+          <span class="role">{{ inspector.role }}</span>
+          <span class="level-badge">{{ inspector.level }}</span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+
+
+      <div class="header-actions">
+        <button mat-stroked-button class="header-btn" [routerLink]="['/inspector/accdetails']">
+          <mat-icon>settings</mat-icon>
+          <span>Account</span>
+        </button>
+
+        <button mat-flat-button color="primary" class="header-btn-primary" [routerLink]="['/inspector/inspection']">
+          <mat-icon>add</mat-icon>
+          <span>New Inspection</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Stats Overview Grid -->
+    <section class="stats-overview">
+      <div 
+        class="stat-card animate-on-scroll" 
+        *ngFor="let tile of summaryTiles; let i = index"
+        [style.animation-delay]="(100 + i * 50) + 'ms'">
+        <div class="stat-icon" [style.background-color]="tile.color">
+          <mat-icon>{{ tile.icon }}</mat-icon>
+        </div>
+
+        <div class="stat-content">
+          <h3 class="stat-value">{{ tile.value }}</h3>
+          <p class="stat-label">{{ tile.label }}</p>
+
+          <div
+            class="stat-trend"
+            *ngIf="tile.trend"
+            [class.positive]="tile.trendDirection === 'up'"
+            [class.negative]="tile.trendDirection === 'down'">
+            <mat-icon>{{ tile.trendDirection === 'up' ? 'trending_up' : 'trending_down' }}</mat-icon>
+            <span>{{ tile.trend }}</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Featured Upcoming Inspection Hero -->
+    <section class="hero-section animate-on-scroll" style="animation-delay: 300ms" *ngIf="upcoming">
+      <div class="hero-card">
+        <div class="hero-image">
+          <img [src]="heroImage" [alt]="upcoming.title" />
+          <div class="hero-overlay"></div>
+        </div>
+
+        <div class="hero-content">
+          <div class="hero-tag">
+            <mat-icon>schedule</mat-icon>
+            <span>NEXT INSPECTION</span>
+          </div>
+
+          <h2 class="hero-title">{{ upcoming.title }}</h2>
+
+          <div class="hero-details">
+            <div class="hero-detail">
               <mat-icon>location_on</mat-icon>
               <span>{{ upcoming.location }}</span>
             </div>
-            <div class="detail-item">
-              <mat-icon>schedule</mat-icon>
+            <div class="hero-detail">
+              <mat-icon>event</mat-icon>
               <span>{{ upcoming.dateTime }}</span>
+            </div>
+          </div>
+
+          <button
+            mat-flat-button
+            color="primary"
+            class="hero-btn"
+            [routerLink]="['/inspector/inspection']"
+            [queryParams]="{ inventoryId: upcoming.inventoryId }">
+            <span>Start Inspection</span>
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Empty Hero State -->
+    <section class="hero-section animate-on-scroll" style="animation-delay: 300ms" *ngIf="!upcoming">
+      <div class="hero-card empty-state">
+        <mat-icon>event_available</mat-icon>
+        <h3>No Upcoming Inspections</h3>
+        <p>New assignments will appear here</p>
+      </div>
+    </section>
+
+    <!-- Performance Dashboard -->
+    <section class="performance-section animate-on-scroll" style="animation-delay: 400ms">
+      <div class="section-header">
+        <h2>Performance Overview</h2>
+        <p>Comprehensive inspection analytics and metrics</p>
+      </div>
+
+      <div class="performance-grid">
+        <!-- Total Inspections Card -->
+        <div class="performance-card animate-on-scroll" style="animation-delay: 450ms">
+          <div class="card-icon">
+            <mat-icon>analytics</mat-icon>
+          </div>
+
+          <div class="card-content">
+            <h3>Total Inspections</h3>
+            <div class="card-value">{{ totalInspections }}</div>
+
+            <div class="card-breakdown">
+              <div class="breakdown-item">
+                <span>Completed</span>
+                <strong>{{ completedInspections }}</strong>
+              </div>
+              <div class="breakdown-item">
+                <span>Pending</span>
+                <strong>{{ pendingInspections }}</strong>
+              </div>
+            </div>
+
+            <div class="progress-wrapper">
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="completionRate"></div>
+              </div>
+              <span class="progress-label">{{ completionRate }}% Completion Rate</span>
             </div>
           </div>
         </div>
 
-        <div class="appointment-image">
-          <img [src]="heroImage" [alt]="upcoming.title" />
-        </div>
-      </article>
-
-      <!-- No Upcoming Appointment -->
-      <article class="appointment-hero" *ngIf="!upcoming">
-        <div class="appointment-content">
-          <p class="appointment-label">Upcoming Appointment</p>
-          <h2 class="appointment-title">No appointments scheduled</h2>
-          <p class="no-appointment-text">
-            Your upcoming inspections will appear here once assigned.
-          </p>
-        </div>
-        <div class="appointment-image">
-          <img [src]="fallbackHero" alt="No appointment" />
-        </div>
-      </article>
-
-      <!-- Summary Stats -->
-      <section class="stats-grid">
-        <div
-          class="stat-card"
-          *ngFor="let tile of summaryTiles"
-        >
-          <div class="stat-icon" [style.background-color]="tile.color">
-            <mat-icon>{{ tile.icon }}</mat-icon>
+        <!-- Vehicle Portfolio Card -->
+        <div class="performance-card animate-on-scroll" style="animation-delay: 500ms">
+          <div class="card-icon">
+            <mat-icon>garage</mat-icon>
           </div>
-          <div class="stat-content">
-            <p class="stat-value">{{ tile.value }}</p>
-            <p class="stat-label">{{ tile.label }}</p>
+
+          <div class="card-content">
+            <h3>Vehicle Portfolio</h3>
+            <div class="card-value">{{ totalVehicles }}</div>
+
+            <div class="card-breakdown">
+              <div class="breakdown-item">
+                <span>Assigned to You</span>
+                <strong>{{ assignedVehicles }}</strong>
+              </div>
+              <div class="breakdown-item">
+                <span>Available</span>
+                <strong>{{ totalVehicles - assignedVehicles }}</strong>
+              </div>
+            </div>
           </div>
         </div>
-      </section>
 
-      <!-- My Reports (now: assigned inventory thumbnails) -->
-      <section class="reports-section">
-        <div class="section-header">
+        <!-- Efficiency Card -->
+        <div class="performance-card animate-on-scroll" style="animation-delay: 550ms">
+          <div class="card-icon">
+            <mat-icon>speed</mat-icon>
+          </div>
+
+          <div class="card-content">
+            <h3>Efficiency Metrics</h3>
+            <div class="card-value">{{ avgInspectionTime }}</div>
+
+            <div class="card-breakdown">
+              <div class="breakdown-item">
+                <span>Avg. Inspection Time</span>
+                <strong class="success">-15%</strong>
+              </div>
+              <div class="breakdown-item">
+                <span>vs. Target</span>
+                <strong class="success">+8%</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Content Grid: Reports & Vehicles -->
+    <div class="content-grid">
+
+      <!-- Active Reports Section -->
+      <section class="reports-panel animate-on-scroll" style="animation-delay: 600ms">
+        <div class="panel-header">
           <div>
-            <h3>My Reports</h3>
-            <p class="section-subtitle">Assigned Inventory</p>
+            <h2>Active Reports</h2>
+            <p>Your current inspection assignments</p>
           </div>
+
           <button mat-button class="view-all-btn">
-            View All
+            <span>View All</span>
+            <mat-icon>arrow_forward</mat-icon>
           </button>
         </div>
 
-        <div class="reports-grid" *ngIf="myReports.length; else noReports">
+        <div class="reports-list" *ngIf="myReports.length; else noReports">
           <a
-            class="report-card"
-            *ngFor="let report of myReports"
+            class="report-item"
+            *ngFor="let report of myReports; let i = index"
             [routerLink]="['/inspector/inspection']"
-            [queryParams]="{ inventoryId: report.inventoryId }"
-          >
+            [queryParams]="{ inventoryId: report.inventoryId }">
+
             <div class="report-thumbnail">
-              <img
-                *ngIf="report.thumbnail; else reportThumbPlaceholder"
-                [src]="report.thumbnail"
-                [alt]="report.title"
-              />
-              <ng-template #reportThumbPlaceholder>
-                <div class="thumbnail-placeholder">
+              <img *ngIf="report.thumbnail; else reportPlaceholder" [src]="report.thumbnail" [alt]="report.title" />
+              <ng-template #reportPlaceholder>
+                <div class="placeholder">
                   <mat-icon>directions_car</mat-icon>
                 </div>
               </ng-template>
             </div>
-            <div class="report-content">
+
+            <div class="report-info">
               <h4>{{ report.title }}</h4>
               <p>{{ report.subtitle }}</p>
+
+              <div class="progress-container">
+                <div class="progress-bar">
+                  <div class="progress-fill" [style.width.%]="report.progress"></div>
+                </div>
+                <span class="progress-text">{{ report.progress }}%</span>
+              </div>
             </div>
+
+            <div
+              class="report-status"
+              [class.completed]="report.status === 'Completed'"
+              [class.in-progress]="report.status === 'In Progress'">
+              {{ report.status }}
+            </div>
+
+            <mat-icon class="chevron">chevron_right</mat-icon>
           </a>
         </div>
 
         <ng-template #noReports>
-          <div class="no-vehicles">
+          <div class="empty-state">
             <mat-icon>description</mat-icon>
-            <span>No inventory assigned yet</span>
+            <p>No active reports</p>
           </div>
         </ng-template>
       </section>
-    </div>
 
-    <!-- Right Column -->
-    <div class="right-column">
-      <!-- Profile Card (redesigned) -->
-      <article class="profile-card">
-        <div class="profile-avatar-wrapper">
-          <div class="profile-avatar">
-            <ng-container *ngIf="inspector.avatar; else initialsAvatar">
-              <img [src]="inspector.avatar" [alt]="inspector.name" />
-            </ng-container>
-            <ng-template #initialsAvatar>
-              <span>{{ initials }}</span>
-            </ng-template>
-          </div>
-        </div>
-
-        <h3 class="profile-name">{{ inspector.name }}</h3>
-        <p class="profile-handle">{{ inspector.handle }}</p>
-
-        <button 
-          mat-stroked-button 
-          class="switch-account-btn"
-          [routerLink]="['/inspector/accdetails']">
-          View Account
-        </button>
-
-      </article>
-
-      <!-- Registered Vehicles -->
-      <article class="vehicles-section">
-        <div class="section-header">
+      <!-- Vehicle Registry Section -->
+      <section class="vehicles-panel animate-on-scroll" style="animation-delay: 650ms">
+        <div class="panel-header">
           <div>
-            <h3>Registered Vehicles</h3>
-            <p class="section-subtitle">Sales Summary</p>
+            <h2>Vehicle Registry</h2>
+            <p>All registered vehicles</p>
           </div>
+
           <button
             mat-button
             class="view-all-btn"
-            *ngIf="registeredVehicles.length > 5"
-            (click)="showAllVehicles = !showAllVehicles"
-          >
-            {{ showAllVehicles ? 'Show Less' : 'View All' }}
+            *ngIf="registeredVehicles.length > 6"
+            (click)="toggleVehicleView()">
+            <span>{{ showAllVehicles ? 'Show Less' : 'View All' }}</span>
+            <mat-icon>{{ showAllVehicles ? 'expand_less' : 'expand_more' }}</mat-icon>
           </button>
         </div>
 
-        <div class="vehicles-list" *ngIf="registeredVehicles.length; else noVehicles">
-          <div
-            class="vehicle-item"
-            *ngFor="let vehicle of visibleRegisteredVehicles"
-          >
-            <div class="vehicle-thumbnail">
-              <img
-                *ngIf="vehicle.thumbnail; else noThumb"
-                [src]="vehicle.thumbnail"
-                [alt]="vehicle.title"
-              />
-              <ng-template #noThumb>
-                <div class="thumbnail-placeholder">
+        <div class="vehicles-grid" *ngIf="registeredVehicles.length; else noVehicles">
+          <div 
+            class="vehicle-card animate-on-scroll" 
+            *ngFor="let vehicle of visibleRegisteredVehicles; let i = index"
+            [style.animation-delay]="(700 + i * 50) + 'ms'">
+
+            <div class="vehicle-image">
+              <img *ngIf="vehicle.thumbnail; else vehiclePlaceholder" [src]="vehicle.thumbnail" [alt]="vehicle.title" />
+              <ng-template #vehiclePlaceholder>
+                <div class="placeholder">
                   <mat-icon>directions_car</mat-icon>
                 </div>
               </ng-template>
+
+              <div class="vehicle-year" *ngIf="vehicle.year">
+                <span>{{ vehicle.year }}</span>
+              </div>
             </div>
 
-            <div class="vehicle-details">
-              <p class="vehicle-name">{{ vehicle.title }}</p>
-              <p class="vehicle-id">{{ vehicle.subtitle }}</p>
+            <div class="vehicle-info">
+              <h4>{{ vehicle.title }}</h4>
+              <p>{{ vehicle.subtitle }}</p>
+
+              <div class="vehicle-meta">
+                <div class="assignment-badge" [class.mine]="vehicle.isMine">
+                  <mat-icon>{{ vehicle.isMine ? 'person' : 'group' }}</mat-icon>
+                  <span>{{ vehicle.assignedToLabel }}</span>
+                </div>
+
+                <div
+                  class="status-indicator"
+                  [class.completed]="vehicle.status === 'completed'"
+                  [class.in-progress]="vehicle.status === 'in-progress'">
+                </div>
+              </div>
             </div>
 
-            <!-- Assigned to pill -->
-            <span
-              class="vehicle-assignment"
-              [class.me]="vehicle.isMine"
-            >
-              {{ vehicle.assignedToLabel }}
-            </span>
           </div>
         </div>
 
         <ng-template #noVehicles>
-          <div class="no-vehicles">
-            <mat-icon>directions_car</mat-icon>
-            <span>No vehicles registered yet</span>
+          <div class="empty-state">
+            <mat-icon>garage</mat-icon>
+            <p>No vehicles registered</p>
           </div>
         </ng-template>
-      </article>
+      </section>
+
     </div>
   </div>
 </div>

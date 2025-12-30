@@ -1,8 +1,9 @@
-<!-- inspector-layout.html -->
+<!-- Inspector Layout - Light Luxury Theme -->
 <div class="inspector-shell" [class.collapsed]="railCollapsed">
-  
+
   <!-- LEFT: Sidebar Navigation -->
   <aside class="sidebar" [class.collapsed]="railCollapsed">
+
     <div class="sidebar-header">
       <div class="logo">
         <a routerLink="/inspector/dashboard">
@@ -66,9 +67,11 @@
         class="cta-image"
       />
       <p class="cta-title">Time for Inspection?</p>
-      <p class="cta-subtitle">Inspect assigned vehicles and Earn upto PKR 20000</p>
+      <p class="cta-subtitle">Inspect assigned vehicles and Earn up to PKR 20,000</p>
+
       <button
-        mat-raised-button
+        mat-flat-button
+        color="primary"
         class="cta-button"
         [routerLink]="['/inspector/inspection']"
       >
@@ -90,20 +93,18 @@
 
   <!-- RIGHT: Main Content Area -->
   <main class="main-content">
-    
-    <!-- Top Header (Fixed/Sticky) -->
+
+    <!-- Top Header (Sticky) -->
     <header class="top-header">
       <div class="header-left">
-        <h1 class="page-title">{{ pageTitle }}</h1>
+        <h1 class="page-title">
+          <span class="page-title-text">{{ pageTitle }}</span>
+        </h1>
       </div>
 
       <div class="header-right">
-        <button mat-button class="lang-selector">
-          <img
-            src="https://flagcdn.com/w40/us.png"
-            alt="US"
-            class="flag-icon"
-          />
+        <button mat-stroked-button class="lang-selector">
+          <img src="https://flagcdn.com/w40/us.png" alt="US" class="flag-icon" />
           <span>Eng (US)</span>
         </button>
 
@@ -121,10 +122,12 @@
           <div class="user-avatar">
             <span>{{ initials }}</span>
           </div>
+
           <div class="user-meta">
             <span class="user-name">{{ displayName }}</span>
             <span class="user-role">Inspector</span>
           </div>
+
           <mat-icon class="user-chevron">expand_more</mat-icon>
 
           <ul class="user-menu">
@@ -134,13 +137,16 @@
                 <span>Profile</span>
               </button>
             </li>
+
             <li>
               <button type="button" (click)="changePassword()">
                 <mat-icon>lock</mat-icon>
                 <span>Change Password</span>
               </button>
             </li>
+
             <li class="divider"></li>
+
             <li>
               <button type="button" class="logout-btn" (click)="logout()">
                 <mat-icon>exit_to_app</mat-icon>
@@ -156,7 +162,7 @@
     <section class="content-wrapper">
       <router-outlet></router-outlet>
     </section>
-    
+
   </main>
-  
+
 </div>

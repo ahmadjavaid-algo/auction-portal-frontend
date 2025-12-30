@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit, AfterViewInit, OnDestroy, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 
@@ -36,18 +36,21 @@ interface ActivityItem {
   templateUrl: './inspectors-accdetails.html',
   styleUrl: './inspectors-accdetails.scss'
 })
-export class InspectorsAccdetails {
+export class InspectorsAccdetails implements OnInit, AfterViewInit, OnDestroy {
   private router = inject(Router);
   private inspectorsSvc = inject(InspectorsService);
   private auth = inject(InspectorAuthService);
+  private elementRef = inject(ElementRef);
 
   loading = true;
   error: string | null = null;
   user: Inspector | null = null;
 
-  
   activeTab: 'overview' | 'activity' | 'security' = 'overview';
   activity: ActivityItem[] = [];
+
+  private io?: IntersectionObserver;
+  private observedEls = new WeakSet<Element>();
 
   ngOnInit(): void {
     if (!this.auth.isAuthenticated || !this.auth.currentUser?.userId) {
@@ -61,6 +64,51 @@ export class InspectorsAccdetails {
     this.loadUser(id);
   }
 
+  ngAfterViewInit(): void {
+    this.initScrollAnimations();
+    this.observeAnimatedElements();
+  }
+
+  ngOnDestroy(): void {
+    try {
+      this.io?.disconnect();
+    } catch {}
+  }
+
+  private initScrollAnimations(): void {
+    this.io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in-view');
+            try {
+              this.io?.unobserve(entry.target);
+            } catch {}
+          }
+        });
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      }
+    );
+  }
+
+  private observeAnimatedElements(): void {
+    if (!this.io) return;
+
+    const root: HTMLElement = this.elementRef.nativeElement as HTMLElement;
+    const elements = root.querySelectorAll('.animate-on-scroll');
+
+    elements.forEach((el: Element) => {
+      if (this.observedEls.has(el)) return;
+      this.observedEls.add(el);
+      try {
+        this.io!.observe(el);
+      } catch {}
+    });
+  }
+
   private loadUser(id: number): void {
     this.loading = true;
     this.error = null;
@@ -70,6 +118,11 @@ export class InspectorsAccdetails {
         this.user = u;
         this.buildActivityTimeline();
         this.loading = false;
+        
+        // Re-observe elements after data loads
+        setTimeout(() => {
+          this.observeAnimatedElements();
+        }, 100);
       },
       error: (e) => {
         this.error = e?.error?.message || 'Failed to load account details.';
@@ -134,6 +187,11 @@ export class InspectorsAccdetails {
 
   setTab(tab: 'overview' | 'activity' | 'security'): void {
     this.activeTab = tab;
+    
+    // Re-observe elements when tab changes
+    setTimeout(() => {
+      this.observeAnimatedElements();
+    }, 50);
   }
 
   refresh(): void {

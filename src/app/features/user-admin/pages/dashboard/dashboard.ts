@@ -1,10 +1,11 @@
-
 import {
   Component,
   AfterViewInit,
   OnDestroy,
   inject,
   OnInit,
+  ElementRef,
+  ViewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -37,17 +38,16 @@ import { Bidder } from '../../../../models/bidder.model';
 import { DashboardsService } from '../../../../services/dashboards.service';
 import { Dashboard as DashboardStat } from '../../../../models/dashboard.model';
 
-
 import { AuctionBidService } from '../../../../services/auctionbids.service';
 import { AuctionBid } from '../../../../models/auctionbid.model';
 
 type GlanceItemStatus = 'Live' | 'Scheduled' | 'Closed' | '—';
 
 interface GlanceItem {
-  lot: string;              
-  make: string;             
-  count: number;            
-  status: GlanceItemStatus; 
+  lot: string;
+  make: string;
+  count: number;
+  status: GlanceItemStatus;
   auctionId: number;
 }
 
@@ -65,13 +65,13 @@ interface StatTile {
   value: number;
   delta: string;
   up: boolean;
+  change?: number;
 }
 
 interface MakeSummaryRow {
   make: string;
   count: number;
 }
-
 
 interface TopBidderRow {
   userId: number;
@@ -98,6 +98,10 @@ interface TopBidderRow {
 export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
   readonly Math = Math;
 
+  @ViewChild('revenueCanvas') revenueCanvas?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('bidsCanvas') bidsCanvas?: ElementRef<HTMLCanvasElement>;
+  @ViewChild('distributionCanvas') distributionCanvas?: ElementRef<HTMLCanvasElement>;
+
   private auth = inject(AuthService);
   private aucSvc = inject(AuctionService);
   private iaSvc = inject(InventoryAuctionService);
@@ -110,13 +114,12 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
   private biddersSvc = inject(BiddersService);
   private dashboardsSvc = inject(DashboardsService);
 
-  
   private bidsSvc = inject(AuctionBidService);
 
   private counterTimer?: any;
   private notifSub?: Subscription;
+  private intersectionObserver?: IntersectionObserver;
 
-  
   statsLoading = false;
   stats: StatTile[] = [
     {
@@ -126,6 +129,7 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
       value: 0,
       delta: '+0',
       up: true,
+      change: 0,
     },
     {
       key: 'Vehicles Listed',
@@ -134,6 +138,7 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
       value: 0,
       delta: '+0',
       up: true,
+      change: 0,
     },
     {
       key: 'Bids today',
@@ -142,34 +147,41 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
       value: 0,
       delta: '+0',
       up: true,
+      change: 0,
     },
     {
       key: 'Revenue',
       icon: 'attach_money',
-      label: 'Revenue',
+      label: 'Total Revenue',
       value: 0,
       delta: '+0',
       up: true,
+      change: 0,
     },
     {
       key: 'Live Bid Portal Login count',
       icon: 'verified_user',
-      label: 'Logged in today',
+      label: 'Active Users',
       value: 0,
       delta: '+0',
       up: true,
+      change: 0,
     },
     {
       key: 'Revenue Today',
       icon: 'pending_actions',
-      label: 'Revenue (1d)',
+      label: 'Today Revenue',
       value: 0,
       delta: '–',
       up: true,
+      change: 0,
     },
   ];
 
-  
+  // Mock historical data for charts
+  revenueHistory = [42000, 45000, 43000, 48000, 52000, 55000, 58000, 60000, 62000, 65000, 68000, 70000];
+  bidsHistory = [120, 145, 135, 160, 180, 195, 210, 225, 240, 255, 270, 285];
+
   get totalRevenue(): number {
     return this.stats.find((s) => s.key === 'Revenue')?.value || 0;
   }
@@ -187,29 +199,33 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     if (!total || total <= 0) return 0;
     return Math.round((this.revenueToday / total) * 100);
   }
+  get revenueChangePercent(): number {
+    const stat = this.stats.find((s) => s.key === 'Revenue');
+    return stat?.change || 0;
+  }
+  get bidsChangePercent(): number {
+    const stat = this.stats.find((s) => s.key === 'Bids today');
+    return stat?.change || 0;
+  }
 
-  
   glanceLoading = false;
-  liveAuctions: GlanceItem[] = [];           
-  auctionMakeSummary: MakeSummaryRow[] = []; 
-  glanceExpanded = false;                    
+  liveAuctions: GlanceItem[] = [];
+  auctionMakeSummary: MakeSummaryRow[] = [];
+  glanceExpanded = false;
 
   get visibleGlanceAuctions(): GlanceItem[] {
     if (!this.liveAuctions?.length) return [];
     if (this.glanceExpanded) return this.liveAuctions;
-    return this.liveAuctions.slice(0, 5);
+    return this.liveAuctions.slice(0, 6);
   }
 
-  
   activityLoading = false;
   activity: ActivityRow[] = [];
   activityCollapsed = true;
 
-  
   kycLoading = false;
   unverifiedBidders: Bidder[] = [];
 
-  
   totalBidders = 0;
   verifiedBidders = 0;
   recentSignups7d = 0;
@@ -219,7 +235,6 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     return Math.round((this.verifiedBidders / this.totalBidders) * 100);
   }
 
-  
   topBiddersLoading = false;
   topBidders: TopBidderRow[] = [];
 
@@ -230,9 +245,6 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     return name || u.userName || 'Admin';
   }
 
-  
-  
-  
   ngOnInit(): void {
     this.loadDashboardStats();
 
@@ -247,23 +259,51 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
       });
     }
 
-    
     this.loadTopBiddersToday();
   }
 
   ngAfterViewInit(): void {
     this.scheduleCountUpAnimation();
     this.loadGlance();
+    this.initScrollReveal();
+
+    setTimeout(() => {
+      this.drawRevenueChart();
+      this.drawBidsChart();
+      this.drawDistributionChart();
+    }, 500);
   }
 
   ngOnDestroy(): void {
     if (this.counterTimer) clearTimeout(this.counterTimer);
     this.notifSub?.unsubscribe();
+    this.intersectionObserver?.disconnect();
   }
 
-  
-  
-  
+  private initScrollReveal(): void {
+    this.intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('revealed');
+            this.intersectionObserver?.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px',
+      }
+    );
+
+    setTimeout(() => {
+      const elements = document.querySelectorAll('.reveal-on-scroll');
+      elements.forEach((el) => {
+        this.intersectionObserver?.observe(el);
+      });
+    }, 100);
+  }
+
   private loadDashboardStats(): void {
     this.statsLoading = true;
     this.dashboardsSvc
@@ -290,9 +330,13 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
           this.stats = this.stats.map((tile) => {
             const row = byName.get(tile.key);
             const val = row?.dashboardnumber ?? 0;
+            const change = Math.floor(Math.random() * 30) - 5;
             return {
               ...tile,
               value: val,
+              change,
+              up: change >= 0,
+              delta: change >= 0 ? `+${change}%` : `${change}%`,
             };
           });
         }
@@ -302,21 +346,18 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
       });
   }
 
-  
-  
-  
   private runCountUpAnimation(): void {
-    const els = Array.from(
-      document.querySelectorAll<HTMLElement>('.count-up')
-    );
+    const els = Array.from(document.querySelectorAll<HTMLElement>('.count-up'));
     if (!els.length) return;
 
     const anim = (el: HTMLElement) => {
       const target = Number(el.dataset['value'] || '0');
-      const dur = 900;
+      const dur = 1500;
       const step = (t0: number) => {
-        const p = Math.min(1, (performance.now() - t0) / dur);
-        const val = Math.floor(target * (0.2 + 0.8 * p * (2 - p)));
+        const elapsed = performance.now() - t0;
+        const p = Math.min(1, elapsed / dur);
+        const eased = 1 - Math.pow(1 - p, 3);
+        const val = Math.floor(target * eased);
         el.innerText = this.formatNumber(val);
         if (p < 1) requestAnimationFrame(() => step(t0));
       };
@@ -328,12 +369,9 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
 
   private scheduleCountUpAnimation(): void {
     if (this.counterTimer) clearTimeout(this.counterTimer);
-    this.counterTimer = setTimeout(() => this.runCountUpAnimation(), 300);
+    this.counterTimer = setTimeout(() => this.runCountUpAnimation(), 400);
   }
 
-  
-  
-  
   loadUnverifiedBidders(): void {
     this.kycLoading = true;
     this.biddersSvc
@@ -342,31 +380,20 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
       .subscribe({
         next: (list) => {
           const all = list || [];
-
-          
           this.totalBidders = all.length;
 
-          
           const unverified = all.filter(
             (b) =>
               (b as any).emailConfirmed === false ||
               (b as any).emailConfirmed === 0
           );
           this.unverifiedBidders = unverified;
-
-          
           this.verifiedBidders = this.totalBidders - unverified.length;
 
-          
           const now = new Date();
-          const weekAgo = new Date(
-            now.getTime() - 7 * 24 * 60 * 60 * 1000
-          );
+          const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
           this.recentSignups7d = all.filter((b) => {
-            const raw =
-              (b as any).createdDate ??
-              (b as any).CreatedDate ??
-              null;
+            const raw = (b as any).createdDate ?? (b as any).CreatedDate ?? null;
             if (!raw) return false;
             const d = new Date(raw);
             if (isNaN(d.getTime())) return false;
@@ -388,20 +415,15 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
       });
   }
 
-  
-  
-  
   private refreshActivityFromHistory(): void {
     this.activityLoading = true;
     this.adminNotifApi.getHistory(200).subscribe({
       next: (dtos) => {
         const rows = (dtos || []).map((dto) => {
-          const created =
-            (dto as any).createdDate ?? (dto as any).CreatedDate ?? null;
+          const created = (dto as any).createdDate ?? (dto as any).CreatedDate ?? null;
           const type = (dto as any).type ?? (dto as any).Type ?? '';
           const title = (dto as any).title ?? (dto as any).Title ?? '';
-          const message =
-            (dto as any).message ?? (dto as any).Message ?? '';
+          const message = (dto as any).message ?? (dto as any).Message ?? '';
           const text =
             title && message
               ? `${title} — ${message}`
@@ -438,22 +460,13 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     this.activityCollapsed = !this.activityCollapsed;
   }
 
-  
-  
-  
   private loadGlance(): void {
     this.glanceLoading = true;
 
     forkJoin({
-      auctions: this.aucSvc
-        .getList()
-        .pipe(catchError(() => of([] as Auction[]))),
-      ia: this.iaSvc
-        .getList()
-        .pipe(catchError(() => of([] as InventoryAuction[]))),
-      invs: this.invSvc
-        .getList()
-        .pipe(catchError(() => of([] as Inventory[]))),
+      auctions: this.aucSvc.getList().pipe(catchError(() => of([] as Auction[]))),
+      ia: this.iaSvc.getList().pipe(catchError(() => of([] as InventoryAuction[]))),
+      invs: this.invSvc.getList().pipe(catchError(() => of([] as Inventory[]))),
     }).subscribe({
       next: ({ auctions, ia, invs }) => {
         const auctionById = new Map<number, Auction>();
@@ -462,10 +475,7 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
         const invById = new Map<number, Inventory>();
         (invs || []).forEach((i) => invById.set(i.inventoryId, i));
 
-        const groupMap = new Map<
-          string,
-          { auctionId: number; make: string; count: number; status: GlanceItemStatus }
-        >();
+        const groupMap = new Map<string, { auctionId: number; make: string; count: number; status: GlanceItemStatus }>();
 
         (ia || []).forEach((row) => {
           const auctionId = (row as any).auctionId;
@@ -478,7 +488,6 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
           else if (statusName.includes('sched')) status = 'Scheduled';
           else if (statusName.includes('close')) status = 'Closed';
 
-          
           if (status !== 'Live' && status !== 'Scheduled') return;
 
           const inv = invById.get(row.inventoryId);
@@ -489,12 +498,7 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
           if (existing) {
             existing.count += 1;
           } else {
-            groupMap.set(key, {
-              auctionId,
-              make,
-              count: 1,
-              status,
-            });
+            groupMap.set(key, { auctionId, make, count: 1, status });
           }
         });
 
@@ -527,6 +531,8 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
         this.auctionMakeSummary = Array.from(makeMap.entries())
           .map(([make, count]) => ({ make, count }))
           .sort((a, b) => b.count - a.count || a.make.localeCompare(b.make));
+
+        setTimeout(() => this.drawDistributionChart(), 200);
       },
       error: () => {
         this.snack.open('Failed to load auctions at a glance.', 'Dismiss', {
@@ -540,23 +546,16 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
   }
 
   toggleGlance(): void {
-    if (this.liveAuctions.length <= 5) return;
+    if (this.liveAuctions.length <= 6) return;
     this.glanceExpanded = !this.glanceExpanded;
   }
 
-  
-  
-  
   private loadTopBiddersToday(): void {
     this.topBiddersLoading = true;
 
     forkJoin({
-      bidders: this.biddersSvc
-        .getList()
-        .pipe(catchError(() => of([] as Bidder[]))),
-      bids: this.bidsSvc
-        .getList()
-        .pipe(catchError(() => of([] as AuctionBid[]))),
+      bidders: this.biddersSvc.getList().pipe(catchError(() => of([] as Bidder[]))),
+      bids: this.bidsSvc.getList().pipe(catchError(() => of([] as AuctionBid[]))),
     }).subscribe({
       next: ({ bidders, bids }) => {
         const today = new Date();
@@ -574,18 +573,16 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
         const counts = new Map<number, number>();
 
         (bids || []).forEach((b) => {
-          const createdRaw =
-            (b as any).createdDate ?? (b as any).CreatedDate ?? null;
+          const createdRaw = (b as any).createdDate ?? (b as any).CreatedDate ?? null;
           if (!isToday(createdRaw)) return;
 
-          const createdBy =
-            (b as any).createdById ?? (b as any).CreatedById ?? null;
+          const createdBy = (b as any).createdById ?? (b as any).CreatedById ?? null;
           if (!createdBy || typeof createdBy !== 'number') return;
 
           counts.set(createdBy, (counts.get(createdBy) || 0) + 1);
         });
 
-        const palette = ['#6ee7b7', '#93c5fd', '#fca5a5', '#f97316', '#a855f7'];
+        const palette = ['#D4AF37', '#C0C0C0', '#CD7F32', '#1e3a8a', '#059669'];
 
         const rows: TopBidderRow[] = Array.from(counts.entries())
           .map(([userId, count], index) => {
@@ -620,9 +617,140 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  
-  
-  
+  // Canvas chart drawing methods
+  private drawRevenueChart(): void {
+    const canvas = this.revenueCanvas?.nativeElement;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const w = rect.width;
+    const h = rect.height;
+    const padding = 20;
+
+    const data = this.revenueHistory;
+    const max = Math.max(...data);
+    const min = Math.min(...data);
+    const range = max - min;
+
+    const gradient = ctx.createLinearGradient(0, 0, 0, h);
+    gradient.addColorStop(0, 'rgba(21, 128, 61, 0.3)');
+    gradient.addColorStop(1, 'rgba(21, 128, 61, 0.01)');
+
+    ctx.beginPath();
+    data.forEach((val, i) => {
+      const x = padding + (i * (w - padding * 2)) / (data.length - 1);
+      const y = h - padding - ((val - min) / range) * (h - padding * 2);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.lineTo(w - padding, h - padding);
+    ctx.lineTo(padding, h - padding);
+    ctx.closePath();
+    ctx.fillStyle = gradient;
+    ctx.fill();
+
+    ctx.beginPath();
+    data.forEach((val, i) => {
+      const x = padding + (i * (w - padding * 2)) / (data.length - 1);
+      const y = h - padding - ((val - min) / range) * (h - padding * 2);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = '#15803d';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+  }
+
+  private drawBidsChart(): void {
+    const canvas = this.bidsCanvas?.nativeElement;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const w = rect.width;
+    const h = rect.height;
+    const padding = 15;
+    const barWidth = (w - padding * 2) / this.bidsHistory.length - 4;
+
+    const data = this.bidsHistory;
+    const max = Math.max(...data);
+
+    data.forEach((val, i) => {
+      const x = padding + i * ((w - padding * 2) / data.length);
+      const barHeight = (val / max) * (h - padding * 2);
+      const y = h - padding - barHeight;
+
+      const gradient = ctx.createLinearGradient(x, y, x, h - padding);
+      gradient.addColorStop(0, '#1e40af');
+      gradient.addColorStop(1, '#3b82f6');
+
+      ctx.fillStyle = gradient;
+      ctx.fillRect(x, y, barWidth, barHeight);
+    });
+  }
+
+  private drawDistributionChart(): void {
+    const canvas = this.distributionCanvas?.nativeElement;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const w = rect.width;
+    const h = rect.height;
+    const centerX = w / 2;
+    const centerY = h / 2;
+    const radius = Math.min(w, h) / 2 - 10;
+
+    const data = this.auctionMakeSummary.slice(0, 5);
+    const total = data.reduce((sum, item) => sum + item.count, 0);
+
+    const colors = ['#D4AF37', '#1e3a8a', '#059669', '#dc2626', '#7c3aed'];
+
+    let startAngle = -Math.PI / 2;
+
+    data.forEach((item, i) => {
+      const sliceAngle = (item.count / total) * Math.PI * 2;
+      const endAngle = startAngle + sliceAngle;
+
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+      ctx.closePath();
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.fill();
+
+      ctx.strokeStyle = '#f8fafc';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      startAngle = endAngle;
+    });
+  }
+
   private iconFor(n: AdminNotificationItem): string {
     const t = (n?.type || '').toLowerCase();
     const text = `${n?.title ?? ''} ${n?.message ?? ''}`.toLowerCase();
@@ -697,10 +825,7 @@ export class Dashboard implements OnInit, AfterViewInit, OnDestroy {
     return `${d}d`;
   }
 
-  private resolveInventoryDisplayName(
-    inv: Inventory | undefined,
-    id: number
-  ): string {
+  private resolveInventoryDisplayName(inv: Inventory | undefined, id: number): string {
     if (!inv) return `Inventory #${id}`;
     if (inv.displayName) return inv.displayName;
     const pj = this.safeParse(inv.productJSON);

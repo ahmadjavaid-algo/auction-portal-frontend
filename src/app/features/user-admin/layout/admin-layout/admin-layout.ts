@@ -5,7 +5,8 @@ import {
   ViewChild,
   inject,
   OnInit,
-  OnDestroy
+  OnDestroy,
+  AfterViewInit
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
@@ -19,6 +20,7 @@ import {
   AdminNotificationItem
 } from '../../../../services/admin-notification-hub.service';
 import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-admin-layout',
@@ -27,7 +29,7 @@ import { Subscription } from 'rxjs';
   templateUrl: './admin-layout.html',
   styleUrls: ['./admin-layout.scss']
 })
-export class AdminLayout implements OnInit, OnDestroy {
+export class AdminLayout implements OnInit, AfterViewInit, OnDestroy {
   private auth = inject(AuthService);
   private snack = inject(MatSnackBar);
   private router = inject(Router);
@@ -40,9 +42,12 @@ export class AdminLayout implements OnInit, OnDestroy {
   notifications: AdminNotificationItem[] = [];
   unreadCount = 0;
 
-  
   currentPageTitle = 'Dashboard';
+  pageFullBleed = false;
 
+  // Profile avatar animation
+  avatarHovered = false;
+  
   @ViewChild('dropdown') dropdownRef!: ElementRef;
   @ViewChild('notifHost') notifHostRef!: ElementRef;
 
@@ -56,6 +61,28 @@ export class AdminLayout implements OnInit, OnDestroy {
     return name || u.userName || 'Admin';
   }
 
+  get avatarInitials(): string {
+    const u = this.auth.currentUser;
+    if (!u) return 'A';
+    
+    const firstName = (u.firstName || '').trim();
+    const lastName = (u.lastName || '').trim();
+    
+    if (firstName && lastName) {
+      return `${firstName[0]}${lastName[0]}`.toUpperCase();
+    }
+    
+    if (firstName) {
+      return firstName.slice(0, 2).toUpperCase();
+    }
+    
+    if (u.userName) {
+      return u.userName.slice(0, 2).toUpperCase();
+    }
+    
+    return 'AD';
+  }
+
   ngOnInit(): void {
     if (this.auth.isAuthenticated) {
       this.adminNotifHub.init();
@@ -65,15 +92,28 @@ export class AdminLayout implements OnInit, OnDestroy {
       });
     }
 
-    
-    this.updatePageTitleFromUrl(this.router.url);
+    this.applyRouteUI(this.router.url);
 
-    
-    this.routeSub = this.router.events.subscribe(ev => {
-      if (ev instanceof NavigationEnd) {
-        this.updatePageTitleFromUrl(ev.urlAfterRedirects || ev.url);
-      }
-    });
+    this.routeSub = this.router.events
+      .pipe(filter(ev => ev instanceof NavigationEnd))
+      .subscribe((ev: NavigationEnd) => {
+        this.applyRouteUI(ev.urlAfterRedirects || ev.url);
+        
+        // Close menus on navigation
+        this.dropdownOpen = false;
+        this.notifOpen = false;
+      });
+  }
+
+  ngAfterViewInit(): void {
+    // Add staggered reveal animation to nav items
+    setTimeout(() => {
+      const navItems = document.querySelectorAll('.sidebar nav a');
+      navItems.forEach((item, index) => {
+        (item as HTMLElement).style.animationDelay = `${index * 0.05}s`;
+        item.classList.add('nav-reveal');
+      });
+    }, 100);
   }
 
   ngOnDestroy(): void {
@@ -81,8 +121,10 @@ export class AdminLayout implements OnInit, OnDestroy {
     this.routeSub?.unsubscribe();
   }
 
-  private updatePageTitleFromUrl(url: string): void {
+  private applyRouteUI(url: string): void {
     const clean = (url || '').split('?')[0].toLowerCase();
+
+    this.pageFullBleed = clean.includes('/admin/dashboard');
 
     if (clean.includes('/admin/users')) {
       this.currentPageTitle = 'Users';
@@ -186,5 +228,52 @@ export class AdminLayout implements OnInit, OnDestroy {
     this.adminNotifHub.stop();
     this.auth.logout();
     this.router.navigate(['/admin/login']);
+  }
+
+  getNotificationIcon(type: string): string {
+    const t = (type || '').toLowerCase();
+    switch (t) {
+      case 'bid-created':
+      case 'bid-placed':
+      case 'bid-updated':
+        return 'gavel';
+      case 'auction-created':
+        return 'add_business';
+      case 'auction-scheduled':
+        return 'event';
+      case 'auction-live':
+        return 'local_fire_department';
+      case 'auction-closed':
+        return 'lock';
+      case 'vehicle-listed':
+      case 'inventory-added':
+        return 'directions_car';
+      case 'user-created':
+      case 'user-updated':
+        return 'person';
+      case 'kyc-pending':
+        return 'pending_actions';
+      case 'kyc-approved':
+        return 'verified_user';
+      case 'payment-received':
+        return 'payments';
+      default:
+        return 'notifications';
+    }
+  }
+
+  formatNotificationTime(date: Date): string {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    
+    if (minutes < 1) return 'now';
+    if (minutes < 60) return `${minutes}m`;
+    
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h`;
+    
+    const days = Math.floor(hours / 24);
+    return `${days}d`;
   }
 }

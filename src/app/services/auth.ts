@@ -55,7 +55,7 @@ export class AuthService {
   }
 
   get currentUser():
-    | { userId: number; userName: string; firstName: string; email: string; permissions: string[] }
+    | { userId: number; userName: string; firstName: string; lastName: string;email: string; permissions: string[] }
     | null {
     const raw = localStorage.getItem(USER_KEY);
     return raw ? JSON.parse(raw) : null;

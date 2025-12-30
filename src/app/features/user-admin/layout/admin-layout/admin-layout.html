@@ -1,110 +1,148 @@
 <div class="layout-container">
   <!-- Sidebar -->
   <aside [class.collapsed]="sidebarCollapsed" class="sidebar">
-    <div class="logo">
-      <a
-        routerLink="dashboard"
-        style="display:flex;align-items:center;gap:10px;text-decoration:none;color:white"
-      >
-        <img
-          src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8"
-          alt="Logo"
-        />
-        <span *ngIf="!sidebarCollapsed">Auction Portal</span>
-      </a>
+    <div class="sidebar-header">
+      <div class="logo">
+        <a routerLink="dashboard" class="logo-link">
+          <div class="logo-icon">
+            <img
+              src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8"
+              alt="Logo"
+            />
+          </div>
+          <div class="logo-text" *ngIf="!sidebarCollapsed">
+            <span class="logo-name">Auction Portal</span>
+            <span class="logo-subtitle">Admin Console</span>
+          </div>
+        </a>
+      </div>
+
+      <button class="toggle-btn" (click)="toggleSidebar()" [attr.aria-label]="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
+        <mat-icon>{{ sidebarCollapsed ? 'menu_open' : 'menu' }}</mat-icon>
+      </button>
     </div>
 
-    <button class="toggle-btn" (click)="toggleSidebar()">
-      <span class="material-icons">{{ sidebarCollapsed ? 'menu' : 'close' }}</span>
-    </button>
-
-    <nav>
-      <a
-        routerLink="dashboard"
-        routerLinkActive="active"
-        [routerLinkActiveOptions]="{ exact: true }"
-      >
-        <mat-icon>space_dashboard</mat-icon>
-        <span class="label" *ngIf="!sidebarCollapsed">Dashboard</span>
-      </a>
-      <a routerLink="users" routerLinkActive="active">
-        <mat-icon>people</mat-icon>
-        <span class="label" *ngIf="!sidebarCollapsed">Users</span>
+    <nav class="sidebar-nav">
+      <a routerLink="dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" class="nav-item">
+        <div class="nav-icon">
+          <mat-icon>space_dashboard</mat-icon>
+        </div>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">Dashboard</span>
+        <div class="nav-indicator"></div>
       </a>
 
-      <a routerLink="roles" routerLinkActive="active">
-        <mat-icon>admin_panel_settings</mat-icon>
-        <span class="label" *ngIf="!sidebarCollapsed">Roles</span>
+      <a routerLink="users" routerLinkActive="active" class="nav-item">
+        <div class="nav-icon">
+          <mat-icon>people</mat-icon>
+        </div>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">Users</span>
+        <div class="nav-indicator"></div>
       </a>
 
-      <a routerLink="inspectors" routerLinkActive="active">
-        <mat-icon>verified_user</mat-icon>
-        <span class="label" *ngIf="!sidebarCollapsed">Inspectors</span>
-      </a>
-      <a routerLink="bidders" routerLinkActive="active">
-        <mat-icon>gavel</mat-icon>
-        <span class="label" *ngIf="!sidebarCollapsed">Bidders</span>
-      </a>
-      <a routerLink="emails" routerLinkActive="active">
-        <mat-icon>mail</mat-icon>
-        <span class="label" *ngIf="!sidebarCollapsed">Emails</span>
-      </a>
-      <a routerLink="make" routerLinkActive="active">
-        <mat-icon>directions_car</mat-icon>
-        <span class="label" *ngIf="!sidebarCollapsed">Product Configuration</span>
-      </a>
-      <a routerLink="products" routerLinkActive="active">
-        <mat-icon>category</mat-icon>
-        <span class="label" *ngIf="!sidebarCollapsed">Products</span>
+      <a routerLink="roles" routerLinkActive="active" class="nav-item">
+        <div class="nav-icon">
+          <mat-icon>admin_panel_settings</mat-icon>
+        </div>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">Roles</span>
+        <div class="nav-indicator"></div>
       </a>
 
-      <a routerLink="inventory" routerLinkActive="active">
-        <mat-icon>inventory_2</mat-icon>
-        <span class="label" *ngIf="!sidebarCollapsed">Inventory</span>
+      <a routerLink="inspectors" routerLinkActive="active" class="nav-item">
+        <div class="nav-icon">
+          <mat-icon>verified_user</mat-icon>
+        </div>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">Inspectors</span>
+        <div class="nav-indicator"></div>
       </a>
-      <a routerLink="auctions" routerLinkActive="active">
-        <mat-icon>price_change</mat-icon>
-        <span class="label" *ngIf="!sidebarCollapsed">Auctions</span>
+
+      <a routerLink="bidders" routerLinkActive="active" class="nav-item">
+        <div class="nav-icon">
+          <mat-icon>gavel</mat-icon>
+        </div>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">Bidders</span>
+        <div class="nav-indicator"></div>
       </a>
-      <a routerLink="inspection" routerLinkActive="active">
-        <mat-icon>fact_check</mat-icon>
-        <span class="label" *ngIf="!sidebarCollapsed">Inspection</span>
+
+      <a routerLink="emails" routerLinkActive="active" class="nav-item">
+        <div class="nav-icon">
+          <mat-icon>mail</mat-icon>
+        </div>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">Emails</span>
+        <div class="nav-indicator"></div>
+      </a>
+
+      <div class="nav-divider" *ngIf="!sidebarCollapsed"></div>
+
+      <a routerLink="make" routerLinkActive="active" class="nav-item">
+        <div class="nav-icon">
+          <mat-icon>directions_car</mat-icon>
+        </div>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">Product Config</span>
+        <div class="nav-indicator"></div>
+      </a>
+
+      <a routerLink="products" routerLinkActive="active" class="nav-item">
+        <div class="nav-icon">
+          <mat-icon>category</mat-icon>
+        </div>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">Products</span>
+        <div class="nav-indicator"></div>
+      </a>
+
+      <a routerLink="inventory" routerLinkActive="active" class="nav-item">
+        <div class="nav-icon">
+          <mat-icon>inventory_2</mat-icon>
+        </div>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">Inventory</span>
+        <div class="nav-indicator"></div>
+      </a>
+
+      <a routerLink="auctions" routerLinkActive="active" class="nav-item">
+        <div class="nav-icon">
+          <mat-icon>price_change</mat-icon>
+        </div>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">Auctions</span>
+        <div class="nav-indicator"></div>
+      </a>
+
+      <a routerLink="inspection" routerLinkActive="active" class="nav-item">
+        <div class="nav-icon">
+          <mat-icon>fact_check</mat-icon>
+        </div>
+        <span class="nav-label" *ngIf="!sidebarCollapsed">Inspection</span>
+        <div class="nav-indicator"></div>
       </a>
     </nav>
   </aside>
 
-  <!-- Main -->
+  <!-- Main Content -->
   <main class="main-content">
     <header class="topbar">
-      <!-- Left: current page title -->
-      <div class="page-title">
-        <h1>{{ currentPageTitle }}</h1>
+      <div class="topbar-left">
+        <div class="page-title">
+          <h1>{{ currentPageTitle }}</h1>
+        </div>
       </div>
 
-      <!-- Right: notifications + user -->
       <div class="topbar-right">
         <!-- Notifications -->
         <div #notifHost class="notif-wrapper">
-          <button
-            class="icon-btn"
-            aria-label="Notifications"
-            (click)="toggleNotifications()
-            "
-          >
+          <button class="topbar-btn notif-btn" (click)="toggleNotifications()" [class.has-unread]="unreadCount > 0">
             <mat-icon>notifications</mat-icon>
-            <span class="dot" *ngIf="unreadCount > 0"></span>
+            <span class="notif-badge" *ngIf="unreadCount > 0">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
           </button>
 
-          <div class="notif-panel" *ngIf="notifOpen">
+          <div class="notif-dropdown" *ngIf="notifOpen">
             <div class="notif-header">
-              <span>Notifications</span>
-              <div class="right">
-                <span class="badge" *ngIf="unreadCount > 0">
-                  {{ unreadCount }} new
-                </span>
+              <div class="notif-title">
+                <mat-icon>notifications_active</mat-icon>
+                <span>Notifications</span>
+              </div>
+              <div class="notif-actions">
+                <span class="notif-count" *ngIf="unreadCount > 0">{{ unreadCount }} new</span>
                 <button
                   type="button"
-                  class="clear-btn"
+                  class="clear-all-btn"
                   *ngIf="notifications.length"
                   (click)="clearNotifications($event)"
                 >
@@ -113,54 +151,84 @@
               </div>
             </div>
 
-            <div class="notif-list" *ngIf="notifications.length; else noAdminNotif">
-              <button
-                type="button"
-                class="notif-item"
-                *ngFor="let n of notifications"
-                (click)="onNotificationClick(n)"
-              >
-                <div class="notif-main">
-                  <div class="title">
-                    {{ n.title }}
-                    <span class="pill" *ngIf="!n.read">NEW</span>
+            <div class="notif-body">
+              <div class="notif-list" *ngIf="notifications.length; else noNotifs">
+                <button
+                  type="button"
+                  class="notif-item"
+                  *ngFor="let n of notifications"
+                  [class.unread]="!n.read"
+                  (click)="onNotificationClick(n)"
+                >
+                  <div class="notif-icon">
+                    <mat-icon>{{ getNotificationIcon(n.type) }}</mat-icon>
                   </div>
-                  <div class="msg">{{ n.message }}</div>
-                </div>
-                <div class="time">
-                  {{ n.createdAt | date: 'shortTime' }}
-                </div>
-              </button>
-            </div>
-
-            <ng-template #noAdminNotif>
-              <div class="notif-empty">
-                <mat-icon>notifications_none</mat-icon>
-                <span>No notifications yet.</span>
+                  <div class="notif-content">
+                    <div class="notif-title-row">
+                      <span class="notif-title-text">{{ n.title }}</span>
+                      <span class="notif-time">{{ formatNotificationTime(n.createdAt) }}</span>
+                    </div>
+                    <p class="notif-message">{{ n.message }}</p>
+                  </div>
+                  <div class="notif-indicator" *ngIf="!n.read"></div>
+                </button>
               </div>
-            </ng-template>
+
+              <ng-template #noNotifs>
+                <div class="notif-empty">
+                  <mat-icon>notifications_none</mat-icon>
+                  <span>No notifications</span>
+                </div>
+              </ng-template>
+            </div>
           </div>
         </div>
 
-        <!-- User dropdown -->
-        <div
-          #dropdown
-          class="user"
-          [class.open]="dropdownOpen"
-          (click)="toggleDropdown()"
-        >
-          <div class="avatar">{{ (displayName || 'U') | slice: 0:1 }}</div>
-          <span class="name">{{ displayName }}</span>
-          <mat-icon>expand_more</mat-icon>
-          <ul>
-            <li><a (click)="changePassword()">Change Password</a></li>
-            <li><a (click)="logout()">Logout</a></li>
-          </ul>
+        <!-- User Profile -->
+        <div #dropdown class="profile-wrapper" [class.open]="dropdownOpen" (click)="toggleDropdown()">
+          <div class="profile-trigger">
+            <div class="profile-avatar" [class.hovered]="dropdownOpen">
+              <span class="avatar-text">{{ avatarInitials }}</span>
+              <div class="avatar-ring"></div>
+            </div>
+            <div class="profile-info" *ngIf="!sidebarCollapsed">
+              <span class="profile-name">{{ displayName }}</span>
+              <span class="profile-role">Administrator</span>
+            </div>
+            <mat-icon class="profile-chevron">expand_more</mat-icon>
+          </div>
+
+          <div class="profile-dropdown" *ngIf="dropdownOpen">
+            <div class="profile-dropdown-header">
+              <div class="profile-dropdown-avatar">
+                <span>{{ avatarInitials }}</span>
+              </div>
+              <div class="profile-dropdown-info">
+                <div class="profile-dropdown-name">{{ displayName }}</div>
+                <div class="profile-dropdown-role">Administrator</div>
+              </div>
+            </div>
+
+            <div class="profile-dropdown-divider"></div>
+
+            <div class="profile-dropdown-menu">
+              <button type="button" class="profile-menu-item" (click)="changePassword()">
+                <mat-icon>lock</mat-icon>
+                <span>Change Password</span>
+              </button>
+              <button type="button" class="profile-menu-item logout" (click)="logout()">
+                <mat-icon>logout</mat-icon>
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </header>
 
     <!-- Routed Content -->
-    <router-outlet></router-outlet>
+    <section class="page-shell" [class.full-bleed]="pageFullBleed">
+      <router-outlet></router-outlet>
+    </section>
   </main>
 </div>

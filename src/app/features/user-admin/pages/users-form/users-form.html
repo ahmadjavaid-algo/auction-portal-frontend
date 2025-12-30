@@ -1,112 +1,184 @@
-<form class="dialog-form" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
-  <!-- Honeypots to stop browser credential autofill -->
+<form class="user-form-dialog" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
+  <!-- Honeypots to prevent autofill -->
   <input type="text" autocomplete="username" tabindex="-1" aria-hidden="true"
          style="position:absolute;left:-9999px;width:0;height:0;opacity:0;" />
   <input type="password" autocomplete="current-password" tabindex="-1" aria-hidden="true"
          style="position:absolute;left:-9999px;width:0;height:0;opacity:0;" />
 
-  <!-- Header -->
-  <div class="header">
-    <div class="title">
-      <h2>{{ mode === 'edit' ? 'Edit User' : 'Create User' }}</h2>
-      <p class="sub">Fill in the details below. Fields marked * are required.</p>
+  <!-- Dialog Header -->
+  <div class="dialog-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <mat-icon>{{ mode === 'edit' ? 'edit' : 'person_add' }}</mat-icon>
+      </div>
+      <div class="header-text">
+        <h2 class="dialog-title">{{ dialogTitle }}</h2>
+        <p class="dialog-subtitle">{{ mode === 'edit' ? 'Update user information below' : 'Fill in the details to create a new user' }}</p>
+      </div>
     </div>
+    <button type="button" mat-icon-button class="close-btn" (click)="onCancel()" matTooltip="Close">
+      <mat-icon>close</mat-icon>
+    </button>
   </div>
 
-  <!-- Scrollable body -->
-  <mat-dialog-content class="body">
-    <div class="sheet">
-      <div class="grid">
-
-        <!-- Row 1 -->
-        <mat-form-field appearance="outline">
-          <mat-label>First name</mat-label>
-          <input matInput formControlName="firstName" autocomplete="off" autocapitalize="none" />
-          <mat-error *ngIf="form.get('firstName')?.hasError('required')">
-            First name is required
-          </mat-error>
+  <!-- Dialog Body -->
+  <mat-dialog-content class="dialog-body">
+    <!-- Personal Information Section -->
+    <div class="form-section">
+      <div class="section-header">
+        <mat-icon>person</mat-icon>
+        <h3>Personal Information</h3>
+      </div>
+      
+      <div class="form-grid">
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>First Name *</mat-label>
+          <mat-icon matPrefix>badge</mat-icon>
+          <input matInput formControlName="firstName" autocomplete="off" autocapitalize="words" />
+          <mat-error>{{ getErrorMessage('firstName') }}</mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Last name</mat-label>
-          <input matInput formControlName="lastName" autocomplete="off" autocapitalize="none" />
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Last Name</mat-label>
+          <mat-icon matPrefix>badge</mat-icon>
+          <input matInput formControlName="lastName" autocomplete="off" autocapitalize="words" />
+          <mat-error>{{ getErrorMessage('lastName') }}</mat-error>
         </mat-form-field>
 
-        <!-- Row 2 -->
-        <mat-form-field appearance="outline">
-          <mat-label>Username</mat-label>
-          <input matInput formControlName="userName" name="no-username" autocomplete="off" />
-          <mat-error *ngIf="form.get('userName')?.hasError('required')">
-            Username is required
-          </mat-error>
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Username *</mat-label>
+          <mat-icon matPrefix>account_circle</mat-icon>
+          <input matInput formControlName="userName" name="no-username" autocomplete="off" autocapitalize="none" />
+          <mat-error>{{ getErrorMessage('userName') }}</mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Email</mat-label>
-          <input matInput type="email" formControlName="email" name="no-email" autocomplete="off" />
-          <mat-error *ngIf="form.get('email')?.hasError('required')">Email is required</mat-error>
-          <mat-error *ngIf="form.get('email')?.hasError('email')">Enter a valid email</mat-error>
-        </mat-form-field>
-
-        <!-- Row 3 -->
-        <mat-form-field appearance="outline">
-          <mat-label>Phone</mat-label>
-          <input matInput formControlName="phoneNumber" autocomplete="off" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline">
-          <mat-label>Identification #</mat-label>
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Identification Number</mat-label>
+          <mat-icon matPrefix>fingerprint</mat-icon>
           <input matInput formControlName="identificationNumber" autocomplete="off" />
+          <mat-error>{{ getErrorMessage('identificationNumber') }}</mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Contact Information Section -->
+    <div class="form-section">
+      <div class="section-header">
+        <mat-icon>contact_mail</mat-icon>
+        <h3>Contact Information</h3>
+      </div>
+      
+      <div class="form-grid">
+        <mat-form-field appearance="outline" class="form-field full-width">
+          <mat-label>Email Address *</mat-label>
+          <mat-icon matPrefix>mail</mat-icon>
+          <input matInput type="email" formControlName="email" name="no-email" autocomplete="off" />
+          <mat-error>{{ getErrorMessage('email') }}</mat-error>
         </mat-form-field>
 
-        <!-- Row 4 -->
-        <mat-form-field appearance="outline">
-          <mat-label>Address</mat-label>
-          <input matInput formControlName="address1" autocomplete="off" />
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Phone Number</mat-label>
+          <mat-icon matPrefix>phone</mat-icon>
+          <input matInput formControlName="phoneNumber" autocomplete="off" />
+          <mat-error>{{ getErrorMessage('phoneNumber') }}</mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="outline" class="form-field">
           <mat-label>Postal Code</mat-label>
+          <mat-icon matPrefix>markunread_mailbox</mat-icon>
           <input matInput formControlName="postalCode" autocomplete="off" />
+          <mat-error>{{ getErrorMessage('postalCode') }}</mat-error>
         </mat-form-field>
 
-        <!-- Row 5 -->
-        <mat-form-field appearance="outline" class="full">
-          <mat-label>Roles (optional)</mat-label>
+        <mat-form-field appearance="outline" class="form-field full-width">
+          <mat-label>Address</mat-label>
+          <mat-icon matPrefix>location_on</mat-icon>
+          <input matInput formControlName="address1" autocomplete="off" />
+          <mat-error>{{ getErrorMessage('address1') }}</mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Account Settings Section -->
+    <div class="form-section">
+      <div class="section-header">
+        <mat-icon>settings</mat-icon>
+        <h3>Account Settings</h3>
+      </div>
+      
+      <div class="form-grid">
+        <mat-form-field appearance="outline" class="form-field full-width">
+          <mat-label>Roles</mat-label>
+          <mat-icon matPrefix>badge</mat-icon>
           <mat-select formControlName="roleIds" multiple>
             <mat-option *ngFor="let r of roles" [value]="r.roleId">
-              {{ r.roleName }} ({{ r.roleCode }})
+              {{ r.roleName }} <span class="role-code">({{ r.roleCode }})</span>
             </mat-option>
           </mat-select>
+          <mat-hint *ngIf="rolesLoading">Loading roles...</mat-hint>
+          <mat-hint *ngIf="!rolesLoading && !roles.length">No roles available</mat-hint>
         </mat-form-field>
 
-        <!-- Row 6 -->
-        <div class="full toggles">
-          <mat-slide-toggle formControlName="emailConfirmed" color="primary">
-            Email confirmed
-          </mat-slide-toggle>
+        <!-- Password field (create only) -->
+        <mat-form-field *ngIf="mode === 'create'" appearance="outline" class="form-field full-width">
+          <mat-label>Password *</mat-label>
+          <mat-icon matPrefix>lock</mat-icon>
+          <input matInput 
+                 [type]="passwordVisible ? 'text' : 'password'" 
+                 formControlName="passwordHash"
+                 name="new-password" 
+                 autocomplete="new-password" />
+          <button type="button" 
+                  mat-icon-button 
+                  matSuffix 
+                  (click)="togglePasswordVisibility()"
+                  [matTooltip]="passwordVisible ? 'Hide password' : 'Show password'">
+            <mat-icon>{{ passwordVisible ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          <mat-error>{{ getErrorMessage('passwordHash') }}</mat-error>
+          <mat-hint>Minimum 6 characters required</mat-hint>
+        </mat-form-field>
+
+        <!-- Toggles -->
+        <div class="toggles-container full-width">
+          <div class="toggle-item">
+            <mat-slide-toggle formControlName="emailConfirmed" color="primary">
+              <div class="toggle-content">
+                <mat-icon class="toggle-icon">mark_email_read</mat-icon>
+                <div class="toggle-text">
+                  <span class="toggle-label">Email Verified</span>
+                  <span class="toggle-hint">Mark this email as confirmed</span>
+                </div>
+              </div>
+            </mat-slide-toggle>
+          </div>
+
+          <div class="toggle-item" *ngIf="mode === 'edit'">
+            <mat-slide-toggle formControlName="active" color="primary">
+              <div class="toggle-content">
+                <mat-icon class="toggle-icon">check_circle</mat-icon>
+                <div class="toggle-text">
+                  <span class="toggle-label">Active Status</span>
+                  <span class="toggle-hint">Enable or disable user account</span>
+                </div>
+              </div>
+            </mat-slide-toggle>
+          </div>
         </div>
-
-        <!-- Row 7 (create only) -->
-        <mat-form-field *ngIf="mode === 'create'" appearance="outline" class="full">
-          <mat-label>Password</mat-label>
-          <input matInput type="password" formControlName="passwordHash"
-                 name="new-password" autocomplete="new-password" />
-          <mat-error *ngIf="form.get('passwordHash')?.hasError('required')">Password is required</mat-error>
-          <mat-error *ngIf="form.get('passwordHash')?.hasError('minlength')">
-            Password must be at least 6 characters
-          </mat-error>
-        </mat-form-field>
-
       </div>
     </div>
   </mat-dialog-content>
 
-  <!-- Actions -->
-  <mat-dialog-actions align="end" class="actions">
-    <button mat-stroked-button type="button" class="btn-cancel" (click)="onCancel()">Cancel</button>
-    <button mat-flat-button type="submit" class="btn-primary" [disabled]="form.invalid">
-      {{ mode === 'edit' ? 'Update' : 'Create' }}
+  <!-- Dialog Actions -->
+  <mat-dialog-actions class="dialog-actions">
+    <button type="button" mat-stroked-button class="action-btn cancel-btn" (click)="onCancel()">
+      <mat-icon>close</mat-icon>
+      <span>Cancel</span>
+    </button>
+    
+    <button type="submit" mat-flat-button class="action-btn submit-btn" [disabled]="form.invalid">
+      <mat-icon>{{ mode === 'edit' ? 'check' : 'add' }}</mat-icon>
+      <span>{{ submitButtonText }}</span>
     </button>
   </mat-dialog-actions>
 </form>
