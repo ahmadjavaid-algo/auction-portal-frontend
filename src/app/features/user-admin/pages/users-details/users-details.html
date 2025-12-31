@@ -1,19 +1,11 @@
 <div class="user-details-page">
-  <!-- Back Button -->
-  <div class="page-header reveal-on-scroll">
-    <button mat-button class="back-btn" (click)="back()">
-      <mat-icon>arrow_back</mat-icon>
-      <span>Back to Users</span>
-    </button>
-  </div>
-
   <!-- Loading State -->
   <ng-container *ngIf="loading">
     <div class="loading-container">
       <div class="loading-spinner">
-        <mat-spinner diameter="48"></mat-spinner>
+        <mat-spinner diameter="64"></mat-spinner>
       </div>
-      <p class="loading-text">Loading user details...</p>
+      <p class="loading-text">Loading user profile...</p>
     </div>
   </ng-container>
 
@@ -27,248 +19,463 @@
       <p class="error-message">{{ error }}</p>
       <button mat-flat-button class="error-action" (click)="back()">
         <mat-icon>arrow_back</mat-icon>
-        Go Back
+        Go Back to Users
       </button>
     </div>
   </ng-container>
 
   <!-- User Profile -->
   <ng-container *ngIf="!loading && user">
-    <!-- Hero Section -->
+    <!-- Full-Width Hero Section -->
     <section class="profile-hero reveal-on-scroll">
       <div class="hero-background">
         <div class="hero-gradient"></div>
         <div class="hero-pattern"></div>
       </div>
 
-      <div class="hero-content">
-        <div class="hero-left">
-          <div class="profile-avatar">
-            <span class="avatar-text">{{ initials }}</span>
-            <div class="avatar-ring"></div>
-          </div>
-
-          <div class="profile-info">
-            <h1 class="profile-name">{{ fullName }}</h1>
-            <p class="profile-username">@{{ user.userName }}</p>
-
-            <div class="profile-badges">
-              <span
-                class="status-badge"
-                [class.active]="user.active"
-                [class.inactive]="!user.active"
-              >
-                <mat-icon>{{ user.active ? 'check_circle' : 'pause_circle' }}</mat-icon>
-                {{ user.active ? 'Active' : 'Inactive' }}
-              </span>
-
-              <span
-                class="status-badge"
-                [class.verified]="user.emailConfirmed"
-                [class.unverified]="!user.emailConfirmed"
-              >
-                <mat-icon>{{ user.emailConfirmed ? 'verified' : 'pending' }}</mat-icon>
-                {{ user.emailConfirmed ? 'Verified' : 'Unverified' }}
-              </span>
-
-              <span class="status-badge id-badge">
-                <mat-icon>fingerprint</mat-icon>
-                ID {{ user.userId }}
-              </span>
-            </div>
-          </div>
+      <div class="hero-content-wrapper">
+        <!-- Back Button in Hero -->
+        <div class="hero-navigation">
+          <button mat-button class="back-btn-hero" (click)="back()">
+            <mat-icon>arrow_back</mat-icon>
+            <span>Back to Users</span>
+          </button>
         </div>
 
-        <div class="hero-stats">
-          <div class="stat-item">
-            <mat-icon class="stat-icon">schedule</mat-icon>
-            <div class="stat-content">
-              <div class="stat-label">Last Activity</div>
-              <div class="stat-value">{{ formatLastLogin(user.loginDate) }}</div>
+        <!-- Main Profile Section -->
+        <div class="hero-main-section">
+          <div class="hero-left">
+            <div class="profile-avatar-large">
+              <span class="avatar-text">{{ initials }}</span>
+              <div class="avatar-ring"></div>
+              <div class="avatar-glow"></div>
             </div>
-          </div>
 
-          <div class="stat-item">
-            <mat-icon class="stat-icon">calendar_today</mat-icon>
-            <div class="stat-content">
-              <div class="stat-label">Account Age</div>
-              <div class="stat-value">{{ getAccountAge() }}</div>
-            </div>
-          </div>
+            <div class="profile-header-info">
+              <div class="profile-header-top">
+                <h1 class="profile-name">{{ fullName }}</h1>
+                <div 
+                  class="activity-indicator" 
+                  [class.online]="activityStatus === 'online'"
+                  [class.recent]="activityStatus === 'recent'"
+                  [class.away]="activityStatus === 'away'"
+                  [class.inactive]="activityStatus === 'inactive'"
+                  [matTooltip]="activityStatusLabel"
+                >
+                  <span class="indicator-dot"></span>
+                  <span class="indicator-label">{{ activityStatusLabel }}</span>
+                </div>
+              </div>
 
-          <div class="stat-item" *ngIf="hasRoles">
-            <mat-icon class="stat-icon">badge</mat-icon>
-            <div class="stat-content">
-              <div class="stat-label">Roles</div>
-              <div class="stat-value">
-                <span class="role-chip" *ngFor="let rid of roleIds; trackBy: trackByRole">
-                  #{{ rid }}
+              <p class="profile-username">
+                <mat-icon>alternate_email</mat-icon>
+                {{ user.userName }}
+              </p>
+
+              <div class="profile-badges-row">
+                <span
+                  class="status-badge"
+                  [class.active]="user.active"
+                  [class.inactive]="!user.active"
+                >
+                  <mat-icon>{{ user.active ? 'check_circle' : 'cancel' }}</mat-icon>
+                  {{ user.active ? 'Active Account' : 'Inactive Account' }}
+                </span>
+
+                <span
+                  class="status-badge"
+                  [class.verified]="user.emailConfirmed"
+                  [class.unverified]="!user.emailConfirmed"
+                >
+                  <mat-icon>{{ user.emailConfirmed ? 'verified' : 'pending' }}</mat-icon>
+                  {{ user.emailConfirmed ? 'Email Verified' : 'Email Pending' }}
+                </span>
+
+                <span class="status-badge id-badge">
+                  <mat-icon>fingerprint</mat-icon>
+                  ID: {{ user.userId }}
                 </span>
               </div>
             </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="hero-actions">
+            <button mat-flat-button class="hero-action-btn primary" (click)="editUser()">
+              <mat-icon>edit</mat-icon>
+              <span>Edit Profile</span>
+            </button>
+            <button mat-stroked-button class="hero-action-btn secondary" (click)="resetPassword()">
+              <mat-icon>lock_reset</mat-icon>
+              <span>Reset Password</span>
+            </button>
+            <button 
+              mat-stroked-button 
+              class="hero-action-btn warning" 
+              (click)="toggleUserStatus()"
+              *ngIf="user.active"
+            >
+              <mat-icon>block</mat-icon>
+              <span>Deactivate</span>
+            </button>
+            <button 
+              mat-stroked-button 
+              class="hero-action-btn success" 
+              (click)="toggleUserStatus()"
+              *ngIf="!user.active"
+            >
+              <mat-icon>check_circle</mat-icon>
+              <span>Activate</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Hero Stats Grid -->
+        <div class="hero-stats-grid">
+          <div class="hero-stat-card">
+            <div class="stat-icon-wrapper">
+              <mat-icon>schedule</mat-icon>
+            </div>
+            <div class="stat-details">
+              <div class="stat-label">Last Activity</div>
+              <div class="stat-value">{{ formatLastLogin(user.loginDate) }}</div>
+            </div>
+            <div class="stat-decoration"></div>
+          </div>
+
+          <div class="hero-stat-card">
+            <div class="stat-icon-wrapper">
+              <mat-icon>event</mat-icon>
+            </div>
+            <div class="stat-details">
+              <div class="stat-label">Member Since</div>
+              <div class="stat-value">{{ getAccountAgeDetailed() }}</div>
+            </div>
+            <div class="stat-decoration"></div>
+          </div>
+
+          <div class="hero-stat-card">
+            <div class="stat-icon-wrapper">
+              <mat-icon>cake</mat-icon>
+            </div>
+            <div class="stat-details">
+              <div class="stat-label">Account Age</div>
+              <div class="stat-value">{{ getAccountAge() }}</div>
+            </div>
+            <div class="stat-decoration"></div>
+          </div>
+
+          <div class="hero-stat-card" *ngIf="hasRoles">
+            <div class="stat-icon-wrapper">
+              <mat-icon>badge</mat-icon>
+            </div>
+            <div class="stat-details">
+              <div class="stat-label">Assigned Roles</div>
+              <div class="stat-value">{{ roleIds.length }} {{ roleIds.length === 1 ? 'Role' : 'Roles' }}</div>
+            </div>
+            <div class="stat-decoration"></div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- Details Grid -->
-    <div class="details-grid">
-      <!-- Contact Information -->
-      <section class="detail-card reveal-on-scroll">
-        <div class="card-header">
-          <div class="card-title">
-            <mat-icon>contact_mail</mat-icon>
-            <h2>Contact Information</h2>
-          </div>
-        </div>
-
-        <div class="card-body">
-          <div class="detail-item">
-            <div class="detail-icon">
-              <mat-icon>mail</mat-icon>
+    <!-- Enhanced Details Grid -->
+    <div class="details-container">
+      <div class="details-grid">
+        <!-- Contact Information Card -->
+        <section class="detail-card reveal-on-scroll">
+          <div class="card-header">
+            <div class="card-icon-wrapper">
+              <mat-icon>contact_mail</mat-icon>
             </div>
-            <div class="detail-content">
-              <div class="detail-label">Email Address</div>
-              <div class="detail-value">{{ user.email || '—' }}</div>
+            <div class="card-title-group">
+              <h2 class="card-title">Contact Information</h2>
+              <p class="card-subtitle">Primary contact details</p>
             </div>
           </div>
 
-          <div class="detail-item">
-            <div class="detail-icon">
-              <mat-icon>phone</mat-icon>
+          <div class="card-body">
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>mail</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Email Address</div>
+                <div class="detail-value">{{ user.email || '—' }}</div>
+              </div>
+              <button 
+                mat-icon-button 
+                class="detail-action" 
+                matTooltip="Send email"
+                *ngIf="user.email"
+              >
+                <mat-icon>send</mat-icon>
+              </button>
             </div>
-            <div class="detail-content">
-              <div class="detail-label">Phone Number</div>
-              <div class="detail-value">{{ user.phoneNumber || '—' }}</div>
+
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>phone</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Phone Number</div>
+                <div class="detail-value">{{ user.phoneNumber || '—' }}</div>
+              </div>
+              <button 
+                mat-icon-button 
+                class="detail-action" 
+                matTooltip="Call user"
+                *ngIf="user.phoneNumber"
+              >
+                <mat-icon>call</mat-icon>
+              </button>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>location_on</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Address</div>
+                <div class="detail-value">{{ user.address1 || 'No address provided' }}</div>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>markunread_mailbox</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Postal Code</div>
+                <div class="detail-value">{{ user.postalCode || '—' }}</div>
+              </div>
             </div>
           </div>
+        </section>
 
-          <div class="detail-item">
-            <div class="detail-icon">
-              <mat-icon>location_on</mat-icon>
-            </div>
-            <div class="detail-content">
-              <div class="detail-label">Address</div>
-              <div class="detail-value">{{ user.address1 || '—' }}</div>
-            </div>
-          </div>
-
-          <div class="detail-item">
-            <div class="detail-icon">
-              <mat-icon>markunread_mailbox</mat-icon>
-            </div>
-            <div class="detail-content">
-              <div class="detail-label">Postal Code</div>
-              <div class="detail-value">{{ user.postalCode || '—' }}</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Account Details -->
-      <section class="detail-card reveal-on-scroll">
-        <div class="card-header">
-          <div class="card-title">
-            <mat-icon>account_circle</mat-icon>
-            <h2>Account Details</h2>
-          </div>
-        </div>
-
-        <div class="card-body">
-          <div class="detail-item">
-            <div class="detail-icon">
-              <mat-icon>badge</mat-icon>
-            </div>
-            <div class="detail-content">
-              <div class="detail-label">Identification Number</div>
-              <div class="detail-value mono">{{ user.identificationNumber || '—' }}</div>
-            </div>
-          </div>
-
-          <div class="detail-item">
-            <div class="detail-icon">
+        <!-- Account Security Card -->
+        <section class="detail-card reveal-on-scroll">
+          <div class="card-header">
+            <div class="card-icon-wrapper">
               <mat-icon>security</mat-icon>
             </div>
-            <div class="detail-content">
-              <div class="detail-label">Security Stamp</div>
-              <div class="detail-value mono">{{ user.securityStamp || '—' }}</div>
+            <div class="card-title-group">
+              <h2 class="card-title">Account Security</h2>
+              <p class="card-subtitle">Security & authentication details</p>
             </div>
           </div>
 
-          <div class="detail-item">
-            <div class="detail-icon">
-              <mat-icon>qr_code</mat-icon>
-            </div>
-            <div class="detail-content">
-              <div class="detail-label">User Code</div>
-              <div class="detail-value mono">{{ user.code || '—' }}</div>
-            </div>
-          </div>
-
-          <div class="detail-item">
-            <div class="detail-icon">
-              <mat-icon>event</mat-icon>
-            </div>
-            <div class="detail-content">
-              <div class="detail-label">Created Date</div>
-              <div class="detail-value">{{ formatDate(user.createdDate) }}</div>
-            </div>
-          </div>
-
-          <div class="detail-item">
-            <div class="detail-icon">
-              <mat-icon>update</mat-icon>
-            </div>
-            <div class="detail-content">
-              <div class="detail-label">Last Modified</div>
-              <div class="detail-value">{{ formatDate(user.modifiedDate) }}</div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Audit Information -->
-      <section class="detail-card audit-card reveal-on-scroll">
-        <div class="card-header">
-          <div class="card-title">
-            <mat-icon>history</mat-icon>
-            <h2>Audit Trail</h2>
-          </div>
-        </div>
-
-        <div class="card-body">
-          <div class="audit-grid">
-            <div class="audit-item">
-              <mat-icon class="audit-icon">person_add</mat-icon>
-              <div class="audit-content">
-                <div class="audit-label">Created By</div>
-                <div class="audit-value">User ID {{ user.createdById || '—' }}</div>
+          <div class="card-body">
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>badge</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Identification Number</div>
+                <div class="detail-value mono">{{ user.identificationNumber || 'Not provided' }}</div>
               </div>
             </div>
 
-            <div class="audit-item">
-              <mat-icon class="audit-icon">edit</mat-icon>
-              <div class="audit-content">
-                <div class="audit-label">Modified By</div>
-                <div class="audit-value">User ID {{ user.modifiedById || '—' }}</div>
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>vpn_key</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Security Stamp</div>
+                <div class="detail-value mono truncate">{{ user.securityStamp || 'Not set' }}</div>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>qr_code</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">User Code</div>
+                <div class="detail-value mono">{{ user.code || 'Not generated' }}</div>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>verified_user</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Email Verification</div>
+                <div class="detail-value">
+                  <span class="inline-badge" [class.success]="user.emailConfirmed" [class.warning]="!user.emailConfirmed">
+                    {{ user.emailConfirmed ? 'Verified' : 'Pending Verification' }}
+                  </span>
+                </div>
+              </div>
+              <button 
+                mat-icon-button 
+                class="detail-action" 
+                matTooltip="Resend verification"
+                *ngIf="!user.emailConfirmed"
+                (click)="resendVerification()"
+              >
+                <mat-icon>forward_to_inbox</mat-icon>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Role Assignments Card -->
+        <section class="detail-card reveal-on-scroll" *ngIf="hasRoles">
+          <div class="card-header">
+            <div class="card-icon-wrapper">
+              <mat-icon>admin_panel_settings</mat-icon>
+            </div>
+            <div class="card-title-group">
+              <h2 class="card-title">Role Assignments</h2>
+              <p class="card-subtitle">User permissions and access levels</p>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="roles-grid">
+              <div class="role-card" *ngFor="let rid of roleIds; trackBy: trackByRole">
+                <div class="role-icon">
+                  <mat-icon>shield</mat-icon>
+                </div>
+                <div class="role-info">
+                  <div class="role-id">Role ID: {{ rid }}</div>
+                  <div class="role-status">Active</div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        <!-- System Information Card -->
+        <section class="detail-card reveal-on-scroll">
+          <div class="card-header">
+            <div class="card-icon-wrapper">
+              <mat-icon>settings</mat-icon>
+            </div>
+            <div class="card-title-group">
+              <h2 class="card-title">System Information</h2>
+              <p class="card-subtitle">Timestamps and system metadata</p>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>add_circle</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Account Created</div>
+                <div class="detail-value">{{ formatDate(user.createdDate) }}</div>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>update</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Last Modified</div>
+                <div class="detail-value">{{ formatDate(user.modifiedDate) }}</div>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>login</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Last Login</div>
+                <div class="detail-value">{{ formatDate(user.loginDate) }}</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Audit Trail Card (Full Width) -->
+        <section class="detail-card audit-card reveal-on-scroll">
+          <div class="card-header">
+            <div class="card-icon-wrapper">
+              <mat-icon>history</mat-icon>
+            </div>
+            <div class="card-title-group">
+              <h2 class="card-title">Audit Trail</h2>
+              <p class="card-subtitle">User creation and modification history</p>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="audit-timeline">
+              <div class="timeline-item">
+                <div class="timeline-marker created">
+                  <mat-icon>person_add</mat-icon>
+                </div>
+                <div class="timeline-content">
+                  <div class="timeline-header">
+                    <h3 class="timeline-title">Account Created</h3>
+                    <span class="timeline-date">{{ formatDate(user.createdDate) }}</span>
+                  </div>
+                  <p class="timeline-description">
+                    Created by User ID: <span class="mono-highlight">{{ user.createdById || 'System' }}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div class="timeline-item" *ngIf="user.modifiedById">
+                <div class="timeline-marker modified">
+                  <mat-icon>edit</mat-icon>
+                </div>
+                <div class="timeline-content">
+                  <div class="timeline-header">
+                    <h3 class="timeline-title">Last Modified</h3>
+                    <span class="timeline-date">{{ formatDate(user.modifiedDate) }}</span>
+                  </div>
+                  <p class="timeline-description">
+                    Modified by User ID: <span class="mono-highlight">{{ user.modifiedById }}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div class="timeline-item" *ngIf="user.loginDate">
+                <div class="timeline-marker activity">
+                  <mat-icon>login</mat-icon>
+                </div>
+                <div class="timeline-content">
+                  <div class="timeline-header">
+                    <h3 class="timeline-title">Last Active</h3>
+                    <span class="timeline-date">{{ formatLastLogin(user.loginDate) }}</span>
+                  </div>
+                  <p class="timeline-description">
+                    User last logged in {{ formatDate(user.loginDate) }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
     </div>
 
     <!-- Action Footer -->
     <div class="action-footer reveal-on-scroll">
-      <button mat-stroked-button class="footer-btn secondary" (click)="back()">
-        <mat-icon>arrow_back</mat-icon>
-        <span>Back to List</span>
-      </button>
+      <div class="footer-left">
+        <button mat-stroked-button class="footer-btn secondary" (click)="back()">
+          <mat-icon>arrow_back</mat-icon>
+          <span>Back to Users</span>
+        </button>
+      </div>
 
-      <button mat-flat-button class="footer-btn primary" (click)="editUser()">
-        <mat-icon>edit</mat-icon>
-        <span>Edit User</span>
-      </button>
+      <div class="footer-right">
+        <button mat-stroked-button class="footer-btn danger" (click)="deleteUser()">
+          <mat-icon>delete</mat-icon>
+          <span>Delete User</span>
+        </button>
+        <button mat-flat-button class="footer-btn primary" (click)="editUser()">
+          <mat-icon>edit</mat-icon>
+          <span>Edit Profile</span>
+        </button>
+      </div>
     </div>
   </ng-container>
 </div>

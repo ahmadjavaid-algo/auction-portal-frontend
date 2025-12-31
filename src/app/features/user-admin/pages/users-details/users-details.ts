@@ -8,6 +8,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { UsersService } from '../../../../services/users.service';
 import { User } from '../../../../models/user.model';
@@ -23,7 +24,8 @@ import { User } from '../../../../models/user.model';
     MatChipsModule,
     MatDividerModule,
     MatButtonModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatTooltipModule
   ],
   templateUrl: './users-details.html',
   styleUrls: ['./users-details.scss']
@@ -125,6 +127,28 @@ export class UsersDetails implements OnInit, AfterViewInit, OnDestroy {
     return this.roleIds.length > 0;
   }
 
+  get activityStatus(): 'online' | 'recent' | 'away' | 'inactive' {
+    if (!this.user?.loginDate) return 'inactive';
+    
+    const lastLogin = new Date(this.user.loginDate);
+    const now = new Date();
+    const diffMinutes = Math.floor((now.getTime() - lastLogin.getTime()) / 60000);
+    
+    if (diffMinutes < 5) return 'online';
+    if (diffMinutes < 60) return 'recent';
+    if (diffMinutes < 1440) return 'away';
+    return 'inactive';
+  }
+
+  get activityStatusLabel(): string {
+    switch (this.activityStatus) {
+      case 'online': return 'Online Now';
+      case 'recent': return 'Active Recently';
+      case 'away': return 'Away';
+      default: return 'Offline';
+    }
+  }
+
   formatDate(date: any): string {
     if (!date) return '—';
     const d = new Date(date);
@@ -175,12 +199,65 @@ export class UsersDetails implements OnInit, AfterViewInit, OnDestroy {
     return `${years} ${years === 1 ? 'year' : 'years'}`;
   }
 
+  getAccountAgeDetailed(): string {
+    if (!this.user?.createdDate) return 'Unknown';
+    const created = new Date(this.user.createdDate);
+    if (isNaN(created.getTime())) return 'Unknown';
+    
+    const now = new Date();
+    const diff = now.getTime() - created.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (days === 0) return 'Today';
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days} days ago`;
+    if (days < 30) {
+      const weeks = Math.floor(days / 7);
+      return `${weeks} ${weeks === 1 ? 'week' : 'weeks'} ago`;
+    }
+    if (days < 365) {
+      const months = Math.floor(days / 30);
+      return `${months} ${months === 1 ? 'month' : 'months'} ago`;
+    }
+    const years = Math.floor(days / 365);
+    const remainingMonths = Math.floor((days % 365) / 30);
+    return remainingMonths > 0 
+      ? `${years}y ${remainingMonths}m ago`
+      : `${years} ${years === 1 ? 'year' : 'years'} ago`;
+  }
+
   editUser(): void {
     if (this.user) {
       this.router.navigate(['/admin/users'], {
         queryParams: { edit: this.user.userId }
       });
     }
+  }
+
+  deleteUser(): void {
+    if (!this.user) return;
+    if (confirm(`Are you sure you want to delete ${this.fullName}?`)) {
+      // Implement delete functionality
+      console.log('Delete user:', this.user.userId);
+    }
+  }
+
+  toggleUserStatus(): void {
+    if (!this.user) return;
+    // Implement toggle status
+    console.log('Toggle status for:', this.user.userId);
+  }
+
+  resendVerification(): void {
+    if (!this.user) return;
+    // Implement resend verification
+    console.log('Resend verification to:', this.user.email);
+  }
+
+  resetPassword(): void {
+    if (!this.user) return;
+    // Implement password reset
+    console.log('Reset password for:', this.user.userId);
   }
 
   trackByRole(_i: number, rid: number): number {

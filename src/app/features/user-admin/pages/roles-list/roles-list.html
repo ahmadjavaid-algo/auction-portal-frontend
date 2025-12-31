@@ -1,156 +1,353 @@
-<!-- Stats strip -->
-<!-- Stats strip -->
-<section class="stats-strip">
-  <div class="stat-card system">
-    <div class="icon-wrap"><mat-icon>security</mat-icon></div>
-    <div>
-      <div class="value">4</div>
-      <div class="label">System Roles</div>
-    </div>
-  </div>
-
-  <div class="stat-card total">
-    <div class="icon-wrap"><mat-icon>groups</mat-icon></div>
-    <div>
-      <div class="value">{{ stats?.totalRoles ?? 0 }}</div>
-      <div class="label">Total Roles</div>
-    </div>
-  </div>
-
-  <div class="stat-card active">
-    <div class="icon-wrap"><mat-icon>verified_user</mat-icon></div>
-    <div>
-      <div class="value">{{ stats?.activeRoles ?? 0 }}</div>
-      <div class="label">Active Roles</div>
-    </div>
-  </div>
-
-  <div class="stat-card inactive">
-    <div class="icon-wrap"><mat-icon>person_off</mat-icon></div>
-    <div>
-      <div class="value">{{ stats?.inactiveRoles ?? 0 }}</div>
-      <div class="label">Inactive Roles</div>
-    </div>
-  </div>
-</section>
-
-<!-- (rest of your template unchanged) -->
-
-
-<!-- Toolbar -->
-<div class="role-header">
-  <mat-form-field appearance="outline" class="search-field">
-    <mat-label>Search role</mat-label>
-    <input matInput [(ngModel)]="searchTerm" (input)="onSearch()" />
-    <button mat-icon-button *ngIf="searchTerm" matSuffix (click)="searchTerm=''; onSearch()">
-      <mat-icon>close</mat-icon>
-    </button>
-  </mat-form-field>
-
-  <button mat-flat-button class="add-btn" (click)="openCreateRole()">
-    <mat-icon>add</mat-icon>
-    Add Role
-  </button>
-</div>
-
-<!-- Data panel + table -->
-<div class="panel">
-  <table
-    mat-table
-    [dataSource]="roles"
-    class="full-width-table"
-    [multiTemplateDataRows]="true">
-
-    <!-- Expand toggle -->
-    <ng-container matColumnDef="expand">
-      <th mat-header-cell *matHeaderCellDef class="thin"></th>
-      <td mat-cell *matCellDef="let r">
-        <button mat-icon-button class="expand-btn"
-                (click)="toggleExpand(r.roleId)"
-                [attr.aria-label]="'Toggle permissions for role ' + r.roleId">
-          <mat-icon>{{ expandedRoleId === r.roleId ? 'expand_less' : 'expand_more' }}</mat-icon>
-        </button>
-      </td>
-    </ng-container>
-
-    <!-- Role -->
-    <ng-container matColumnDef="role">
-      <th mat-header-cell *matHeaderCellDef>Role</th>
-      <td mat-cell *matCellDef="let r">
-        <div class="role-cell">
-          <div class="name">{{ r.roleName }}</div>
-          <div class="sub">ID {{ r.roleId }}</div>
+<div class="roles-page">
+  <!-- Enhanced Hero Header with Integrated Stats -->
+  <section class="roles-hero reveal-on-scroll">
+    <div class="hero-content">
+      <div class="hero-main">
+        <div class="hero-text">
+          <div class="hero-badge">
+            <mat-icon>admin_panel_settings</mat-icon>
+            <span>Admin Portal</span>
+          </div>
+          <h1 class="hero-title">Role & Permission Management</h1>
+          <p class="hero-subtitle">
+            Configure user roles, assign permissions, and manage access control across your auction platform
+          </p>
         </div>
-      </td>
-    </ng-container>
-
-    <!-- Code -->
-    <ng-container matColumnDef="code">
-      <th mat-header-cell *matHeaderCellDef>Code</th>
-      <td mat-cell *matCellDef="let r"><span class="mono">{{ r.roleCode }}</span></td>
-    </ng-container>
-
-    <!-- Description -->
-    <ng-container matColumnDef="description">
-      <th mat-header-cell *matHeaderCellDef>Description</th>
-      <td mat-cell *matCellDef="let r"><span class="muted">{{ r.description || '—' }}</span></td>
-    </ng-container>
-
-    <!-- Status -->
-    <ng-container matColumnDef="status">
-      <th mat-header-cell *matHeaderCellDef>Status</th>
-      <td mat-cell *matCellDef="let r">
-        <button mat-stroked-button
-                [class.is-active]="r.active"
-                [class.is-inactive]="r.active === false"
-                (click)="toggleActive(r)">
-          {{ r.active ? 'Active' : 'Inactive' }}
-        </button>
-      </td>
-    </ng-container>
-
-    <!-- Actions -->
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef>Actions</th>
-      <td mat-cell *matCellDef="let r">
-        <button mat-icon-button class="edit-btn" (click)="editRole(r)" matTooltip="Edit">
-          <mat-icon>edit</mat-icon>
-        </button>
-        <button mat-icon-button (click)="viewRole(r.roleId)" aria-label="View details" matTooltip="View details">
-          <mat-icon>visibility</mat-icon>
-        </button>
-      </td>
-    </ng-container>
-
-    <!-- Header + data rows -->
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row class="role-row" *matRowDef="let row; columns: displayedColumns"></tr>
-
-    <!-- Expanded row -->
-    <ng-container matColumnDef="expandedDetail">
-      <td *matCellDef="let r" class="detail-cell" [attr.colspan]="displayedColumns.length">
-        <div class="expanded-wrapper">
-          <app-roles-claims [roleId]="r.roleId"></app-roles-claims>
+        
+        <div class="hero-actions">
+          <button mat-stroked-button class="hero-btn secondary" (click)="exportRoles()">
+            <mat-icon>download</mat-icon>
+            <span>Export</span>
+          </button>
+          <button mat-flat-button class="hero-btn primary" (click)="openCreateRole()">
+            <mat-icon>add_circle</mat-icon>
+            <span>Create Role</span>
+          </button>
         </div>
-      </td>
-    </ng-container>
-    <tr
-      mat-row
-      *matRowDef="let row; columns: ['expandedDetail']"
-      class="expanded-row"
-      [hidden]="expandedRoleId !== row.roleId">
-    </tr>
-  </table>
-</div>
+      </div>
 
-<!-- Footer -->
-<div class="list-footer">
-  <mat-paginator
-    [length]="totalItems"
-    [pageSize]="pageSize"
-    [pageSizeOptions]="[5,10,20]"
-    [pageIndex]="pageIndex"
-    (page)="onPageChange($event)">
-  </mat-paginator>
-  <div class="count">{{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }}</div>
+      <!-- Integrated Stats in Hero -->
+      <div class="hero-stats">
+        <div class="hero-stat-item system">
+          <div class="stat-icon-wrapper">
+            <mat-icon>shield</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.systemRoles }}</div>
+            <div class="stat-label">System Roles</div>
+          </div>
+        </div>
+
+        <div class="hero-stat-item custom">
+          <div class="stat-icon-wrapper">
+            <mat-icon>tune</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.customRoles }}</div>
+            <div class="stat-label">Custom Roles</div>
+          </div>
+        </div>
+
+        <div class="hero-stat-item total">
+          <div class="stat-icon-wrapper">
+            <mat-icon>groups</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.totalRoles }}</div>
+            <div class="stat-label">Total Roles</div>
+          </div>
+        </div>
+
+        <div class="hero-stat-item active">
+          <div class="stat-icon-wrapper">
+            <mat-icon>verified_user</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.activeRoles }}</div>
+            <div class="stat-label">Active Roles</div>
+          </div>
+        </div>
+
+        <div class="hero-stat-item inactive">
+          <div class="stat-icon-wrapper">
+            <mat-icon>block</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.inactiveRoles }}</div>
+            <div class="stat-label">Inactive Roles</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Admin Info Banner -->
+  <div class="admin-banner reveal-on-scroll">
+    <div class="banner-icon">
+      <mat-icon>info</mat-icon>
+    </div>
+    <div class="banner-content">
+      <div class="banner-title">Role-Based Access Control (RBAC)</div>
+      <div class="banner-text">
+        Roles define what actions users can perform. Each role contains a set of permissions that grant access to specific features and operations.
+      </div>
+    </div>
+    <div class="banner-actions">
+      <button mat-button class="banner-btn">
+        <mat-icon>help_outline</mat-icon>
+        <span>Learn More</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Themed Toolbar -->
+  <div class="roles-toolbar reveal-on-scroll">
+    <div class="toolbar-left">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search roles</mat-label>
+        <mat-icon matPrefix class="search-icon">search</mat-icon>
+        <input
+          matInput
+          [(ngModel)]="searchTerm"
+          (input)="onSearch()"
+          placeholder="Search by name, code, or description..."
+        />
+        <button
+          mat-icon-button
+          *ngIf="searchTerm"
+          matSuffix
+          (click)="searchTerm=''; onSearch()"
+          matTooltip="Clear search"
+          class="clear-btn"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-form-field>
+    </div>
+
+    <div class="toolbar-right">
+      <div class="results-count">
+        <mat-icon>info</mat-icon>
+        <span class="count-text">{{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Themed Data Table -->
+  <div class="table-container reveal-on-scroll">
+    <table mat-table [dataSource]="roles" class="roles-table" [multiTemplateDataRows]="true">
+      
+      <!-- Expand Column -->
+      <ng-container matColumnDef="expand">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>unfold_more</mat-icon>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let r">
+          <button 
+            mat-icon-button 
+            class="expand-btn"
+            (click)="toggleExpand(r.roleId)"
+            [class.expanded]="isExpanded(r.roleId)"
+            [matTooltip]="isExpanded(r.roleId) ? 'Collapse permissions' : 'Expand permissions'"
+          >
+            <mat-icon>{{ isExpanded(r.roleId) ? 'expand_less' : 'expand_more' }}</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <!-- Role Column -->
+      <ng-container matColumnDef="role">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>badge</mat-icon>
+            <span>Role</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let r">
+          <div class="role-cell">
+            <div class="role-avatar">
+              <span>{{ getRoleInitials(r) }}</span>
+            </div>
+            <div class="role-info">
+              <div class="role-name">{{ r.roleName }}</div>
+              <div class="role-meta">
+                <span class="role-id">ID {{ r.roleId }}</span>
+              </div>
+            </div>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Code Column -->
+      <ng-container matColumnDef="code">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>code</mat-icon>
+            <span>Code</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let r">
+          <div class="code-cell">
+            <span class="code-badge">{{ r.roleCode }}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Description Column -->
+      <ng-container matColumnDef="description">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>description</mat-icon>
+            <span>Description</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let r">
+          <div class="description-cell">
+            <span>{{ r.description || '—' }}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Permissions Column -->
+      <ng-container matColumnDef="permissions">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>key</mat-icon>
+            <span>Permissions</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let r">
+          <div class="permissions-cell">
+            <span class="permission-badge">
+              <mat-icon>vpn_key</mat-icon>
+              <span>{{ getPermissionCount(r) }}</span>
+            </span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Status Column -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>toggle_on</mat-icon>
+            <span>Status</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let r">
+          <button
+            mat-stroked-button
+            class="status-toggle"
+            [class.active]="r.active"
+            [class.inactive]="!r.active"
+            (click)="toggleActive(r)"
+            [matTooltip]="r.active ? 'Click to deactivate' : 'Click to activate'"
+          >
+            <span class="status-dot"></span>
+            {{ r.active ? 'Active' : 'Inactive' }}
+          </button>
+        </td>
+      </ng-container>
+
+      <!-- Actions Column -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>more_horiz</mat-icon>
+            <span>Actions</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let r">
+          <div class="actions-cell">
+            <button
+              mat-icon-button
+              class="action-btn edit"
+              (click)="editRole(r)"
+              matTooltip="Edit role"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              class="action-btn view"
+              (click)="viewRole(r.roleId)"
+              matTooltip="View details"
+            >
+              <mat-icon>visibility</mat-icon>
+            </button>
+
+            <button
+              mat-icon-button
+              class="action-btn delete"
+              (click)="deleteRole(r)"
+              matTooltip="Delete role"
+            >
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Header and Data Rows -->
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns" class="table-row"></tr>
+
+      <!-- Expanded Detail Row -->
+      <ng-container matColumnDef="expandedDetail">
+        <td mat-cell *matCellDef="let r" class="detail-cell" [attr.colspan]="displayedColumns.length">
+          <div class="expanded-wrapper" [@detailExpand]="expandedRoleId === r.roleId ? 'expanded' : 'collapsed'">
+            <div class="expanded-content">
+              <div class="expanded-header">
+                <mat-icon>vpn_key</mat-icon>
+                <h3>Role Permissions & Claims</h3>
+              </div>
+              <app-roles-claims [roleId]="r.roleId"></app-roles-claims>
+            </div>
+          </div>
+        </td>
+      </ng-container>
+      
+      <tr
+        mat-row
+        *matRowDef="let row; columns: ['expandedDetail']"
+        class="expanded-row"
+        [class.visible]="expandedRoleId === row.roleId">
+      </tr>
+    </table>
+
+    <!-- Empty State -->
+    <div class="table-empty" *ngIf="!roles.data.length">
+      <mat-icon>group_work</mat-icon>
+      <h3>No roles found</h3>
+      <p>Start by creating your first role to manage user permissions</p>
+      <button mat-flat-button class="empty-action" (click)="openCreateRole()">
+        <mat-icon>add_circle</mat-icon>
+        Create Role
+      </button>
+    </div>
+  </div>
+
+  <!-- Themed Pagination Footer -->
+  <div class="table-footer reveal-on-scroll">
+    <div class="footer-left">
+      <mat-icon>list</mat-icon>
+      <span class="footer-text">
+        Showing {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }} roles
+      </span>
+    </div>
+    
+    <div class="footer-right">
+      <mat-paginator
+        [length]="totalItems"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[5, 10, 20, 50]"
+        [pageIndex]="pageIndex"
+        (page)="onPageChange($event)"
+        showFirstLastButtons
+      >
+      </mat-paginator>
+    </div>
+  </div>
 </div>

@@ -1,0 +1,243 @@
+<div class="savage-container" (click)="spawnReaction($event)">
+  <!-- Floating Reactions -->
+  <div class="reactions-layer">
+    <div 
+      class="floating-reaction" 
+      *ngFor="let reaction of activeReactions; trackBy: trackByReaction"
+      [style.left.px]="reaction.x"
+      [style.top.px]="reaction.y"
+    >
+      {{ reaction.emoji }}
+    </div>
+  </div>
+
+  <!-- Background Pattern -->
+  <div class="savage-background">
+    <div class="warning-stripes"></div>
+    <div class="laugh-particles">
+      <span class="laugh" *ngFor="let l of [1,2,3,4,5,6,7,8,9,10]">HA</span>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="savage-content">
+    
+    <!-- Massive Rejection Icon -->
+    <div class="rejection-icon-wrapper">
+      <div class="rejection-glow"></div>
+      <div class="rejection-icon">
+        <mat-icon>block</mat-icon>
+      </div>
+      <div class="rejection-ring"></div>
+    </div>
+
+    <!-- Savage Header -->
+    <div class="savage-header">
+      <h1 class="savage-title">
+        ADMIN ACCESS?
+        <span class="title-emphasis">NAH BRO 💀</span>
+      </h1>
+      <p class="savage-subtitle">
+        The absolute <span class="highlight">AUDACITY</span> to even click that button
+      </p>
+    </div>
+
+    <!-- Roast Section -->
+    <div class="roast-box">
+      <div class="roast-label">
+        <mat-icon>whatshot</mat-icon>
+        <span>LIVE ROAST FEED</span>
+      </div>
+      <div class="roast-message">{{ currentRoast }}</div>
+      <div class="roast-footer">
+        <span class="laugh-meter">
+          😂 × {{ laughCount }}
+        </span>
+        <span class="rejection-counter">
+          🚫 Rejected {{ rejectionCount }} time{{ rejectionCount === 1 ? '' : 's' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Savage Cards Grid -->
+    <div class="savage-cards">
+      <div class="savage-card denied">
+        <div class="card-icon">
+          <mat-icon>cancel</mat-icon>
+        </div>
+        <h3 class="card-title">ACCESS DENIED</h3>
+        <p class="card-text">
+          You thought you could just waltz in here and get admin rights? 
+          <strong>Hilarious.</strong>
+        </p>
+      </div>
+
+      <div class="savage-card clown">
+        <div class="card-icon">
+          <span class="emoji">🤡</span>
+        </div>
+        <h3 class="card-title">CLOWN ALERT</h3>
+        <p class="card-text">
+          Seriously though, what made you think this would work? 
+          We're <strong>deceased</strong> from laughing.
+        </p>
+      </div>
+
+      <div class="savage-card ratio">
+        <div class="card-icon">
+          <mat-icon>trending_down</mat-icon>
+        </div>
+        <h3 class="card-title">L + RATIO</h3>
+        <p class="card-text">
+          Your admin request got a bigger L than your chances of success.
+          <strong>Touch grass.</strong>
+        </p>
+      </div>
+    </div>
+
+    <!-- Requirements Section (More Roasting) -->
+    <div class="requirements-section">
+      <h2 class="requirements-title">
+        "Requirements" for Admin Access
+        <span class="sarcasm">(You Don't Meet Any)</span>
+      </h2>
+      
+      <div class="requirements-grid">
+        <div class="requirement-item failed">
+          <mat-icon class="check-icon">close</mat-icon>
+          <div class="requirement-text">
+            <strong>Be Actually Qualified</strong>
+            <span class="fail-reason">Status: Not even close 💀</span>
+          </div>
+        </div>
+
+        <div class="requirement-item failed">
+          <mat-icon class="check-icon">close</mat-icon>
+          <div class="requirement-text">
+            <strong>Have Valid Reasons</strong>
+            <span class="fail-reason">Status: "I just wanted to try" ain't it chief</span>
+          </div>
+        </div>
+
+        <div class="requirement-item failed">
+          <mat-icon class="check-icon">close</mat-icon>
+          <div class="requirement-text">
+            <strong>Not Be a Random User</strong>
+            <span class="fail-reason">Status: You're literally random 🎲</span>
+          </div>
+        </div>
+
+        <div class="requirement-item failed">
+          <mat-icon class="check-icon">close</mat-icon>
+          <div class="requirement-text">
+            <strong>Know What Admin Does</strong>
+            <span class="fail-reason">Status: Clearly not 🤦</span>
+          </div>
+        </div>
+
+        <div class="requirement-item failed">
+          <mat-icon class="check-icon">close</mat-icon>
+          <div class="requirement-text">
+            <strong>Read the Room</strong>
+            <span class="fail-reason">Status: Failed spectacularly 📉</span>
+          </div>
+        </div>
+
+        <div class="requirement-item failed">
+          <mat-icon class="check-icon">close</mat-icon>
+          <div class="requirement-text">
+            <strong>Have Common Sense</strong>
+            <span class="fail-reason">Status: 404 Not Found 🔍</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Meme Gallery -->
+    <div class="meme-gallery">
+      <div class="meme-card">
+        <div class="meme-text top">WHEN RANDOM USERS</div>
+        <div class="meme-emoji">👁️👄👁️</div>
+        <div class="meme-text bottom">REQUEST ADMIN ACCESS</div>
+      </div>
+
+      <div class="meme-card">
+        <div class="meme-text top">SECURITY TEAM</div>
+        <div class="meme-emoji">💀💀💀</div>
+        <div class="meme-text bottom">WATCHING THIS</div>
+      </div>
+
+      <div class="meme-card">
+        <div class="meme-text top">YOUR CHANCES</div>
+        <div class="meme-emoji">📉</div>
+        <div class="meme-text bottom">OF GETTING ACCESS</div>
+      </div>
+    </div>
+
+    <!-- Reality Check -->
+    <div class="reality-check">
+      <div class="reality-header">
+        <mat-icon>psychology</mat-icon>
+        <h3>REALITY CHECK</h3>
+      </div>
+      <div class="reality-content">
+        <p class="reality-text">
+          Look, we get it. You saw the shiny "Request Access" button and thought 
+          <em>"Why not?"</em>
+        </p>
+        <p class="reality-text">
+          Here's the thing though - admin access is for <strong>actual administrators</strong>.
+          You know, people who are <em>supposed</em> to be here? 
+        </p>
+        <p class="reality-text emphasis">
+          NOT random users testing their luck like it's a lottery 🎰
+        </p>
+        <p class="reality-text">
+          But hey, we appreciate the confidence. That's the kind of delusional energy 
+          we need in 2025! <strong>Just not in our admin panel.</strong>
+        </p>
+      </div>
+    </div>
+
+    <!-- Suggestions (Sarcastic) -->
+    <div class="suggestions-box">
+      <h3 class="suggestions-title">
+        <mat-icon>lightbulb</mat-icon>
+        What You COULD Do Instead:
+      </h3>
+      <ul class="suggestions-list">
+        <li><mat-icon>check_circle</mat-icon> Go back to the regular user portal (where you belong)</li>
+        <li><mat-icon>check_circle</mat-icon> Touch some grass</li>
+        <li><mat-icon>check_circle</mat-icon> Reflect on your life choices</li>
+        <li><mat-icon>check_circle</mat-icon> Read a book on "Understanding Boundaries"</li>
+        <li><mat-icon>check_circle</mat-icon> Try again in 10 years (still won't work though)</li>
+        <li><mat-icon>check_circle</mat-icon> Accept defeat gracefully</li>
+      </ul>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-section">
+      <button mat-flat-button class="shame-btn" routerLink="/admin/login">
+        <mat-icon>logout</mat-icon>
+        <span>Leave in Shame</span>
+      </button>
+
+      <button mat-stroked-button class="try-again-btn" (click)="incrementRejection()">
+        <mat-icon>refresh</mat-icon>
+        <span>Try Again (It Won't Work)</span>
+      </button>
+    </div>
+
+    <!-- Footer Roast -->
+    <div class="footer-roast">
+      <p class="footer-text">
+        This page will remain in your browser history forever as a reminder of your L.
+      </p>
+      <p class="footer-subtext">
+        © 2025 Algo Auction • Admin Access Denial Department • 
+        <span class="highlight">Get Rekt Division</span>
+      </p>
+    </div>
+
+  </div>
+</div>

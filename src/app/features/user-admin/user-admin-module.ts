@@ -42,6 +42,7 @@ import { InspectioncheckpointsList } from './pages/inspectioncheckpoints-list/in
 import { InspectioncheckpointsForm } from './pages/inspectioncheckpoints-form/inspectioncheckpoints-form';
 import { InspectioncheckpointsDetails } from './pages/inspectioncheckpoints-details/inspectioncheckpoints-details';
 import { InventoryInspectionreport } from './pages/inventory-inspectionreport/inventory-inspectionreport';
+import { NeedAccess } from './pages/need-access/need-access';
 @NgModule({
   imports: [
     CommonModule,
@@ -81,7 +82,8 @@ import { InventoryInspectionreport } from './pages/inventory-inspectionreport/in
     InspectioncheckpointsList,
     InspectioncheckpointsForm,
     InspectioncheckpointsDetails,
-    InventoryInspectionreport
+    InventoryInspectionreport,
+    NeedAccess
   ]
 })
 export class UserAdminModule {}

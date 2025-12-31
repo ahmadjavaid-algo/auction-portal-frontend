@@ -18,11 +18,12 @@ import { Info } from './pages/info/info';
 import { FavouritesList } from './pages/favourites-list/favourites-list';
 import { Auctionbid } from './pages/auctionbid/auctionbid';
 import { BidderChangePassword } from './pages/bidder-change-password/bidder-change-password';
+import { LandingPage } from './pages/landing-page/landing-page';
 
 const routes: Routes = [
-  { path: '', pathMatch: 'full', redirectTo: 'login' },
+  { path: '', pathMatch: 'full', redirectTo: 'AlgoAuctions' },
 
-  
+  { path: 'AlgoAuctions', component: LandingPage, title: 'Algo Auctions' },
   { path: 'login', component: BiddersLogin, title: 'Bidder Login' },
   { path: 'forgot-password', component: BiddersForgotpassword, title: 'Forgot Password' },
   { path: 'auth/reset-password', component: BiddersResetpassword, title: 'Reset Password' },

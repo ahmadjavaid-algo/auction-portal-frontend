@@ -1,40 +1,241 @@
 <div class="login-container">
-  <div class="login-form">
-    <div class="brand-head">
-      <img
-        class="logo"
-        src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8"
-        alt="Algo Auction Portal"
-      />
-      <span class="brand-name">Algo Auction Portal</span>
-    </div>
-    <h2>Welcome back</h2>
-    <p class="subtitle">Please enter your details</p>
+  <!-- Left Panel - Login Form -->
+  <div class="login-panel">
+    <div class="login-content">
+      <!-- Header -->
+      <div class="login-header">
+        <div class="brand-logo">
+          <div class="logo-wrapper">
+            <img
+              class="logo-image"
+              src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8"
+              alt="Algo Auction"
+            />
+            <div class="logo-ring"></div>
+          </div>
+          <div class="brand-text">
+            <h1 class="brand-name">Algo Auction</h1>
+            <p class="brand-tagline">Admin Portal</p>
+          </div>
+        </div>
 
-    <form (ngSubmit)="login()">
-      <label>Email address</label>
-      <input type="email" [(ngModel)]="email" name="email" required />
-
-      <label>Password</label>
-      <input type="password" [(ngModel)]="password" name="password" required />
-
-      <div class="options">
-        <label class="remember">
-          <input type="checkbox" /> Remember for 30 days
-        </label>
-        <a routerLink="/admin/forgot-password">Forgot password</a>
+        <div class="welcome-section">
+          <h2 class="welcome-title">Welcome Back</h2>
+          <p class="welcome-subtitle">Sign in to access the admin dashboard</p>
+        </div>
       </div>
 
+      <!-- Error Alert -->
+      <div class="error-alert" *ngIf="error && !loading">
+        <div class="error-content">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ error }}</span>
+        </div>
+        <button class="error-close" type="button" (click)="clearError()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
 
-      <button type="submit" class="primary-btn">Sign in</button>
-    </form>
+      <!-- Login Form -->
+      <form class="login-form" (ngSubmit)="login()" novalidate>
+        <!-- Email Field -->
+        <div class="form-group">
+          <label class="form-label">
+            <mat-icon>mail</mat-icon>
+            <span>Email or Username</span>
+          </label>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              class="form-input"
+              [(ngModel)]="email"
+              name="email"
+              placeholder="Enter your email or username"
+              autocomplete="email"
+              required
+              [disabled]="loading"
+            />
+            <mat-icon class="input-icon">alternate_email</mat-icon>
+          </div>
+        </div>
 
-    <div class="signup">
-      Don’t have an account? <a href="#">Request Access</a>
+        <!-- Password Field -->
+        <div class="form-group">
+          <label class="form-label">
+            <mat-icon>lock</mat-icon>
+            <span>Password</span>
+          </label>
+          <div class="input-wrapper">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              class="form-input"
+              [(ngModel)]="password"
+              name="password"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+              required
+              [disabled]="loading"
+            />
+            <button
+              type="button"
+              class="password-toggle"
+              (click)="togglePasswordVisibility()"
+              tabindex="-1"
+            >
+              <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Options Row -->
+        <div class="form-options">
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              [(ngModel)]="rememberMe"
+              name="rememberMe"
+              [disabled]="loading"
+            />
+            <span class="checkbox-custom"></span>
+            <span class="checkbox-text">Remember me for 30 days</span>
+          </label>
+
+          <a routerLink="/admin/forgot-password" class="forgot-link">
+            Forgot password?
+          </a>
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="submit-btn"
+          [disabled]="loading"
+          [class.loading]="loading"
+        >
+          <span class="btn-content" *ngIf="!loading">
+            <mat-icon>login</mat-icon>
+            <span>Sign In to Dashboard</span>
+          </span>
+          <span class="btn-loading" *ngIf="loading">
+            <mat-spinner diameter="24"></mat-spinner>
+            <span>Authenticating...</span>
+          </span>
+        </button>
+      </form>
+
+      <!-- Footer Links -->
+      <div class="login-footer">
+        <div class="footer-divider">
+          <span>Need access?</span>
+        </div>
+<a routerLink="/admin/access" class="request-access-btn">
+          <mat-icon>person_add</mat-icon>
+          <span>Request Admin Access</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Bottom Info -->
+    <div class="login-bottom">
+      <div class="security-badge">
+        <mat-icon>verified_user</mat-icon>
+        <span>Secure Admin Login</span>
+      </div>
+      <div class="copyright">
+        © {{ currentYear }} Algo Auction. All rights reserved.
+      </div>
     </div>
   </div>
 
-  <div class="login-illustration">
-    <img src="https://media.istockphoto.com/id/1169397243/vector/human-resources-concept-vector-illustration.jpg?s=612x612&w=0&k=20&c=IwFeMVZa7OVr65_NsHu2zhhOOWYLJj3BuTI1hdVtb7w=" alt="Illustration" />
+  <!-- Right Panel - Visual Experience -->
+  <div class="visual-panel">
+    <div class="visual-background">
+      <div class="visual-gradient"></div>
+      <div class="visual-pattern"></div>
+      <div class="particles-container">
+        <div class="particle" *ngFor="let p of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]"></div>
+      </div>
+    </div>
+
+    <div class="visual-content">
+      <!-- Hero Stats -->
+      <div class="hero-stats">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <mat-icon>gavel</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">24/7</div>
+            <div class="stat-label">Live Auctions</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">
+            <mat-icon>trending_up</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">$2.5M+</div>
+            <div class="stat-label">Monthly Revenue</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">
+            <mat-icon>groups</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">10K+</div>
+            <div class="stat-label">Active Users</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Visual -->
+      <div class="main-visual">
+        <div class="visual-card">
+          <div class="card-glow"></div>
+          <div class="card-content">
+            <div class="visual-icon-large">
+              <mat-icon>admin_panel_settings</mat-icon>
+            </div>
+            <h3 class="visual-title">Admin Command Center</h3>
+            <p class="visual-description">
+              Manage your luxury auction platform with powerful admin tools and real-time analytics
+            </p>
+            <div class="visual-features">
+              <div class="feature-item">
+                <mat-icon>check_circle</mat-icon>
+                <span>Advanced Analytics</span>
+              </div>
+              <div class="feature-item">
+                <mat-icon>check_circle</mat-icon>
+                <span>User Management</span>
+              </div>
+              <div class="feature-item">
+                <mat-icon>check_circle</mat-icon>
+                <span>Live Monitoring</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Features -->
+      <div class="feature-badges">
+        <div class="feature-badge">
+          <mat-icon>security</mat-icon>
+          <span>Enterprise Security</span>
+        </div>
+        <div class="feature-badge">
+          <mat-icon>cloud_done</mat-icon>
+          <span>Cloud Powered</span>
+        </div>
+        <div class="feature-badge">
+          <mat-icon>speed</mat-icon>
+          <span>Lightning Fast</span>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

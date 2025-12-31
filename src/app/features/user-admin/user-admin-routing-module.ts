@@ -31,6 +31,7 @@ import { InspectionDetails } from './pages/inspection-details/inspection-details
 
 
 import { InventoryInspectionreport } from './pages/inventory-inspectionreport/inventory-inspectionreport';
+import { NeedAccess } from './pages/need-access/need-access';
 
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -39,6 +40,7 @@ const routes: Routes = [
   { path: 'login', component: UsersLogin, title: 'Admin Login' },
   { path: 'forgot-password', component: UsersForgotpassword, title: 'Forgot Password' },
   { path: 'auth/reset-password', component: UsersResetpassword, title: 'Reset Password' },
+  { path: 'access', component: NeedAccess, title: 'Need Access?' },
 
   {
     path: '',
