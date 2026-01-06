@@ -1,142 +1,285 @@
-<!-- Stats strip -->
-<section class="stats-strip">
-  <div class="stat-card online">
-    <div class="icon-wrap"><mat-icon>online_prediction</mat-icon></div>
-    <div>
-      <div class="value">1</div>
-      <div class="label">Online Bidders</div>
+<div class="users-page">
+  <!-- Full-Width Hero Section -->
+  <section class="users-hero reveal-on-scroll">
+    <div class="hero-background">
+      <div class="hero-gradient"></div>
+      <div class="hero-pattern"></div>
     </div>
-  </div>
 
-  <div class="stat-card total">
-    <div class="icon-wrap"><mat-icon>group</mat-icon></div>
-    <div>
-      <div class="value">{{ stats?.totalUsers ?? 0 }}</div>
-      <div class="label">Total Bidders</div>
-    </div>
-  </div>
-
-  <div class="stat-card active">
-    <div class="icon-wrap"><mat-icon>verified_user</mat-icon></div>
-    <div>
-      <div class="value">{{ stats?.activeUsers ?? 0 }}</div>
-      <div class="label">Active Bidders</div>
-    </div>
-  </div>
-
-  <div class="stat-card inactive">
-    <div class="icon-wrap"><mat-icon>person_off</mat-icon></div>
-    <div>
-      <div class="value">{{ stats?.inactiveUsers ?? 0 }}</div>
-      <div class="label">Inactive Bidders</div>
-    </div>
-  </div>
-</section>
-
-<!-- Toolbar -->
-<div class="user-header">
-  <mat-form-field appearance="outline" class="search-field">
-    <mat-label>Search Bidder</mat-label>
-    <input matInput [(ngModel)]="searchTerm" (input)="onSearch()" />
-    <button mat-icon-button *ngIf="searchTerm" matSuffix (click)="searchTerm=''; onSearch()">
-      <mat-icon>close</mat-icon>
-    </button>
-  </mat-form-field>
-
-  <button mat-flat-button class="add-btn" (click)="openCreateUser()">
-    <mat-icon>person_add</mat-icon>
-    Add Bidder
-  </button>
-</div>
-
-<!-- Data panel + table -->
-<div class="panel">
-  <table mat-table [dataSource]="users" class="full-width-table">
-    <!-- User -->
-    <ng-container matColumnDef="user">
-      <th mat-header-cell *matHeaderCellDef>User</th>
-      <td mat-cell *matCellDef="let u">
-        <div class="user-cell">
-          <!-- CHANGED: u.fullName -> getFullName(u) -->
-          <div class="name">{{ getFullName(u) }}</div>
-          <div class="sub">ID {{ u.userId }} <span *ngIf="u.userName">• {{ u.userName }}</span></div>
+    <div class="hero-content-wrapper">
+      <div class="hero-main-content">
+        <div class="hero-text-section">
+          <h1 class="hero-title">Bidder Management</h1>
+          <p class="hero-description">
+            Manage and monitor all registered bidders across your luxury auction platform
+          </p>
         </div>
-      </td>
-    </ng-container>
 
-    <!-- Email -->
-    <ng-container matColumnDef="email">
-      <th mat-header-cell *matHeaderCellDef>Email</th>
-      <td mat-cell *matCellDef="let u">
-        <div class="email-cell">{{ u.email }}</div>
-      </td>
-    </ng-container>
+        <div class="hero-actions">
+          <button mat-flat-button class="hero-btn primary" (click)="openCreateUser()">
+            <mat-icon>person_add</mat-icon>
+            <span>Add New Bidder</span>
+          </button>
+        </div>
+      </div>
 
-    <!-- Verified -->
-    <ng-container matColumnDef="verified">
-      <th mat-header-cell *matHeaderCellDef>Verified Status</th>
-      <td mat-cell *matCellDef="let u">
-        <span class="badge" [class.badge-ok]="u.emailConfirmed" [class.badge-no]="!u.emailConfirmed">
-          <mat-icon class="badge-icon">{{ u.emailConfirmed ? 'check_circle' : 'cancel' }}</mat-icon>
-          <span>{{ u.emailConfirmed ? 'Verified' : 'Unverified' }}</span>
-        </span>
-      </td>
-    </ng-container>
+      <!-- Integrated Hero Stats -->
+      <div class="hero-stats-grid">
+        <div class="hero-stat-card online">
+          <div class="stat-icon-wrapper">
+            <mat-icon>online_prediction</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.onlineUsers }}</div>
+            <div class="stat-label">Online Now</div>
+          </div>
+          <div class="stat-decoration"></div>
+        </div>
 
-    <!-- Last Login -->
-    <ng-container matColumnDef="lastLogin">
-      <th mat-header-cell *matHeaderCellDef>Last Login</th>
-      <td mat-cell *matCellDef="let u">
-        <!-- CHANGED: u.lastLogin -> getLastLogin(u) -->
-        <span class="muted">{{ getLastLogin(u) ? (getLastLogin(u) | date:'yyyy-MM-dd HH:mm') : '—' }}</span>
-      </td>
-    </ng-container>
+        <div class="hero-stat-card total">
+          <div class="stat-icon-wrapper">
+            <mat-icon>group</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.totalUsers }}</div>
+            <div class="stat-label">Total Bidders</div>
+          </div>
+          <div class="stat-decoration"></div>
+        </div>
 
-    <!-- Status -->
-    <ng-container matColumnDef="status">
-      <th mat-header-cell *matHeaderCellDef>Status</th>
-      <td mat-cell *matCellDef="let u">
-        <button mat-stroked-button
-                [class.is-active]="u.active"
-                [class.is-inactive]="u.active === false"
-                (click)="toggleActive(u)">
-          {{ u.active ? 'Active' : 'Inactive' }}
+        <div class="hero-stat-card active">
+          <div class="stat-icon-wrapper">
+            <mat-icon>verified_user</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.activeUsers }}</div>
+            <div class="stat-label">Active Bidders</div>
+          </div>
+          <div class="stat-decoration"></div>
+        </div>
+
+        <div class="hero-stat-card inactive">
+          <div class="stat-icon-wrapper">
+            <mat-icon>person_off</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.inactiveUsers }}</div>
+            <div class="stat-label">Inactive Bidders</div>
+          </div>
+          <div class="stat-decoration"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Themed Toolbar -->
+  <div class="users-toolbar reveal-on-scroll">
+    <div class="toolbar-left">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search bidders</mat-label>
+        <mat-icon matPrefix class="search-icon">search</mat-icon>
+        <input
+          matInput
+          [(ngModel)]="searchTerm"
+          (input)="onSearch()"
+          placeholder="Search by name, email, or username..."
+        />
+        <button
+          mat-icon-button
+          *ngIf="searchTerm"
+          matSuffix
+          (click)="searchTerm=''; onSearch()"
+          matTooltip="Clear search"
+          class="clear-btn"
+        >
+          <mat-icon>close</mat-icon>
         </button>
-      </td>
-    </ng-container>
+      </mat-form-field>
+    </div>
 
-    <!-- Actions -->
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef>Actions</th>
-      <td mat-cell *matCellDef="let u">
-        <button mat-icon-button class="edit-btn" (click)="editUser(u)" matTooltip="Edit">
-          <mat-icon>edit</mat-icon>
-        </button>
-        <button mat-icon-button (click)="openChangePassword(u)" matTooltip="Change password">
-          <mat-icon>lock</mat-icon>
-        </button>
-        <button mat-icon-button (click)="viewUser(u.userId)" aria-label="View details" matTooltip="View details">
-          <mat-icon>visibility</mat-icon>
-        </button>
-      </td>
-    </ng-container>
+    <div class="toolbar-right">
+      <div class="results-count">
+        <mat-icon>info</mat-icon>
+        <span class="count-text">{{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }}</span>
+      </div>
+    </div>
+  </div>
 
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-  </table>
-</div>
+  <!-- Themed Data Table -->
+  <div class="table-container reveal-on-scroll">
+    <table mat-table [dataSource]="users" class="users-table">
+      <!-- User Column -->
+      <ng-container matColumnDef="user">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>person</mat-icon>
+            <span>Bidder</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let u">
+          <div class="user-cell">
+            <div class="user-avatar">
+              <span>{{ getUserInitials(u) }}</span>
+            </div>
+            <div class="user-info">
+              <div class="user-name">{{ getFullName(u) }}</div>
+              <div class="user-meta">
+                <span class="user-id">ID {{ u.userId }}</span>
+                <span *ngIf="u.userName" class="user-username">@{{ u.userName }}</span>
+              </div>
+            </div>
+          </div>
+        </td>
+      </ng-container>
 
-<!-- Footer -->
-<div class="list-footer">
-  <mat-paginator
-    [length]="totalItems"
-    [pageSize]="pageSize"
-    [pageSizeOptions]="[5,10,20]"
-    [pageIndex]="pageIndex"
-    (page)="onPageChange($event)">
-  </mat-paginator>
+      <!-- Email Column -->
+      <ng-container matColumnDef="email">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>mail</mat-icon>
+            <span>Email</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let u">
+          <div class="email-cell">
+            <mat-icon class="cell-icon">alternate_email</mat-icon>
+            <span>{{ u.email || '—' }}</span>
+          </div>
+        </td>
+      </ng-container>
 
-  <div class="count">
-    {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }}
+      <!-- Verified Column -->
+      <ng-container matColumnDef="verified">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>verified</mat-icon>
+            <span>Verification</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let u">
+          <span
+            class="status-badge"
+            [class.verified]="u.emailConfirmed"
+            [class.unverified]="!u.emailConfirmed"
+          >
+            <mat-icon>{{ u.emailConfirmed ? 'verified' : 'pending' }}</mat-icon>
+            <span>{{ u.emailConfirmed ? 'Verified' : 'Pending' }}</span>
+          </span>
+        </td>
+      </ng-container>
+
+      <!-- Last Login Column -->
+      <ng-container matColumnDef="lastLogin">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>schedule</mat-icon>
+            <span>Last Activity</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let u">
+          <div class="login-cell">
+            <mat-icon class="cell-icon">access_time</mat-icon>
+            <span>{{ formatLastLogin(getLastLogin(u)) }}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Status Column -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>toggle_on</mat-icon>
+            <span>Status</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let u">
+          <button
+            mat-stroked-button
+            class="status-toggle"
+            [class.active]="u.active"
+            [class.inactive]="!u.active"
+            (click)="toggleActive(u)"
+            [matTooltip]="u.active ? 'Click to deactivate' : 'Click to activate'"
+          >
+            <span class="status-dot"></span>
+            {{ u.active ? 'Active' : 'Inactive' }}
+          </button>
+        </td>
+      </ng-container>
+
+      <!-- Actions Column -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>more_horiz</mat-icon>
+            <span>Actions</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let u">
+          <div class="actions-cell">
+            <button
+              mat-icon-button
+              class="action-btn edit"
+              (click)="editUser(u)"
+              matTooltip="Edit bidder"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              class="action-btn view"
+              (click)="viewUser(u.userId)"
+              matTooltip="View details"
+            >
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button
+              mat-icon-button
+              class="action-btn lock"
+              (click)="openChangePassword(u)"
+              matTooltip="Change password"
+            >
+              <mat-icon>lock</mat-icon>
+            </button>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns" class="table-row"></tr>
+    </table>
+
+    <!-- Empty State -->
+    <div class="table-empty" *ngIf="!users.data.length">
+      <mat-icon>person_search</mat-icon>
+      <h3>No bidders found</h3>
+      <p>Start by adding your first bidder to the system</p>
+      <button mat-flat-button class="empty-action" (click)="openCreateUser()">
+        <mat-icon>person_add</mat-icon>
+        Add Bidder
+      </button>
+    </div>
+  </div>
+
+  <!-- Themed Pagination Footer -->
+  <div class="table-footer reveal-on-scroll">
+    <div class="footer-left">
+      <mat-icon>list</mat-icon>
+      <span class="footer-text">
+        Showing {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }} bidders
+      </span>
+    </div>
+
+    <div class="footer-right">
+      <mat-paginator
+        [length]="totalItems"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[5, 10, 20, 50]"
+        [pageIndex]="pageIndex"
+        (page)="onPageChange($event)"
+        showFirstLastButtons
+      >
+      </mat-paginator>
+    </div>
   </div>
 </div>

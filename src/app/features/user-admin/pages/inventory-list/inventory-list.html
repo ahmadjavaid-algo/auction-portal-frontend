@@ -1,200 +1,355 @@
-<!-- Stats strip (unchanged) -->
-<section class="stats-strip">
-  <div class="stat-card total">
-    <div class="icon-wrap"><mat-icon>inventory_2</mat-icon></div>
-    <div>
-      <div class="value">{{ stats?.total ?? 0 }}</div>
-      <div class="label">Total Inventory</div>
+<div class="inventory-page">
+  <!-- Full-Width Hero Section -->
+  <section class="inventory-hero reveal-on-scroll">
+    <div class="hero-background">
+      <div class="hero-gradient"></div>
+      <div class="hero-pattern"></div>
+    </div>
+
+    <div class="hero-content-wrapper">
+      <div class="hero-main-content">
+        <div class="hero-text-section">
+          <h1 class="hero-title">Inventory Management</h1>
+          <p class="hero-description">
+            Manage, track, and stage verified vehicles for auctions across your luxury marketplace
+          </p>
+        </div>
+
+        <div class="hero-actions">
+          <button mat-flat-button class="hero-btn primary" (click)="openCreateInventory()">
+            <mat-icon>post_add</mat-icon>
+            <span>Add Inventory</span>
+          </button>
+
+          <button
+            *ngIf="selection.selected.length"
+            mat-stroked-button
+            class="hero-btn secondary"
+            (click)="addSelectedToAuction()"
+          >
+            <mat-icon>playlist_add</mat-icon>
+            <span>Add Selected</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Integrated Hero Stats -->
+      <div class="hero-stats-grid">
+        <div class="hero-stat-card total">
+          <div class="stat-icon-wrapper">
+            <mat-icon>inventory_2</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.total }}</div>
+            <div class="stat-label">Total Inventory</div>
+          </div>
+          <div class="stat-decoration"></div>
+        </div>
+
+        <div class="hero-stat-card active">
+          <div class="stat-icon-wrapper">
+            <mat-icon>verified</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.active }}</div>
+            <div class="stat-label">Active</div>
+          </div>
+          <div class="stat-decoration"></div>
+        </div>
+
+        <div class="hero-stat-card inactive">
+          <div class="stat-icon-wrapper">
+            <mat-icon>do_not_disturb_on</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.inactive }}</div>
+            <div class="stat-label">Inactive</div>
+          </div>
+          <div class="stat-decoration"></div>
+        </div>
+
+        <div class="hero-stat-card online">
+          <div class="stat-icon-wrapper">
+            <mat-icon>view_list</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.products }}</div>
+            <div class="stat-label">Distinct Products</div>
+          </div>
+          <div class="stat-decoration"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Themed Toolbar -->
+  <div class="inventory-toolbar reveal-on-scroll">
+    <div class="toolbar-left">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search inventory</mat-label>
+        <mat-icon matPrefix class="search-icon">search</mat-icon>
+        <input
+          matInput
+          [(ngModel)]="searchTerm"
+          (input)="onSearch()"
+          placeholder="Search by name, make, model, chassis, registration..."
+        />
+        <button
+          mat-icon-button
+          *ngIf="searchTerm"
+          matSuffix
+          (click)="searchTerm=''; onSearch()"
+          matTooltip="Clear search"
+          class="clear-btn"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-form-field>
+    </div>
+
+    <div class="toolbar-right">
+      <!-- Selection chip (kept, but styled like the rest of the UI) -->
+      <div class="selection-chip" *ngIf="selection.selected.length" matTooltip="Selected rows">
+        <mat-icon>check_box</mat-icon>
+        <span>{{ selection.selected.length }} selected</span>
+        <button
+          mat-icon-button
+          type="button"
+          class="selection-clear"
+          (click)="clearSelection()"
+          aria-label="Clear selection"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="results-count">
+        <mat-icon>info</mat-icon>
+        <span class="count-text">{{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }}</span>
+      </div>
     </div>
   </div>
 
-  <div class="stat-card active">
-    <div class="icon-wrap"><mat-icon>verified</mat-icon></div>
-    <div>
-      <div class="value">{{ stats?.active ?? 0 }}</div>
-      <div class="label">Active</div>
-    </div>
+  <!-- Loading (optional, matches your data reality) -->
+  <div class="loading-wrap reveal-on-scroll" *ngIf="loading">
+    <mat-spinner diameter="44"></mat-spinner>
+    <p>Loading inventory...</p>
   </div>
 
-  <div class="stat-card inactive">
-    <div class="icon-wrap"><mat-icon>do_not_disturb_on</mat-icon></div>
-    <div>
-      <div class="value">{{ stats?.inactive ?? 0 }}</div>
-      <div class="label">Inactive</div>
-    </div>
-  </div>
+  <!-- Themed Data Table -->
+  <div class="table-container reveal-on-scroll" *ngIf="!loading">
+    <table mat-table [dataSource]="inventory" class="inventory-table">
+      <!-- Select -->
+      <ng-container matColumnDef="select">
+        <th mat-header-cell *matHeaderCellDef class="select-col">
+          <mat-checkbox
+            (change)="masterToggle()"
+            [checked]="isAllSelected()"
+            [indeterminate]="selection.selected.length && !isAllSelected()"
+            [aria-label]="checkboxLabel()"
+          ></mat-checkbox>
+        </th>
 
-  <div class="stat-card online">
-    <div class="icon-wrap"><mat-icon>view_list</mat-icon></div>
-    <div>
-      <div class="value">{{ stats?.products ?? 0 }}</div>
-      <div class="label">Distinct Products</div>
-    </div>
-  </div>
-</section>
+        <td mat-cell *matCellDef="let i" class="select-col">
+          <mat-checkbox
+            (click)="$event.stopPropagation()"
+            (change)="$event ? selection.toggle(i) : null"
+            [checked]="selection.isSelected(i)"
+            [aria-label]="checkboxLabel(i)"
+          ></mat-checkbox>
+        </td>
+      </ng-container>
 
-<!-- Toolbar -->
-<div class="inventory-header">
-  <mat-form-field appearance="outline" class="search-field">
-    <mat-label>Search inventory</mat-label>
-    <input matInput [(ngModel)]="searchTerm" (input)="onSearch()" />
-    <button mat-icon-button *ngIf="searchTerm" matSuffix (click)="searchTerm=''; onSearch()">
-      <mat-icon>close</mat-icon>
-    </button>
-  </mat-form-field>
+      <!-- Name -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>directions_car</mat-icon>
+            <span>Vehicle</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let i">
+          <div class="item-cell">
+            <div class="item-avatar">
+              <span>{{ getInventoryInitials(i) }}</span>
+            </div>
+            <div class="item-info">
+              <div class="item-name">{{ getProductName(i) }}</div>
+              <div class="item-meta">
+                <span class="item-id">INV {{ i.inventoryId }}</span>
+                <span *ngIf="i.productId" class="item-sub">Product {{ i.productId }}</span>
+              </div>
+            </div>
+          </div>
+        </td>
+      </ng-container>
 
-  <!-- Selection actions (inline, on-brand) -->
-  <div class="selection-toolbar" *ngIf="selection.selected.length">
-    <div class="selection-chip" title="Selected rows">
-      <mat-icon>check_box</mat-icon>
-      <span>{{ selection.selected.length }} selected</span>
-      <button
-        mat-icon-button
-        type="button"
-        class="selection-clear"
-        (click)="clearSelection()"
-        aria-label="Clear selection">
-        <mat-icon>close</mat-icon>
+      <!-- Inspection -->
+      <ng-container matColumnDef="inspectionReport">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>assignment</mat-icon>
+            <span>Inspection</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let i">
+          <button
+            mat-icon-button
+            class="action-btn inspection"
+            (click)="openInspectionReport(i)"
+            matTooltip="Open inspection report"
+          >
+            <mat-icon>assignment_turned_in</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <!-- Chassis -->
+      <ng-container matColumnDef="chassis">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>badge</mat-icon>
+            <span>Chassis</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let i">
+          <div class="mono-cell">
+            <mat-icon class="cell-icon">pin</mat-icon>
+            <span>{{ i.chassisNo || '—' }}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Registration -->
+      <ng-container matColumnDef="registration">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>confirmation_number</mat-icon>
+            <span>Registration</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let i">
+          <div class="mono-cell">
+            <mat-icon class="cell-icon">local_offer</mat-icon>
+            <span>{{ i.registrationNo || '—' }}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Description -->
+      <ng-container matColumnDef="description">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>notes</mat-icon>
+            <span>Description</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let i">
+          <div class="desc-cell" [matTooltip]="i.description || '—'">
+            {{ i.description || '—' }}
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Status -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>toggle_on</mat-icon>
+            <span>Status</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let i">
+          <button
+            mat-stroked-button
+            class="status-toggle"
+            [class.active]="i.active"
+            [class.inactive]="!i.active"
+            (click)="toggleActive(i)"
+            [matTooltip]="i.active ? 'Click to deactivate' : 'Click to activate'"
+          >
+            <span class="status-dot"></span>
+            {{ i.active ? 'Active' : 'Inactive' }}
+          </button>
+        </td>
+      </ng-container>
+
+      <!-- Actions -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>more_horiz</mat-icon>
+            <span>Actions</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let i">
+          <div class="actions-cell">
+            <button
+              mat-icon-button
+              class="action-btn upload"
+              (click)="openUploadFor(i)"
+              matTooltip="Upload images/files"
+              aria-label="Upload images/files"
+            >
+              <mat-icon>cloud_upload</mat-icon>
+            </button>
+
+            <button
+              mat-icon-button
+              class="action-btn edit"
+              (click)="editInventory(i)"
+              matTooltip="Edit inventory"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+
+            <button
+              mat-icon-button
+              class="action-btn view"
+              (click)="viewInventory(i.inventoryId)"
+              matTooltip="View details"
+            >
+              <mat-icon>visibility</mat-icon>
+            </button>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns" class="table-row"></tr>
+    </table>
+
+    <!-- Empty State -->
+    <div class="table-empty" *ngIf="!inventory.data.length">
+      <mat-icon>inventory_2</mat-icon>
+      <h3>No inventory found</h3>
+      <p>Start by adding your first vehicle to the system</p>
+      <button mat-flat-button class="empty-action" (click)="openCreateInventory()">
+        <mat-icon>post_add</mat-icon>
+        Add Inventory
       </button>
     </div>
-
-    <button mat-flat-button class="chip-action" (click)="addSelectedToAuction()">
-      <mat-icon>playlist_add</mat-icon>
-      Add to Auction
-    </button>
   </div>
 
-  <button mat-flat-button class="add-btn" (click)="openCreateInventory()">
-    <mat-icon>post_add</mat-icon>
-    Add Inventory
-  </button>
-</div>
+  <!-- Themed Pagination Footer -->
+  <div class="table-footer reveal-on-scroll" *ngIf="!loading">
+    <div class="footer-left">
+      <mat-icon>list</mat-icon>
+      <span class="footer-text">
+        Showing {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }} inventory items
+      </span>
+    </div>
 
-<!-- Data panel + table -->
-<div class="panel">
-  <table mat-table [dataSource]="inventory" class="full-width-table">
-
-    <!-- Select (header: master toggle) -->
-    <ng-container matColumnDef="select">
-      <th mat-header-cell *matHeaderCellDef>
-        <mat-checkbox
-          (change)="masterToggle()"
-          [checked]="isAllSelected()"
-          [indeterminate]="selection.selected.length && !isAllSelected()"
-          [aria-label]="checkboxLabel()">
-        </mat-checkbox>
-      </th>
-      <td mat-cell *matCellDef="let i">
-        <mat-checkbox
-          (click)="$event.stopPropagation()"
-          (change)="$event ? selection.toggle(i) : null"
-          [checked]="selection.isSelected(i)"
-          [aria-label]="checkboxLabel(i)">
-        </mat-checkbox>
-      </td>
-    </ng-container>
-
-    <!-- Name -->
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef>Name</th>
-      <td mat-cell *matCellDef="let i">
-        <div class="user-cell">
-          <div class="name">{{ getProductName(i) }}</div>
-          <div class="sub">Inventory #{{ i.inventoryId }}</div>
-        </div>
-      </td>
-    </ng-container>
-
-    <!-- NEW: Inspection Report column (replaces old Product column) -->
-    <ng-container matColumnDef="inspectionReport">
-      <th mat-header-cell *matHeaderCellDef>Inspection</th>
-      <td mat-cell *matCellDef="let i">
-        <button
-          mat-icon-button
-          class="inspection-btn"
-          (click)="openInspectionReport(i)"
-          matTooltip="Open inspection report">
-          <mat-icon>assignment_turned_in</mat-icon>
-        </button>
-      </td>
-    </ng-container>
-
-    <!-- Chassis No -->
-    <ng-container matColumnDef="chassis">
-      <th mat-header-cell *matHeaderCellDef>Chassis No</th>
-      <td mat-cell *matCellDef="let i">
-        {{ i.chassisNo || '—' }}
-      </td>
-    </ng-container>
-
-    <!-- Registration No -->
-    <ng-container matColumnDef="registration">
-      <th mat-header-cell *matHeaderCellDef>Registration No</th>
-      <td mat-cell *matCellDef="let i">
-        {{ i.registrationNo || '—' }}
-      </td>
-    </ng-container>
-
-    <!-- Description -->
-    <ng-container matColumnDef="description">
-      <th mat-header-cell *matHeaderCellDef>Description</th>
-      <td mat-cell *matCellDef="let i">
-        <div class="subject-cell">{{ i.description || '—' }}</div>
-      </td>
-    </ng-container>
-
-    <!-- Status -->
-    <ng-container matColumnDef="status">
-      <th mat-header-cell *matHeaderCellDef>Status</th>
-      <td mat-cell *matCellDef="let i">
-        <button mat-stroked-button
-                [class.is-active]="i.active"
-                [class.is-inactive]="i.active === false"
-                (click)="toggleActive(i)">
-          {{ i.active ? 'Active' : 'Inactive' }}
-        </button>
-      </td>
-    </ng-container>
-
-    <!-- Actions -->
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef>Actions</th>
-      <td mat-cell *matCellDef="let i">
-        <!-- Upload images/files for this inventory -->
-        <button
-          mat-icon-button
-          class="upload-btn"
-          (click)="openUploadFor(i)"
-          aria-label="Upload images"
-          matTooltip="Upload images/files">
-          <mat-icon>cloud_upload</mat-icon>
-        </button>
-
-        <button mat-icon-button class="edit-btn" (click)="editInventory(i)" matTooltip="Edit">
-          <mat-icon>edit</mat-icon>
-        </button>
-        <button mat-icon-button (click)="viewInventory(i.inventoryId)" aria-label="View details" matTooltip="View details">
-          <mat-icon>visibility</mat-icon>
-        </button>
-      </td>
-    </ng-container>
-
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-  </table>
-</div>
-
-<!-- Footer -->
-<div class="list-footer">
-  <mat-paginator
-    [length]="totalItems"
-    [pageSize]="pageSize"
-    [pageSizeOptions]="[5,10,20]"
-    [pageIndex]="pageIndex"
-    (page)="onPageChange($event)">
-  </mat-paginator>
-
-  <div class="count">
-    {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }}
+    <div class="footer-right">
+      <mat-paginator
+        [length]="totalItems"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[5, 10, 20, 50]"
+        [pageIndex]="pageIndex"
+        (page)="onPageChange($event)"
+        showFirstLastButtons
+      >
+      </mat-paginator>
+    </div>
   </div>
 </div>

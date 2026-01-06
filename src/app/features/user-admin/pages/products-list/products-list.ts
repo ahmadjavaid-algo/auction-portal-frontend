@@ -1,4 +1,12 @@
-import { Component, ViewChild, inject } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  inject
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -11,12 +19,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 
 import { SelectionModel } from '@angular/cdk/collections';
-import { forkJoin } from 'rxjs';
 
 import { ProductsService } from '../../../../services/products.service';
 import { Product } from '../../../../models/product.model';
@@ -29,6 +35,13 @@ import {
   AddToInventoryDialog,
   AddToInventoryResult
 } from '../add-to-inventory.dialog/add-to-inventory.dialog';
+
+type ProductStats = {
+  total: number;
+  active: number;
+  inactive: number;
+  categories: number;
+};
 
 @Component({
   selector: 'app-products-list',
@@ -44,14 +57,15 @@ import {
     MatButtonModule,
     MatDialogModule,
     MatSnackBarModule,
-    MatProgressSpinnerModule,
     MatTooltipModule,
     MatCheckboxModule
   ],
   templateUrl: './products-list.html',
   styleUrls: ['./products-list.scss']
 })
-export class ProductsList {
+export class ProductsList implements OnInit, AfterViewInit, OnDestroy {
+  private host = inject(ElementRef<HTMLElement>);
+
   private productsSvc = inject(ProductsService);
   private invSvc = inject(InventoryService);
   private router = inject(Router);
@@ -59,7 +73,17 @@ export class ProductsList {
   private snack = inject(MatSnackBar);
   private auth = inject(AuthService);
 
-  displayedColumns: string[] = ['select', 'name', 'make', 'model', 'year', 'category', 'status', 'actions'];
+  displayedColumns: string[] = [
+    'select',
+    'product',
+    'make',
+    'model',
+    'year',
+    'category',
+    'status',
+    'actions'
+  ];
+
   products = new MatTableDataSource<Product>([]);
   totalItems = 0;
 
@@ -67,12 +91,18 @@ export class ProductsList {
   pageIndex = 0;
   searchTerm = '';
 
-  stats = { total: 0, active: 0, inactive: 0, categories: 0 };
+  stats: ProductStats = { total: 0, active: 0, inactive: 0, categories: 0 };
+
+  // Animated stats values (same pattern as UsersList)
+  animatedStats: ProductStats = { total: 0, active: 0, inactive: 0, categories: 0 };
 
   loading = false;
 
-  
+  // single-select (kept)
   selection = new SelectionModel<Product>(false, []);
+
+  private intersectionObserver?: IntersectionObserver;
+  private animationFrames: number[] = [];
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
@@ -86,26 +116,62 @@ export class ProductsList {
         anyp.makeName ?? '',
         anyp.modelName ?? '',
         anyp.yearName ?? '',
-        anyp.categoryName ?? ''
-      ].join(' ').toLowerCase();
+        anyp.categoryName ?? '',
+        String(p.productId ?? '')
+      ]
+        .join(' ')
+        .toLowerCase();
+
       return haystack.includes(filter);
     };
   }
 
   ngAfterViewInit(): void {
     this.products.paginator = this.paginator;
+    this.initScrollReveal();
+  }
+
+  ngOnDestroy(): void {
+    this.intersectionObserver?.disconnect();
+    this.animationFrames.forEach(id => cancelAnimationFrame(id));
+  }
+
+  private initScrollReveal(): void {
+    this.intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('revealed');
+            this.intersectionObserver?.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px',
+      }
+    );
+
+    setTimeout(() => {
+      const elements = document.querySelectorAll('.reveal-on-scroll');
+      elements.forEach((el) => this.intersectionObserver?.observe(el));
+    }, 100);
   }
 
   private loadData(): void {
     this.loading = true;
 
-    
     this.productsSvc.getList().subscribe({
-      next: (products) => {
-        this.products.data = products ?? [];
+      next: (list) => {
+        this.products.data = list ?? [];
+        this.totalItems = this.products.data.length;
+
         if (this.paginator) this.products.paginator = this.paginator;
+
         this.applyPagingTotals();
         this.computeStats();
+        this.animateStats();
+
         this.selection.clear();
       },
       error: (e) => {
@@ -117,11 +183,11 @@ export class ProductsList {
   }
 
   private computeStats(): void {
-    const all = this.products.data;
+    const all = this.products.data ?? [];
     const active = all.filter(x => x.active === true).length;
     const inactive = all.length - active;
 
-    const catSet = new Set(all.map(p => p.categoryId));
+    const catSet = new Set(all.map(p => (p as any).categoryId ?? p.categoryId));
     this.stats = {
       total: all.length,
       active,
@@ -130,13 +196,54 @@ export class ProductsList {
     };
   }
 
-  getCreatedAt(p: Product): Date | null {
-    return p.createdDate ? new Date(p.createdDate) : null;
+  private animateStats(): void {
+    const duration = 1500;
+    const startTime = performance.now();
+
+    const start = { ...this.animatedStats };
+    const target = { ...this.stats };
+
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+
+      this.animatedStats.total = Math.floor(start.total + (target.total - start.total) * eased);
+      this.animatedStats.active = Math.floor(start.active + (target.active - start.active) * eased);
+      this.animatedStats.inactive = Math.floor(start.inactive + (target.inactive - start.inactive) * eased);
+      this.animatedStats.categories = Math.floor(start.categories + (target.categories - start.categories) * eased);
+
+      if (progress < 1) {
+        const frameId = requestAnimationFrame(animate);
+        this.animationFrames.push(frameId);
+      }
+    };
+
+    const frameId = requestAnimationFrame(animate);
+    this.animationFrames.push(frameId);
   }
 
+  // ---------- UI helpers ----------
+  getDisplayName(p: Product): string {
+    return (p.displayName ?? '').trim() || `Product #${p.productId ?? ''}`;
+  }
+
+  getProductInitials(p: Product): string {
+    const name = (p.displayName ?? '').trim();
+    if (!name) return 'PR';
+
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return name.slice(0, 2).toUpperCase();
+  }
+
+  // ---------- search / paging ----------
   onSearch(): void {
     this.products.filter = this.searchTerm.trim().toLowerCase();
     this.totalItems = this.products.filteredData.length;
+
     if (this.paginator) {
       this.paginator.firstPage();
       this.pageIndex = 0;
@@ -159,12 +266,12 @@ export class ProductsList {
     if (!this.totalItems) return 0;
     return this.pageIndex * this.pageSize + 1;
   }
+
   get rangeEnd(): number {
     return Math.min(this.totalItems, (this.pageIndex + 1) * this.pageSize);
   }
 
-  
-
+  // ---------- selection ----------
   onRowCheckboxChange(p: Product): void {
     if (this.selection.isSelected(p)) {
       this.selection.deselect(p);
@@ -174,34 +281,30 @@ export class ProductsList {
     }
   }
 
-  
-
+  // ---------- create/edit/status ----------
   openCreateProduct(): void {
     const ref = this.dialog.open<
       ProductsForm,
       { mode: 'create' },
       ProductFormResult
     >(ProductsForm, {
-      width: '720px',
+      width: '820px',
       data: { mode: 'create' }
     });
 
     ref.afterClosed().subscribe((res) => {
-      if (!res) return;
-      if (res.action === 'create') {
-        this.productsSvc.add(res.payload).subscribe({
-          next: (id) => {
-            this.snack.open(`Product created (ID ${id}).`, 'OK', { duration: 2500 });
-            this.loadData();
-          },
-          error: (e) =>
-            this.snack.open(
-              e?.error?.message || 'Failed to create product.',
-              'Dismiss',
-              { duration: 3000 }
-            )
-        });
-      }
+      if (!res || res.action !== 'create') return;
+
+      this.productsSvc.add(res.payload).subscribe({
+        next: (id) => {
+          this.snack.open(`Product created successfully (ID ${id}).`, 'OK', { duration: 2500 });
+          this.loadData();
+        },
+        error: (e) =>
+          this.snack.open(e?.error?.message || 'Failed to create product.', 'Dismiss', {
+            duration: 3000
+          })
+      });
     });
   }
 
@@ -211,32 +314,25 @@ export class ProductsList {
       { mode: 'edit'; initialData: Product },
       ProductFormResult
     >(ProductsForm, {
-      width: '720px',
+      width: '820px',
       data: { mode: 'edit', initialData: row }
     });
 
     ref.afterClosed().subscribe((res) => {
-      if (!res) return;
-      if (res.action === 'edit') {
-        this.productsSvc.update(res.payload).subscribe({
-          next: (ok) => {
-            if (ok) {
-              this.snack.open('Product updated.', 'OK', { duration: 2000 });
-              this.loadData();
-            } else {
-              this.snack.open('Failed to update product.', 'Dismiss', {
-                duration: 3000
-              });
-            }
-          },
-          error: (e) =>
-            this.snack.open(
-              e?.error?.message || 'Failed to update product.',
-              'Dismiss',
-              { duration: 3000 }
-            )
-        });
-      }
+      if (!res || res.action !== 'edit') return;
+
+      this.productsSvc.update(res.payload).subscribe({
+        next: (ok) => {
+          this.snack.open(ok ? 'Product updated successfully.' : 'Update failed.', 'OK', {
+            duration: 2500
+          });
+          if (ok) this.loadData();
+        },
+        error: (e) =>
+          this.snack.open(e?.error?.message || 'Failed to update product.', 'Dismiss', {
+            duration: 3000
+          })
+      });
     });
   }
 
@@ -247,37 +343,34 @@ export class ProductsList {
       Active: newState,
       ModifiedById: this.auth.currentUser?.userId ?? null
     };
+
     this.productsSvc.activate(payload).subscribe({
       next: (ok) => {
         if (ok) {
           p.active = newState;
           this.snack.open(
-            `Product ${newState ? 'activated' : 'deactivated'}.`,
+            `Product ${newState ? 'activated' : 'deactivated'} successfully.`,
             'OK',
             { duration: 2000 }
           );
           this.computeStats();
+          this.animateStats();
         } else {
-          this.snack.open('Failed to change status.', 'Dismiss', {
-            duration: 3000
-          });
+          this.snack.open('Failed to change status.', 'Dismiss', { duration: 3000 });
         }
       },
       error: () =>
-        this.snack.open('Failed to change status.', 'Dismiss', {
-          duration: 3000
-        })
+        this.snack.open('Failed to change status.', 'Dismiss', { duration: 3000 })
     });
   }
 
-  
+  // ---------- inventory ----------
   addSelectedToInventory(): void {
     const p = this.selection.selected[0];
     if (!p) return;
     this.addToInventory(p);
   }
 
-  
   addToInventory(p: Product): void {
     const ref = this.dialog.open<
       AddToInventoryDialog,
@@ -309,12 +402,10 @@ export class ProductsList {
 
       this.invSvc.add(payload).subscribe({
         next: (newId: number) => {
-          this.snack.open(`Added to inventory (ID ${newId}).`, 'View', {
-            duration: 3000
-          }).onAction()
-            .subscribe(() =>
-              this.router.navigate(['/admin/inventory', newId])
-            );
+          this.snack
+            .open(`Added to inventory (ID ${newId}).`, 'View', { duration: 3000 })
+            .onAction()
+            .subscribe(() => this.router.navigate(['/admin/inventory', newId]));
         },
         error: (e) => {
           const msg = e?.error?.message || 'Failed to add to inventory.';

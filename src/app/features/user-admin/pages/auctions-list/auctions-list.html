@@ -1,154 +1,300 @@
-<!-- Stats strip (unchanged) -->
-<section class="stats-strip">
-  <div class="stat-card total">
-    <div class="icon-wrap"><mat-icon>gavel</mat-icon></div>
-    <div>
-      <div class="value">{{ stats?.total ?? 0 }}</div>
-      <div class="label">Total Auctions</div>
+<div class="auctions-page">
+  <!-- Full-Width Hero Section -->
+  <section class="auctions-hero reveal-on-scroll">
+    <div class="hero-background">
+      <div class="hero-gradient"></div>
+      <div class="hero-pattern"></div>
+    </div>
+
+    <div class="hero-content-wrapper">
+      <div class="hero-main-content">
+        <div class="hero-text-section">
+          <h1 class="hero-title">Auction Management</h1>
+          <p class="hero-description">
+            Create, schedule, and control auctions — while linking inventory seamlessly to every event.
+          </p>
+        </div>
+
+        <div class="hero-actions">
+          <button mat-flat-button class="hero-btn primary" (click)="openCreateAuction()">
+            <mat-icon>post_add</mat-icon>
+            <span>Add New Auction</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Integrated Hero Stats -->
+      <div class="hero-stats-grid">
+        <div class="hero-stat-card online">
+          <div class="stat-icon-wrapper">
+            <mat-icon>view_list</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.distinctStatuses }}</div>
+            <div class="stat-label">Distinct Statuses</div>
+          </div>
+          <div class="stat-decoration"></div>
+        </div>
+
+        <div class="hero-stat-card total">
+          <div class="stat-icon-wrapper">
+            <mat-icon>gavel</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.totalAuctions }}</div>
+            <div class="stat-label">Total Auctions</div>
+          </div>
+          <div class="stat-decoration"></div>
+        </div>
+
+        <div class="hero-stat-card active">
+          <div class="stat-icon-wrapper">
+            <mat-icon>verified</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.activeAuctions }}</div>
+            <div class="stat-label">Active</div>
+          </div>
+          <div class="stat-decoration"></div>
+        </div>
+
+        <div class="hero-stat-card inactive">
+          <div class="stat-icon-wrapper">
+            <mat-icon>do_not_disturb_on</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.inactiveAuctions }}</div>
+            <div class="stat-label">Inactive</div>
+          </div>
+          <div class="stat-decoration"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Themed Toolbar -->
+  <div class="auctions-toolbar reveal-on-scroll">
+    <div class="toolbar-left">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search auctions</mat-label>
+        <mat-icon matPrefix class="search-icon">search</mat-icon>
+        <input
+          matInput
+          [(ngModel)]="searchTerm"
+          (input)="onSearch()"
+          placeholder="Search by name, ID, status, schedule, bid increment..."
+        />
+        <button
+          mat-icon-button
+          *ngIf="searchTerm"
+          matSuffix
+          (click)="searchTerm=''; onSearch()"
+          matTooltip="Clear search"
+          class="clear-btn"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-form-field>
+    </div>
+
+    <div class="toolbar-right">
+      <div class="results-count">
+        <mat-icon>info</mat-icon>
+        <span class="count-text">{{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }}</span>
+      </div>
     </div>
   </div>
-  <div class="stat-card active">
-    <div class="icon-wrap"><mat-icon>verified</mat-icon></div>
-    <div>
-      <div class="value">{{ stats?.active ?? 0 }}</div>
-      <div class="label">Active</div>
+
+  <!-- Themed Data Table -->
+  <div class="table-container reveal-on-scroll">
+    <table
+      mat-table
+      [dataSource]="auctions"
+      class="auctions-table"
+      [multiTemplateDataRows]="true"
+    >
+      <!-- Expand -->
+      <ng-container matColumnDef="expand">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>unfold_more</mat-icon>
+            <span>Inventory</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let a">
+          <button
+            mat-icon-button
+            class="expand-btn"
+            (click)="toggleExpand(a.auctionId)"
+            [matTooltip]="isExpanded(a.auctionId) ? 'Hide inventory' : 'Show inventory'"
+          >
+            <mat-icon>{{ isExpanded(a.auctionId) ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <!-- Name -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>gavel</mat-icon>
+            <span>Auction</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let a">
+          <div class="user-cell">
+            <div class="user-avatar">
+              <span>{{ getAuctionInitials(a) }}</span>
+            </div>
+            <div class="user-info">
+              <div class="user-name">{{ a.auctionName || '—' }}</div>
+              <div class="user-meta">
+                <span class="user-id">ID {{ a.auctionId }}</span>
+                <span class="user-username" *ngIf="a.auctionStatusName || a.auctionStatusCode">
+                  {{ a.auctionStatusName || a.auctionStatusCode }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Schedule -->
+      <ng-container matColumnDef="schedule">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>event</mat-icon>
+            <span>Schedule</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let a">
+          <div class="login-cell">
+            <mat-icon class="cell-icon">schedule</mat-icon>
+            <span>
+              {{ getStart(a) ? (getStart(a) | date:'medium') : '—' }}
+              &nbsp;→&nbsp;
+              {{ getEnd(a) ? (getEnd(a) | date:'medium') : '—' }}
+            </span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Bid Increment -->
+      <ng-container matColumnDef="bid">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>trending_up</mat-icon>
+            <span>Bid Increment</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let a">
+          <div class="phone-cell">
+            <mat-icon class="cell-icon">payments</mat-icon>
+            <span>{{ a.bidIncrement ?? '—' }}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Status -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>toggle_on</mat-icon>
+            <span>Status</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let a">
+          <button
+            mat-stroked-button
+            class="status-toggle"
+            [class.active]="a.active"
+            [class.inactive]="!a.active"
+            (click)="toggleActive(a)"
+            [matTooltip]="a.active ? 'Click to deactivate' : 'Click to activate'"
+          >
+            <span class="status-dot"></span>
+            {{ a.active ? 'Active' : 'Inactive' }}
+          </button>
+        </td>
+      </ng-container>
+
+      <!-- Actions -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>more_horiz</mat-icon>
+            <span>Actions</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let a">
+          <div class="actions-cell">
+            <button
+              mat-icon-button
+              class="action-btn edit"
+              (click)="editAuction(a)"
+              matTooltip="Edit auction"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+
+            <button
+              mat-icon-button
+              class="action-btn view"
+              (click)="viewAuction(a.auctionId)"
+              matTooltip="View details"
+            >
+              <mat-icon>visibility</mat-icon>
+            </button>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Main rows -->
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns" class="table-row"></tr>
+
+      <!-- Expanded detail -->
+      <ng-container matColumnDef="expandedDetail">
+        <td mat-cell *matCellDef="let a" [attr.colspan]="displayedColumns.length" class="expanded-cell">
+          <div class="expanded-wrap">
+            <app-inventoryauctions-list [auctionId]="a.auctionId"></app-inventoryauctions-list>
+          </div>
+        </td>
+      </ng-container>
+      <tr mat-row *matRowDef="let row; columns: detailRow; when: isDetailRow"></tr>
+    </table>
+
+    <!-- Empty State -->
+    <div class="table-empty" *ngIf="!auctions.data.length && !loading">
+      <mat-icon>gavel</mat-icon>
+      <h3>No auctions found</h3>
+      <p>Start by creating your first auction and attaching inventory</p>
+      <button mat-flat-button class="empty-action" (click)="openCreateAuction()">
+        <mat-icon>post_add</mat-icon>
+        Add Auction
+      </button>
     </div>
   </div>
-  <div class="stat-card inactive">
-    <div class="icon-wrap"><mat-icon>do_not_disturb_on</mat-icon></div>
-    <div>
-      <div class="value">{{ stats?.inactive ?? 0 }}</div>
-      <div class="label">Inactive</div>
+
+  <!-- Themed Pagination Footer -->
+  <div class="table-footer reveal-on-scroll">
+    <div class="footer-left">
+      <mat-icon>list</mat-icon>
+      <span class="footer-text">
+        Showing {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }} auctions
+      </span>
     </div>
-  </div>
-  <div class="stat-card online">
-    <div class="icon-wrap"><mat-icon>view_list</mat-icon></div>
-    <div>
-      <div class="value">{{ stats?.statuses ?? 0 }}</div>
-      <div class="label">Distinct Statuses</div>
+
+    <div class="footer-right">
+      <mat-paginator
+        [length]="totalItems"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[5, 10, 20, 50]"
+        [pageIndex]="pageIndex"
+        (page)="onPageChange($event)"
+        showFirstLastButtons
+      >
+      </mat-paginator>
     </div>
-  </div>
-</section>
-
-<!-- Toolbar -->
-<div class="inventory-header">
-  <mat-form-field appearance="outline" class="search-field">
-    <mat-label>Search auctions</mat-label>
-    <input matInput [(ngModel)]="searchTerm" (input)="onSearch()" />
-    <button mat-icon-button *ngIf="searchTerm" matSuffix (click)="searchTerm=''; onSearch()">
-      <mat-icon>close</mat-icon>
-    </button>
-  </mat-form-field>
-
-  <button mat-flat-button class="add-btn" (click)="openCreateAuction()">
-    <mat-icon>post_add</mat-icon>
-    Add Auction
-  </button>
-</div>
-
-<!-- Data panel + table -->
-<div class="panel">
-  <table mat-table [dataSource]="auctions" class="full-width-table" [multiTemplateDataRows]="true">
-
-    <!-- Expand / Collapse -->
-    <ng-container matColumnDef="expand">
-      <th mat-header-cell *matHeaderCellDef></th>
-      <td mat-cell *matCellDef="let a">
-        <button mat-icon-button
-                (click)="toggleExpand(a.auctionId)"
-                [matTooltip]="isExpanded(a.auctionId) ? 'Hide inventory' : 'Show inventory'">
-          <mat-icon>{{ isExpanded(a.auctionId) ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}</mat-icon>
-        </button>
-      </td>
-    </ng-container>
-
-    <!-- Name -->
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef>Name</th>
-      <td mat-cell *matCellDef="let a">
-        <div class="user-cell">
-          <div class="name">{{ a.auctionName || '—' }}</div>
-          <div class="sub">Auction #{{ a.auctionId }}</div>
-        </div>
-      </td>
-    </ng-container>
-
-    <!-- Schedule -->
-    <ng-container matColumnDef="schedule">
-      <th mat-header-cell *matHeaderCellDef>Schedule</th>
-      <td mat-cell *matCellDef="let a">
-        <div class="subject-cell">
-          {{ getStart(a) ? (getStart(a) | date:'medium') : '—' }}
-          &nbsp;→&nbsp;
-          {{ getEnd(a) ? (getEnd(a) | date:'medium') : '—' }}
-        </div>
-        <div class="sub">
-          {{ a.auctionStatusName || a.auctionStatusCode || '' }}
-        </div>
-      </td>
-    </ng-container>
-
-    <!-- Bid Increment -->
-    <ng-container matColumnDef="bid">
-      <th mat-header-cell *matHeaderCellDef>Bid Increment</th>
-      <td mat-cell *matCellDef="let a">
-        {{ a.bidIncrement ?? '—' }}
-      </td>
-    </ng-container>
-
-    <!-- Status (Active toggle) -->
-    <ng-container matColumnDef="status">
-      <th mat-header-cell *matHeaderCellDef>Status</th>
-      <td mat-cell *matCellDef="let a">
-        <button mat-stroked-button
-                [class.is-active]="a.active"
-                [class.is-inactive]="a.active === false"
-                (click)="toggleActive(a)">
-          {{ a.active ? 'Active' : 'Inactive' }}
-        </button>
-      </td>
-    </ng-container>
-
-    <!-- Actions -->
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef>Actions</th>
-      <td mat-cell *matCellDef="let a">
-        <button mat-icon-button class="edit-btn" (click)="editAuction(a)" matTooltip="Edit">
-          <mat-icon>edit</mat-icon>
-        </button>
-        <button mat-icon-button (click)="viewAuction(a.auctionId)" aria-label="View details" matTooltip="View details">
-          <mat-icon>visibility</mat-icon>
-        </button>
-      </td>
-    </ng-container>
-
-    <!-- Main rows -->
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-
-    <!-- Expanded detail -->
-    <ng-container matColumnDef="expandedDetail">
-      <td mat-cell *matCellDef="let a" [attr.colspan]="displayedColumns.length" class="expanded-cell">
-        <div class="expanded-wrap">
-          <app-inventoryauctions-list [auctionId]="a.auctionId"></app-inventoryauctions-list>
-        </div>
-      </td>
-    </ng-container>
-    <tr mat-row *matRowDef="let row; columns: detailRow; when: isDetailRow"></tr>
-  </table>
-</div>
-
-<!-- Footer -->
-<div class="list-footer">
-  <mat-paginator
-    [length]="totalItems"
-    [pageSize]="pageSize"
-    [pageSizeOptions]="[5,10,20]"
-    [pageIndex]="pageIndex"
-    (page)="onPageChange($event)">
-  </mat-paginator>
-
-  <div class="count">
-    {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }}
   </div>
 </div>

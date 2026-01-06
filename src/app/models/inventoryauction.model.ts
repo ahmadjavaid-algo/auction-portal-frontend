@@ -3,7 +3,7 @@ export interface InventoryAuction {
   inventoryAuctionStatusId: number;
   inventoryId: number;
   auctionId: number;
-
+endDate:number;
   buyNowPrice: number;
   reservePrice: number;
   bidIncrement: number;

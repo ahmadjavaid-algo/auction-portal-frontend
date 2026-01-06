@@ -1,1 +1,520 @@
-<p>landing-page works!</p>
+<div class="landing-page">
+  <!-- Animated background gradient mesh -->
+  <div class="bg-mesh">
+    <div class="mesh-gradient mesh-1"></div>
+    <div class="mesh-gradient mesh-2"></div>
+    <div class="mesh-gradient mesh-3"></div>
+    <div class="grain-overlay"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="container">
+      <div class="header-wrap">
+        <a class="logo-lockup" >
+          <img class="logo-img" [src]="algoLogoUrl" alt="Algo" />
+          <span class="logo-text">
+            <span class="logo-algo">ALGO</span>
+            <span class="logo-auction">AUCTION</span>
+          </span>
+        </a>
+
+        <nav class="main-nav">
+          <button (click)="scrollToSection('autobid')" class="nav-item">AutoBid AI</button>
+          <button (click)="scrollToSection('inspections')" class="nav-item">Inspections</button>
+          <button (click)="scrollToSection('live-auctions')" class="nav-item">Live Auctions</button>
+          <button (click)="scrollToSection('how-it-works')" class="nav-item">How It Works</button>
+        </nav>
+
+        <div class="header-cta">
+          <!-- ✅ Uses your routes -->
+          <a [routerLink]="loginLink" class="btn-login">Login</a>
+          <a [routerLink]="signupLink" class="btn-signup">
+            <span>Start Bidding</span>
+            <mat-icon>arrow_forward</mat-icon>
+          </a>
+        </div>
+
+        <button class="mobile-toggle">
+          <mat-icon>menu</mat-icon>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section with Live Background -->
+  <section class="hero-section" [ngStyle]="{ '--hero-bg': heroBackground }">
+    <div class="hero-bg-overlay"></div>
+    
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-badge-group">
+          <div class="hero-badge">
+            <span class="badge-pulse"></span>
+            <span>LIVE AUCTIONS</span>
+          </div>
+          <div class="hero-badge secondary">
+            <mat-icon>verified</mat-icon>
+            <span>342 CHECKPOINT INSPECTIONS</span>
+          </div>
+        </div>
+
+        <h1 class="hero-title">
+          <span class="title-main">Bid with Intelligence.</span>
+          <span class="title-sub">Win with <span class="title-accent">Certainty.</span></span>
+        </h1>
+
+        <p class="hero-description">
+          <strong>AI AutoBid</strong> monitors auctions 24/7 across timezones. 
+          <strong>Inspection-first reports</strong> with 342+ checkpoints eliminate guesswork. 
+          For collectors, dealers, and overseas bidders who demand precision.
+        </p>
+
+        <div class="hero-stats-row">
+          <div class="hero-stat">
+            <div class="stat-number">94%</div>
+            <div class="stat-label">AutoBid Win Rate</div>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="hero-stat">
+            <div class="stat-number">147</div>
+            <div class="stat-label">Mechanical Checks</div>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="hero-stat">
+            <div class="stat-number">24/7</div>
+            <div class="stat-label">Global Monitoring</div>
+          </div>
+        </div>
+
+        <div class="hero-actions">
+          <button (click)="navigateToSignup()" class="btn-hero-primary">
+            <span>Experience AutoBid</span>
+            <mat-icon>psychology</mat-icon>
+          </button>
+          <button (click)="scrollToSection('live-auctions')" class="btn-hero-secondary">
+            <span>Browse Live Auctions</span>
+            <mat-icon>gavel</mat-icon>
+          </button>
+        </div>
+
+        <div class="hero-trust">
+          <div class="trust-badge">
+            <mat-icon>lock</mat-icon>
+            <span>Bank-grade encryption</span>
+          </div>
+          <div class="trust-badge">
+            <mat-icon>verified_user</mat-icon>
+            <span>Certified inspectors</span>
+          </div>
+          <div class="trust-badge">
+            <mat-icon>support_agent</mat-icon>
+            <span>24/7 concierge support</span>
+          </div>
+        </div>
+      </div>
+
+
+    </div>
+
+
+  </section>
+
+  <!-- Core Differentiators - Split Screen -->
+  <section id="autobid" class="differentiator-section autobid-section">
+    <div class="container-wide">
+      <div class="diff-grid">
+        <div class="diff-content scroll-reveal">
+          <div class="section-eyebrow">
+            <mat-icon>psychology</mat-icon>
+            <span>CORE DIFFERENTIATOR #1</span>
+          </div>
+          <h2 class="section-title">AI AutoBid:<br/>Your 24/7 Bidding Agent</h2>
+          <p class="section-lead">
+            Never miss an auction close due to timezone differences. Never lose because you couldn't monitor real-time. 
+            AutoBid analyzes competitor behavior, places strategic bids, and protects your budget—around the clock.
+          </p>
+
+          <div class="feature-list">
+            <div class="feature-item" *ngFor="let feature of differentiators[0].features">
+              <mat-icon>check_circle</mat-icon>
+              <span>{{ feature }}</span>
+            </div>
+          </div>
+
+          <div class="diff-stat-box">
+            <div class="stat-mega">{{ differentiators[0].stat }}</div>
+            <div class="stat-context">{{ differentiators[0].statContext }}</div>
+          </div>
+
+          <button (click)="navigateToSignup()" class="btn-diff-primary">
+            <span>Activate AutoBid</span>
+            <mat-icon>trending_up</mat-icon>
+          </button>
+        </div>
+
+        <div class="diff-visual scroll-reveal">
+          <div class="visual-device">
+            <div class="device-header">
+              <div class="device-tabs">
+                <div class="tab active">Strategy</div>
+                <div class="tab">Activity</div>
+                <div class="tab">History</div>
+              </div>
+            </div>
+            <div class="device-body">
+              <div class="autobid-demo">
+                <div class="demo-row">
+                  <div class="demo-label">Maximum Bid</div>
+                  <div class="demo-value">$285,000</div>
+                  <div class="demo-slider">
+                    <div class="slider-fill" style="width: 72%"></div>
+                    <div class="slider-thumb" style="left: 72%"></div>
+                  </div>
+                </div>
+                <div class="demo-row">
+                  <div class="demo-label">Increment Strategy</div>
+                  <div class="demo-toggle">
+                    <button class="toggle-btn">Conservative</button>
+                    <button class="toggle-btn active">Aggressive</button>
+                    <button class="toggle-btn">Custom</button>
+                  </div>
+                </div>
+                <div class="demo-row">
+                  <div class="demo-label">Time Window</div>
+                  <div class="demo-value">All Hours (24/7)</div>
+                </div>
+                <div class="demo-activity">
+                  <div class="activity-item">
+                    <div class="activity-icon">
+                      <mat-icon>trending_up</mat-icon>
+                    </div>
+                    <div class="activity-content">
+                      <div class="activity-title">AutoBid placed strategic bid</div>
+                      <div class="activity-meta">$187,500 • 2 competitors remaining • 2m ago</div>
+                    </div>
+                  </div>
+                  <div class="activity-item">
+                    <div class="activity-icon success">
+                      <mat-icon>check_circle</mat-icon>
+                    </div>
+                    <div class="activity-content">
+                      <div class="activity-title">You're currently winning</div>
+                      <div class="activity-meta">Leading by $2,500 • Next bid: $190,000</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Inspection-First Section -->
+  <section id="inspections" class="differentiator-section inspection-section">
+    <div class="container-wide">
+      <div class="diff-grid reverse">
+        <div class="diff-visual scroll-reveal">
+          <div class="inspection-showcase">
+            <div class="inspection-header">
+              <mat-icon>verified</mat-icon>
+              <span>COMPREHENSIVE INSPECTION REPORT</span>
+            </div>
+            <div class="inspection-types">
+              <div class="inspection-card" *ngFor="let type of inspectionTypes">
+                <div class="inspection-icon">
+                  <mat-icon>{{ type.icon }}</mat-icon>
+                </div>
+                <div class="inspection-content">
+                  <div class="inspection-name">{{ type.name }}</div>
+                  <div class="inspection-checkpoints">{{ type.checkpoints }} checkpoints</div>
+                  <div class="inspection-desc">{{ type.description }}</div>
+                </div>
+                <div class="inspection-status">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>Verified</span>
+                </div>
+              </div>
+            </div>
+            <div class="inspection-summary">
+              <div class="summary-item">
+                <mat-icon>engineering</mat-icon>
+                <div class="summary-content">
+                  <div class="summary-label">Overall Condition</div>
+                  <div class="summary-value">Excellent (9.2/10)</div>
+                </div>
+              </div>
+              <div class="summary-item">
+                <mat-icon>assessment</mat-icon>
+                <div class="summary-content">
+                  <div class="summary-label">Risk Score</div>
+                  <div class="summary-value">Low Risk</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="diff-content scroll-reveal">
+          <div class="section-eyebrow">
+            <mat-icon>verified</mat-icon>
+            <span>CORE DIFFERENTIATOR #2</span>
+          </div>
+          <h2 class="section-title">Inspection-First Bidding:<br/>Zero Guesswork</h2>
+          <p class="section-lead">
+            Stop bidding blind from photos. Our certified inspectors document every detail across 342+ checkpoints. 
+            Paint depth, mechanical health, service history—all verified before you bid a single dollar.
+          </p>
+
+          <div class="feature-list">
+            <div class="feature-item" *ngFor="let feature of differentiators[1].features">
+              <mat-icon>check_circle</mat-icon>
+              <span>{{ feature }}</span>
+            </div>
+          </div>
+
+          <div class="diff-stat-box">
+            <div class="stat-mega">{{ differentiators[1].stat }}</div>
+            <div class="stat-context">{{ differentiators[1].statContext }}</div>
+          </div>
+
+          <button (click)="navigateToSignup()" class="btn-diff-primary">
+            <span>View Sample Report</span>
+            <mat-icon>description</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Live Auctions Showcase -->
+  <section id="live-auctions" class="live-auctions-section">
+    <div class="container">
+      <div class="section-header scroll-reveal">
+        <div class="header-content">
+          <div class="section-eyebrow">
+            <span class="pulse-dot"></span>
+            <span>LIVE AUCTIONS</span>
+          </div>
+          <h2 class="section-title">Active Now</h2>
+          <p class="section-description">
+            Premium vehicles with full inspection reports. AutoBid ready. Global shipping available.
+          </p>
+        </div>
+        <button class="btn-view-all">
+          <span>View All Auctions</span>
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+      </div>
+
+      <div class="auctions-grid" *ngIf="!loading">
+        <div class="auction-card scroll-reveal" *ngFor="let item of featuredAuctions; let i = index" [style.animation-delay]="(i * 80) + 'ms'">
+          <div class="auction-image-wrapper">
+            <img [src]="item.imageUrl || fallbackHeroImage" [alt]="item.make + ' ' + item.model" class="auction-image">
+            <div class="auction-badges">
+              <div class="auction-badge time">
+                <mat-icon>schedule</mat-icon>
+                <span>{{ getTimeRemaining(item.auction) }}</span>
+              </div>
+              <button class="auction-favorite">
+                <mat-icon>favorite_border</mat-icon>
+              </button>
+            </div>
+            <div class="auction-overlay">
+              <div class="overlay-feature">
+                <mat-icon>psychology</mat-icon>
+                <span>AutoBid Available</span>
+              </div>
+              <div class="overlay-feature">
+                <mat-icon>verified</mat-icon>
+                <span>342-Point Inspection</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="auction-content">
+            <div class="auction-header">
+              <div class="auction-year">{{ item.year || '2024' }}</div>
+              <div class="auction-bids">{{ getBidCount(item.auction) }} bids</div>
+            </div>
+            <h3 class="auction-title">{{ item.make || 'Premium' }} {{ item.model || 'Vehicle' }}</h3>
+            
+            <div class="auction-bid-section">
+              <div class="bid-current">
+                <span class="bid-label">Current Bid</span>
+                <span class="bid-value">{{ formatCurrency(item.auction.auctionStartPrice) }}</span>
+              </div>
+            </div>
+
+            <div class="auction-features">
+              <div class="feature-tag">
+                <mat-icon>verified</mat-icon>
+                <span>Inspected</span>
+              </div>
+              <div class="feature-tag">
+                <mat-icon>local_shipping</mat-icon>
+                <span>Worldwide</span>
+              </div>
+            </div>
+
+            <a 
+              class="auction-cta"
+              [routerLink]="['/bidder/auctions', item.auction.auctionId, item.auction.inventoryAuctionId]"
+            >
+              <span>Place Bid</span>
+              <mat-icon>arrow_forward</mat-icon>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="loading-state" *ngIf="loading">
+        <div class="spinner"></div>
+        <p>Loading live auctions...</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works -->
+  <section id="how-it-works" class="how-it-works-section">
+    <div class="container">
+      <div class="section-header centered scroll-reveal">
+        <div class="section-eyebrow">
+          <span>THE PROCESS</span>
+        </div>
+        <h2 class="section-title">Four Steps to Confident Bidding</h2>
+      </div>
+
+      <div class="process-flow">
+        <div class="process-step scroll-reveal" *ngFor="let step of processSteps; let i = index" [style.animation-delay]="(i * 100) + 'ms'">
+          <div class="step-number">{{ step.step }}</div>
+          <div class="step-content">
+            <h3 class="step-title">{{ step.title }}</h3>
+            <p class="step-description">{{ step.description }}</p>
+          </div>
+          <div class="step-connector" *ngIf="i < processSteps.length - 1">
+            <div class="connector-line"></div>
+            <mat-icon>arrow_forward</mat-icon>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="testimonials-section">
+    <div class="container">
+      <div class="section-header centered scroll-reveal">
+        <div class="section-eyebrow">
+          <span>COLLECTOR STORIES</span>
+        </div>
+        <h2 class="section-title">Trusted by Serious Bidders</h2>
+      </div>
+
+      <div class="testimonials-grid">
+        <div class="testimonial-card scroll-reveal" *ngFor="let testimonial of testimonials; let i = index" [style.animation-delay]="(i * 100) + 'ms'">
+          <div class="testimonial-quote">{{ testimonial.quote }}</div>
+          <div class="testimonial-author">
+            <div class="author-avatar">{{ testimonial.avatar }}</div>
+            <div class="author-info">
+              <div class="author-name">{{ testimonial.author }}</div>
+              <div class="author-role">{{ testimonial.role }}</div>
+              <div class="author-highlight">{{ testimonial.highlight }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="final-cta-section">
+    <div class="container">
+      <div class="cta-content scroll-reveal">
+        <h2 class="cta-title">Ready to Bid with Intelligence?</h2>
+        <p class="cta-description">
+          Join collectors, dealers, and overseas bidders who trust AI AutoBid and inspection-first reports 
+          for their high-value automotive acquisitions.
+        </p>
+        <div class="cta-actions">
+          <button (click)="navigateToSignup()" class="btn-cta-primary">
+            <span>Start Bidding Now</span>
+            <mat-icon>psychology</mat-icon>
+          </button>
+          <button (click)="scrollToSection('live-auctions')" class="btn-cta-secondary">
+            <span>Browse Auctions</span>
+          </button>
+        </div>
+        <div class="cta-footnote">
+          <mat-icon>lock</mat-icon>
+          <span>Free account • No credit card • Full inspection access</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-main">
+        <div class="footer-brand">
+          <div class="footer-logo">
+            <!-- ✅ Real logo in footer -->
+            <img [src]="algoLogoUrl" alt="Algo" />
+            <span>ALGO AUCTION</span>
+          </div>
+          <p class="footer-tagline">
+            AI-powered bidding meets inspection-first transparency. 
+            For the world's most discerning automotive collectors.
+          </p>
+          <div class="footer-social">
+            <a href="#" class="social-link"><mat-icon>link</mat-icon></a>
+            <a href="#" class="social-link"><mat-icon>tag</mat-icon></a>
+            <a href="#" class="social-link"><mat-icon>camera_alt</mat-icon></a>
+          </div>
+        </div>
+
+        <div class="footer-links">
+          <div class="footer-column">
+            <h4>Platform</h4>
+            <a href="#">Live Auctions</a>
+            <a href="#">AutoBid AI</a>
+            <a href="#">Inspection Reports</a>
+            <a href="#">Seller Portal</a>
+          </div>
+          <div class="footer-column">
+            <h4>Company</h4>
+            <a href="#">About Us</a>
+            <a href="#">Careers</a>
+            <a href="#">Press</a>
+            <a href="#">Contact</a>
+          </div>
+          <div class="footer-column">
+            <h4>Resources</h4>
+            <a href="#">Buyer Guide</a>
+            <a href="#">Inspector Network</a>
+            <a href="#">API Docs</a>
+            <a href="#">Help Center</a>
+          </div>
+          <div class="footer-column">
+            <h4>Legal</h4>
+            <a href="#">Terms</a>
+            <a href="#">Privacy</a>
+            <a href="#">Security</a>
+            <a href="#">Compliance</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2024 Algo Auction. All rights reserved.</p>
+        <div class="footer-badges">
+          <div class="badge"><mat-icon>verified_user</mat-icon><span>SSL Secured</span></div>
+          <div class="badge"><mat-icon>shield</mat-icon><span>PCI Compliant</span></div>
+        </div>
+      </div>
+    </div>
+  </footer>
+</div>

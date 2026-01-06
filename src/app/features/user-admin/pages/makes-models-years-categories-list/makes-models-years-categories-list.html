@@ -1,279 +1,284 @@
-<!-- Stats strip (replicated style, section-aware) -->
-<section class="stats-strip">
-  <div class="stat-card total">
-    <div class="icon-wrap">
+<div class="users-page mmyc-page">
+  <!-- Full-Width Hero Section (1:1 with UsersList) -->
+  <section class="users-hero reveal-on-scroll">
+    <div class="hero-background">
+      <div class="hero-gradient"></div>
+      <div class="hero-pattern"></div>
+    </div>
+
+    <div class="hero-content-wrapper">
+      <div class="hero-main-content">
+        <div class="hero-text-section">
+          <h1 class="hero-title">{{ heroTitle }}</h1>
+          <p class="hero-description">{{ heroDescription }}</p>
+        </div>
+
+        <div class="hero-actions">
+          <button mat-flat-button class="hero-btn primary" (click)="openCreate()">
+            <mat-icon>add_circle</mat-icon>
+            <span>{{ addBtnText }}</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Integrated Hero Stats (1:1 styling) -->
+      <div class="hero-stats-grid">
+        <div class="hero-stat-card total">
+          <div class="stat-icon-wrapper">
+            <mat-icon>{{ sectionIcon }}</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.total }}</div>
+            <div class="stat-label">Total {{ sectionTitle }}</div>
+          </div>
+          <div class="stat-decoration"></div>
+        </div>
+
+        <div class="hero-stat-card active">
+          <div class="stat-icon-wrapper">
+            <mat-icon>verified</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.active }}</div>
+            <div class="stat-label">Active</div>
+          </div>
+          <div class="stat-decoration"></div>
+        </div>
+
+        <div class="hero-stat-card inactive">
+          <div class="stat-icon-wrapper">
+            <mat-icon>do_not_disturb_on</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.inactive }}</div>
+            <div class="stat-label">Inactive</div>
+          </div>
+          <div class="stat-decoration"></div>
+        </div>
+
+        <div class="hero-stat-card online">
+          <div class="stat-icon-wrapper">
+            <mat-icon>hub</mat-icon>
+          </div>
+          <div class="stat-details">
+            <div class="stat-value">{{ animatedStats.parentsDistinct }}</div>
+            <div class="stat-label">{{ parentLabel }}</div>
+          </div>
+          <div class="stat-decoration"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Themed Toolbar (1:1 with UsersList) -->
+  <div class="users-toolbar reveal-on-scroll">
+    <div class="toolbar-left">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-label>Search {{ sectionTitle | lowercase }}</mat-label>
+        <mat-icon matPrefix class="search-icon">search</mat-icon>
+        <input
+          matInput
+          [(ngModel)]="searchTerm"
+          (input)="onSearch()"
+          [placeholder]="'Search ' + (sectionTitle | lowercase) + '...'"
+        />
+        <button
+          mat-icon-button
+          *ngIf="searchTerm"
+          matSuffix
+          (click)="searchTerm=''; onSearch()"
+          matTooltip="Clear search"
+          class="clear-btn"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-form-field>
+    </div>
+
+    <div class="toolbar-right">
+      <!-- Section Switcher (kept inside toolbar to stay consistent) -->
+      <div class="section-switch">
+        <button
+          type="button"
+          class="seg-btn"
+          [class.active]="section==='make'"
+          (click)="onSectionChange('make')"
+          matTooltip="Makes"
+        >
+          <mat-icon>directions_car</mat-icon>
+          <span>Make</span>
+        </button>
+
+        <button
+          type="button"
+          class="seg-btn"
+          [class.active]="section==='model'"
+          (click)="onSectionChange('model')"
+          matTooltip="Models"
+        >
+          <mat-icon>view_in_ar</mat-icon>
+          <span>Model</span>
+        </button>
+
+        <button
+          type="button"
+          class="seg-btn"
+          [class.active]="section==='year'"
+          (click)="onSectionChange('year')"
+          matTooltip="Years"
+        >
+          <mat-icon>calendar_today</mat-icon>
+          <span>Year</span>
+        </button>
+
+        <button
+          type="button"
+          class="seg-btn"
+          [class.active]="section==='category'"
+          (click)="onSectionChange('category')"
+          matTooltip="Categories"
+        >
+          <mat-icon>category</mat-icon>
+          <span>Category</span>
+        </button>
+      </div>
+
+      <div class="results-count">
+        <mat-icon>info</mat-icon>
+        <span class="count-text">{{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Themed Data Table (1:1 container + header style) -->
+  <div class="table-container reveal-on-scroll">
+    <table mat-table [dataSource]="activeDS" class="users-table">
+      <!-- Parent Column (Model/Year/Category only) -->
+      <ng-container matColumnDef="parent">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>{{ parentHeaderIcon }}</mat-icon>
+            <span>{{ parentHeaderText }}</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let r">
+          <div class="parent-cell">
+            <mat-icon class="cell-icon">account_tree</mat-icon>
+            <div class="user-cell">
+              <div class="user-info">
+                <div class="user-name">{{ getParentName(r) }}</div>
+                <div class="user-meta">
+                  <span class="user-id">ID {{ getParentId(r) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Name Column -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>{{ sectionIcon }}</mat-icon>
+            <span>{{ nameHeaderText }}</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let r">
+          <div class="user-cell">
+            <div class="user-avatar">
+              <span>{{ (getEntityName(r) || 'U').slice(0, 2).toUpperCase() }}</span>
+            </div>
+            <div class="user-info">
+              <div class="user-name">{{ getEntityName(r) }}</div>
+              <div class="user-meta">
+                <span class="user-id">ID {{ getEntityId(r) }}</span>
+              </div>
+            </div>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Status Column -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>toggle_on</mat-icon>
+            <span>Status</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let r">
+          <button
+            mat-stroked-button
+            class="status-toggle"
+            [class.active]="r.active"
+            [class.inactive]="!r.active"
+            (click)="toggleActive(r)"
+            [matTooltip]="r.active ? 'Click to deactivate' : 'Click to activate'"
+          >
+            <span class="status-dot"></span>
+            {{ r.active ? 'Active' : 'Inactive' }}
+          </button>
+        </td>
+      </ng-container>
+
+      <!-- Actions Column -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>
+          <div class="header-cell">
+            <mat-icon>more_horiz</mat-icon>
+            <span>Actions</span>
+          </div>
+        </th>
+        <td mat-cell *matCellDef="let r">
+          <div class="actions-cell">
+            <button
+              mat-icon-button
+              class="action-btn edit"
+              (click)="editRow(r)"
+              matTooltip="Edit"
+            >
+              <mat-icon>edit</mat-icon>
+            </button>
+          </div>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns" class="table-row"></tr>
+    </table>
+
+    <!-- Empty State (1:1 style) -->
+    <div class="table-empty" *ngIf="!activeDS.data.length">
       <mat-icon>{{ sectionIcon }}</mat-icon>
-    </div>
-    <div>
-      <div class="value">{{ stats?.total ?? 0 }}</div>
-      <div class="label">Total {{ sectionTitle }}</div>
-    </div>
-  </div>
-
-  <div class="stat-card active">
-    <div class="icon-wrap"><mat-icon>verified</mat-icon></div>
-    <div>
-      <div class="value">{{ stats?.active ?? 0 }}</div>
-      <div class="label">Active</div>
+      <h3>No {{ sectionTitle | lowercase }} found</h3>
+      <p>Start by adding your first {{ sectionSingular | lowercase }} record</p>
+      <button mat-flat-button class="empty-action" (click)="openCreate()">
+        <mat-icon>add_circle</mat-icon>
+        Add {{ sectionSingular }}
+      </button>
     </div>
   </div>
 
-  <div class="stat-card inactive">
-    <div class="icon-wrap"><mat-icon>do_not_disturb_on</mat-icon></div>
-    <div>
-      <div class="value">{{ stats?.inactive ?? 0 }}</div>
-      <div class="label">Inactive</div>
+  <!-- Themed Pagination Footer (1:1) -->
+  <div class="table-footer reveal-on-scroll">
+    <div class="footer-left">
+      <mat-icon>list</mat-icon>
+      <span class="footer-text">
+        Showing {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }} {{ sectionTitle | lowercase }}
+      </span>
     </div>
-  </div>
 
-  <div class="stat-card online">
-    <div class="icon-wrap"><mat-icon>hub</mat-icon></div>
-    <div>
-      <div class="value">{{ stats?.parentsDistinct ?? 0 }}</div>
-      <div class="label">{{ parentLabel }}</div>
+    <div class="footer-right">
+      <mat-paginator
+        [length]="totalItems"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[5, 10, 20, 50]"
+        [pageIndex]="pageIndex"
+        (page)="onPageChange($event)"
+        showFirstLastButtons
+      >
+      </mat-paginator>
     </div>
-  </div>
-</section>
-
-<!-- Segmented switcher (Make / Model / Year / Category) -->
-<section class="switcher">
-  <div class="seg">
-    <button type="button" class="seg-btn" [class.active]="section==='make'"
-            (click)="section='make'; onSectionChange('make')">
-      <mat-icon>directions_car</mat-icon>
-      <span>Make</span>
-    </button>
-
-    <button type="button" class="seg-btn" [class.active]="section==='model'"
-            (click)="section='model'; onSectionChange('model')">
-      <mat-icon>view_in_ar</mat-icon>
-      <span>Model</span>
-    </button>
-
-    <button type="button" class="seg-btn" [class.active]="section==='year'"
-            (click)="section='year'; onSectionChange('year')">
-      <mat-icon>calendar_today</mat-icon>
-      <span>Year</span>
-    </button>
-
-    <button type="button" class="seg-btn" [class.active]="section==='category'"
-            (click)="section='category'; onSectionChange('category')">
-      <mat-icon>category</mat-icon>
-      <span>Category</span>
-    </button>
-  </div>
-</section>
-
-<!-- Toolbar -->
-<div class="list-toolbar">
-  <mat-form-field appearance="outline" class="search-field">
-    <mat-label>Search {{ section }}</mat-label>
-    <input matInput [(ngModel)]="searchTerm" (input)="onSearch()" />
-    <button mat-icon-button *ngIf="searchTerm" matSuffix (click)="searchTerm=''; onSearch()">
-      <mat-icon>close</mat-icon>
-    </button>
-  </mat-form-field>
-
-  <button mat-flat-button class="add-btn" (click)="openCreate()">
-    <mat-icon>add_circle</mat-icon>
-    Add {{ section | titlecase }}
-  </button>
-</div>
-
-<!-- Panel + ONE table depending on the selected section -->
-<div class="panel">
-
-<!-- MAKE -->
-  <table mat-table [dataSource]="makes" class="full-width-table" *ngIf="section==='make'">
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef>Make</th>
-      <td mat-cell *matCellDef="let r">
-        <div class="user-cell">
-          <div class="name">{{ r.makeName || '—' }}</div>
-          <div class="sub">ID {{ r.makeId }}</div>
-        </div>
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="status">
-      <th mat-header-cell *matHeaderCellDef>Status</th>
-      <td mat-cell *matCellDef="let r">
-        <button mat-stroked-button
-                [class.is-active]="r.active"
-                [class.is-inactive]="r.active === false"
-                (click)="toggleActive(r)">
-          {{ r.active ? 'Active' : 'Inactive' }}
-        </button>
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef>Actions</th>
-      <td mat-cell *matCellDef="let r">
-        <button mat-icon-button class="edit-btn" (click)="editRow(r)" matTooltip="Edit">
-          <mat-icon>edit</mat-icon>
-        </button>
-      </td>
-    </ng-container>
-
-    <tr mat-header-row *matHeaderRowDef="colsMake"></tr>
-    <tr mat-row *matRowDef="let row; columns: colsMake;"></tr>
-  </table>
-
-  <!-- MODEL -->
-  <table mat-table [dataSource]="models" class="full-width-table" *ngIf="section==='model'">
-    <ng-container matColumnDef="make">
-      <th mat-header-cell *matHeaderCellDef>Make</th>
-      <td mat-cell *matCellDef="let r">
-        <div class="user-cell">
-          <div class="name">{{ r.makeName || '—' }}</div>
-          <div class="sub">ID {{ r.makeId }}</div>
-        </div>
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef>Model</th>
-      <td mat-cell *matCellDef="let r">
-        <div class="user-cell">
-          <div class="name">{{ r.modelName || '—' }}</div>
-          <div class="sub">ID {{ r.modelId }}</div>
-        </div>
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="status">
-      <th mat-header-cell *matHeaderCellDef>Status</th>
-      <td mat-cell *matCellDef="let r">
-        <button mat-stroked-button
-                [class.is-active]="r.active"
-                [class.is-inactive]="r.active === false"
-                (click)="toggleActive(r)">
-          {{ r.active ? 'Active' : 'Inactive' }}
-        </button>
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef>Actions</th>
-      <td mat-cell *matCellDef="let r">
-        <button mat-icon-button class="edit-btn" (click)="editRow(r)" matTooltip="Edit">
-          <mat-icon>edit</mat-icon>
-        </button>
-      </td>
-    </ng-container>
-
-    <tr mat-header-row *matHeaderRowDef="colsModel"></tr>
-    <tr mat-row *matRowDef="let row; columns: colsModel;"></tr>
-  </table>
-
-  <!-- YEAR -->
-  <table mat-table [dataSource]="years" class="full-width-table" *ngIf="section==='year'">
-    <ng-container matColumnDef="model">
-      <th mat-header-cell *matHeaderCellDef>Model</th>
-      <td mat-cell *matCellDef="let r">
-        <div class="user-cell">
-          <div class="name">{{ r.modelName || '—' }}</div>
-          <div class="sub">ID {{ r.modelId }}</div>
-        </div>
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef>Year</th>
-      <td mat-cell *matCellDef="let r">
-        <div class="user-cell">
-          <div class="name">{{ r.yearName || '—' }}</div>
-          <div class="sub">ID {{ r.yearId }}</div>
-        </div>
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="status">
-      <th mat-header-cell *matHeaderCellDef>Status</th>
-      <td mat-cell *matCellDef="let r">
-        <button mat-stroked-button
-                [class.is-active]="r.active"
-                [class.is-inactive]="r.active === false"
-                (click)="toggleActive(r)">
-          {{ r.active ? 'Active' : 'Inactive' }}
-        </button>
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef>Actions</th>
-      <td mat-cell *matCellDef="let r">
-        <button mat-icon-button class="edit-btn" (click)="editRow(r)" matTooltip="Edit">
-          <mat-icon>edit</mat-icon>
-        </button>
-      </td>
-    </ng-container>
-
-    <tr mat-header-row *matHeaderRowDef="colsYear"></tr>
-    <tr mat-row *matRowDef="let row; columns: colsYear;"></tr>
-  </table>
-
-  <!-- CATEGORY -->
-  <table mat-table [dataSource]="cats" class="full-width-table" *ngIf="section==='category'">
-    <ng-container matColumnDef="year">
-      <th mat-header-cell *matHeaderCellDef>Year</th>
-      <td mat-cell *matCellDef="let r">
-        <div class="user-cell">
-          <div class="name">{{ r.yearName || '—' }}</div>
-          <div class="sub">ID {{ r.yearId }}</div>
-        </div>
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef>Category</th>
-      <td mat-cell *matCellDef="let r">
-        <div class="user-cell">
-          <div class="name">{{ r.categoryName || '—' }}</div>
-          <div class="sub">ID {{ r.categoryId }}</div>
-        </div>
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="status">
-      <th mat-header-cell *matHeaderCellDef>Status</th>
-      <td mat-cell *matCellDef="let r">
-        <button mat-stroked-button
-                [class.is-active]="r.active"
-                [class.is-inactive]="r.active === false"
-                (click)="toggleActive(r)">
-          {{ r.active ? 'Active' : 'Inactive' }}
-        </button>
-      </td>
-    </ng-container>
-
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef>Actions</th>
-      <td mat-cell *matCellDef="let r">
-        <button mat-icon-button class="edit-btn" (click)="editRow(r)" matTooltip="Edit">
-          <mat-icon>edit</mat-icon>
-        </button>
-      </td>
-    </ng-container>
-
-    <tr mat-header-row *matHeaderRowDef="colsCategory"></tr>
-    <tr mat-row *matRowDef="let row; columns: colsCategory;"></tr>
-  </table>
-</div>
-
-<!-- Footer -->
-<div class="list-footer">
-  <mat-paginator
-    [length]="totalItems"
-    [pageSize]="pageSize"
-    [pageSizeOptions]="[5,10,20]"
-    [pageIndex]="pageIndex"
-    (page)="onPageChange($event)">
-  </mat-paginator>
-
-  <div class="count">
-    {{ rangeStart }}–{{ rangeEnd }} of {{ totalItems }}
   </div>
 </div>
-

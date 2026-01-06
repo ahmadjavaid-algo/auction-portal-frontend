@@ -1,4 +1,11 @@
-import { Component, ViewChild, inject } from '@angular/core';
+import {
+  Component,
+  ViewChild,
+  inject,
+  OnInit,
+  AfterViewInit,
+  OnDestroy
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -32,6 +39,8 @@ import {
   InventoryImagesDialogResult
 } from '../inventory-imagesform/inventory-imagesform';
 
+type InventoryStats = { total: number; active: number; inactive: number; products: number };
+
 @Component({
   selector: 'app-inventory-list',
   standalone: true,
@@ -53,7 +62,7 @@ import {
   templateUrl: './inventory-list.html',
   styleUrls: ['./inventory-list.scss']
 })
-export class InventoryList {
+export class InventoryList implements OnInit, AfterViewInit, OnDestroy {
   private invSvc = inject(InventoryService);
   private invAucSvc = inject(InventoryAuctionService);
   private router = inject(Router);
@@ -79,11 +88,17 @@ export class InventoryList {
   pageIndex = 0;
   searchTerm = '';
 
-  stats = { total: 0, active: 0, inactive: 0, products: 0 };
+  stats: InventoryStats = { total: 0, active: 0, inactive: 0, products: 0 };
+
+  // Animated stats values (same pattern as UsersList)
+  animatedStats: InventoryStats = { total: 0, active: 0, inactive: 0, products: 0 };
 
   loading = false;
 
   selection = new SelectionModel<Inventory>(true, []);
+
+  private intersectionObserver?: IntersectionObserver;
+  private animationFrames: number[] = [];
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
 
@@ -96,6 +111,7 @@ export class InventoryList {
         i.displayName ?? '',
         i.description ?? '',
         String(i.productId ?? ''),
+        String(i.inventoryId ?? ''),
         pj?.DisplayName ?? pj?.displayName ?? '',
         pj?.Make ?? pj?.make ?? '',
         pj?.Model ?? pj?.model ?? '',
@@ -103,7 +119,9 @@ export class InventoryList {
         pj?.Category ?? pj?.category ?? '',
         i.chassisNo ?? '',
         i.registrationNo ?? ''
-      ].join(' ').toLowerCase();
+      ]
+        .join(' ')
+        .toLowerCase();
 
       return haystack.includes(filter);
     };
@@ -111,14 +129,44 @@ export class InventoryList {
 
   ngAfterViewInit(): void {
     this.inventory.paginator = this.paginator;
+    this.initScrollReveal();
+  }
+
+  ngOnDestroy(): void {
+    this.intersectionObserver?.disconnect();
+    this.animationFrames.forEach(id => cancelAnimationFrame(id));
+  }
+
+  private initScrollReveal(): void {
+    this.intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('revealed');
+            this.intersectionObserver?.unobserve(entry.target);
+          }
+        });
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+      }
+    );
+
+    setTimeout(() => {
+      const elements = document.querySelectorAll('.reveal-on-scroll');
+      elements.forEach((el) => this.intersectionObserver?.observe(el));
+    }, 100);
   }
 
   private loadInventory(): void {
     this.loading = true;
+
     this.invSvc.getList().subscribe({
       next: (list: Inventory[]) => {
         this.inventory.data = list ?? [];
         if (this.paginator) this.inventory.paginator = this.paginator;
+
         this.applyPagingTotals();
         this.computeStats();
         this.selection.clear();
@@ -132,27 +180,43 @@ export class InventoryList {
   }
 
   private computeStats(): void {
-    const all = this.inventory.data;
+    const all = this.inventory.data ?? [];
     const active = all.filter(x => x.active === true).length;
     const inactive = all.length - active;
     const prodSet = new Set(all.map(i => i.productId));
 
     this.stats = { total: all.length, active, inactive, products: prodSet.size };
+    this.animateStats();
   }
 
-  getCreatedAt(i: Inventory): Date | null {
-    return i.createdDate ? new Date(i.createdDate) : null;
-  }
+  private animateStats(): void {
+    // cancel prior animation frames
+    this.animationFrames.forEach(id => cancelAnimationFrame(id));
+    this.animationFrames = [];
 
-  getProductName(i: Inventory): string {
-    if (i.displayName) return i.displayName;
-    const pj = this.safeParseProductJSON(i.productJSON);
-    return pj?.DisplayName || pj?.displayName || `#${i.productId}`;
-  }
+    const duration = 1500;
+    const startTime = performance.now();
 
-  getProductCategory(i: Inventory): string {
-    const pj = this.safeParseProductJSON(i.productJSON);
-    return pj?.Category || pj?.categoryName || pj?.category || '';
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // ease-out cubic (same as UsersList)
+      const eased = 1 - Math.pow(1 - progress, 3);
+
+      this.animatedStats.total = Math.floor(this.stats.total * eased);
+      this.animatedStats.active = Math.floor(this.stats.active * eased);
+      this.animatedStats.inactive = Math.floor(this.stats.inactive * eased);
+      this.animatedStats.products = Math.floor(this.stats.products * eased);
+
+      if (progress < 1) {
+        const frameId = requestAnimationFrame(animate);
+        this.animationFrames.push(frameId);
+      }
+    };
+
+    const frameId = requestAnimationFrame(animate);
+    this.animationFrames.push(frameId);
   }
 
   private safeParseProductJSON(json: string | null | undefined): any | null {
@@ -160,13 +224,30 @@ export class InventoryList {
     try { return JSON.parse(json); } catch { return null; }
   }
 
+  getProductName(i: Inventory): string {
+    if (i.displayName) return i.displayName;
+    const pj = this.safeParseProductJSON(i.productJSON);
+    return pj?.DisplayName || pj?.displayName || (i.productId ? `Product #${i.productId}` : `Inventory #${i.inventoryId}`);
+  }
+
+  getInventoryInitials(i: Inventory): string {
+    const name = (this.getProductName(i) || '').trim();
+    if (!name) return 'IV';
+
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return name.slice(0, 2).toUpperCase();
+  }
+
   onSearch(): void {
     this.inventory.filter = this.searchTerm.trim().toLowerCase();
     this.totalItems = this.inventory.filteredData.length;
+
     if (this.paginator) {
       this.paginator.firstPage();
       this.pageIndex = 0;
     }
+
     this.trimSelectionToCurrentFilter();
   }
 
@@ -177,13 +258,16 @@ export class InventoryList {
   }
 
   private applyPagingTotals(): void {
-    this.totalItems = this.inventory.filter ? this.inventory.filteredData.length : this.inventory.data.length;
+    this.totalItems = this.inventory.filter
+      ? this.inventory.filteredData.length
+      : this.inventory.data.length;
   }
 
   get rangeStart(): number {
     if (!this.totalItems) return 0;
     return this.pageIndex * this.pageSize + 1;
   }
+
   get rangeEnd(): number {
     return Math.min(this.totalItems, (this.pageIndex + 1) * this.pageSize);
   }
@@ -234,16 +318,10 @@ export class InventoryList {
       AddToAuctionDialog,
       { count: number; inventoryIds: number[] },
       AddToAuctionResult
-    >(
-      AddToAuctionDialog,
-      {
-        width: '680px',
-        data: {
-          count: ids.length,
-          inventoryIds: ids          
-        }
-      }
-    );
+    >(AddToAuctionDialog, {
+      width: '680px',
+      data: { count: ids.length, inventoryIds: ids }
+    });
 
     ref.afterClosed().subscribe(res => {
       if (!res) return;
@@ -266,25 +344,27 @@ export class InventoryList {
         } as any).pipe(catchError(() => of(-1)))
       );
 
-      forkJoin(calls).pipe(
-        map(results => {
-          const success = results.filter(x => typeof x === 'number' && x > 0).length;
-          const failed = results.length - success;
-          return { success, failed };
-        })
-      ).subscribe(({ success, failed }) => {
-        if (success) {
-          this.snack.open(`Added ${success} item(s) to auction #${auctionId}.`, 'OK', { duration: 2500 });
-        }
-        if (failed) {
-          this.snack.open(
-            `${failed} item(s) could not be added (maybe already in this auction).`,
-            'Dismiss',
-            { duration: 3500 }
-          );
-        }
-        this.clearSelection();
-      });
+      forkJoin(calls)
+        .pipe(
+          map(results => {
+            const success = results.filter(x => typeof x === 'number' && x > 0).length;
+            const failed = results.length - success;
+            return { success, failed };
+          })
+        )
+        .subscribe(({ success, failed }) => {
+          if (success) {
+            this.snack.open(`Added ${success} item(s) to auction #${auctionId}.`, 'OK', { duration: 2500 });
+          }
+          if (failed) {
+            this.snack.open(
+              `${failed} item(s) could not be added (maybe already in this auction).`,
+              'Dismiss',
+              { duration: 3500 }
+            );
+          }
+          this.clearSelection();
+        });
     });
   }
 
@@ -293,16 +373,14 @@ export class InventoryList {
       InventoryImagesform,
       { inventoryId: number },
       InventoryImagesDialogResult
-    >(
-      InventoryImagesform,
-      { width: '720px', data: { inventoryId: row.inventoryId } }
-    );
+    >(InventoryImagesform, {
+      width: '720px',
+      data: { inventoryId: row.inventoryId }
+    });
 
     ref.afterClosed().subscribe(result => {
       if (!result) return;
-      if (result.refresh) {
-        this.snack.open('Images uploaded.', 'OK', { duration: 2000 });
-      }
+      if (result.refresh) this.snack.open('Images uploaded.', 'OK', { duration: 2000 });
     });
   }
 
@@ -312,26 +390,21 @@ export class InventoryList {
       { mode: 'create' },
       InventoryFormResult
     >(InventoryForm, {
-      width: '720px',
+      width: '820px',
       data: { mode: 'create' }
     });
 
-    ref.afterClosed().subscribe((res) => {
-      if (!res) return;
-      if (res.action === 'create') {
-        this.invSvc.add(res.payload).subscribe({
-          next: (id) => {
-            this.snack.open(`Inventory created (ID ${id}).`, 'OK', { duration: 2500 });
-            this.loadInventory();
-          },
-          error: (e) =>
-            this.snack.open(
-              e?.error?.message || 'Failed to create inventory.',
-              'Dismiss',
-              { duration: 3000 }
-            )
-        });
-      }
+    ref.afterClosed().subscribe(res => {
+      if (!res || res.action !== 'create') return;
+
+      this.invSvc.add(res.payload).subscribe({
+        next: (id) => {
+          this.snack.open(`Inventory created successfully (ID ${id}).`, 'OK', { duration: 2500 });
+          this.loadInventory();
+        },
+        error: (e) =>
+          this.snack.open(e?.error?.message || 'Failed to create inventory.', 'Dismiss', { duration: 3000 })
+      });
     });
   }
 
@@ -341,30 +414,21 @@ export class InventoryList {
       { mode: 'edit'; initialData: Inventory },
       InventoryFormResult
     >(InventoryForm, {
-      width: '720px',
+      width: '820px',
       data: { mode: 'edit', initialData: row }
     });
 
-    ref.afterClosed().subscribe((res) => {
-      if (!res) return;
-      if (res.action === 'edit') {
-        this.invSvc.update(res.payload).subscribe({
-          next: (ok) => {
-            if (ok) {
-              this.snack.open('Inventory updated.', 'OK', { duration: 2000 });
-              this.loadInventory();
-            } else {
-              this.snack.open('Failed to update inventory.', 'Dismiss', { duration: 3000 });
-            }
-          },
-          error: (e) =>
-            this.snack.open(
-              e?.error?.message || 'Failed to update inventory.',
-              'Dismiss',
-              { duration: 3000 }
-            )
-        });
-      }
+    ref.afterClosed().subscribe(res => {
+      if (!res || res.action !== 'edit') return;
+
+      this.invSvc.update(res.payload).subscribe({
+        next: (ok) => {
+          this.snack.open(ok ? 'Inventory updated successfully.' : 'Update failed.', 'OK', { duration: 2500 });
+          if (ok) this.loadInventory();
+        },
+        error: (e) =>
+          this.snack.open(e?.error?.message || 'Failed to update inventory.', 'Dismiss', { duration: 3000 })
+      });
     });
   }
 
@@ -375,18 +439,18 @@ export class InventoryList {
       Active: newState,
       ModifiedById: this.auth.currentUser?.userId ?? null
     };
+
     this.invSvc.activate(payload).subscribe({
       next: (ok) => {
         if (ok) {
           i.active = newState;
-          this.snack.open(`Inventory ${newState ? 'activated' : 'deactivated'}.`, 'OK', { duration: 2000 });
+          this.snack.open(`Inventory ${newState ? 'activated' : 'deactivated'} successfully.`, 'OK', { duration: 2000 });
           this.computeStats();
         } else {
           this.snack.open('Failed to change status.', 'Dismiss', { duration: 3000 });
         }
       },
-      error: () =>
-        this.snack.open('Failed to change status.', 'Dismiss', { duration: 3000 })
+      error: () => this.snack.open('Failed to change status.', 'Dismiss', { duration: 3000 })
     });
   }
 
