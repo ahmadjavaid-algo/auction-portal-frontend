@@ -181,6 +181,7 @@ export class Auctionbid implements OnInit, OnDestroy {
   autoBidCeiling: number | null = null;
 
   allTypes: InspectionType[] = [];
+   isLightMode = false;
   allCheckpoints: InspectionCheckpoint[] = [];
   reportGroups: InspectionTypeGroupForUI[] = [];
   reportLoading = false;
@@ -256,7 +257,20 @@ export class Auctionbid implements OnInit, OnDestroy {
       }
 
       this.loadAll();
-
+          try {
+      const savedTheme = localStorage.getItem('theme-preference');
+      if (savedTheme === 'light') {
+        this.isLightMode = true;
+        setTimeout(() => {
+          const hostElement = document.querySelector('app-auctionbid');
+          if (hostElement) {
+            hostElement.classList.add('light-mode');
+          }
+        }, 0);
+      }
+    } catch (e) {
+      console.warn('Could not load theme preference:', e);
+    }
       if (!this.notifStreamSub) {
         this.notifStreamSub = this.notifHub.stream$.subscribe(n => this.handleNotification(n));
       }
@@ -1051,7 +1065,26 @@ export class Auctionbid implements OnInit, OnDestroy {
       new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(d);
     return `${s ? fmt(s) : '—'} → ${e ? fmt(e) : '—'}`;
   }
-
+  toggleTheme(): void {
+    this.isLightMode = !this.isLightMode;
+    
+    // Apply theme to host element
+    const hostElement = document.querySelector('app-auctionbid');
+    if (hostElement) {
+      if (this.isLightMode) {
+        hostElement.classList.add('light-mode');
+      } else {
+        hostElement.classList.remove('light-mode');
+      }
+    }
+    
+    // Save preference to localStorage
+    try {
+      localStorage.setItem('theme-preference', this.isLightMode ? 'light' : 'dark');
+    } catch (e) {
+      console.warn('Could not save theme preference:', e);
+    }
+  }
   // ===================== INSPECTION REPORT =====================
 
   private isActiveInspection(i: Inspection): boolean {

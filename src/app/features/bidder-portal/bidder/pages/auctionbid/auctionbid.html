@@ -1,4 +1,9 @@
 <div class="bidding-theater" *ngIf="!loading; else loadingState">
+  <!-- ===================== THEME TOGGLE (FLOATING) ===================== -->
+  <button class="theme-toggle-fab" (click)="toggleTheme()" [attr.aria-label]="isLightMode ? 'Switch to dark mode' : 'Switch to light mode'">
+    <mat-icon>{{ isLightMode ? 'dark_mode' : 'light_mode' }}</mat-icon>
+  </button>
+
   <!-- ===================== HERO BANNER (WITH RANDOM IMAGE) ===================== -->
   <header class="hero-banner" [ngStyle]="{ '--hero-img': 'url(' + bannerImage + ')' }">
     <div class="hero-overlay"></div>

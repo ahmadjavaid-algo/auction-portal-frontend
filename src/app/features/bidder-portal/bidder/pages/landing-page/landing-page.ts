@@ -1,6 +1,13 @@
-import { Component, OnInit, OnDestroy, HostListener, inject, PLATFORM_ID } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  HostListener,
+  inject,
+  PLATFORM_ID
+} from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 
@@ -24,6 +31,11 @@ interface EnrichedAuction {
   vehicleDetails?: any;
 }
 
+type TiltHandlers = {
+  onMove: (ev: MouseEvent) => void;
+  onLeave: (ev: MouseEvent) => void;
+};
+
 @Component({
   selector: 'app-landing-page',
   standalone: true,
@@ -34,16 +46,17 @@ interface EnrichedAuction {
 export class LandingPage implements OnInit, OnDestroy {
   private platformId = inject(PLATFORM_ID);
   private isBrowser = isPlatformBrowser(this.platformId);
-  
+
   private auctionSvc = inject(InventoryAuctionService);
   private fileSvc = inject(InventoryDocumentFileService);
   private inventorySvc = inject(InventoryService);
-  // ✅ Routes (edit here if your bidder base path is different)
+
+  private router = inject(Router);
+
   public readonly homeLink = ['/bidder'];
   public readonly loginLink = ['/bidder', 'login'];
   public readonly signupLink = ['/bidder', 'signup'];
 
-  // ✅ Real ALGO logo
   public readonly algoLogoUrl =
     'https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8';
 
@@ -58,9 +71,16 @@ export class LandingPage implements OnInit, OnDestroy {
   mouseY = 0;
   scrollY = 0;
 
-  // Animation states
+  // Cursor position for magnetic effects
+  cursorX = 0;
+  cursorY = 0;
+
+  // ✅ Tilt tracking (store actual attached listeners so we can remove them)
+  private tiltHandlers: Map<HTMLElement, TiltHandlers> = new Map();
+
   heroRevealed = false;
   statsRevealed = false;
+  contentRevealed = false;
 
   autoBidStats = {
     winRate: 94,
@@ -76,35 +96,40 @@ export class LandingPage implements OnInit, OnDestroy {
       icon: 'engineering',
       name: 'Mechanical Deep-Dive',
       checkpoints: 147,
-      description: 'Engine compression, transmission health, drivetrain integrity, suspension geometry, brake pad depth',
-      color: '#ff6b6b'
+      description:
+        'Engine compression, transmission health, drivetrain integrity, suspension geometry, brake pad depth',
+      color: '#00D9FF'
     },
     {
       icon: 'brush',
       name: 'Exterior Forensics',
       checkpoints: 89,
-      description: 'Paint depth meter readings, bodywork assessment, panel gap measurements, glass condition matrix',
-      color: '#4ecdc4'
+      description:
+        'Paint depth meter readings, bodywork assessment, panel gap measurements, glass condition matrix',
+      color: '#FF3366'
     },
     {
       icon: 'airline_seat_recline_extra',
       name: 'Interior Analysis',
       checkpoints: 72,
-      description: 'Upholstery condition, electronic system tests, climate control calibration, dashboard diagnostics',
-      color: '#ffe66d'
+      description:
+        'Upholstery condition, electronic system tests, climate control calibration, dashboard diagnostics',
+      color: '#FFE600'
     },
     {
       icon: 'description',
       name: 'Documentation Audit',
       checkpoints: 34,
-      description: 'Service history verification, ownership records, accident reports, maintenance log analysis',
-      color: '#a8dadc'
+      description:
+        'Service history verification, ownership records, accident reports, maintenance log analysis',
+      color: '#00FF88'
     }
   ];
 
   testimonials = [
     {
-      quote: 'The inspection reports are insanely detailed. 147 mechanical checkpoints gave me confidence to bid $280K sight unseen. AutoBid won it while I was in meetings.',
+      quote:
+        'The inspection reports are insanely detailed. 147 mechanical checkpoints gave me confidence to bid $280K sight unseen. AutoBid won it while I was in meetings.',
       author: 'Marcus Ashford',
       role: 'Private Collector',
       location: 'London',
@@ -113,7 +138,8 @@ export class LandingPage implements OnInit, OnDestroy {
       verified: true
     },
     {
-      quote: 'As a dealer, the structured inspection system is revolutionary. No more guessing from photos. Clear risk assessment on every lot. AutoBid handles timezone differences perfectly.',
+      quote:
+        'As a dealer, the structured inspection system is revolutionary. No more guessing from photos. Clear risk assessment on every lot. AutoBid handles timezone differences perfectly.',
       author: 'Yuki Tanaka',
       role: 'Exotic Car Dealer',
       location: 'Tokyo',
@@ -122,7 +148,8 @@ export class LandingPage implements OnInit, OnDestroy {
       verified: true
     },
     {
-      quote: 'Checkpoint-based inspections changed everything. I can see exactly where the car stands on paint depth, mechanical health, documentation. AutoBid got me a 1967 Shelby at 3 AM my time.',
+      quote:
+        'Checkpoint-based inspections changed everything. I can see exactly where the car stands on paint depth, mechanical health, documentation. AutoBid got me a 1967 Shelby at 3 AM my time.',
       author: 'David Chen',
       role: 'Vintage Collector',
       location: 'Singapore',
@@ -173,7 +200,8 @@ export class LandingPage implements OnInit, OnDestroy {
     {
       step: '01',
       title: 'Access Inspection Intel',
-      description: 'Review detailed checkpoint data, photos, and AI risk scores before placing any bid',
+      description:
+        'Review detailed checkpoint data, photos, and AI risk scores before placing any bid',
       icon: 'search'
     },
     {
@@ -185,7 +213,8 @@ export class LandingPage implements OnInit, OnDestroy {
     {
       step: '03',
       title: 'AI Takes Control',
-      description: 'AutoBid monitors 24/7, analyzes competitors, places strategic bids at optimal moments',
+      description:
+        'AutoBid monitors 24/7, analyzes competitors, places strategic bids at optimal moments',
       icon: 'smart_toy'
     },
     {
@@ -199,52 +228,67 @@ export class LandingPage implements OnInit, OnDestroy {
   private observers: IntersectionObserver[] = [];
   private animationFrame?: number;
   private scrollTicking = false;
-  public fallbackHeroImage = 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1920&q=80';
-  router: any;
+  private magneticElements: HTMLElement[] = [];
+
+  public fallbackHeroImage =
+    'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1920&q=80';
 
   ngOnInit(): void {
     this.loading = true;
     this.loadRealAuctionData();
 
     if (this.isBrowser) {
-      setTimeout(() => {
-        this.heroRevealed = true;
-        this.initScrollAnimations();
-        this.initParallaxEffects();
-        this.startBackgroundAnimation();
-      }, 300);
+      setTimeout(() => (this.heroRevealed = true), 200);
+      setTimeout(() => (this.statsRevealed = true), 600);
 
       setTimeout(() => {
-        this.statsRevealed = true;
+        this.contentRevealed = true;
+        this.initScrollAnimations();
+        this.initParallaxEffects();
+        this.initMagneticButtons();
+        this.initTiltCards();
+        this.startBackgroundAnimation();
+        this.initCursorEffects();
       }, 800);
     }
   }
 
   ngOnDestroy(): void {
     this.observers.forEach(observer => observer.disconnect());
-    if (this.animationFrame) {
-      cancelAnimationFrame(this.animationFrame);
-    }
+    if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
+
+    // ✅ Proper cleanup: remove the same function refs we added
+    this.tiltHandlers.forEach((handlers, element) => {
+      element.removeEventListener('mousemove', handlers.onMove);
+      element.removeEventListener('mouseleave', handlers.onLeave);
+    });
+    this.tiltHandlers.clear();
   }
 
   @HostListener('window:scroll')
   onScroll(): void {
     if (!this.isBrowser || this.scrollTicking) return;
-    
+
     this.scrollTicking = true;
     window.requestAnimationFrame(() => {
       this.scrollY = window.pageYOffset;
       this.updateParallax();
+      this.updateScrollProgress();
       this.scrollTicking = false;
     });
   }
 
   @HostListener('document:mousemove', ['$event'])
   onMouseMove(event: MouseEvent): void {
-    if (this.isBrowser) {
-      this.mouseX = (event.clientX / window.innerWidth) * 100;
-      this.mouseY = (event.clientY / window.innerHeight) * 100;
-    }
+    if (!this.isBrowser) return;
+
+    this.mouseX = (event.clientX / window.innerWidth) * 100;
+    this.mouseY = (event.clientY / window.innerHeight) * 100;
+    this.cursorX = event.clientX;
+    this.cursorY = event.clientY;
+
+    this.updateMagneticButtons(event);
+    this.updateCustomCursor(event);
   }
 
   private loadRealAuctionData(): void {
@@ -255,7 +299,7 @@ export class LandingPage implements OnInit, OnDestroy {
       .pipe(
         switchMap(({ auctions, files }) => {
           const active = (auctions || []).filter(a => a.active ?? true);
-          
+
           const sorted = [...active].sort((a, b) =>
             this.dateDesc(a.createdDate || a.modifiedDate, b.createdDate || b.modifiedDate)
           );
@@ -304,22 +348,16 @@ export class LandingPage implements OnInit, OnDestroy {
   }
 
   private initScrollAnimations(): void {
-    const observerOptions = {
-      threshold: 0.15,
-      rootMargin: '0px 0px -100px 0px'
-    };
+    const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -80px 0px' };
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('in-view');
-          
-          // Stagger animations for child elements
+
           const children = entry.target.querySelectorAll('.stagger-item');
           children.forEach((child, index) => {
-            setTimeout(() => {
-              child.classList.add('in-view');
-            }, index * 100);
+            setTimeout(() => child.classList.add('in-view'), index * 80);
           });
         }
       });
@@ -328,45 +366,170 @@ export class LandingPage implements OnInit, OnDestroy {
     setTimeout(() => {
       const elements = document.querySelectorAll('.scroll-reveal');
       elements.forEach(el => observer.observe(el));
-    }, 200);
+    }, 300);
 
     this.observers.push(observer);
   }
 
   private initParallaxEffects(): void {
-    // Initial parallax setup
     this.updateParallax();
   }
 
   private updateParallax(): void {
     const scrolled = this.scrollY;
-    
-    // Update parallax layers
+
     const parallaxElements = document.querySelectorAll('[data-parallax]');
     parallaxElements.forEach((el: any) => {
       const speed = parseFloat(el.dataset.parallax) || 0.5;
       const yPos = -(scrolled * speed);
       el.style.transform = `translate3d(0, ${yPos}px, 0)`;
     });
+
+    const hero = document.querySelector('.hero-section') as HTMLElement;
+    if (hero) {
+      const transformValue = Math.min(scrolled * 0.3, 100);
+      hero.style.transform = `perspective(1000px) rotateX(${transformValue * 0.05}deg)`;
+    }
+  }
+
+  private initMagneticButtons(): void {
+    const buttons = document.querySelectorAll('.magnetic-btn');
+    buttons.forEach(btn => this.magneticElements.push(btn as HTMLElement));
+  }
+
+  private updateMagneticButtons(event: MouseEvent): void {
+    this.magneticElements.forEach(btn => {
+      const rect = btn.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      const distanceX = event.clientX - centerX;
+      const distanceY = event.clientY - centerY;
+      const distance = Math.sqrt(distanceX ** 2 + distanceY ** 2);
+
+      const magnetDistance = 100;
+
+      if (distance < magnetDistance) {
+        const strength = 0.3;
+        const moveX = distanceX * strength;
+        const moveY = distanceY * strength;
+        btn.style.transform = `translate(${moveX}px, ${moveY}px) scale(1.05)`;
+      } else {
+        btn.style.transform = 'translate(0, 0) scale(1)';
+      }
+    });
+  }
+
+  private initTiltCards(): void {
+    setTimeout(() => {
+      const cards = document.querySelectorAll('.tilt-card');
+      cards.forEach(card => {
+        const element = card as HTMLElement;
+
+        const onMove = (ev: MouseEvent) => this.handleTilt(ev, element);
+        const onLeave = (_ev: MouseEvent) => this.resetTilt(element);
+
+        this.tiltHandlers.set(element, { onMove, onLeave });
+
+        element.addEventListener('mousemove', onMove);
+        element.addEventListener('mouseleave', onLeave);
+      });
+    }, 1000);
+  }
+
+  private handleTilt(event: MouseEvent, element: HTMLElement): void {
+    const rect = element.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    const rotateX = ((y - centerY) / centerY) * -10;
+    const rotateY = ((x - centerX) / centerX) * 10;
+
+    element.style.transform =
+      `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+
+    const glowX = (x / rect.width) * 100;
+    const glowY = (y / rect.height) * 100;
+    element.style.setProperty('--glow-x', `${glowX}%`);
+    element.style.setProperty('--glow-y', `${glowY}%`);
+  }
+
+  private resetTilt(element: HTMLElement): void {
+    element.style.transform =
+      'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
   }
 
   private startBackgroundAnimation(): void {
     let time = 0;
     const animate = () => {
-      time += 0.0005;
-      
-      // Update mesh gradients
+      time += 0.0008;
+
       const meshes = document.querySelectorAll('.mesh-gradient');
       meshes.forEach((mesh: any, index) => {
-        const offset = index * 2;
-        const x = Math.sin(time + offset) * 50;
-        const y = Math.cos(time + offset) * 50;
-        mesh.style.transform = `translate(${x}px, ${y}px)`;
+        const offset = index * 2.5;
+        const x = Math.sin(time + offset) * 80;
+        const y = Math.cos(time + offset * 0.8) * 60;
+        const scale = 1 + Math.sin(time * 0.5 + offset) * 0.15;
+        const rotate = Math.sin(time * 0.3 + offset) * 10;
+
+        mesh.style.transform = `translate(${x}px, ${y}px) scale(${scale}) rotate(${rotate}deg)`;
       });
-      
+
+      const particles = document.querySelectorAll('.particle');
+      particles.forEach((particle: any, index) => {
+        const offset = index * 1.5;
+        const x = Math.sin(time * 0.5 + offset) * 30;
+        const y = Math.cos(time * 0.3 + offset) * 40;
+        particle.style.transform = `translate(${x}px, ${y}px)`;
+      });
+
       this.animationFrame = requestAnimationFrame(animate);
     };
     animate();
+  }
+
+  private initCursorEffects(): void {
+    const cursor = document.querySelector('.custom-cursor') as HTMLElement;
+    const cursorDot = document.querySelector('.custom-cursor-dot') as HTMLElement;
+
+    if (cursor && cursorDot) {
+      document.addEventListener('mousemove', (e) => {
+        cursor.style.left = e.clientX + 'px';
+        cursor.style.top = e.clientY + 'px';
+        cursorDot.style.left = e.clientX + 'px';
+        cursorDot.style.top = e.clientY + 'px';
+      });
+
+      const interactives = document.querySelectorAll('a, button, .auction-card');
+      interactives.forEach(el => {
+        el.addEventListener('mouseenter', () => cursor.classList.add('cursor-expanded'));
+        el.addEventListener('mouseleave', () => cursor.classList.remove('cursor-expanded'));
+      });
+    }
+  }
+
+  private updateCustomCursor(event: MouseEvent): void {
+    const cursor = document.querySelector('.custom-cursor') as HTMLElement;
+    const dot = document.querySelector('.custom-cursor-dot') as HTMLElement;
+
+    if (cursor && dot) {
+      cursor.style.left = event.clientX + 'px';
+      cursor.style.top = event.clientY + 'px';
+      dot.style.left = event.clientX + 'px';
+      dot.style.top = event.clientY + 'px';
+    }
+  }
+
+  private updateScrollProgress(): void {
+    const scrollProgress = document.querySelector('.scroll-progress') as HTMLElement;
+    if (scrollProgress) {
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = (this.scrollY / totalHeight) * 100;
+      scrollProgress.style.width = `${progress}%`;
+    }
   }
 
   private buildImagesMap(files: InventoryDocumentFile[]): Map<number, string[]> {
@@ -439,9 +602,7 @@ export class LandingPage implements OnInit, OnDestroy {
   scrollToSection(sectionId: string): void {
     if (this.isBrowser) {
       const element = document.getElementById(sectionId);
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
+      if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }
 
@@ -455,7 +616,7 @@ export class LandingPage implements OnInit, OnDestroy {
 
   getTimeRemaining(auction: InventoryAuction): string {
     if (!auction.endDate) return 'Ending soon';
-    
+
     const now = new Date().getTime();
     const end = new Date(auction.endDate).getTime();
     const diff = end - now;
@@ -473,7 +634,7 @@ export class LandingPage implements OnInit, OnDestroy {
     return `${hours}h ${minutes}m`;
   }
 
-  getBidCount(auction: InventoryAuction): number {
+  getBidCount(_auction: InventoryAuction): number {
     return Math.floor(Math.random() * 80) + 20;
   }
 }
