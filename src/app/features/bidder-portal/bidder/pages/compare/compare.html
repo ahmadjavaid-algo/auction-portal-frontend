@@ -1,0 +1,635 @@
+<div class="compare-theater" *ngIf="!loading; else loadingState">
+  <!-- THEME TOGGLE -->
+  <button
+    class="theme-toggle-fab"
+    (click)="toggleTheme()"
+    [attr.aria-label]="isLightMode ? 'Switch to dark mode' : 'Switch to light mode'"
+  >
+    <mat-icon>{{ isLightMode ? 'dark_mode' : 'light_mode' }}</mat-icon>
+  </button>
+
+  <!-- HERO HEADER -->
+  <header class="compare-hero">
+    <div class="hero-bg"></div>
+    <div class="hero-particles"></div>
+
+    <div class="hero-content">
+      <button class="back-btn" routerLink="/bidder/auctions">
+        <mat-icon>arrow_back</mat-icon>
+        <span>Back to Auctions</span>
+      </button>
+
+      <div class="hero-title-group">
+        <div class="hero-icon">
+          <mat-icon>compare_arrows</mat-icon>
+        </div>
+        <div>
+          <h1 class="hero-title">Vehicle Comparison</h1>
+          <p class="hero-subtitle">AI-Powered Side-by-Side Analysis</p>
+        </div>
+      </div>
+
+      <div class="hero-badge">
+        <mat-icon>psychology</mat-icon>
+        <span>Powered by AI</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- VEHICLE SELECTOR -->
+  <div class="selector-panel" *ngIf="vehicle1">
+    <div class="selector-content">
+      <div class="selector-label">
+        <mat-icon>compare</mat-icon>
+        <span>
+          Select a vehicle to compare with
+          <strong>{{ vehicle1.title }}</strong>
+        </span>
+      </div>
+
+      <mat-select
+        [(ngModel)]="selectedVehicle2Id"
+        (selectionChange)="onVehicle2Change()"
+        placeholder="Choose a vehicle..."
+        class="vehicle-select"
+      >
+        <mat-option *ngFor="let v of availableVehicles" [value]="v.id">
+          {{ v.label }}
+        </mat-option>
+      </mat-select>
+    </div>
+  </div>
+
+  <!-- COMPARISON GRID -->
+  <div class="comparison-container" *ngIf="vehicle1 && vehicle2">
+    <!-- LEFT VEHICLE CARD -->
+    <div class="vehicle-card left" [class.winner]="aiComparison?.winner === 'vehicle1'">
+      <div class="card-header">
+        <div class="card-hero" [ngStyle]="{ '--hero-img': 'url(' + vehicle1.imageUrl + ')' }">
+          <div class="hero-overlay"></div>
+          <div class="hero-glow"></div>
+
+          <div class="winner-badge" *ngIf="aiComparison?.winner === 'vehicle1'">
+            <mat-icon>emoji_events</mat-icon>
+            <span>AI RECOMMENDED</span>
+          </div>
+
+          <div class="card-title-group">
+            <h2 class="card-title">{{ vehicle1.title }}</h2>
+            <p class="card-subtitle">{{ vehicle1.subtitle }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <!-- Pricing Section -->
+        <div class="section">
+          <div class="section-header">
+            <mat-icon>payments</mat-icon>
+            <h3>Pricing</h3>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric">
+              <span class="metric-label">Current Price</span>
+              <span class="metric-value price">{{ money(vehicle1.currentPrice) }}</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Start Price</span>
+              <span class="metric-value">{{ money(vehicle1.startPrice) }}</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Reserve</span>
+              <span class="metric-value" [class.met]="vehicle1.reserveMet">
+                {{ money(vehicle1.reservePrice) }}
+                <mat-icon *ngIf="vehicle1.reservePrice">{{
+                  vehicle1.reserveMet ? 'check_circle' : 'info'
+                }}</mat-icon>
+              </span>
+            </div>
+            <div class="metric" *ngIf="vehicle1.buyNowPrice">
+              <span class="metric-label">Buy Now</span>
+              <span class="metric-value">{{ money(vehicle1.buyNowPrice) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bid Activity -->
+        <div class="section">
+          <div class="section-header">
+            <mat-icon>gavel</mat-icon>
+            <h3>Bid Activity</h3>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric">
+              <span class="metric-label">Total Bids</span>
+              <span class="metric-value">{{ vehicle1.totalBids }}</span>
+            </div>
+            <div class="metric" *ngIf="vehicle1.yourMaxBid">
+              <span class="metric-label">Your Max Bid</span>
+              <span class="metric-value">{{ money(vehicle1.yourMaxBid) }}</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Increment</span>
+              <span class="metric-value">{{ money(vehicle1.bidIncrement) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inspection -->
+        <div class="section">
+          <div class="section-header">
+            <mat-icon>fact_check</mat-icon>
+            <h3>Inspection</h3>
+          </div>
+
+          <div class="inspection-meter">
+            <div class="meter-header">
+              <span class="meter-label">Completion Score</span>
+              <span class="meter-value">{{ vehicle1.inspectionScore?.toFixed(0) ?? 0 }}%</span>
+            </div>
+            <div class="meter-bar">
+              <div
+                class="meter-fill"
+                [style.width.%]="vehicle1.inspectionScore ?? 0"
+                [class.complete]="vehicle1.inspectionComplete"
+              ></div>
+            </div>
+            <div class="meter-footer">
+              <span>{{ vehicle1.completedCheckpoints }} / {{ vehicle1.totalCheckpoints }} checks</span>
+              <mat-icon *ngIf="vehicle1.inspectionComplete" class="complete-icon">check_circle</mat-icon>
+            </div>
+          </div>
+        </div>
+
+        <!-- Specifications -->
+        <div class="section">
+          <div class="section-header">
+            <mat-icon>tune</mat-icon>
+            <h3>Specifications</h3>
+          </div>
+
+          <div class="specs-list">
+            <div class="spec-row" *ngFor="let spec of vehicle1.specs.slice(0, 10)">
+              <span class="spec-label">{{ spec.label }}</span>
+              <span class="spec-value">{{ spec.value || '—' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <button class="action-btn primary" (click)="viewVehicle(vehicle1)">
+          <mat-icon>visibility</mat-icon>
+          <span>View Full Details</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- CENTER DIVIDER WITH VS -->
+    <div class="divider-column">
+      <div class="vs-badge">
+        <div class="vs-circle">
+          <span>VS</span>
+        </div>
+        <div class="vs-line"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT VEHICLE CARD -->
+    <div class="vehicle-card right" [class.winner]="aiComparison?.winner === 'vehicle2'">
+      <div class="card-header">
+        <div class="card-hero" [ngStyle]="{ '--hero-img': 'url(' + vehicle2.imageUrl + ')' }">
+          <div class="hero-overlay"></div>
+          <div class="hero-glow"></div>
+
+          <div class="winner-badge" *ngIf="aiComparison?.winner === 'vehicle2'">
+            <mat-icon>emoji_events</mat-icon>
+            <span>AI RECOMMENDED</span>
+          </div>
+
+          <div class="card-title-group">
+            <h2 class="card-title">{{ vehicle2.title }}</h2>
+            <p class="card-subtitle">{{ vehicle2.subtitle }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-body">
+        <!-- Pricing Section -->
+        <div class="section">
+          <div class="section-header">
+            <mat-icon>payments</mat-icon>
+            <h3>Pricing</h3>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric">
+              <span class="metric-label">Current Price</span>
+              <span class="metric-value price">{{ money(vehicle2.currentPrice) }}</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Start Price</span>
+              <span class="metric-value">{{ money(vehicle2.startPrice) }}</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Reserve</span>
+              <span class="metric-value" [class.met]="vehicle2.reserveMet">
+                {{ money(vehicle2.reservePrice) }}
+                <mat-icon *ngIf="vehicle2.reservePrice">{{
+                  vehicle2.reserveMet ? 'check_circle' : 'info'
+                }}</mat-icon>
+              </span>
+            </div>
+            <div class="metric" *ngIf="vehicle2.buyNowPrice">
+              <span class="metric-label">Buy Now</span>
+              <span class="metric-value">{{ money(vehicle2.buyNowPrice) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bid Activity -->
+        <div class="section">
+          <div class="section-header">
+            <mat-icon>gavel</mat-icon>
+            <h3>Bid Activity</h3>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric">
+              <span class="metric-label">Total Bids</span>
+              <span class="metric-value">{{ vehicle2.totalBids }}</span>
+            </div>
+            <div class="metric" *ngIf="vehicle2.yourMaxBid">
+              <span class="metric-label">Your Max Bid</span>
+              <span class="metric-value">{{ money(vehicle2.yourMaxBid) }}</span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">Increment</span>
+              <span class="metric-value">{{ money(vehicle2.bidIncrement) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inspection -->
+        <div class="section">
+          <div class="section-header">
+            <mat-icon>fact_check</mat-icon>
+            <h3>Inspection</h3>
+          </div>
+
+          <div class="inspection-meter">
+            <div class="meter-header">
+              <span class="meter-label">Completion Score</span>
+              <span class="meter-value">{{ vehicle2.inspectionScore?.toFixed(0) ?? 0 }}%</span>
+            </div>
+            <div class="meter-bar">
+              <div
+                class="meter-fill"
+                [style.width.%]="vehicle2.inspectionScore ?? 0"
+                [class.complete]="vehicle2.inspectionComplete"
+              ></div>
+            </div>
+            <div class="meter-footer">
+              <span>{{ vehicle2.completedCheckpoints }} / {{ vehicle2.totalCheckpoints }} checks</span>
+              <mat-icon *ngIf="vehicle2.inspectionComplete" class="complete-icon">check_circle</mat-icon>
+            </div>
+          </div>
+        </div>
+
+        <!-- Specifications -->
+        <div class="section">
+          <div class="section-header">
+            <mat-icon>tune</mat-icon>
+            <h3>Specifications</h3>
+          </div>
+
+          <div class="specs-list">
+            <div class="spec-row" *ngFor="let spec of vehicle2.specs.slice(0, 10)">
+              <span class="spec-label">{{ spec.label }}</span>
+              <span class="spec-value">{{ spec.value || '—' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <button class="action-btn primary" (click)="viewVehicle(vehicle2)">
+          <mat-icon>visibility</mat-icon>
+          <span>View Full Details</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===============================================
+       ALGO AI COMPARISON PANEL - PREMIUM DESIGN
+       =============================================== -->
+  <div class="algo-ai-panel" *ngIf="showAIPanel && vehicle1 && vehicle2">
+    <!-- Confetti Effect -->
+    <div class="confetti-container" *ngIf="showConfetti">
+      <div class="confetti" *ngFor="let i of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]"></div>
+    </div>
+
+    <div class="algo-ai-inner">
+      <!-- Loading State with Progress -->
+      <div class="algo-ai-loading" *ngIf="loadingAI">
+        <div class="loading-orb">
+          <div class="orb-core"></div>
+          <div class="orb-ring ring-1"></div>
+          <div class="orb-ring ring-2"></div>
+          <div class="orb-ring ring-3"></div>
+          <div class="algo-logo">
+            <span class="logo-text">ALGO</span>
+            <span class="logo-ai">AI</span>
+          </div>
+        </div>
+
+        <h3 class="loading-title">Algo AI is Analyzing...</h3>
+        <p class="loading-stage">{{ aiAnalysisStage }}</p>
+
+        <div class="progress-container">
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="aiAnalysisProgress">
+              <div class="progress-shimmer"></div>
+            </div>
+          </div>
+          <span class="progress-text">{{ aiAnalysisProgress.toFixed(0) }}%</span>
+        </div>
+
+        <div class="loading-features">
+          <div class="feature-badge" *ngFor="let feature of ['Pricing Intelligence', 'Condition Analysis', 'Market Insights']">
+            <mat-icon>check_circle</mat-icon>
+            <span>{{ feature }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Results - Premium Layout -->
+      <div class="algo-ai-results" *ngIf="!loadingAI && aiComparison">
+        <!-- Premium Header with 3D Logo -->
+        <div class="algo-header">
+          <div class="algo-brand">
+            <div class="algo-icon-3d">
+              <div class="icon-layer layer-1">
+                <mat-icon>psychology</mat-icon>
+              </div>
+              <div class="icon-layer layer-2">
+                <mat-icon>psychology</mat-icon>
+              </div>
+              <div class="icon-layer layer-3">
+                <mat-icon>psychology</mat-icon>
+              </div>
+            </div>
+            <div class="algo-title-stack">
+              <div class="algo-main-title">
+                <span class="title-algo">ALGO</span>
+                <span class="title-ai">AI</span>
+                <sup class="title-badge">PRO</sup>
+              </div>
+              <p class="algo-subtitle">Advanced Vehicle Intelligence System</p>
+            </div>
+          </div>
+
+          <div class="confidence-meter">
+            <div class="meter-label">
+              <mat-icon>verified</mat-icon>
+              <span>Confidence Score</span>
+            </div>
+            <div class="meter-display">
+              <svg class="confidence-ring" viewBox="0 0 100 100">
+                <circle
+                  class="ring-bg"
+                  cx="50"
+                  cy="50"
+                  r="45"
+                  fill="none"
+                  stroke-width="8"
+                />
+                <circle
+                  class="ring-progress"
+                  cx="50"
+                  cy="50"
+                  r="45"
+                  fill="none"
+                  stroke-width="8"
+                  [style.stroke-dasharray]="(aiComparison.confidence / 100) * 283 + ' 283'"
+                />
+              </svg>
+              <div class="meter-value">
+                <span class="value-number">{{ aiComparison.confidence }}</span>
+                <span class="value-percent">%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Winner Announcement - Hero Style -->
+        <div class="winner-hero" [class.tie]="aiComparison.winner === 'tie'">
+          <div class="winner-glow"></div>
+          <div class="winner-content">
+            <div class="winner-icon-large">
+              <mat-icon>{{ aiComparison.winner === 'tie' ? 'balance' : 'emoji_events' }}</mat-icon>
+            </div>
+            <div class="winner-text">
+              <h3 class="winner-title" *ngIf="aiComparison.winner === 'vehicle1'">
+                {{ vehicle1.title }}
+                <span class="winner-label">is the Smart Choice</span>
+              </h3>
+              <h3 class="winner-title" *ngIf="aiComparison.winner === 'vehicle2'">
+                {{ vehicle2.title }}
+                <span class="winner-label">is the Smart Choice</span>
+              </h3>
+              <h3 class="winner-title" *ngIf="aiComparison.winner === 'tie'">
+                Both Vehicles Offer Equal Value
+              </h3>
+              <p class="winner-summary">{{ aiComparison.summary }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analysis Grid - Premium Cards -->
+        <div class="analysis-grid-premium">
+          <div class="analysis-card-3d price-card">
+            <div class="card-shine"></div>
+            <div class="card-content">
+              <div class="card-icon">
+                <mat-icon>attach_money</mat-icon>
+              </div>
+              <h4 class="card-title">Price Intelligence</h4>
+              <p class="card-text">{{ aiComparison.priceAnalysis }}</p>
+            </div>
+          </div>
+
+          <div class="analysis-card-3d condition-card">
+            <div class="card-shine"></div>
+            <div class="card-content">
+              <div class="card-icon">
+                <mat-icon>verified_user</mat-icon>
+              </div>
+              <h4 class="card-title">Condition Report</h4>
+              <p class="card-text">{{ aiComparison.conditionAnalysis }}</p>
+            </div>
+          </div>
+
+          <div class="analysis-card-3d value-card">
+            <div class="card-shine"></div>
+            <div class="card-content">
+              <div class="card-icon">
+                <mat-icon>trending_up</mat-icon>
+              </div>
+              <h4 class="card-title">Value Assessment</h4>
+              <p class="card-text">{{ aiComparison.valueAnalysis }}</p>
+            </div>
+          </div>
+
+          <div class="analysis-card-3d recommendation-card highlight">
+            <div class="card-glow"></div>
+            <div class="card-shine"></div>
+            <div class="card-content">
+              <div class="card-icon">
+                <mat-icon>recommend</mat-icon>
+              </div>
+              <h4 class="card-title">AI Recommendation</h4>
+              <p class="card-text">{{ aiComparison.recommendation }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Key Differences - Modern Timeline -->
+        <div class="differences-timeline" *ngIf="aiComparison.keyDifferences.length > 0">
+          <h4 class="section-title-modern">
+            <mat-icon>insights</mat-icon>
+            Key Differentiators
+          </h4>
+          <div class="timeline-items">
+            <div class="timeline-item" *ngFor="let diff of aiComparison.keyDifferences; let i = index">
+              <div class="timeline-marker">{{ i + 1 }}</div>
+              <div class="timeline-content">
+                <mat-icon>arrow_forward</mat-icon>
+                <p>{{ diff }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pros & Cons - Battle Card Style -->
+        <div class="battle-cards">
+          <div class="battle-card vehicle1-card">
+            <div class="battle-header">
+              <div class="vehicle-avatar" [style.background-image]="'url(' + vehicle1.imageUrl + ')'"></div>
+              <h4 class="vehicle-name">{{ vehicle1.title }}</h4>
+            </div>
+
+            <div class="battle-section pros" *ngIf="aiComparison.pros1.length > 0">
+              <h5 class="section-label">
+                <mat-icon>thumb_up</mat-icon>
+                Strengths
+              </h5>
+              <ul class="battle-list">
+                <li *ngFor="let pro of aiComparison.pros1">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>{{ pro }}</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="battle-section cons" *ngIf="aiComparison.cons1.length > 0">
+              <h5 class="section-label">
+                <mat-icon>info</mat-icon>
+                Considerations
+              </h5>
+              <ul class="battle-list">
+                <li *ngFor="let con of aiComparison.cons1">
+                  <mat-icon>error_outline</mat-icon>
+                  <span>{{ con }}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="battle-divider">
+            <div class="divider-icon">
+              <mat-icon>compare_arrows</mat-icon>
+            </div>
+          </div>
+
+          <div class="battle-card vehicle2-card">
+            <div class="battle-header">
+              <div class="vehicle-avatar" [style.background-image]="'url(' + vehicle2.imageUrl + ')'"></div>
+              <h4 class="vehicle-name">{{ vehicle2.title }}</h4>
+            </div>
+
+            <div class="battle-section pros" *ngIf="aiComparison.pros2.length > 0">
+              <h5 class="section-label">
+                <mat-icon>thumb_up</mat-icon>
+                Strengths
+              </h5>
+              <ul class="battle-list">
+                <li *ngFor="let pro of aiComparison.pros2">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>{{ pro }}</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="battle-section cons" *ngIf="aiComparison.cons2.length > 0">
+              <h5 class="section-label">
+                <mat-icon>info</mat-icon>
+                Considerations
+              </h5>
+              <ul class="battle-list">
+                <li *ngFor="let con of aiComparison.cons2">
+                  <mat-icon>error_outline</mat-icon>
+                  <span>{{ con }}</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Premium CTA Section -->
+        <div class="algo-cta">
+          <button class="algo-action-btn" (click)="generateAIComparison()">
+            <div class="btn-glow"></div>
+            <mat-icon>refresh</mat-icon>
+            <span>Regenerate Analysis</span>
+          </button>
+
+          <div class="algo-footer">
+            <div class="footer-badge">
+              <mat-icon>verified</mat-icon>
+              <span>Powered by Algo AI • Analyzed {{ (aiAnalysisProgress === 100 ? 'Now' : 'in Real-time') }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="vehicle1 && !vehicle2">
+    <div class="empty-icon">
+      <mat-icon>compare</mat-icon>
+    </div>
+    <h3>Select a Vehicle to Compare</h3>
+    <p>Choose another vehicle from the dropdown above to see a detailed AI-powered comparison</p>
+  </div>
+</div>
+
+<!-- Loading State -->
+<ng-template #loadingState>
+  <div class="loading-screen">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <span>Loading comparison data...</span>
+  </div>
+</ng-template>
+
+<!-- Error State -->
+<div class="error-screen" *ngIf="error && !loading">
+  <mat-icon>error_outline</mat-icon>
+  <h2>{{ error }}</h2>
+  <button class="btn-back" routerLink="/bidder/auctions">
+    <mat-icon>arrow_back</mat-icon>
+    <span>Back to Auctions</span>
+  </button>
+</div>

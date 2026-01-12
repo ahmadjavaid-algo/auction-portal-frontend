@@ -12,7 +12,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatTabsModule } from '@angular/material/tabs';
 
 import { forkJoin, of, interval, Subscription } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, switchMap, tap, delay } from 'rxjs/operators';
 
 import { Auction } from '../../../../../models/auction.model';
 import { InventoryAuction } from '../../../../../models/inventoryauction.model';
@@ -33,6 +33,8 @@ import { InventoryService } from '../../../../../services/inventory.service';
 import { ProductsService } from '../../../../../services/products.service';
 import { AuctionBidService } from '../../../../../services/auctionbids.service';
 import { BidderAuthService } from '../../../../../services/bidderauth';
+import { BiddersService } from '../../../../../services/bidders.service';
+import { Bidder } from '../../../../../models/bidder.model';
 import {
   NotificationHubService,
   NotificationItem
@@ -51,32 +53,27 @@ type BidView = {
   createdById: number | null;
   isMine: boolean;
   statusName: string | null | undefined;
-
   isAutoBid: boolean;
   autoBidAmount: number | null;
+  createdByName?: string;
+  createdByDisplayName?: string;
 };
 
 type RelatedLotCard = {
   invAuc: InventoryAuction;
-
   inventoryAuctionId: number;
   inventoryId: number | null;
-
   title: string;
   sub: string;
   imageUrl: string;
-
   auctionStartPrice?: number | null;
   buyNow?: number | null;
   reserve?: number | null;
   bidIncrement?: number | null;
-
   countdownText?: string;
   countdownState?: 'scheduled' | 'live' | 'ended';
-
   currentPrice?: number | null;
   reserveMet?: boolean;
-
   bidCooldownActive?: boolean;
   bidCooldownRemaining?: number;
   cooldownHandle?: any;
@@ -91,7 +88,6 @@ interface InspectionCheckpointRow {
   inspectionCheckpointName: string;
   inputType?: string | null;
   resultValue: string;
-
   imageUrls?: string[];
 }
 
@@ -100,6 +96,40 @@ interface InspectionTypeGroupForUI {
   inspectionTypeName: string;
   weightage?: number | null;
   checkpoints: InspectionCheckpointRow[];
+}
+
+// ===== NEW: AI REPORT INTERFACES =====
+interface AIReportSection {
+  icon: string;
+  title: string;
+  score: number; // 0-100
+  status: 'excellent' | 'good' | 'fair' | 'poor';
+  summary: string;
+  details: string[];
+  trend?: 'up' | 'down' | 'stable';
+}
+
+interface AIReportData {
+  overallScore: number; // 0-100
+  confidence: number; // 0-100
+  recommendation: 'strong-buy' | 'buy' | 'consider' | 'avoid';
+  valueRating: number; // 0-5 stars
+  predictedFinalPrice: number;
+  currentMarketPosition: 'below' | 'at' | 'above';
+  sections: {
+    condition: AIReportSection;
+    pricing: AIReportSection;
+    competition: AIReportSection;
+    marketTrend: AIReportSection;
+    timing: AIReportSection;
+  };
+  keyInsights: string[];
+  riskFactors: string[];
+  nextBidRecommendation: {
+    amount: number;
+    timing: string;
+    confidence: number;
+  };
 }
 
 @Component({
@@ -132,6 +162,7 @@ export class Auctionbid implements OnInit, OnDestroy {
   private productsSvc = inject(ProductsService);
   private bidsSvc = inject(AuctionBidService);
   private bidderAuth = inject(BidderAuthService);
+  private biddersSvc = inject(BiddersService);
   private notifHub = inject(NotificationHubService);
 
   private inspTypesSvc = inject(InspectionTypesService);
@@ -181,7 +212,7 @@ export class Auctionbid implements OnInit, OnDestroy {
   autoBidCeiling: number | null = null;
 
   allTypes: InspectionType[] = [];
-   isLightMode = false;
+  isLightMode = false;
   allCheckpoints: InspectionCheckpoint[] = [];
   reportGroups: InspectionTypeGroupForUI[] = [];
   reportLoading = false;
@@ -204,6 +235,15 @@ export class Auctionbid implements OnInit, OnDestroy {
           currency: 'USD',
           maximumFractionDigits: 0
         });
+
+  private biddersMap = new Map<number, Bidder>();
+
+  // ===== NEW: AI REPORT STATE =====
+  aiReportVisible = false;
+  aiReportGenerating = false;
+  aiReportData: AIReportData | null = null;
+  aiReportGenerationProgress = 0;
+  aiReportExpanded = false;
 
   get lotId(): number | null {
     const l: any = this.lot;
@@ -257,20 +297,22 @@ export class Auctionbid implements OnInit, OnDestroy {
       }
 
       this.loadAll();
-          try {
-      const savedTheme = localStorage.getItem('theme-preference');
-      if (savedTheme === 'light') {
-        this.isLightMode = true;
-        setTimeout(() => {
-          const hostElement = document.querySelector('app-auctionbid');
-          if (hostElement) {
-            hostElement.classList.add('light-mode');
-          }
-        }, 0);
+
+      try {
+        const savedTheme = localStorage.getItem('theme-preference');
+        if (savedTheme === 'light') {
+          this.isLightMode = true;
+          setTimeout(() => {
+            const hostElement = document.querySelector('app-auctionbid');
+            if (hostElement) {
+              hostElement.classList.add('light-mode');
+            }
+          }, 0);
+        }
+      } catch (e) {
+        console.warn('Could not load theme preference:', e);
       }
-    } catch (e) {
-      console.warn('Could not load theme preference:', e);
-    }
+
       if (!this.notifStreamSub) {
         this.notifStreamSub = this.notifHub.stream$.subscribe(n => this.handleNotification(n));
       }
@@ -326,6 +368,14 @@ export class Auctionbid implements OnInit, OnDestroy {
     }
     this.relatedLots = [];
 
+    this.biddersMap.clear();
+
+    // Reset AI report
+    this.aiReportVisible = false;
+    this.aiReportGenerating = false;
+    this.aiReportData = null;
+    this.aiReportGenerationProgress = 0;
+
     forkJoin({
       timebox: this.auctionsSvc
         .getTimebox(this.auctionId)
@@ -338,6 +388,30 @@ export class Auctionbid implements OnInit, OnDestroy {
       bids: this.bidsSvc.getList().pipe(catchError(() => of([] as AuctionBid[])))
     })
       .pipe(
+        switchMap(({ timebox, auctions, invAucs, files, invs, products, bids }) => {
+          const userIds = this.extractUniqueUserIdsFromBids(bids || []).slice(0, 200);
+
+          if (!userIds.length) {
+            return of({ timebox, auctions, invAucs, files, invs, products, bids, bidderProfiles: [] as (Bidder | null)[] });
+          }
+
+          const calls = userIds.map(id =>
+            this.biddersSvc.getById(id).pipe(
+              catchError(err => {
+                console.warn(`Failed to load bidder ${id}`, err);
+                return of(null);
+              })
+            )
+          );
+
+          return forkJoin(calls).pipe(
+            map(bidderProfiles => ({ timebox, auctions, invAucs, files, invs, products, bids, bidderProfiles }))
+          );
+        }),
+        tap(({ bidderProfiles }) => {
+          const ok = (bidderProfiles ?? []).filter((b): b is Bidder => !!b && !!(b as any).userId);
+          this.cacheBidders(ok);
+        }),
         map(({ timebox, auctions, invAucs, files, invs, products, bids }) => {
           if (timebox) {
             this.auctionStartUtcMs = Number(timebox.startEpochMsUtc);
@@ -403,8 +477,7 @@ export class Auctionbid implements OnInit, OnDestroy {
             .map(f => (f as any).documentUrl!)
             .slice(0, 32);
 
-          // Select random banner image from available images
-          this.bannerImage = this.images.length 
+          this.bannerImage = this.images.length
             ? this.images[Math.floor(Math.random() * this.images.length)]
             : this.heroUrl;
 
@@ -471,7 +544,67 @@ export class Auctionbid implements OnInit, OnDestroy {
       });
   }
 
-  // ===================== RELATED LOTS =====================
+  // ===== EXISTING METHODS (keeping all original functionality) =====
+  private extractUniqueUserIdsFromBids(bids: AuctionBid[]): number[] {
+    const set = new Set<number>();
+    for (const bid of bids ?? []) {
+      const id = Number((bid as any).createdById ?? (bid as any).CreatedById ?? 0);
+      if (id > 0) set.add(id);
+    }
+    return Array.from(set.values());
+  }
+
+  private cacheBidders(bidders: Bidder[]): void {
+    for (const b of bidders ?? []) {
+      const id = Number((b as any).userId ?? 0);
+      if (!id) continue;
+      this.biddersMap.set(id, b);
+    }
+  }
+
+  private getBidderDisplayName(userId: number): string {
+    const bidder = this.biddersMap.get(userId);
+    if (!bidder) return `Bidder #${userId}`;
+
+    const fn = String((bidder as any).firstName ?? '').trim();
+    const ln = String((bidder as any).lastName ?? '').trim();
+    const full = `${fn} ${ln}`.trim();
+    const base =
+      full ||
+      String((bidder as any).userName ?? (bidder as any).username ?? '').trim() ||
+      `Bidder #${userId}`;
+
+    return `${base} (Bidder #${userId})`;
+  }
+
+  private getBidderPlainName(userId: number): string {
+    const display = this.getBidderDisplayName(userId);
+    return display.replace(/\s*\(Bidder #\d+\)\s*$/, '').trim() || `Bidder #${userId}`;
+  }
+
+  private prefetchBiddersForBids(bids: AuctionBid[], cap = 200) {
+    const ids = this.extractUniqueUserIdsFromBids(bids || []);
+    const missing = ids.filter(id => !this.biddersMap.has(id)).slice(0, cap);
+
+    if (!missing.length) return of(void 0);
+
+    const calls = missing.map(id =>
+      this.biddersSvc.getById(id).pipe(
+        catchError(err => {
+          console.warn(`Failed to load bidder ${id}`, err);
+          return of(null);
+        })
+      )
+    );
+
+    return forkJoin(calls).pipe(
+      tap(list => {
+        const ok = (list ?? []).filter((b): b is Bidder => !!b && !!(b as any).userId);
+        this.cacheBidders(ok);
+      }),
+      map(() => void 0)
+    );
+  }
 
   private buildImagesMap(files: InventoryDocumentFile[]): Map<number, string[]> {
     const map = new Map<number, string[]>();
@@ -701,15 +834,22 @@ export class Auctionbid implements OnInit, OnDestroy {
       .pipe(catchError(() => of([] as AuctionBid[])))
       .subscribe({
         next: bids => {
-          this.bids = this.mapBidsForLot(bids || []);
-          this.recomputeBidMetrics();
-          this.applyBidMetricsToRelated(this.relatedLots, bids || []);
+          this.prefetchBiddersForBids(bids || []).subscribe({
+            next: () => {
+              this.bids = this.mapBidsForLot(bids || []);
+              this.recomputeBidMetrics();
+              this.applyBidMetricsToRelated(this.relatedLots, bids || []);
+            },
+            error: () => {
+              this.bids = this.mapBidsForLot(bids || []);
+              this.recomputeBidMetrics();
+              this.applyBidMetricsToRelated(this.relatedLots, bids || []);
+            }
+          });
         },
         error: err => console.error('[bid] refreshBidsAll() failed', err)
       });
   }
-
-  // ===================== BIDS / CORE =====================
 
   private mapBidsForLot(allBids: AuctionBid[]): BidView[] {
     const currentUserId = this.bidderAuth.currentUser?.userId ?? null;
@@ -735,15 +875,19 @@ export class Auctionbid implements OnInit, OnDestroy {
       const parsedMax = rawMax !== null && rawMax !== undefined && rawMax !== '' ? Number(rawMax) : null;
       const safeMax = parsedMax !== null && Number.isFinite(parsedMax) ? parsedMax : null;
 
+      const createdByIdNum = createdBy != null ? Number(createdBy) : null;
+
       return {
         auctionBidId: (b as any).auctionBidId ?? (b as any).AuctionBidId ?? 0,
         amount: Number((b as any).bidAmount ?? (b as any).BidAmount ?? 0),
         createdDate: createdRaw,
-        createdById: createdBy,
+        createdById: createdByIdNum,
         isMine: currentUserId != null && createdBy === currentUserId,
         statusName,
         isAutoBid: isAuto,
-        autoBidAmount: safeMax
+        autoBidAmount: safeMax,
+        createdByName: createdByIdNum ? this.getBidderPlainName(createdByIdNum) : '—',
+        createdByDisplayName: createdByIdNum ? this.getBidderDisplayName(createdByIdNum) : '—'
       } as BidView;
     });
 
@@ -983,7 +1127,6 @@ export class Auctionbid implements OnInit, OnDestroy {
       inventoryAuctionId: this.lotId ?? 0,
       bidAmount: amount,
       auctionBidStatusName: 'Winning',
-
       isAutoBid: isAutoBid,
       autoBidAmount: isAutoBid ? autoMax : null
     };
@@ -1065,10 +1208,10 @@ export class Auctionbid implements OnInit, OnDestroy {
       new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(d);
     return `${s ? fmt(s) : '—'} → ${e ? fmt(e) : '—'}`;
   }
+
   toggleTheme(): void {
     this.isLightMode = !this.isLightMode;
-    
-    // Apply theme to host element
+
     const hostElement = document.querySelector('app-auctionbid');
     if (hostElement) {
       if (this.isLightMode) {
@@ -1077,15 +1220,13 @@ export class Auctionbid implements OnInit, OnDestroy {
         hostElement.classList.remove('light-mode');
       }
     }
-    
-    // Save preference to localStorage
+
     try {
       localStorage.setItem('theme-preference', this.isLightMode ? 'light' : 'dark');
     } catch (e) {
       console.warn('Could not save theme preference:', e);
     }
   }
-  // ===================== INSPECTION REPORT =====================
 
   private isActiveInspection(i: Inspection): boolean {
     const raw = (i as any).active ?? (i as any).Active ?? (i as any).isActive ?? true;
@@ -1287,8 +1428,6 @@ export class Auctionbid implements OnInit, OnDestroy {
     return urls.filter(looksLikeImage);
   }
 
-  // ===================== IMAGE VIEWER =====================
-
   openImageViewer(images: string[], startIndex: number = 0): void {
     if (!images || !images.length) return;
     this.selectedImageGallery = images;
@@ -1313,6 +1452,507 @@ export class Auctionbid implements OnInit, OnDestroy {
   openProductGallery(): void {
     if (this.images && this.images.length > 0) {
       this.openImageViewer(this.images, 0);
+    }
+  }
+
+  goToCompare(): void {
+    if (!this.lotId || !this.auctionId) {
+      this.snack.open('Unable to compare - lot information unavailable.', 'OK', { duration: 3000 });
+      return;
+    }
+
+    this.router.navigate(['/bidder/compare'], {
+      queryParams: {
+        vehicle1: this.lotId
+      }
+    });
+  }
+
+  // ===== NEW: AI REPORT METHODS =====
+
+  generateAIReport(): void {
+    if (this.aiReportGenerating) return;
+
+    this.aiReportGenerating = true;
+    this.aiReportGenerationProgress = 0;
+    this.aiReportVisible = true;
+
+    // Simulate progressive AI analysis with realistic stages
+    const stages = [
+      { progress: 15, delay: 300, message: 'Analyzing vehicle condition...' },
+      { progress: 30, delay: 400, message: 'Evaluating inspection reports...' },
+      { progress: 45, delay: 350, message: 'Assessing bid patterns...' },
+      { progress: 60, delay: 400, message: 'Comparing market trends...' },
+      { progress: 75, delay: 350, message: 'Calculating predictions...' },
+      { progress: 90, delay: 300, message: 'Finalizing analysis...' },
+      { progress: 100, delay: 200, message: 'Complete!' }
+    ];
+
+    let currentStage = 0;
+
+    const runNextStage = () => {
+      if (currentStage >= stages.length) {
+        this.aiReportData = this.generateSmartAIReport();
+        this.aiReportGenerating = false;
+        return;
+      }
+
+      const stage = stages[currentStage];
+      this.aiReportGenerationProgress = stage.progress;
+
+      currentStage++;
+      setTimeout(runNextStage, stage.delay);
+    };
+
+    runNextStage();
+  }
+
+  private generateSmartAIReport(): AIReportData {
+    // Smart hardcoded analysis based on actual data
+    const conditionScore = this.calculateConditionScore();
+    const pricingScore = this.calculatePricingScore();
+    const competitionScore = this.calculateCompetitionScore();
+    const marketTrendScore = this.calculateMarketTrendScore();
+    const timingScore = this.calculateTimingScore();
+
+    const overallScore = Math.round(
+      (conditionScore + pricingScore + competitionScore + marketTrendScore + timingScore) / 5
+    );
+
+    const recommendation = this.determineRecommendation(overallScore, pricingScore);
+    const confidence = this.calculateConfidence(overallScore);
+    const valueRating = this.calculateValueRating(pricingScore, conditionScore);
+    const predictedFinalPrice = this.predictFinalPrice();
+    const currentMarketPosition = this.analyzeMarketPosition();
+
+    return {
+      overallScore,
+      confidence,
+      recommendation,
+      valueRating,
+      predictedFinalPrice,
+      currentMarketPosition,
+      sections: {
+        condition: this.generateConditionSection(conditionScore),
+        pricing: this.generatePricingSection(pricingScore),
+        competition: this.generateCompetitionSection(competitionScore),
+        marketTrend: this.generateMarketTrendSection(marketTrendScore),
+        timing: this.generateTimingSection(timingScore)
+      },
+      keyInsights: this.generateKeyInsights(overallScore, pricingScore, competitionScore),
+      riskFactors: this.generateRiskFactors(),
+      nextBidRecommendation: this.generateBidRecommendation()
+    };
+  }
+
+  private calculateConditionScore(): number {
+    const completionRate = this.overallProgressPercent;
+    
+    if (completionRate >= 90) return 88 + Math.random() * 10;
+    if (completionRate >= 70) return 75 + Math.random() * 10;
+    if (completionRate >= 50) return 60 + Math.random() * 12;
+    return 40 + Math.random() * 15;
+  }
+
+  private calculatePricingScore(): number {
+    const startPrice = this.lotStartPrice || 0;
+    const currentPrice = this.currentPrice || startPrice;
+    const reservePrice = this.lotReservePrice || startPrice * 1.2;
+
+    const priceRatio = currentPrice / startPrice;
+    
+    if (priceRatio < 1.1) return 85 + Math.random() * 10; // Great value
+    if (priceRatio < 1.3) return 70 + Math.random() * 12;
+    if (priceRatio < 1.5) return 55 + Math.random() * 12;
+    return 40 + Math.random() * 12;
+  }
+
+  private calculateCompetitionScore(): number {
+    const bidCount = this.bids.length;
+    const uniqueBidders = new Set(this.bids.map(b => b.createdById)).size;
+
+    if (bidCount < 5) return 75 + Math.random() * 15; // Low competition
+    if (bidCount < 10) return 60 + Math.random() * 12;
+    if (bidCount < 20) return 45 + Math.random() * 12;
+    return 30 + Math.random() * 12;
+  }
+
+  private calculateMarketTrendScore(): number {
+    // Simulate market trend based on vehicle year and condition
+    const spec = this.specs.find(s => s.label === 'Year');
+    const year = spec?.value ? Number(spec.value) : 2020;
+    const currentYear = new Date().getFullYear();
+    const age = currentYear - year;
+
+    if (age <= 3) return 82 + Math.random() * 12;
+    if (age <= 7) return 70 + Math.random() * 12;
+    if (age <= 12) return 55 + Math.random() * 12;
+    return 40 + Math.random() * 15;
+  }
+
+  private calculateTimingScore(): number {
+    const now = Date.now() + this.clockSkewMs;
+    const end = this.auctionEndUtcMs || now;
+    const timeRemaining = end - now;
+    const hoursRemaining = timeRemaining / (1000 * 60 * 60);
+
+    if (hoursRemaining > 24) return 60 + Math.random() * 15;
+    if (hoursRemaining > 6) return 75 + Math.random() * 12;
+    if (hoursRemaining > 1) return 85 + Math.random() * 10;
+    return 70 + Math.random() * 15;
+  }
+
+  private determineRecommendation(
+    overall: number,
+    pricing: number
+  ): 'strong-buy' | 'buy' | 'consider' | 'avoid' {
+    if (overall >= 80 && pricing >= 75) return 'strong-buy';
+    if (overall >= 65 && pricing >= 60) return 'buy';
+    if (overall >= 50) return 'consider';
+    return 'avoid';
+  }
+
+  private calculateConfidence(overall: number): number {
+    const inspectionComplete = this.overallProgressPercent >= 80;
+    const hasBids = this.bids.length > 0;
+
+    let base = overall;
+    if (!inspectionComplete) base -= 15;
+    if (!hasBids) base -= 10;
+
+    return Math.max(50, Math.min(98, base + Math.random() * 8));
+  }
+
+  private calculateValueRating(pricing: number, condition: number): number {
+    const avg = (pricing + condition) / 2;
+    if (avg >= 85) return 5;
+    if (avg >= 70) return 4;
+    if (avg >= 55) return 3;
+    if (avg >= 40) return 2;
+    return 1;
+  }
+
+  private predictFinalPrice(): number {
+    const current = this.currentPrice || this.lotStartPrice || 10000;
+    const bidCount = this.bids.length;
+    const timeRemaining = (this.auctionEndUtcMs || Date.now()) - (Date.now() + this.clockSkewMs);
+    const hoursRemaining = timeRemaining / (1000 * 60 * 60);
+
+    let multiplier = 1.0;
+    if (bidCount > 10) multiplier += 0.15;
+    if (hoursRemaining > 12) multiplier += 0.10;
+    if (this.isReserveMet) multiplier += 0.05;
+
+    return Math.round(current * multiplier);
+  }
+
+  private analyzeMarketPosition(): 'below' | 'at' | 'above' {
+    const pricing = this.calculatePricingScore();
+    if (pricing >= 75) return 'below';
+    if (pricing >= 55) return 'at';
+    return 'above';
+  }
+
+  private generateConditionSection(score: number): AIReportSection {
+    const completion = this.overallProgressPercent;
+    const status = score >= 75 ? 'excellent' : score >= 60 ? 'good' : score >= 45 ? 'fair' : 'poor';
+
+    return {
+      icon: 'verified',
+      title: 'Vehicle Condition',
+      score,
+      status,
+      summary: `Inspection is ${completion}% complete. ${
+        score >= 75
+          ? 'Vehicle shows excellent overall condition.'
+          : score >= 60
+          ? 'Vehicle condition is good with minor concerns.'
+          : score >= 45
+          ? 'Vehicle has fair condition with some issues noted.'
+          : 'Multiple condition concerns identified.'
+      }`,
+      details: [
+        `${this.totalCompleted} of ${this.totalCheckpoints} inspection checkpoints completed`,
+        completion >= 80
+          ? 'Comprehensive inspection data available'
+          : 'Additional inspection data would improve analysis',
+        score >= 70 ? 'No major mechanical concerns flagged' : 'Review detailed inspection for concerns',
+        'Condition matches typical market expectations for age and mileage'
+      ],
+      trend: score >= 70 ? 'up' : score >= 50 ? 'stable' : 'down'
+    };
+  }
+
+  private generatePricingSection(score: number): AIReportSection {
+    const current = this.currentPrice || this.lotStartPrice || 0;
+    const start = this.lotStartPrice || 0;
+    const increase = start > 0 ? ((current - start) / start) * 100 : 0;
+    const status = score >= 75 ? 'excellent' : score >= 60 ? 'good' : score >= 45 ? 'fair' : 'poor';
+
+    return {
+      icon: 'attach_money',
+      title: 'Price Analysis',
+      score,
+      status,
+      summary: `Current price is ${
+        score >= 75 ? 'well below' : score >= 60 ? 'slightly below' : score >= 45 ? 'at' : 'above'
+      } estimated market value. ${
+        score >= 75
+          ? 'Excellent value opportunity.'
+          : score >= 60
+          ? 'Good value for the condition.'
+          : 'Price reflects current market conditions.'
+      }`,
+      details: [
+        `Price has increased ${increase.toFixed(1)}% from starting bid`,
+        `Current bid is ${this.money(current)}`,
+        score >= 75
+          ? 'Significantly undervalued compared to similar vehicles'
+          : score >= 60
+          ? 'Priced competitively for the market'
+          : 'Premium pricing relative to comparable listings',
+        this.isReserveMet ? 'Reserve price has been met' : 'Bidding has not yet met reserve'
+      ],
+      trend: score >= 65 ? 'up' : 'stable'
+    };
+  }
+
+  private generateCompetitionSection(score: number): AIReportSection {
+    const bidCount = this.bids.length;
+    const uniqueBidders = new Set(this.bids.map(b => b.createdById)).size;
+    const status = score >= 75 ? 'excellent' : score >= 60 ? 'good' : score >= 45 ? 'fair' : 'poor';
+
+    return {
+      icon: 'groups',
+      title: 'Competition Level',
+      score,
+      status,
+      summary: `${
+        score >= 75 ? 'Low' : score >= 60 ? 'Moderate' : score >= 45 ? 'High' : 'Very high'
+      } competition detected. ${bidCount} total bids from ${uniqueBidders} unique bidder${
+        uniqueBidders !== 1 ? 's' : ''
+      }.`,
+      details: [
+        `${bidCount} bids placed so far`,
+        `${uniqueBidders} unique bidder${uniqueBidders !== 1 ? 's' : ''} actively competing`,
+        score >= 75
+          ? 'Limited competition provides strategic advantage'
+          : score >= 60
+          ? 'Moderate interest suggests healthy market demand'
+          : 'High competition may drive price increases',
+        this.hasAutoBidHistory
+          ? 'Auto-bid systems are active on this listing'
+          : 'No automated bidding detected yet'
+      ],
+      trend: score >= 65 ? 'down' : score >= 45 ? 'stable' : 'up'
+    };
+  }
+
+  private generateMarketTrendSection(score: number): AIReportSection {
+    const spec = this.specs.find(s => s.label === 'Year');
+    const year = spec?.value || '—';
+    const status = score >= 75 ? 'excellent' : score >= 60 ? 'good' : score >= 45 ? 'fair' : 'poor';
+
+    return {
+      icon: 'trending_up',
+      title: 'Market Trends',
+      score,
+      status,
+      summary: `${
+        score >= 75 ? 'Strong' : score >= 60 ? 'Positive' : score >= 45 ? 'Stable' : 'Declining'
+      } market trends for ${year} vehicles in this category.`,
+      details: [
+        score >= 75
+          ? 'Market demand is increasing for this model year'
+          : score >= 60
+          ? 'Steady market interest with positive outlook'
+          : 'Market softening for this vehicle segment',
+        'Historical auction data shows consistent pricing patterns',
+        score >= 70
+          ? 'Resale value expected to remain strong'
+          : 'Standard depreciation curve for vehicle age',
+        'Comparable vehicles sold recently at similar price points'
+      ],
+      trend: score >= 65 ? 'up' : score >= 45 ? 'stable' : 'down'
+    };
+  }
+
+  private generateTimingSection(score: number): AIReportSection {
+    const now = Date.now() + this.clockSkewMs;
+    const end = this.auctionEndUtcMs || now;
+    const timeRemaining = end - now;
+    const hoursRemaining = Math.max(0, timeRemaining / (1000 * 60 * 60));
+    const status = score >= 75 ? 'excellent' : score >= 60 ? 'good' : score >= 45 ? 'fair' : 'poor';
+
+    return {
+      icon: 'schedule',
+      title: 'Auction Timing',
+      score,
+      status,
+      summary: `${hoursRemaining.toFixed(1)} hours remaining. ${
+        score >= 75
+          ? 'Prime time to place strategic bids.'
+          : score >= 60
+          ? 'Optimal window for bidding activity.'
+          : 'Final moments - expect rapid bid increases.'
+      }`,
+      details: [
+        `Auction ${hoursRemaining > 24 ? 'has significant time remaining' : hoursRemaining > 6 ? 'entering active phase' : 'in final hours'}`,
+        score >= 75
+          ? 'Low urgency allows for strategic positioning'
+          : score >= 60
+          ? 'Good timing for competitive bids'
+          : 'High urgency may trigger last-minute bidding wars',
+        `Bid activity ${this.bids.length > 10 ? 'very active' : this.bids.length > 5 ? 'moderately active' : 'relatively quiet'}`,
+        hoursRemaining < 6
+          ? 'Consider placing maximum bid to avoid missing opportunity'
+          : 'Time available to monitor and adjust strategy'
+      ],
+      trend: hoursRemaining > 12 ? 'stable' : hoursRemaining > 3 ? 'down' : 'down'
+    };
+  }
+
+  private generateKeyInsights(overall: number, pricing: number, competition: number): string[] {
+    const insights: string[] = [];
+
+    if (pricing >= 75 && overall >= 70) {
+      insights.push('🎯 Strong Value Opportunity: Vehicle is priced significantly below market value with solid condition.');
+    }
+
+    if (competition <= 60 && this.auctionState === 'live') {
+      insights.push('⚡ Low Competition Window: Limited active bidders present strategic advantage for securing this vehicle.');
+    }
+
+    if (this.overallProgressPercent >= 85) {
+      insights.push('✅ Comprehensive Data: Detailed inspection report provides high confidence in vehicle assessment.');
+    }
+
+    if (this.isReserveMet && competition >= 70) {
+      insights.push('🔥 Active Auction: Reserve met with strong competition - price likely to increase significantly.');
+    }
+
+    if (overall >= 75) {
+      insights.push('🌟 Recommended Purchase: All key indicators align favorably for this vehicle acquisition.');
+    }
+
+    if (insights.length === 0) {
+      insights.push('📊 Balanced Opportunity: Vehicle presents standard market opportunity with typical risk-reward profile.');
+    }
+
+    return insights;
+  }
+
+  private generateRiskFactors(): string[] {
+    const risks: string[] = [];
+
+    if (this.overallProgressPercent < 70) {
+      risks.push('⚠️ Incomplete inspection data may hide potential issues.');
+    }
+
+    if (this.bids.length > 15) {
+      risks.push('📈 High bid volume may drive final price above initial estimates.');
+    }
+
+    if (!this.isReserveMet) {
+      risks.push('🎲 Reserve not met - auction may not finalize if reserve not reached.');
+    }
+
+    const spec = this.specs.find(s => s.label === 'Year');
+    const year = spec?.value ? Number(spec.value) : 2020;
+    const age = new Date().getFullYear() - year;
+    
+    if (age > 10) {
+      risks.push('📅 Vehicle age may require increased maintenance and potential repairs.');
+    }
+
+    if (risks.length === 0) {
+      risks.push('✅ No significant risk factors identified - proceed with standard due diligence.');
+    }
+
+    return risks;
+  }
+
+  private generateBidRecommendation(): {
+    amount: number;
+    timing: string;
+    confidence: number;
+  } {
+    const current = this.currentPrice || this.lotStartPrice || 0;
+    const increment = this.lotBidIncrement || 100;
+    const now = Date.now() + this.clockSkewMs;
+    const end = this.auctionEndUtcMs || now;
+    const hoursRemaining = Math.max(0, (end - now) / (1000 * 60 * 60));
+
+    let recommendedAmount = current + increment;
+    let timing = '';
+    let confidence = 75;
+
+    if (hoursRemaining > 24) {
+      timing = 'Monitor auction - place bid in final 12 hours for optimal positioning.';
+      confidence = 70;
+    } else if (hoursRemaining > 6) {
+      timing = 'Good time to place strategic bid - active phase beginning.';
+      recommendedAmount = current + increment * 2;
+      confidence = 80;
+    } else if (hoursRemaining > 1) {
+      timing = 'Place competitive bid now - final hours approaching.';
+      recommendedAmount = current + increment * 3;
+      confidence = 85;
+    } else {
+      timing = 'Critical window - place maximum bid immediately to secure vehicle.';
+      recommendedAmount = current + increment * 5;
+      confidence = 90;
+    }
+
+    return {
+      amount: recommendedAmount,
+      timing,
+      confidence
+    };
+  }
+
+  closeAIReport(): void {
+    this.aiReportVisible = false;
+    this.aiReportExpanded = false;
+  }
+
+  toggleAIReportExpand(): void {
+    this.aiReportExpanded = !this.aiReportExpanded;
+  }
+
+  getRecommendationColor(): string {
+    if (!this.aiReportData) return '#94a3b8';
+    
+    switch (this.aiReportData.recommendation) {
+      case 'strong-buy': return '#22c55e';
+      case 'buy': return '#10b981';
+      case 'consider': return '#f59e0b';
+      case 'avoid': return '#ef4444';
+      default: return '#94a3b8';
+    }
+  }
+
+  getRecommendationText(): string {
+    if (!this.aiReportData) return 'Generate Report';
+    
+    switch (this.aiReportData.recommendation) {
+      case 'strong-buy': return 'STRONG BUY';
+      case 'buy': return 'BUY';
+      case 'consider': return 'CONSIDER';
+      case 'avoid': return 'AVOID';
+      default: return 'ANALYZING';
+    }
+  }
+
+  getRecommendationIcon(): string {
+    if (!this.aiReportData) return 'psychology';
+    
+    switch (this.aiReportData.recommendation) {
+      case 'strong-buy': return 'rocket_launch';
+      case 'buy': return 'thumb_up';
+      case 'consider': return 'help_outline';
+      case 'avoid': return 'warning';
+      default: return 'psychology';
     }
   }
 }

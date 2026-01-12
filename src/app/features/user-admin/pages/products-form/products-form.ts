@@ -1,12 +1,22 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+  AbstractControl
+} from '@angular/forms';
+
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatSelectModule } from '@angular/material/select';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltip } from '@angular/material/tooltip';
 
 import { Product } from '../../../../models/product.model';
 import { Make } from '../../../../models/make.model';
@@ -24,7 +34,7 @@ type Mode = 'create' | 'edit';
 
 export type ProductFormResult =
   | { action: 'create'; payload: Product }
-  | { action: 'edit';   payload: Product };
+  | { action: 'edit'; payload: Product };
 
 @Component({
   selector: 'app-products-form',
@@ -32,28 +42,30 @@ export type ProductFormResult =
   imports: [
     CommonModule,
     ReactiveFormsModule,
+
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
     MatButtonModule,
     MatCardModule,
-    MatDialogModule
+    MatDialogModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatTooltip
   ],
   templateUrl: './products-form.html',
   styleUrls: ['./products-form.scss']
 })
-export class ProductsForm implements OnInit {
+export class ProductsForm implements OnInit, AfterViewInit {
   form!: FormGroup;
   mode: Mode;
 
-  
   makes: Make[] = [];
   modelsAll: Model[] = [];
   modelsFiltered: Model[] = [];
   years: Year[] = [];
   categories: Category[] = [];
 
-  
   loadingMakes = false;
   loadingModels = false;
   loadingYears = false;
@@ -73,33 +85,33 @@ export class ProductsForm implements OnInit {
   }
 
   ngOnInit(): void {
-    
     this.form = this.fb.group({
       productId: [0],
-      displayName: ['', [Validators.required, Validators.maxLength(150)]],
-      makeId: [null, Validators.required],
-      modelId: [null, Validators.required],
-      yearId: [null, Validators.required],
-      categoryId: [null, Validators.required]
+
+      displayName: ['', [Validators.required, Validators.maxLength(150), this.noWhitespaceValidator]],
+      makeId: [null, [Validators.required]],
+      modelId: [null, [Validators.required]],
+      yearId: [null, [Validators.required]],
+      categoryId: [null, [Validators.required]]
     });
 
-    
+    // Load dropdowns
     this.loadMakes();
     this.loadModels();
     this.loadYears();
     this.loadCategories();
 
-    
+    // Filter models by make
     this.form.get('makeId')!.valueChanges.subscribe((makeId: number | null) => {
       this.filterModels(makeId);
-      
+
       const currentModelId = this.form.get('modelId')!.value;
       if (currentModelId && !this.modelsFiltered.some(m => (m as any).modelId === currentModelId)) {
         this.form.get('modelId')!.setValue(null);
       }
     });
 
-    
+    // Patch edit data
     if (this.mode === 'edit' && this.data.initialData) {
       const r = this.data.initialData;
       this.form.patchValue({
@@ -110,15 +122,33 @@ export class ProductsForm implements OnInit {
         yearId: r.yearId ?? null,
         categoryId: r.categoryId ?? null
       });
-      
+
       this.filterModels(r.makeId ?? null);
     }
+  }
+
+  ngAfterViewInit(): void {
+    // Add staggered reveal animation to form fields (same as UsersForm)
+    setTimeout(() => {
+      const fields = document.querySelectorAll('.form-field');
+      fields.forEach((field, index) => {
+        (field as HTMLElement).style.animationDelay = `${index * 0.05}s`;
+        field.classList.add('field-reveal');
+      });
+    }, 100);
+  }
+
+  private noWhitespaceValidator(control: AbstractControl): { [key: string]: any } | null {
+    const isWhitespace = (control.value || '').trim().length === 0;
+    return !isWhitespace ? null : { whitespace: true };
   }
 
   private loadMakes(): void {
     this.loadingMakes = true;
     this.makesSvc.getList().subscribe({
-      next: (list) => (this.makes = list ?? []),
+      next: (list) => {
+        this.makes = [...(list ?? [])].sort((a, b) => (a.makeName ?? '').localeCompare(b.makeName ?? ''));
+      },
       error: () => (this.makes = []),
       complete: () => (this.loadingMakes = false)
     });
@@ -128,8 +158,8 @@ export class ProductsForm implements OnInit {
     this.loadingModels = true;
     this.modelsSvc.getList().subscribe({
       next: (list) => {
-        this.modelsAll = list ?? [];
-        
+        this.modelsAll = [...(list ?? [])].sort((a, b) => (a.modelName ?? '').localeCompare(b.modelName ?? ''));
+
         const makeId = this.form?.get('makeId')?.value ?? null;
         this.filterModels(makeId);
       },
@@ -144,7 +174,9 @@ export class ProductsForm implements OnInit {
   private loadYears(): void {
     this.loadingYears = true;
     this.yearsSvc.getList().subscribe({
-      next: (list) => (this.years = list ?? []),
+      next: (list) => {
+        this.years = [...(list ?? [])].sort((a, b) => (a.yearName ?? '').localeCompare(b.yearName ?? ''));
+      },
       error: () => (this.years = []),
       complete: () => (this.loadingYears = false)
     });
@@ -153,7 +185,9 @@ export class ProductsForm implements OnInit {
   private loadCategories(): void {
     this.loadingCategories = true;
     this.categoriesSvc.getList().subscribe({
-      next: (list) => (this.categories = list ?? []),
+      next: (list) => {
+        this.categories = [...(list ?? [])].sort((a, b) => (a.categoryName ?? '').localeCompare(b.categoryName ?? ''));
+      },
       error: () => (this.categories = []),
       complete: () => (this.loadingCategories = false)
     });
@@ -164,30 +198,30 @@ export class ProductsForm implements OnInit {
       this.modelsFiltered = this.modelsAll.slice();
       return;
     }
-    
     this.modelsFiltered = this.modelsAll.filter((m: any) => m.makeId === makeId);
   }
 
   onSubmit(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
 
     const v = this.form.getRawValue();
     const currentUserId = this.auth.currentUser?.userId ?? null;
 
     const payload: Product = {
       productId: v.productId,
-      displayName: (v.displayName ?? '').trim(),
+      displayName: v.displayName?.trim(),
       makeId: v.makeId,
       modelId: v.modelId,
       yearId: v.yearId,
       categoryId: v.categoryId,
 
-      
       createdById: this.mode === 'create' ? currentUserId : null,
       createdDate: null,
       modifiedById: currentUserId ?? null,
-      modifiedDate: null,
-      
+      modifiedDate: null
     } as Product;
 
     this.dialogRef.close(
@@ -199,5 +233,27 @@ export class ProductsForm implements OnInit {
 
   onCancel(): void {
     this.dialogRef.close();
+  }
+
+  get dialogTitle(): string {
+    return this.mode === 'edit' ? 'Edit Product' : 'Create New Product';
+  }
+
+  get submitButtonText(): string {
+    return this.mode === 'edit' ? 'Update Product' : 'Create Product';
+  }
+
+  getErrorMessage(fieldName: string): string {
+    const control = this.form.get(fieldName);
+    if (!control || !control.errors || !control.touched) return '';
+
+    if (control.hasError('required')) return 'This field is required';
+    if (control.hasError('maxlength')) {
+      const maxLength = control.errors['maxlength'].requiredLength;
+      return `Must not exceed ${maxLength} characters`;
+    }
+    if (control.hasError('whitespace')) return 'Cannot be only whitespace';
+
+    return 'Invalid value';
   }
 }

@@ -1,51 +1,83 @@
-<form class="dialog-form" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
-  <!-- Header -->
-  <div class="header">
-    <div class="title">
-      <h2>{{ mode === 'edit' ? 'Edit model' : 'Create model' }}</h2>
-      <p class="sub">Fill in the details below. Fields marked * are required.</p>
+<form class="model-form-dialog" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
+  <!-- Honeypots to prevent autofill -->
+  <input type="text" autocomplete="username" tabindex="-1" aria-hidden="true"
+         style="position:absolute;left:-9999px;width:0;height:0;opacity:0;" />
+  <input type="password" autocomplete="current-password" tabindex="-1" aria-hidden="true"
+         style="position:absolute;left:-9999px;width:0;height:0;opacity:0;" />
+
+  <!-- Dialog Header -->
+  <div class="dialog-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <mat-icon>{{ mode === 'edit' ? 'edit' : 'add_circle' }}</mat-icon>
+      </div>
+      <div class="header-text">
+        <h2 class="dialog-title">{{ dialogTitle }}</h2>
+        <p class="dialog-subtitle">
+          {{ mode === 'edit' ? 'Update model information below' : 'Fill in the details to create a new model' }}
+        </p>
+      </div>
     </div>
+
+    <button type="button" mat-icon-button class="close-btn" (click)="onCancel()" matTooltip="Close">
+      <mat-icon>close</mat-icon>
+    </button>
   </div>
 
-  <!-- Body -->
-  <mat-dialog-content class="body">
-    <div class="sheet">
-      <div class="grid">
+  <!-- Dialog Body -->
+  <mat-dialog-content class="dialog-body">
+    <!-- Model Information Section -->
+    <div class="form-section">
+      <div class="section-header">
+        <mat-icon>directions_car</mat-icon>
+        <h3>Model Information</h3>
+      </div>
 
+      <div class="form-grid">
         <!-- Make selector -->
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="outline" class="form-field">
           <mat-label>Make *</mat-label>
+          <mat-icon matPrefix>factory</mat-icon>
+
           <mat-select formControlName="makeId" [disabled]="loadingMakes">
             <mat-option *ngFor="let m of makes" [value]="m.makeId">
-              {{ m.makeName }} (ID {{ m.makeId }})
+              {{ m.makeName }} <span class="role-code">(ID {{ m.makeId }})</span>
             </mat-option>
           </mat-select>
-          <mat-error *ngIf="form.get('makeId')?.hasError('required')">
-            Make is required
-          </mat-error>
+
+          <mat-hint *ngIf="loadingMakes">Loading makes...</mat-hint>
+          <mat-hint *ngIf="!loadingMakes && !makes.length">No makes available</mat-hint>
+          <mat-error>{{ getErrorMessage('makeId') }}</mat-error>
         </mat-form-field>
 
         <!-- Model name -->
-        <mat-form-field appearance="outline">
-          <mat-label>Model name *</mat-label>
-          <input matInput formControlName="modelName" autocomplete="off" autocapitalize="none" />
-          <mat-error *ngIf="form.get('modelName')?.hasError('required')">
-            Model name is required
-          </mat-error>
-          <mat-error *ngIf="form.get('modelName')?.hasError('maxlength')">
-            Max 100 characters
-          </mat-error>
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Model Name *</mat-label>
+          <mat-icon matPrefix>badge</mat-icon>
+          <input
+            matInput
+            formControlName="modelName"
+            autocomplete="off"
+            autocapitalize="words"
+            spellcheck="false"
+          />
+          <mat-error>{{ getErrorMessage('modelName') }}</mat-error>
+          <mat-hint>Example: Corolla, Civic, 3 Series</mat-hint>
         </mat-form-field>
-
       </div>
     </div>
   </mat-dialog-content>
 
-  <!-- Actions -->
-  <mat-dialog-actions align="end" class="actions">
-    <button mat-stroked-button type="button" class="btn-cancel" (click)="onCancel()">Cancel</button>
-    <button mat-flat-button type="submit" class="btn-primary" [disabled]="form.invalid">
-      {{ mode === 'edit' ? 'Update' : 'Create' }}
+  <!-- Dialog Actions -->
+  <mat-dialog-actions class="dialog-actions">
+    <button type="button" mat-stroked-button class="action-btn cancel-btn" (click)="onCancel()">
+      <mat-icon>close</mat-icon>
+      <span>Cancel</span>
+    </button>
+
+    <button type="submit" mat-flat-button class="action-btn submit-btn" [disabled]="form.invalid">
+      <mat-icon>{{ mode === 'edit' ? 'check' : 'add' }}</mat-icon>
+      <span>{{ submitButtonText }}</span>
     </button>
   </mat-dialog-actions>
 </form>

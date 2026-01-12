@@ -1,49 +1,75 @@
-<form class="dialog-form" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
-  <!-- Header -->
-  <div class="header">
-    <div class="title">
-      <h2>{{ mode === 'edit' ? 'Edit Role' : 'Create Role' }}</h2>
-      <p class="sub">Fill in the details below. Fields marked * are required.</p>
+<!-- roles-form.html -->
+<form class="role-form-dialog" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
+  <!-- Honeypots to prevent autofill -->
+  <input type="text" autocomplete="username" tabindex="-1" aria-hidden="true"
+         style="position:absolute;left:-9999px;width:0;height:0;opacity:0;" />
+  <input type="password" autocomplete="current-password" tabindex="-1" aria-hidden="true"
+         style="position:absolute;left:-9999px;width:0;height:0;opacity:0;" />
+
+  <!-- Dialog Header (MATCH USERS-FORM) -->
+  <div class="dialog-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <mat-icon>{{ mode === 'edit' ? 'edit' : 'add_circle' }}</mat-icon>
+      </div>
+      <div class="header-text">
+        <h2 class="dialog-title">{{ dialogTitle }}</h2>
+        <p class="dialog-subtitle">
+          {{ mode === 'edit' ? 'Update role information below' : 'Fill in the details to create a new role' }}
+        </p>
+      </div>
     </div>
+
+    <button type="button" mat-icon-button class="close-btn" (click)="onCancel()" matTooltip="Close">
+      <mat-icon>close</mat-icon>
+    </button>
   </div>
 
-  <!-- Scrollable body -->
-  <mat-dialog-content class="body">
-    <div class="sheet">
-      <div class="grid">
+  <!-- Dialog Body (MATCH USERS-FORM) -->
+  <mat-dialog-content class="dialog-body">
+    <!-- Role Information Section -->
+    <div class="form-section">
+      <div class="section-header">
+        <mat-icon>badge</mat-icon>
+        <h3>Role Information</h3>
+      </div>
 
-        <!-- Row 1 -->
-        <mat-form-field appearance="outline">
-          <mat-label>Role name</mat-label>
-          <input matInput formControlName="roleName" autocomplete="off" autocapitalize="none" />
-          <mat-error *ngIf="form.get('roleName')?.hasError('required')">
-            Role name is required
-          </mat-error>
+      <div class="form-grid">
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Role Name *</mat-label>
+          <mat-icon matPrefix>id_card</mat-icon>
+          <input matInput formControlName="roleName" autocomplete="off" autocapitalize="words" />
+          <mat-error>{{ getErrorMessage('roleName') }}</mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="outline">
-          <mat-label>Role code</mat-label>
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Role Code *</mat-label>
+          <mat-icon matPrefix>vpn_key</mat-icon>
           <input matInput formControlName="roleCode" autocomplete="off" autocapitalize="characters" />
-          <mat-error *ngIf="form.get('roleCode')?.hasError('required')">
-            Role code is required
-          </mat-error>
+          <mat-error>{{ getErrorMessage('roleCode') }}</mat-error>
         </mat-form-field>
 
-        <!-- Row 2 -->
-        <mat-form-field appearance="outline" class="full">
+        <mat-form-field appearance="outline" class="form-field full-width">
           <mat-label>Description</mat-label>
+          <mat-icon matPrefix>notes</mat-icon>
           <input matInput formControlName="description" autocomplete="off" />
+          <mat-error>{{ getErrorMessage('description') }}</mat-error>
+          <mat-hint>Optional — describe what this role can access</mat-hint>
         </mat-form-field>
-
       </div>
     </div>
   </mat-dialog-content>
 
-  <!-- Actions -->
-  <mat-dialog-actions align="end" class="actions">
-    <button mat-stroked-button type="button" class="btn-cancel" (click)="onCancel()">Cancel</button>
-    <button mat-flat-button type="submit" class="btn-primary" [disabled]="form.invalid">
-      {{ mode === 'edit' ? 'Update' : 'Create' }}
+  <!-- Dialog Actions (MATCH USERS-FORM) -->
+  <mat-dialog-actions class="dialog-actions">
+    <button type="button" mat-stroked-button class="action-btn cancel-btn" (click)="onCancel()">
+      <mat-icon>close</mat-icon>
+      <span>Cancel</span>
+    </button>
+
+    <button type="submit" mat-flat-button class="action-btn submit-btn" [disabled]="form.invalid">
+      <mat-icon>{{ mode === 'edit' ? 'check' : 'add' }}</mat-icon>
+      <span>{{ submitButtonText }}</span>
     </button>
   </mat-dialog-actions>
 </form>

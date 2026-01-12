@@ -1,12 +1,15 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltip } from '@angular/material/tooltip';
 
 import { Email } from '../../../../models/email.model';
 import { AuthService } from '../../../../services/auth';
@@ -28,12 +31,15 @@ export type EmailFormResult =
     MatButtonModule,
     MatCardModule,
     MatSlideToggleModule,
-    MatDialogModule
+    MatDialogModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatTooltip
   ],
   templateUrl: './emails-form.html',
   styleUrls: ['./emails-form.scss']
 })
-export class EmailsForm implements OnInit {
+export class EmailsForm implements OnInit, AfterViewInit {
   form!: FormGroup;
   mode: Mode;
 
@@ -49,11 +55,14 @@ export class EmailsForm implements OnInit {
   ngOnInit(): void {
     this.form = this.fb.group({
       emailId: [0],
-      emailCode: ['', [Validators.required, Validators.maxLength(100)]],
-      emailSubject: ['', [Validators.required, Validators.maxLength(400)]],
-      emailTo: ['', [Validators.required, Validators.email]],
-      emailFrom: ['', [Validators.required, Validators.email]],
-      emailBody: ['', [Validators.required]],
+
+      emailCode: ['', [Validators.required, Validators.maxLength(100), this.noWhitespaceValidator]],
+      emailSubject: ['', [Validators.required, Validators.maxLength(400), this.noWhitespaceValidator]],
+
+      emailTo: ['', [Validators.required, Validators.email, Validators.maxLength(200)]],
+      emailFrom: ['', [Validators.required, Validators.email, Validators.maxLength(200)]],
+
+      emailBody: ['', [Validators.required, this.noWhitespaceValidator]],
       active: [true]
     });
 
@@ -71,8 +80,27 @@ export class EmailsForm implements OnInit {
     }
   }
 
+  ngAfterViewInit(): void {
+    // Add staggered reveal animation to form fields (same as UsersForm)
+    setTimeout(() => {
+      const fields = document.querySelectorAll('.form-field');
+      fields.forEach((field, index) => {
+        (field as HTMLElement).style.animationDelay = `${index * 0.05}s`;
+        field.classList.add('field-reveal');
+      });
+    }, 100);
+  }
+
+  private noWhitespaceValidator(control: AbstractControl): { [key: string]: any } | null {
+    const isWhitespace = (control.value || '').trim().length === 0;
+    return !isWhitespace ? null : { whitespace: true };
+  }
+
   onSubmit(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
 
     const v = this.form.getRawValue();
     const currentUserId = this.auth.currentUser?.userId ?? null;
@@ -102,5 +130,28 @@ export class EmailsForm implements OnInit {
 
   onCancel(): void {
     this.dialogRef.close();
+  }
+
+  get dialogTitle(): string {
+    return this.mode === 'edit' ? 'Edit Email' : 'Create New Email';
+  }
+
+  get submitButtonText(): string {
+    return this.mode === 'edit' ? 'Update Email' : 'Create Email';
+  }
+
+  getErrorMessage(fieldName: string): string {
+    const control = this.form.get(fieldName);
+    if (!control || !control.errors || !control.touched) return '';
+
+    if (control.hasError('required')) return 'This field is required';
+    if (control.hasError('email')) return 'Please enter a valid email address';
+    if (control.hasError('maxlength')) {
+      const maxLength = control.errors['maxlength'].requiredLength;
+      return `Must not exceed ${maxLength} characters`;
+    }
+    if (control.hasError('whitespace')) return 'Cannot be only whitespace';
+
+    return 'Invalid value';
   }
 }

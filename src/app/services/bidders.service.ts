@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Bidder,BidderStats } from '../models/bidder.model';
-import { AuthService } from '../services/auth'; 
+import { BidderAuthService } from '../services/bidderauth'; 
 
 
 
@@ -11,7 +11,7 @@ const API_BASE = 'http://localhost:5070/api';
 @Injectable({ providedIn: 'root' })
 export class BiddersService {
   private http = inject(HttpClient);
-  private auth = inject(AuthService);
+  private auth = inject(BidderAuthService);
   private base = `${API_BASE}/Bidders`;
 
   private authHeaders(): HttpHeaders {

@@ -1,0 +1,375 @@
+<div class="gmail-preview-container">
+  <!-- Loading State -->
+  <ng-container *ngIf="loading">
+    <div class="loading-overlay">
+      <div class="loading-content">
+        <div class="gmail-loader">
+          <div class="loader-bar"></div>
+        </div>
+        <p class="loading-text">Loading email preview...</p>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- Error State -->
+  <ng-container *ngIf="!loading && error">
+    <div class="error-container">
+      <div class="error-icon">
+        <mat-icon>error_outline</mat-icon>
+      </div>
+      <h2 class="error-title">Unable to load preview</h2>
+      <p class="error-message">{{ error }}</p>
+      <button class="error-btn" (click)="back()">
+        <mat-icon>arrow_back</mat-icon>
+        Return to Emails
+      </button>
+    </div>
+  </ng-container>
+
+  <!-- Gmail Interface -->
+  <ng-container *ngIf="!loading && email">
+    <!-- Preview Banner -->
+    <div class="preview-banner">
+      <div class="banner-left">
+        <mat-icon>visibility</mat-icon>
+        <span class="banner-text">Email Preview Mode</span>
+        <span class="banner-divider">|</span>
+        <span class="template-code">{{ templateLabel }}</span>
+      </div>
+      <div class="banner-right">
+        <button class="banner-btn" (click)="goToDetails()" matTooltip="View Email Details">
+          <mat-icon>edit_note</mat-icon>
+          <span>Edit Template</span>
+        </button>
+        <button class="banner-btn secondary" (click)="back()" matTooltip="Back to List">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Browser Chrome -->
+    <div class="browser-chrome">
+      <div class="browser-tabs">
+        <div class="browser-tab">
+          <img src="https://www.google.com/favicon.ico" alt="" class="tab-favicon">
+          <span class="tab-title">Replicate component code</span>
+          <button class="tab-close">×</button>
+        </div>
+        <div class="browser-tab">
+          <span class="tab-favicon color-tab"></span>
+          <span class="tab-title">100 Color Combinations To Infl...</span>
+          <button class="tab-close">×</button>
+        </div>
+        <div class="browser-tab">
+          <img src="https://claude.ai/favicon.ico" alt="" class="tab-favicon claude-icon">
+          <span class="tab-title">Claude</span>
+          <button class="tab-close">×</button>
+        </div>
+        <div class="browser-tab active">
+          <img src="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/gmail.ico" alt="" class="tab-favicon">
+          <span class="tab-title">{{ displaySubject }} - cod...</span>
+          <button class="tab-close">×</button>
+        </div>
+        <button class="new-tab-btn">+</button>
+      </div>
+      <div class="browser-controls">
+        <button class="window-btn minimize"></button>
+        <button class="window-btn maximize"></button>
+        <button class="window-btn close"></button>
+      </div>
+    </div>
+
+    <!-- Browser Address Bar -->
+    <div class="browser-toolbar">
+      <div class="toolbar-left">
+        <button class="nav-btn" disabled>
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <button class="nav-btn" disabled>
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+        <button class="nav-btn">
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </div>
+      <div class="address-bar">
+        <mat-icon class="lock-icon">lock</mat-icon>
+        <span class="address-text">mail.google.com/mail/u/0/?tab=rm&ogbl#inbox/FMfcgzQdzvxFGLxQRQTJjgwGLXgcBvjv</span>
+      </div>
+      <div class="toolbar-right">
+        <button class="toolbar-icon-btn">
+          <mat-icon>extension</mat-icon>
+        </button>
+        <button class="toolbar-icon-btn">
+          <mat-icon>star_border</mat-icon>
+        </button>
+        <div class="profile-avatar toolbar-avatar">A</div>
+        <button class="toolbar-icon-btn menu-btn">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Gmail App -->
+    <div class="gmail-app">
+      <!-- Gmail Header -->
+      <header class="gmail-header">
+        <div class="header-left">
+          <button class="menu-toggle" matTooltip="Main menu">
+            <mat-icon>menu</mat-icon>
+          </button>
+          <div class="gmail-logo">
+            <img src="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/logo_gmail_lockup_default_1x_r5.png" alt="Gmail" class="gmail-logo-img">
+          </div>
+        </div>
+
+        <div class="header-center">
+          <div class="search-bar">
+            <mat-icon class="search-icon">search</mat-icon>
+            <input type="text" placeholder="Search mail" class="search-input" readonly>
+            <button class="search-options" matTooltip="Show search options">
+              <mat-icon>tune</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <button class="header-icon-btn" matTooltip="Support">
+            <mat-icon>help_outline</mat-icon>
+          </button>
+          <button class="header-icon-btn" matTooltip="Settings">
+            <mat-icon>settings</mat-icon>
+          </button>
+          <button class="header-icon-btn" matTooltip="Google apps">
+            <mat-icon>apps</mat-icon>
+          </button>
+          <div class="profile-avatar header-avatar" [style.background-color]="'#1a73e8'">A</div>
+        </div>
+      </header>
+
+      <!-- Gmail Main Content -->
+      <div class="gmail-main">
+        <!-- Sidebar -->
+        <aside class="gmail-sidebar">
+          <button class="compose-btn">
+            <mat-icon>edit</mat-icon>
+            <span>Compose</span>
+          </button>
+
+          <nav class="sidebar-nav">
+            <a 
+              *ngFor="let item of sidebarItems; trackBy: trackBySidebarItem"
+              class="sidebar-item"
+              [class.active]="item.active"
+              [class.more-item]="item.label === 'More'"
+            >
+              <mat-icon class="sidebar-icon">{{ item.icon }}</mat-icon>
+              <span class="sidebar-label">{{ item.label }}</span>
+              <span class="sidebar-count" *ngIf="item.count">{{ item.count }}</span>
+            </a>
+          </nav>
+
+          <div class="sidebar-divider"></div>
+
+          <div class="sidebar-section">
+            <div class="section-header">
+              <span>Labels</span>
+              <button class="add-label-btn" matTooltip="Create new label">
+                <mat-icon>add</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <div class="sidebar-footer">
+            <button class="upgrade-btn">
+              <mat-icon>info</mat-icon>
+              <span>Upgrade</span>
+              <mat-icon class="arrow-icon">arrow_forward</mat-icon>
+            </button>
+          </div>
+        </aside>
+
+        <!-- Email View -->
+        <main class="email-view">
+          <!-- Email Toolbar -->
+          <div class="email-toolbar">
+            <div class="toolbar-actions-left">
+              <button class="action-btn" matTooltip="Back to Inbox" (click)="back()">
+                <mat-icon>arrow_back</mat-icon>
+              </button>
+              <button class="action-btn" matTooltip="Archive">
+                <mat-icon>archive</mat-icon>
+              </button>
+              <button class="action-btn" matTooltip="Report spam">
+                <mat-icon>report</mat-icon>
+              </button>
+              <button class="action-btn" matTooltip="Delete">
+                <mat-icon>delete</mat-icon>
+              </button>
+              <div class="toolbar-divider"></div>
+              <button class="action-btn" matTooltip="Mark as unread">
+                <mat-icon>markunread</mat-icon>
+              </button>
+              <button class="action-btn" matTooltip="Snooze">
+                <mat-icon>schedule</mat-icon>
+              </button>
+              <button class="action-btn" matTooltip="Add to Tasks">
+                <mat-icon>add_task</mat-icon>
+              </button>
+              <button class="action-btn" matTooltip="More">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+            </div>
+
+            <div class="toolbar-actions-right">
+              <span class="email-position">{{ emailCount.current }} of {{ emailCount.total }}</span>
+              <button class="action-btn" matTooltip="Newer">
+                <mat-icon>chevron_left</mat-icon>
+              </button>
+              <button class="action-btn" matTooltip="Older">
+                <mat-icon>chevron_right</mat-icon>
+              </button>
+              <button class="action-btn" [matMenuTriggerFor]="viewMenu" matTooltip="Toggle split pane mode">
+                <mat-icon>vertical_split</mat-icon>
+                <mat-icon class="dropdown-arrow">arrow_drop_down</mat-icon>
+              </button>
+              <mat-menu #viewMenu="matMenu">
+                <button mat-menu-item>No split</button>
+                <button mat-menu-item>Right of inbox</button>
+                <button mat-menu-item>Below inbox</button>
+              </mat-menu>
+            </div>
+          </div>
+
+          <!-- Email Content -->
+          <div class="email-content">
+            <!-- Subject Line -->
+            <div class="email-subject-row">
+              <h1 class="email-subject">{{ displaySubject }}</h1>
+              <div class="subject-labels">
+                <span class="label-chip inbox">Inbox</span>
+                <button class="label-remove">×</button>
+              </div>
+              <div class="subject-actions">
+                <button class="subject-action-btn" matTooltip="Print all">
+                  <mat-icon>print</mat-icon>
+                </button>
+                <button class="subject-action-btn" matTooltip="In new window">
+                  <mat-icon>open_in_new</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <!-- Sender Info -->
+            <div class="sender-row">
+              <div class="sender-avatar" [style.background-color]="avatarColor">
+                {{ avatarInitial }}
+              </div>
+              
+              <div class="sender-details">
+                <div class="sender-header">
+                  <span class="sender-name">{{ senderName }}</span>
+                  <span class="sender-email">&lt;{{ senderEmail }}&gt;</span>
+                </div>
+                <div class="recipient-info">
+                  <span class="to-label">to me</span>
+                  <mat-icon class="dropdown-icon">arrow_drop_down</mat-icon>
+                </div>
+              </div>
+
+              <div class="email-meta">
+                <span class="email-date">{{ emailTimestamp }}</span>
+                <div class="meta-actions">
+                  <button class="meta-btn" matTooltip="Not starred">
+                    <mat-icon>star_border</mat-icon>
+                  </button>
+                  <button class="meta-btn" matTooltip="Add reaction">
+                    <mat-icon>sentiment_satisfied_alt</mat-icon>
+                  </button>
+                  <button class="meta-btn" matTooltip="Reply">
+                    <mat-icon>reply</mat-icon>
+                  </button>
+                  <button class="meta-btn" matTooltip="More">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Email Body -->
+            <div class="email-body-wrapper">
+              <div class="email-body-container">
+                <div class="email-body-content" [innerHTML]="sanitizedEmailBody"></div>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        <!-- Right Sidebar (Google Apps) -->
+        <aside class="gmail-right-sidebar">
+          <button class="app-icon-btn" matTooltip="Calendar">
+            <img src="https://ssl.gstatic.com/calendar/images/dynamiclogo_2020q4/calendar_23_2x.png" alt="Calendar" class="app-icon">
+          </button>
+          <button class="app-icon-btn" matTooltip="Keep">
+            <mat-icon class="keep-icon">lightbulb</mat-icon>
+          </button>
+          <button class="app-icon-btn" matTooltip="Tasks">
+            <mat-icon class="tasks-icon">check_circle</mat-icon>
+          </button>
+          <button class="app-icon-btn" matTooltip="Contacts">
+            <mat-icon class="contacts-icon">person</mat-icon>
+          </button>
+          <div class="sidebar-spacer"></div>
+          <button class="app-icon-btn" matTooltip="Get Add-ons">
+            <mat-icon>add</mat-icon>
+          </button>
+          <button class="expand-btn" matTooltip="Expand side panel">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </aside>
+      </div>
+    </div>
+
+    <!-- Fake Taskbar -->
+    <div class="fake-taskbar">
+      <div class="taskbar-left">
+        <button class="start-btn">
+          <div class="windows-icon">
+            <div class="win-square"></div>
+            <div class="win-square"></div>
+            <div class="win-square"></div>
+            <div class="win-square"></div>
+          </div>
+        </button>
+        <div class="search-box">
+          <mat-icon>search</mat-icon>
+          <span>Search</span>
+        </div>
+      </div>
+      <div class="taskbar-center">
+        <button class="taskbar-app active">
+          <mat-icon>folder</mat-icon>
+        </button>
+        <button class="taskbar-app">
+          <mat-icon>language</mat-icon>
+        </button>
+      </div>
+      <div class="taskbar-right">
+        <button class="system-tray-btn">
+          <mat-icon>keyboard_arrow_up</mat-icon>
+        </button>
+        <div class="system-icons">
+          <span class="tray-text">ENG</span>
+          <span class="tray-text">US</span>
+        </div>
+        <div class="datetime">
+          <span class="time">{{ currentTime }}</span>
+          <span class="date">{{ currentDate }}</span>
+        </div>
+        <button class="notification-btn">
+          <mat-icon>notifications_none</mat-icon>
+        </button>
+      </div>
+    </div>
+  </ng-container>
+</div>

@@ -1,0 +1,419 @@
+<div class="leaderboard-stage" *ngIf="!loading; else loadingState">
+  <!-- THEME TOGGLE (FLOATING) -->
+  <button class="theme-toggle-fab" (click)="toggleTheme()" [attr.aria-label]="isLightMode ? 'Switch to dark mode' : 'Switch to light mode'">
+    <mat-icon>{{ isLightMode ? 'dark_mode' : 'light_mode' }}</mat-icon>
+  </button>
+
+  <!-- HERO SECTION WITH 3D DEPTH -->
+  <header class="hero-stage">
+    <div class="hero-bg-layers">
+      <div class="bg-layer layer-1"></div>
+      <div class="bg-layer layer-2"></div>
+      <div class="bg-layer layer-3"></div>
+    </div>
+
+    <div class="hero-shell">
+      <!-- Breadcrumbs -->
+      <div class="hero-crumbs">
+        <a class="crumb" routerLink="/bidder/auctions">
+          <span class="dot"></span>
+          Auctions
+        </a>
+        <span class="sep"></span>
+        <span class="crumb current">
+          <span class="dot"></span>
+          Leaderboard
+        </span>
+      </div>
+
+      <!-- Main Hero Content -->
+      <div class="hero-main">
+        <div class="hero-kicker">
+          <span class="k-chip">
+            <mat-icon>leaderboard</mat-icon>
+            GLOBAL RANKINGS
+          </span>
+        </div>
+
+        <h1 class="hero-title">
+          <span class="title-line">Elite Bidders</span>
+          <span class="title-line gradient">Powered by AI</span>
+        </h1>
+
+        <p class="hero-desc">
+          Celebrating the most strategic bidders leveraging AlgoX AI Auto-Bidding technology to dominate auctions worldwide
+        </p>
+
+        <!-- Global Stats -->
+        <div class="hero-stats">
+          <div class="stat-card">
+            <div class="stat-icon">
+              <mat-icon>groups</mat-icon>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value">{{ totalBidders }}</div>
+              <div class="stat-label">Active Bidders</div>
+            </div>
+          </div>
+
+          <div class="stat-card ai-highlight">
+            <div class="stat-icon">
+              <mat-icon>auto_awesome</mat-icon>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value">{{ totalAiBidders }}</div>
+              <div class="stat-label">AI-Powered Bidders</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">
+              <mat-icon>trending_up</mat-icon>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value">{{ totalBidsPlaced }}</div>
+              <div class="stat-label">Total Bids</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon">
+              <mat-icon>psychology</mat-icon>
+            </div>
+            <div class="stat-content">
+              <div class="stat-value">{{ totalAiActivations }}</div>
+              <div class="stat-label">AI Activations</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- CATEGORY SELECTOR -->
+  <section class="category-selector">
+    <div class="selector-shell">
+      <h2 class="selector-title">Choose Your Arena</h2>
+      <div class="category-grid">
+        <button 
+          class="category-card" 
+          [class.active]="activeCategory === 'ai'"
+          (click)="switchCategory('ai')"
+        >
+          <div class="card-glow"></div>
+          <div class="card-icon ai">
+            <mat-icon>auto_awesome</mat-icon>
+          </div>
+          <div class="card-text">
+            <div class="card-title">AI Masters</div>
+            <div class="card-desc">Strategic automation leaders</div>
+          </div>
+          <div class="card-badge" *ngIf="activeCategory === 'ai'">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+        </button>
+
+        <button 
+          class="category-card" 
+          [class.active]="activeCategory === 'bids'"
+          (click)="switchCategory('bids')"
+        >
+          <div class="card-glow"></div>
+          <div class="card-icon bids">
+            <mat-icon>gavel</mat-icon>
+          </div>
+          <div class="card-text">
+            <div class="card-title">Most Active</div>
+            <div class="card-desc">Highest bid volume</div>
+          </div>
+          <div class="card-badge" *ngIf="activeCategory === 'bids'">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+        </button>
+
+        <button 
+          class="category-card" 
+          [class.active]="activeCategory === 'wins'"
+          (click)="switchCategory('wins')"
+        >
+          <div class="card-glow"></div>
+          <div class="card-icon wins">
+            <mat-icon>emoji_events</mat-icon>
+          </div>
+          <div class="card-text">
+            <div class="card-title">Champions</div>
+            <div class="card-desc">Most auctions won</div>
+          </div>
+          <div class="card-badge" *ngIf="activeCategory === 'wins'">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+        </button>
+
+        <button 
+          class="category-card" 
+          [class.active]="activeCategory === 'amount'"
+          (click)="switchCategory('amount')"
+        >
+          <div class="card-glow"></div>
+          <div class="card-icon amount">
+            <mat-icon>attach_money</mat-icon>
+          </div>
+          <div class="card-text">
+            <div class="card-title">High Rollers</div>
+            <div class="card-desc">Biggest single bids</div>
+          </div>
+          <div class="card-badge" *ngIf="activeCategory === 'amount'">
+            <mat-icon>check_circle</mat-icon>
+          </div>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN LEADERBOARD -->
+  <section class="leaderboard-main">
+    <div class="leaderboard-shell">
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="currentLeaders.length === 0">
+        <mat-icon>leaderboard</mat-icon>
+        <h3>No rankings available yet</h3>
+        <p>Be the first to dominate this leaderboard!</p>
+      </div>
+
+      <!-- Top 3 Podium (3D) -->
+      <div class="podium-stage" *ngIf="currentLeaders.length > 0">
+        <div class="podium-title">
+          <mat-icon>military_tech</mat-icon>
+          <span>Hall of Fame</span>
+        </div>
+
+        <div class="podium-grid">
+          <!-- 2nd Place -->
+          <div class="podium-card rank-2" *ngIf="currentLeaders[1]">
+            <div class="podium-rank">
+              <mat-icon [style.color]="getRankColor(2)">{{ getRankIcon(2) }}</mat-icon>
+              <span class="rank-num">#2</span>
+            </div>
+            <div class="podium-avatar">
+              <div class="avatar-circle">
+                <mat-icon>person</mat-icon>
+              </div>
+              <div class="avatar-badge silver">
+                <mat-icon>workspace_premium</mat-icon>
+              </div>
+            </div>
+            <div class="podium-name">{{ currentLeaders[1].displayName }}</div>
+            <div class="podium-stats">
+              <div class="stat" *ngIf="activeCategory === 'bids'">
+                <span class="stat-val">{{ currentLeaders[1].stats.totalBids }}</span>
+                <span class="stat-lbl">Bids</span>
+              </div>
+              <div class="stat" *ngIf="activeCategory === 'wins'">
+                <span class="stat-val">{{ currentLeaders[1].stats.totalWins }}</span>
+                <span class="stat-lbl">Wins</span>
+              </div>
+              <div class="stat" *ngIf="activeCategory === 'amount'">
+                <span class="stat-val">{{ money(currentLeaders[1].stats.highestBid) }}</span>
+                <span class="stat-lbl">Top Bid</span>
+              </div>
+              <div class="stat" *ngIf="activeCategory === 'ai'">
+                <span class="stat-val">{{ currentLeaders[1].stats.aiActivations }}</span>
+                <span class="stat-lbl">AI Activations</span>
+              </div>
+            </div>
+            <div class="ai-indicator" *ngIf="currentLeaders[1].stats.aiEnabled">
+              <mat-icon>auto_awesome</mat-icon>
+              <span>AI Enabled</span>
+            </div>
+          </div>
+
+          <!-- 1st Place (Center, Elevated) -->
+          <div class="podium-card rank-1" *ngIf="currentLeaders[0]">
+            <div class="champion-crown">
+              <mat-icon>emoji_events</mat-icon>
+            </div>
+            <div class="podium-rank">
+              <mat-icon [style.color]="getRankColor(1)">{{ getRankIcon(1) }}</mat-icon>
+              <span class="rank-num">#1</span>
+            </div>
+            <div class="podium-avatar">
+              <div class="avatar-circle champion">
+                <mat-icon>person</mat-icon>
+              </div>
+              <div class="avatar-badge gold">
+                <mat-icon>emoji_events</mat-icon>
+              </div>
+            </div>
+            <div class="podium-name">{{ currentLeaders[0].displayName }}</div>
+            <div class="podium-stats">
+              <div class="stat" *ngIf="activeCategory === 'bids'">
+                <span class="stat-val">{{ currentLeaders[0].stats.totalBids }}</span>
+                <span class="stat-lbl">Bids</span>
+              </div>
+              <div class="stat" *ngIf="activeCategory === 'wins'">
+                <span class="stat-val">{{ currentLeaders[0].stats.totalWins }}</span>
+                <span class="stat-lbl">Wins</span>
+              </div>
+              <div class="stat" *ngIf="activeCategory === 'amount'">
+                <span class="stat-val">{{ money(currentLeaders[0].stats.highestBid) }}</span>
+                <span class="stat-lbl">Top Bid</span>
+              </div>
+              <div class="stat" *ngIf="activeCategory === 'ai'">
+                <span class="stat-val">{{ currentLeaders[0].stats.aiActivations }}</span>
+                <span class="stat-lbl">AI Activations</span>
+              </div>
+            </div>
+            <div class="ai-indicator" *ngIf="currentLeaders[0].stats.aiEnabled">
+              <mat-icon>auto_awesome</mat-icon>
+              <span>AI Enabled</span>
+            </div>
+          </div>
+
+          <!-- 3rd Place -->
+          <div class="podium-card rank-3" *ngIf="currentLeaders[2]">
+            <div class="podium-rank">
+              <mat-icon [style.color]="getRankColor(3)">{{ getRankIcon(3) }}</mat-icon>
+              <span class="rank-num">#3</span>
+            </div>
+            <div class="podium-avatar">
+              <div class="avatar-circle">
+                <mat-icon>person</mat-icon>
+              </div>
+              <div class="avatar-badge bronze">
+                <mat-icon>workspace_premium</mat-icon>
+              </div>
+            </div>
+            <div class="podium-name">{{ currentLeaders[2].displayName }}</div>
+            <div class="podium-stats">
+              <div class="stat" *ngIf="activeCategory === 'bids'">
+                <span class="stat-val">{{ currentLeaders[2].stats.totalBids }}</span>
+                <span class="stat-lbl">Bids</span>
+              </div>
+              <div class="stat" *ngIf="activeCategory === 'wins'">
+                <span class="stat-val">{{ currentLeaders[2].stats.totalWins }}</span>
+                <span class="stat-lbl">Wins</span>
+              </div>
+              <div class="stat" *ngIf="activeCategory === 'amount'">
+                <span class="stat-val">{{ money(currentLeaders[2].stats.highestBid) }}</span>
+                <span class="stat-lbl">Top Bid</span>
+              </div>
+              <div class="stat" *ngIf="activeCategory === 'ai'">
+                <span class="stat-val">{{ currentLeaders[2].stats.aiActivations }}</span>
+                <span class="stat-lbl">AI Activations</span>
+              </div>
+            </div>
+            <div class="ai-indicator" *ngIf="currentLeaders[2].stats.aiEnabled">
+              <mat-icon>auto_awesome</mat-icon>
+              <span>AI Enabled</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remaining Rankings (List View) -->
+      <div class="rankings-list" *ngIf="currentLeaders.length > 3">
+        <div class="rankings-header">
+          <mat-icon>format_list_numbered</mat-icon>
+          <span>Complete Rankings</span>
+        </div>
+
+        <div class="rankings-table">
+          <div 
+            class="ranking-row" 
+            *ngFor="let leader of currentLeaders.slice(3); let i = index"
+            [class.is-current-user]="leader.isCurrentUser"
+          >
+            <div class="row-rank">
+              <span class="rank-badge">{{ leader.rank }}</span>
+            </div>
+
+            <div class="row-user">
+              <div class="user-avatar">
+                <mat-icon>person</mat-icon>
+              </div>
+              <div class="user-info">
+                <div class="user-name">
+                  {{ leader.displayName }}
+                  <span class="you-badge" *ngIf="leader.isCurrentUser">YOU</span>
+                </div>
+                <div class="user-badge-line" *ngIf="leader.badge">
+                  <mat-icon>{{ leader.badge === 'elite' ? 'military_tech' : 'star' }}</mat-icon>
+                  <span>{{ leader.badge | uppercase }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="row-stat">
+              <div class="stat-value" *ngIf="activeCategory === 'bids'">
+                {{ leader.stats.totalBids }}
+              </div>
+              <div class="stat-value" *ngIf="activeCategory === 'wins'">
+                {{ leader.stats.totalWins }}
+              </div>
+              <div class="stat-value" *ngIf="activeCategory === 'amount'">
+                {{ money(leader.stats.highestBid) }}
+              </div>
+              <div class="stat-value" *ngIf="activeCategory === 'ai'">
+                {{ leader.stats.aiActivations }}
+              </div>
+              <div class="stat-label" *ngIf="activeCategory === 'bids'">Bids</div>
+              <div class="stat-label" *ngIf="activeCategory === 'wins'">Wins</div>
+              <div class="stat-label" *ngIf="activeCategory === 'amount'">Top Bid</div>
+              <div class="stat-label" *ngIf="activeCategory === 'ai'">AI Acts</div>
+            </div>
+
+            <div class="row-ai" *ngIf="leader.stats.aiEnabled">
+              <div class="ai-chip">
+                <mat-icon>auto_awesome</mat-icon>
+                <span>AI</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI PROMO SECTION -->
+  <section class="ai-promo" *ngIf="activeCategory === 'ai'">
+    <div class="promo-shell">
+      <div class="promo-content">
+        <div class="promo-icon">
+          <mat-icon>psychology</mat-icon>
+        </div>
+        <h2 class="promo-title">Join the AI Revolution</h2>
+        <p class="promo-desc">
+          AlgoX AI Auto-Bidding learns your strategy, monitors auctions 24/7, and places strategic bids on your behalf—keeping you ahead of the competition without the stress.
+        </p>
+        <button class="promo-cta" routerLink="/bidder/auctions">
+          <mat-icon>rocket_launch</mat-icon>
+          <span>Start Bidding with AI</span>
+        </button>
+      </div>
+      <div class="promo-visual">
+        <div class="visual-orb"></div>
+        <div class="visual-rings"></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- LOADING STATE -->
+<ng-template #loadingState>
+  <div class="loading-screen">
+    <div class="loading-spinner">
+      <mat-icon>leaderboard</mat-icon>
+    </div>
+    <span>Loading leaderboard...</span>
+  </div>
+</ng-template>
+
+<!-- ERROR STATE -->
+<div class="error-screen" *ngIf="error && !loading">
+  <mat-icon>error_outline</mat-icon>
+  <h2>{{ error }}</h2>
+  <button class="btn-retry" (click)="loadLeaderboards()">
+    <mat-icon>refresh</mat-icon>
+    <span>Retry</span>
+  </button>
+</div>

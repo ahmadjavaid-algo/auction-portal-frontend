@@ -1,10 +1,10 @@
 <div class="bidding-theater" *ngIf="!loading; else loadingState">
-  <!-- ===================== THEME TOGGLE (FLOATING) ===================== -->
+  <!-- THEME TOGGLE (FLOATING) -->
   <button class="theme-toggle-fab" (click)="toggleTheme()" [attr.aria-label]="isLightMode ? 'Switch to dark mode' : 'Switch to light mode'">
     <mat-icon>{{ isLightMode ? 'dark_mode' : 'light_mode' }}</mat-icon>
   </button>
 
-  <!-- ===================== HERO BANNER (WITH RANDOM IMAGE) ===================== -->
+  <!-- HERO BANNER -->
   <header class="hero-banner" [ngStyle]="{ '--hero-img': 'url(' + bannerImage + ')' }">
     <div class="hero-overlay"></div>
     <div class="hero-noise"></div>
@@ -99,23 +99,313 @@
         </div>
       </div>
 
-      <!-- View Gallery Button -->
+      <!-- Buttons row -->
       <div class="hero-bottom">
         <button class="view-gallery-btn" (click)="openProductGallery()" *ngIf="images.length > 0">
           <mat-icon>photo_library</mat-icon>
           <span>View Product Gallery ({{ images.length }} {{ images.length === 1 ? 'Photo' : 'Photos' }})</span>
         </button>
+
+        <button class="compare-btn" (click)="goToCompare()">
+          <mat-icon>compare_arrows</mat-icon>
+          <span>Compare with Other Vehicles</span>
+        </button>
+
+        <!-- ===== NEW: AI REPORT BUTTON ===== -->
+        <button class="ai-report-trigger" (click)="generateAIReport()" *ngIf="!aiReportVisible" [disabled]="aiReportGenerating">
+          <div class="ai-glow"></div>
+          <mat-icon>psychology</mat-icon>
+          <span>{{ aiReportGenerating ? 'Generating AI Report...' : 'Generate AlgoX AI Report' }}</span>
+          <div class="ai-badge">POWERED BY AI</div>
+        </button>
       </div>
     </div>
   </header>
 
-  <!-- Main Content Grid -->
+  <!-- ===== NEW: AI REPORT & PREDICTION SECTION ===== -->
+  <div class="ai-report-container" *ngIf="aiReportVisible" [@slideInOut]>
+    <!-- Generation Progress Overlay -->
+    <div class="ai-generating-overlay" *ngIf="aiReportGenerating">
+      <div class="generation-content">
+        <div class="ai-logo-spinner">
+          <mat-icon>psychology</mat-icon>
+          <div class="spinner-ring"></div>
+          <div class="spinner-ring ring-2"></div>
+          <div class="spinner-ring ring-3"></div>
+        </div>
+        <h3>AlgoX AI is Analyzing...</h3>
+        <div class="generation-bar">
+          <div class="generation-fill" [style.width.%]="aiReportGenerationProgress"></div>
+        </div>
+        <p class="generation-stage">Processing {{ aiReportGenerationProgress }}%</p>
+      </div>
+    </div>
+
+    <!-- Generated Report -->
+    <div class="ai-report-main" *ngIf="!aiReportGenerating && aiReportData">
+      <!-- Report Header -->
+      <div class="ai-report-header">
+        <div class="header-left">
+          <div class="ai-badge-large">
+            <mat-icon>psychology</mat-icon>
+            <span>AlgoX AI</span>
+          </div>
+          <div class="header-text">
+            <h2>AI-Powered Vehicle Analysis & Prediction</h2>
+            <p>Comprehensive analysis using advanced algorithms, market data, and predictive modeling</p>
+          </div>
+        </div>
+        <button class="btn-close-report" (click)="closeAIReport()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Overall Score & Recommendation -->
+      <div class="ai-overview-grid">
+        <!-- Overall Score Circle -->
+        <div class="overview-card score-card">
+          <div class="score-visual">
+            <svg class="score-circle" viewBox="0 0 200 200">
+              <circle class="score-bg" cx="100" cy="100" r="90" />
+              <circle 
+                class="score-progress" 
+                cx="100" 
+                cy="100" 
+                r="90"
+                [style.stroke-dashoffset]="565 - (565 * aiReportData.overallScore / 100)"
+              />
+            </svg>
+            <div class="score-number">{{ aiReportData.overallScore }}</div>
+          </div>
+          <div class="score-label">Overall Score</div>
+          <div class="score-sublabel">Out of 100</div>
+        </div>
+
+        <!-- Recommendation -->
+        <div class="overview-card recommendation-card">
+          <div class="recommendation-icon" [style.color]="getRecommendationColor()">
+            <mat-icon>{{ getRecommendationIcon() }}</mat-icon>
+          </div>
+          <div class="recommendation-badge" [style.background]="getRecommendationColor() + '22'" [style.border-color]="getRecommendationColor()">
+            {{ getRecommendationText() }}
+          </div>
+          <div class="recommendation-subtitle">AI Recommendation</div>
+          <div class="confidence-meter">
+            <div class="conf-label">Confidence: {{ aiReportData.confidence }}%</div>
+            <div class="conf-bar">
+              <div class="conf-fill" [style.width.%]="aiReportData.confidence"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Value Rating -->
+        <div class="overview-card value-card">
+          <div class="value-stars">
+            <mat-icon *ngFor="let star of [1,2,3,4,5]" [class.filled]="star <= aiReportData.valueRating">
+              {{ star <= aiReportData.valueRating ? 'star' : 'star_border' }}
+            </mat-icon>
+          </div>
+          <div class="value-label">Value Rating</div>
+          <div class="value-sublabel">{{ aiReportData.valueRating }} out of 5 stars</div>
+        </div>
+
+        <!-- Predicted Final Price -->
+        <div class="overview-card prediction-card">
+          <div class="prediction-value">{{ money(aiReportData.predictedFinalPrice) }}</div>
+          <div class="prediction-label">Predicted Final Price</div>
+          <div class="prediction-position">
+            <mat-icon>{{ aiReportData.currentMarketPosition === 'below' ? 'trending_down' : aiReportData.currentMarketPosition === 'above' ? 'trending_up' : 'trending_flat' }}</mat-icon>
+            <span>Currently {{ aiReportData.currentMarketPosition }} market value</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Analysis Sections -->
+      <div class="ai-sections-grid">
+        <!-- Condition -->
+        <div class="analysis-section" [class.expanded]="aiReportExpanded">
+          <div class="section-header">
+            <div class="section-icon">
+              <mat-icon>{{ aiReportData.sections.condition.icon }}</mat-icon>
+            </div>
+            <div class="section-title-group">
+              <h3>{{ aiReportData.sections.condition.title }}</h3>
+              <div class="section-score" [class]="aiReportData.sections.condition.status">
+                {{ aiReportData.sections.condition.score }}/100
+                <mat-icon class="trend-icon" *ngIf="aiReportData.sections.condition.trend">
+                  {{ aiReportData.sections.condition.trend === 'up' ? 'trending_up' : aiReportData.sections.condition.trend === 'down' ? 'trending_down' : 'trending_flat' }}
+                </mat-icon>
+              </div>
+            </div>
+          </div>
+          <p class="section-summary">{{ aiReportData.sections.condition.summary }}</p>
+          <ul class="section-details" *ngIf="aiReportExpanded">
+            <li *ngFor="let detail of aiReportData.sections.condition.details">{{ detail }}</li>
+          </ul>
+        </div>
+
+        <!-- Pricing -->
+        <div class="analysis-section" [class.expanded]="aiReportExpanded">
+          <div class="section-header">
+            <div class="section-icon">
+              <mat-icon>{{ aiReportData.sections.pricing.icon }}</mat-icon>
+            </div>
+            <div class="section-title-group">
+              <h3>{{ aiReportData.sections.pricing.title }}</h3>
+              <div class="section-score" [class]="aiReportData.sections.pricing.status">
+                {{ aiReportData.sections.pricing.score }}/100
+                <mat-icon class="trend-icon" *ngIf="aiReportData.sections.pricing.trend">
+                  {{ aiReportData.sections.pricing.trend === 'up' ? 'trending_up' : aiReportData.sections.pricing.trend === 'down' ? 'trending_down' : 'trending_flat' }}
+                </mat-icon>
+              </div>
+            </div>
+          </div>
+          <p class="section-summary">{{ aiReportData.sections.pricing.summary }}</p>
+          <ul class="section-details" *ngIf="aiReportExpanded">
+            <li *ngFor="let detail of aiReportData.sections.pricing.details">{{ detail }}</li>
+          </ul>
+        </div>
+
+        <!-- Competition -->
+        <div class="analysis-section" [class.expanded]="aiReportExpanded">
+          <div class="section-header">
+            <div class="section-icon">
+              <mat-icon>{{ aiReportData.sections.competition.icon }}</mat-icon>
+            </div>
+            <div class="section-title-group">
+              <h3>{{ aiReportData.sections.competition.title }}</h3>
+              <div class="section-score" [class]="aiReportData.sections.competition.status">
+                {{ aiReportData.sections.competition.score }}/100
+                <mat-icon class="trend-icon" *ngIf="aiReportData.sections.competition.trend">
+                  {{ aiReportData.sections.competition.trend === 'up' ? 'trending_up' : aiReportData.sections.competition.trend === 'down' ? 'trending_down' : 'trending_flat' }}
+                </mat-icon>
+              </div>
+            </div>
+          </div>
+          <p class="section-summary">{{ aiReportData.sections.competition.summary }}</p>
+          <ul class="section-details" *ngIf="aiReportExpanded">
+            <li *ngFor="let detail of aiReportData.sections.competition.details">{{ detail }}</li>
+          </ul>
+        </div>
+
+        <!-- Market Trend -->
+        <div class="analysis-section" [class.expanded]="aiReportExpanded">
+          <div class="section-header">
+            <div class="section-icon">
+              <mat-icon>{{ aiReportData.sections.marketTrend.icon }}</mat-icon>
+            </div>
+            <div class="section-title-group">
+              <h3>{{ aiReportData.sections.marketTrend.title }}</h3>
+              <div class="section-score" [class]="aiReportData.sections.marketTrend.status">
+                {{ aiReportData.sections.marketTrend.score }}/100
+                <mat-icon class="trend-icon" *ngIf="aiReportData.sections.marketTrend.trend">
+                  {{ aiReportData.sections.marketTrend.trend === 'up' ? 'trending_up' : aiReportData.sections.marketTrend.trend === 'down' ? 'trending_down' : 'trending_flat' }}
+                </mat-icon>
+              </div>
+            </div>
+          </div>
+          <p class="section-summary">{{ aiReportData.sections.marketTrend.summary }}</p>
+          <ul class="section-details" *ngIf="aiReportExpanded">
+            <li *ngFor="let detail of aiReportData.sections.marketTrend.details">{{ detail }}</li>
+          </ul>
+        </div>
+
+        <!-- Timing -->
+        <div class="analysis-section" [class.expanded]="aiReportExpanded">
+          <div class="section-header">
+            <div class="section-icon">
+              <mat-icon>{{ aiReportData.sections.timing.icon }}</mat-icon>
+            </div>
+            <div class="section-title-group">
+              <h3>{{ aiReportData.sections.timing.title }}</h3>
+              <div class="section-score" [class]="aiReportData.sections.timing.status">
+                {{ aiReportData.sections.timing.score }}/100
+                <mat-icon class="trend-icon" *ngIf="aiReportData.sections.timing.trend">
+                  {{ aiReportData.sections.timing.trend === 'up' ? 'trending_up' : aiReportData.sections.timing.trend === 'down' ? 'trending_down' : 'trending_flat' }}
+                </mat-icon>
+              </div>
+            </div>
+          </div>
+          <p class="section-summary">{{ aiReportData.sections.timing.summary }}</p>
+          <ul class="section-details" *ngIf="aiReportExpanded">
+            <li *ngFor="let detail of aiReportData.sections.timing.details">{{ detail }}</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Expand/Collapse Button -->
+      <button class="btn-expand-sections" (click)="toggleAIReportExpand()">
+        <mat-icon>{{ aiReportExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
+        <span>{{ aiReportExpanded ? 'Show Less Details' : 'Show Full Analysis' }}</span>
+      </button>
+
+      <!-- Key Insights -->
+      <div class="ai-insights-section">
+        <h3 class="insights-title">
+          <mat-icon>lightbulb</mat-icon>
+          Key Insights
+        </h3>
+        <div class="insights-grid">
+          <div class="insight-card" *ngFor="let insight of aiReportData.keyInsights">
+            <mat-icon>check_circle</mat-icon>
+            <p>{{ insight }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Risk Factors -->
+      <div class="ai-risks-section">
+        <h3 class="risks-title">
+          <mat-icon>shield</mat-icon>
+          Risk Factors
+        </h3>
+        <div class="risks-list">
+          <div class="risk-item" *ngFor="let risk of aiReportData.riskFactors">
+            <mat-icon>warning</mat-icon>
+            <p>{{ risk }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Next Bid Recommendation -->
+      <div class="ai-bid-recommendation">
+        <div class="recommendation-header">
+          <mat-icon>auto_awesome</mat-icon>
+          <h3>AI Bid Strategy</h3>
+        </div>
+        <div class="recommendation-content">
+          <div class="recommended-bid">
+            <div class="bid-label">Recommended Next Bid</div>
+            <div class="bid-amount">{{ money(aiReportData.nextBidRecommendation.amount) }}</div>
+            <div class="bid-confidence">{{ aiReportData.nextBidRecommendation.confidence }}% Confidence</div>
+          </div>
+          <div class="recommendation-timing">
+            <mat-icon>schedule</mat-icon>
+            <p>{{ aiReportData.nextBidRecommendation.timing }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Report Footer -->
+      <div class="ai-report-footer">
+        <div class="footer-disclaimer">
+          <mat-icon>info</mat-icon>
+          <p>This AI-generated report is for informational purposes only. AlgoX AI analyzes multiple data points including inspection reports, bid patterns, market trends, and historical data. Always conduct your own due diligence before making bidding decisions.</p>
+        </div>
+        <button class="btn-regenerate" (click)="generateAIReport()">
+          <mat-icon>refresh</mat-icon>
+          <span>Regenerate Analysis</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Grid (EXISTING) -->
   <div class="content-grid">
-    <!-- Left Column: Details -->
+    <!-- Left Column: Details (EXISTING CONTENT) -->
     <div class="left-column">
       <!-- Status & Price Cards -->
       <div class="cards-row">
-        <!-- Your Status Card -->
         <div class="glass-card status-card">
           <div class="card-label">Your Status</div>
           <div class="status-badge" [ngClass]="yourStatus.toLowerCase().replace(' ', '-')">
@@ -125,14 +415,11 @@
             <span>{{ yourStatus }}</span>
           </div>
           <div class="status-details">
-            <span *ngIf="yourMaxBid != null"
-              >Your top bid: <strong>{{ money(yourMaxBid) }}</strong></span
-            >
+            <span *ngIf="yourMaxBid != null">Your top bid: <strong>{{ money(yourMaxBid) }}</strong></span>
             <span *ngIf="yourMaxBid == null">Place your first bid below</span>
           </div>
         </div>
 
-        <!-- Current Price Card -->
         <div class="glass-card price-card">
           <div class="card-label">Current Price</div>
           <div class="price-value">{{ money(currentPrice ?? lotStartPrice) }}</div>
@@ -142,7 +429,6 @@
           </div>
         </div>
 
-        <!-- Reserve Card -->
         <div class="glass-card reserve-card" [class.met]="isReserveMet" *ngIf="lotReservePrice">
           <div class="card-label">Reserve</div>
           <div class="reserve-badge">
@@ -153,7 +439,7 @@
         </div>
       </div>
 
-      <!-- AI Auto-Bid Showcase (Prominent) -->
+      <!-- AI Auto-Bid Showcase -->
       <div class="ai-showcase" *ngIf="hasAutoBidHistory">
         <div class="ai-header">
           <div class="ai-icon">
@@ -175,8 +461,7 @@
           </div>
         </div>
         <div class="ai-description">
-          Our AI will automatically place strategic bids on your behalf, keeping you in the lead up to your maximum
-          budget. Sit back and let technology work for you.
+          Our AI will automatically place strategic bids on your behalf, keeping you in the lead up to your maximum budget. Sit back and let technology work for you.
         </div>
       </div>
 
@@ -210,7 +495,9 @@
               <div class="bid-header">
                 <div class="bid-user">
                   <mat-icon>{{ bid.isMine ? 'person' : 'person_outline' }}</mat-icon>
-                  <span>{{ bid.isMine ? 'You' : 'Bidder #' + (bid.createdById || '—') }}</span>
+                  <span class="bidder-name">
+                    {{ bid.isMine ? 'You' : (bid.createdByDisplayName || ('Bidder #' + (bid.createdById || '—'))) }}
+                  </span>
                   <span class="ai-badge" *ngIf="bid.isAutoBid">
                     <mat-icon>auto_awesome</mat-icon>
                     AI BID
@@ -248,7 +535,7 @@
         </div>
       </div>
 
-      <!-- Inspection Report -->
+      <!-- Inspection Report (EXISTING) -->
       <div class="glass-card inspection-card" *ngIf="inventory">
         <div class="card-header">
           <mat-icon>fact_check</mat-icon>
@@ -269,7 +556,6 @@
         </div>
 
         <div class="inspection-content" *ngIf="!reportLoading && reportGroups.length > 0">
-          <!-- Summary Stats -->
           <div class="inspection-summary">
             <div class="summary-stat">
               <div class="stat-value">{{ totalCheckpoints }}</div>
@@ -292,7 +578,6 @@
 
           <mat-divider></mat-divider>
 
-          <!-- Tabbed Sections -->
           <mat-tab-group class="inspection-tabs">
             <mat-tab *ngFor="let group of reportGroups">
               <ng-template mat-tab-label>
@@ -316,7 +601,6 @@
                     </div>
 
                     <div class="checkpoint-result">
-                      <!-- Yes/No -->
                       <div
                         *ngIf="normalizeInputType(cp.inputType) === 'yesno'"
                         class="result-badge"
@@ -327,12 +611,10 @@
                         <span>{{ cp.resultValue || 'Not recorded' }}</span>
                       </div>
 
-                      <!-- Number -->
                       <div *ngIf="normalizeInputType(cp.inputType) === 'number'" class="result-value">
                         {{ cp.resultValue || '—' }}
                       </div>
 
-                      <!-- Images -->
                       <div *ngIf="normalizeInputType(cp.inputType) === 'image'" class="result-images">
                         <button
                           class="image-thumb"
@@ -343,7 +625,6 @@
                         <span class="no-images" *ngIf="!cp.imageUrls?.length">No photos</span>
                       </div>
 
-                      <!-- Text -->
                       <div
                         *ngIf="normalizeInputType(cp.inputType) === 'text' || normalizeInputType(cp.inputType) === 'textarea'"
                         class="result-text"
@@ -360,10 +641,9 @@
       </div>
     </div>
 
-    <!-- Right Column: Bidding Panel (Sticky) -->
+    <!-- Right Column: Bidding Panel (EXISTING) -->
     <aside class="right-column">
       <div class="bidding-panel">
-        <!-- Panel Header -->
         <div class="panel-header">
           <div class="header-icon">
             <mat-icon>gavel</mat-icon>
@@ -383,7 +663,6 @@
           </div>
         </div>
 
-        <!-- Bid Amount Input -->
         <div class="bid-input-group">
           <label>Your Bid Amount</label>
           <div class="input-wrapper">
@@ -393,7 +672,6 @@
           <div class="input-hint">Minimum increment: {{ money(lotBidIncrement) }}</div>
         </div>
 
-        <!-- Quick Increment Buttons -->
         <div class="quick-increments">
           <button class="increment-btn" (click)="adjustBid((lotBidIncrement || 100) * 1)" [disabled]="!isLive || placingBid">
             +{{ money((lotBidIncrement || 100) * 1) }}
@@ -408,7 +686,6 @@
 
         <mat-divider></mat-divider>
 
-        <!-- AI Auto-Bid Toggle -->
         <div class="ai-toggle-section">
           <button class="ai-toggle" [class.enabled]="autoBidEnabled" (click)="toggleAutoBid()" [disabled]="!isLive || placingBid">
             <div class="toggle-switch">
@@ -423,7 +700,6 @@
             </div>
           </button>
 
-          <!-- AI Max Amount Input -->
           <div class="ai-max-input" *ngIf="autoBidEnabled">
             <label>AI Maximum Budget</label>
             <div class="input-wrapper">
@@ -437,7 +713,6 @@
           </div>
         </div>
 
-        <!-- Place Bid Button -->
         <button class="btn-place-bid" (click)="placeBid()" [disabled]="!isLive || placingBid">
           <span class="btn-content">
             <mat-icon>{{ placingBid ? 'hourglass_empty' : 'gavel' }}</mat-icon>
@@ -446,13 +721,11 @@
           </span>
         </button>
 
-        <!-- Disclaimer -->
         <div class="bid-disclaimer">
           <mat-icon>info</mat-icon>
           <span>All bids are binding. Review details carefully before bidding.</span>
         </div>
 
-        <!-- Auction Meta Info -->
         <div class="auction-meta">
           <div class="meta-row">
             <span class="meta-label">Auction</span>
@@ -471,7 +744,7 @@
     </aside>
   </div>
 
-  <!-- Related lots strip -->
+  <!-- Related lots strip (EXISTING) -->
   <section class="related-lots" *ngIf="relatedLots.length > 0">
     <div class="related-head">
       <div class="h-left">
@@ -572,12 +845,11 @@
   </button>
 </div>
 
-<!-- PROFESSIONAL IMAGE VIEWER MODAL -->
+<!-- Image Viewer Modal (EXISTING) -->
 <div class="image-viewer-modal" *ngIf="showImageViewer" (click)="closeImageViewer()">
   <div class="viewer-backdrop"></div>
   
   <div class="viewer-container" (click)="$event.stopPropagation()">
-    <!-- Header -->
     <div class="viewer-header">
       <div class="viewer-title">
         <mat-icon>photo_library</mat-icon>
@@ -589,7 +861,6 @@
       </button>
     </div>
 
-    <!-- Main Image Display -->
     <div class="viewer-main">
       <button 
         class="viewer-nav prev" 
@@ -618,7 +889,6 @@
       </button>
     </div>
 
-    <!-- Thumbnail Strip -->
     <div class="viewer-thumbnails" *ngIf="selectedImageGallery.length > 1">
       <div class="thumbnails-track">
         <button
@@ -634,7 +904,6 @@
       </div>
     </div>
 
-    <!-- Footer Info -->
     <div class="viewer-footer">
       <div class="viewer-info">
         <mat-icon>info</mat-icon>

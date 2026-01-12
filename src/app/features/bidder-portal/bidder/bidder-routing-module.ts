@@ -19,6 +19,8 @@ import { FavouritesList } from './pages/favourites-list/favourites-list';
 import { Auctionbid } from './pages/auctionbid/auctionbid';
 import { BidderChangePassword } from './pages/bidder-change-password/bidder-change-password';
 import { LandingPage } from './pages/landing-page/landing-page';
+import { Leaderboard } from './pages/leaderboard/leaderboard';
+import { Compare } from './pages/compare/compare';
 
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'AlgoAuctions' },
@@ -62,6 +64,8 @@ const routes: Routes = [
       { path: 'newcars-list', component: NewcarsList, title: 'New Cars' },
       { path: 'info', component: Info, title: 'Reach Us' },
       { path: 'favourites-list', component: FavouritesList, title: 'Favourites' },
+      { path: 'leaderboard', component: Leaderboard, title: 'Leaderboard' },
+      { path: 'compare', component: Compare, title: 'Compare' },
       { path: 'change-password', component: BidderChangePassword , title: 'Change Password'}
     ]
   }

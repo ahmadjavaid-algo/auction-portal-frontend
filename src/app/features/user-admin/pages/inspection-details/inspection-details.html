@@ -1,178 +1,409 @@
-<div class="page details-theme">
-  <!-- Back -->
-  <button mat-button class="back" (click)="back()">
-    <mat-icon>arrow_back</mat-icon>
-    Back to Inspection Types
-  </button>
-
-  <!-- Loading -->
+<div class="user-details-page">
+  <!-- Loading State -->
   <ng-container *ngIf="loading">
-    <div class="busy">
-      <mat-spinner diameter="40"></mat-spinner>
-      <span>Loading inspection type…</span>
+    <div class="loading-container">
+      <div class="loading-spinner">
+        <mat-spinner diameter="64"></mat-spinner>
+      </div>
+      <p class="loading-text">Loading inspection profile...</p>
     </div>
   </ng-container>
 
-  <!-- Error -->
+  <!-- Error State -->
   <ng-container *ngIf="!loading && error">
-    <mat-card class="error-card">
-      <mat-card-title>Error</mat-card-title>
-      <mat-card-content>{{ error }}</mat-card-content>
-      <mat-card-actions align="end">
-        <button mat-stroked-button color="primary" (click)="back()">OK</button>
-      </mat-card-actions>
-    </mat-card>
+    <div class="error-container reveal-on-scroll">
+      <div class="error-icon">
+        <mat-icon>error_outline</mat-icon>
+      </div>
+      <h2 class="error-title">Oops! Something went wrong</h2>
+      <p class="error-message">{{ error }}</p>
+      <button mat-flat-button class="error-action" (click)="back()">
+        <mat-icon>arrow_back</mat-icon>
+        Go Back to Inspection Types
+      </button>
+    </div>
   </ng-container>
 
-  <!-- Details -->
+  <!-- Inspection Profile -->
   <ng-container *ngIf="!loading && inspectionType">
-    <section class="profile-card mat-elevation-z2">
-      <!-- Hero -->
-      <div class="hero">
-        <div class="hero-left">
-          <div class="avatar">{{ initials }}</div>
-          <div class="title">
-            <h1>
-              {{ inspectionType.inspectionTypeName || '(No inspection type name)' }}
-            </h1>
-            <div class="subtitle">
-              Inspection Type #{{ inspectionType.inspectionTypeId }}
-            </div>
-
-            <div class="pills">
-              <span
-                class="pill"
-                [class.ok]="inspectionType.active"
-                [class.no]="!inspectionType.active"
-              >
-                <mat-icon class="pill-icn">
-                  {{ inspectionType.active ? 'check_circle' : 'pause_circle' }}
-                </mat-icon>
-                {{ inspectionType.active ? 'Active' : 'Inactive' }}
-              </span>
-
-              <span class="pill">
-                <mat-icon class="pill-icn">percent</mat-icon>
-                Weightage: {{ weightageLabel }}
-              </span>
-
-              <span class="pill muted">
-                <mat-icon class="pill-icn">fingerprint</mat-icon>
-                ID {{ inspectionType.inspectionTypeId }}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <ul class="meta">
-          <li>
-            <div class="meta-label">Weightage</div>
-            <div class="meta-value">{{ weightageLabel }}</div>
-          </li>
-          <li>
-            <div class="meta-label">Status</div>
-            <div class="meta-value">
-              {{ inspectionType.active ? 'Active' : 'Inactive' }}
-            </div>
-          </li>
-          <li>
-            <div class="meta-label">Created</div>
-            <div class="meta-value">
-              {{
-                inspectionType.createdDate
-                  ? (inspectionType.createdDate | date: 'medium')
-                  : '—'
-              }}
-            </div>
-          </li>
-          <li>
-            <div class="meta-label">Modified</div>
-            <div class="meta-value">
-              {{
-                inspectionType.modifiedDate
-                  ? (inspectionType.modifiedDate | date: 'medium')
-                  : '—'
-              }}
-            </div>
-          </li>
-        </ul>
+    <!-- Full-Width Hero Section -->
+    <section class="profile-hero reveal-on-scroll">
+      <div class="hero-background">
+        <div class="hero-gradient"></div>
+        <div class="hero-pattern"></div>
       </div>
 
-      <!-- Sections -->
-      <div class="sections">
-        <div class="section">
-          <h3><mat-icon>assignment_turned_in</mat-icon> Inspection Type</h3>
-          <div class="grid">
-            <div class="item">
-              <div class="label">Inspection Type ID</div>
-              <div class="value">
-                {{ inspectionType.inspectionTypeId }}
-              </div>
-            </div>
-            <div class="item">
-              <div class="label">Name</div>
-              <div class="value">
-                {{ inspectionType.inspectionTypeName || '—' }}
-              </div>
-            </div>
-            <div class="item">
-              <div class="label">Weightage</div>
-              <div class="value">{{ weightageLabel }}</div>
-            </div>
-            <div class="item">
-              <div class="label">Active</div>
-              <div class="value">
-                {{ inspectionType.active ? 'Yes' : 'No' }}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="section">
-          <h3><mat-icon>description</mat-icon> Audit</h3>
-          <div class="grid">
-            <div class="item">
-              <div class="label">Created Date</div>
-              <div class="value">
-                {{
-                  inspectionType.createdDate
-                    ? (inspectionType.createdDate | date: 'medium')
-                    : '—'
-                }}
-              </div>
-            </div>
-            <div class="item">
-              <div class="label">Modified Date</div>
-              <div class="value">
-                {{
-                  inspectionType.modifiedDate
-                    ? (inspectionType.modifiedDate | date: 'medium')
-                    : '—'
-                }}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Footer / Audit -->
-      <div class="footer">
-        <div class="audit">
-          <div>
-            Created by <strong>{{ inspectionType.createdById ?? '—' }}</strong>
-          </div>
-          <div>
-            Modified by
-            <strong>{{ inspectionType.modifiedById ?? '—' }}</strong>
-          </div>
-        </div>
-        <div class="buttons">
-          <button mat-stroked-button color="primary" (click)="back()">
+      <div class="hero-content-wrapper">
+        <!-- Back Button in Hero -->
+        <div class="hero-navigation">
+          <button mat-button class="back-btn-hero" (click)="back()">
             <mat-icon>arrow_back</mat-icon>
-            Back
+            <span>Back to Inspection Types</span>
           </button>
+        </div>
+
+        <!-- Main Profile Section -->
+        <div class="hero-main-section">
+          <div class="hero-left">
+            <div class="profile-avatar-large">
+              <span class="avatar-text">{{ initials }}</span>
+              <div class="avatar-ring"></div>
+              <div class="avatar-glow"></div>
+            </div>
+
+            <div class="profile-header-info">
+              <div class="profile-header-top">
+                <h1 class="profile-name">{{ fullName }}</h1>
+
+                <div
+                  class="activity-indicator"
+                  [class.online]="activityStatus === 'online'"
+                  [class.recent]="activityStatus === 'recent'"
+                  [class.away]="activityStatus === 'away'"
+                  [class.inactive]="activityStatus === 'inactive'"
+                  [matTooltip]="activityStatusLabel"
+                >
+                  <span class="indicator-dot"></span>
+                  <span class="indicator-label">{{ activityStatusLabel }}</span>
+                </div>
+              </div>
+
+              <p class="profile-username">
+                <mat-icon>fact_check</mat-icon>
+                Inspection Type
+              </p>
+
+              <div class="profile-badges-row">
+                <span
+                  class="status-badge"
+                  [class.active]="inspectionType.active"
+                  [class.inactive]="!inspectionType.active"
+                >
+                  <mat-icon>{{ inspectionType.active ? 'check_circle' : 'cancel' }}</mat-icon>
+                  {{ inspectionType.active ? 'Active Type' : 'Inactive Type' }}
+                </span>
+
+                <span class="status-badge verified">
+                  <mat-icon>percent</mat-icon>
+                  Weightage: {{ weightageLabel }}
+                </span>
+
+                <span class="status-badge id-badge">
+                  <mat-icon>fingerprint</mat-icon>
+                  ID: {{ inspectionType.inspectionTypeId }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="hero-actions">
+            <button mat-flat-button class="hero-action-btn primary" (click)="editInspectionType()">
+              <mat-icon>edit</mat-icon>
+              <span>Edit Type</span>
+            </button>
+
+            <button mat-stroked-button class="hero-action-btn secondary" (click)="viewCheckpoints()">
+              <mat-icon>rule</mat-icon>
+              <span>View Checkpoints</span>
+            </button>
+
+            <button
+              mat-stroked-button
+              class="hero-action-btn warning"
+              (click)="toggleInspectionStatus()"
+              *ngIf="inspectionType.active"
+            >
+              <mat-icon>block</mat-icon>
+              <span>Deactivate</span>
+            </button>
+
+            <button
+              mat-stroked-button
+              class="hero-action-btn success"
+              (click)="toggleInspectionStatus()"
+              *ngIf="!inspectionType.active"
+            >
+              <mat-icon>check_circle</mat-icon>
+              <span>Activate</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Hero Stats Grid -->
+        <div class="hero-stats-grid">
+          <div class="hero-stat-card">
+            <div class="stat-icon-wrapper">
+              <mat-icon>schedule</mat-icon>
+            </div>
+            <div class="stat-details">
+              <div class="stat-label">Last Update</div>
+              <div class="stat-value">{{ formatLastActivity(lastActivityDate) }}</div>
+            </div>
+            <div class="stat-decoration"></div>
+          </div>
+
+          <div class="hero-stat-card">
+            <div class="stat-icon-wrapper">
+              <mat-icon>event</mat-icon>
+            </div>
+            <div class="stat-details">
+              <div class="stat-label">Created</div>
+              <div class="stat-value">{{ getAccountAgeDetailed() }}</div>
+            </div>
+            <div class="stat-decoration"></div>
+          </div>
+
+          <div class="hero-stat-card">
+            <div class="stat-icon-wrapper">
+              <mat-icon>cake</mat-icon>
+            </div>
+            <div class="stat-details">
+              <div class="stat-label">Age</div>
+              <div class="stat-value">{{ getAccountAge() }}</div>
+            </div>
+            <div class="stat-decoration"></div>
+          </div>
+
+          <div class="hero-stat-card">
+            <div class="stat-icon-wrapper">
+              <mat-icon>percent</mat-icon>
+            </div>
+            <div class="stat-details">
+              <div class="stat-label">Weightage</div>
+              <div class="stat-value">{{ weightageLabel }}</div>
+            </div>
+            <div class="stat-decoration"></div>
+          </div>
         </div>
       </div>
     </section>
+
+    <!-- Enhanced Details Grid -->
+    <div class="details-container">
+      <div class="details-grid">
+        <!-- Inspection Information Card -->
+        <section class="detail-card reveal-on-scroll">
+          <div class="card-header">
+            <div class="card-icon-wrapper">
+              <mat-icon>assignment_turned_in</mat-icon>
+            </div>
+            <div class="card-title-group">
+              <h2 class="card-title">Inspection Information</h2>
+              <p class="card-subtitle">Primary inspection type details</p>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>fingerprint</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Inspection Type ID</div>
+                <div class="detail-value mono">{{ inspectionType.inspectionTypeId }}</div>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>badge</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Type Name</div>
+                <div class="detail-value">{{ inspectionType.inspectionTypeName || '—' }}</div>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>percent</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Weightage</div>
+                <div class="detail-value">{{ weightageLabel }}</div>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>{{ inspectionType.active ? 'check_circle' : 'cancel' }}</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Status</div>
+                <div class="detail-value">{{ inspectionType.active ? 'Active' : 'Inactive' }}</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Configuration Card -->
+        <section class="detail-card reveal-on-scroll">
+          <div class="card-header">
+            <div class="card-icon-wrapper">
+              <mat-icon>tune</mat-icon>
+            </div>
+            <div class="card-title-group">
+              <h2 class="card-title">Configuration</h2>
+              <p class="card-subtitle">Rules and operational settings</p>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>percent</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Weightage</div>
+                <div class="detail-value">{{ weightageLabel }}</div>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>toggle_on</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Active</div>
+                <div class="detail-value">
+                  <span class="inline-badge" [class.success]="inspectionType.active" [class.warning]="!inspectionType.active">
+                    {{ inspectionType.active ? 'Enabled' : 'Disabled' }}
+                  </span>
+                </div>
+              </div>
+              <button
+                mat-icon-button
+                class="detail-action"
+                matTooltip="Toggle status"
+                (click)="toggleInspectionStatus()"
+              >
+                <mat-icon>sync</mat-icon>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- System Information Card -->
+        <section class="detail-card reveal-on-scroll">
+          <div class="card-header">
+            <div class="card-icon-wrapper">
+              <mat-icon>settings</mat-icon>
+            </div>
+            <div class="card-title-group">
+              <h2 class="card-title">System Information</h2>
+              <p class="card-subtitle">Timestamps and system metadata</p>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>add_circle</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Created Date</div>
+                <div class="detail-value">{{ formatDate(inspectionType.createdDate) }}</div>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>update</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Modified Date</div>
+                <div class="detail-value">{{ formatDate(inspectionType.modifiedDate) }}</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Audit Trail Card (Full Width) -->
+        <section class="detail-card audit-card reveal-on-scroll">
+          <div class="card-header">
+            <div class="card-icon-wrapper">
+              <mat-icon>history</mat-icon>
+            </div>
+            <div class="card-title-group">
+              <h2 class="card-title">Audit Trail</h2>
+              <p class="card-subtitle">Creation and modification history</p>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="audit-timeline">
+              <div class="timeline-item">
+                <div class="timeline-marker created">
+                  <mat-icon>add_task</mat-icon>
+                </div>
+                <div class="timeline-content">
+                  <div class="timeline-header">
+                    <h3 class="timeline-title">Type Created</h3>
+                    <span class="timeline-date">{{ formatDate(inspectionType.createdDate) }}</span>
+                  </div>
+                  <p class="timeline-description">
+                    Created by User ID:
+                    <span class="mono-highlight">{{ inspectionType.createdById || 'System' }}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div class="timeline-item" *ngIf="inspectionType.modifiedById">
+                <div class="timeline-marker modified">
+                  <mat-icon>edit</mat-icon>
+                </div>
+                <div class="timeline-content">
+                  <div class="timeline-header">
+                    <h3 class="timeline-title">Last Modified</h3>
+                    <span class="timeline-date">{{ formatDate(inspectionType.modifiedDate) }}</span>
+                  </div>
+                  <p class="timeline-description">
+                    Modified by User ID:
+                    <span class="mono-highlight">{{ inspectionType.modifiedById }}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div class="timeline-item" *ngIf="lastActivityDate">
+                <div class="timeline-marker activity">
+                  <mat-icon>schedule</mat-icon>
+                </div>
+                <div class="timeline-content">
+                  <div class="timeline-header">
+                    <h3 class="timeline-title">Last Activity</h3>
+                    <span class="timeline-date">{{ formatLastActivity(lastActivityDate) }}</span>
+                  </div>
+                  <p class="timeline-description">
+                    Last updated at {{ formatDate(lastActivityDate) }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Action Footer -->
+    <div class="action-footer reveal-on-scroll">
+      <div class="footer-left">
+        <button mat-stroked-button class="footer-btn secondary" (click)="back()">
+          <mat-icon>arrow_back</mat-icon>
+          <span>Back to Inspection Types</span>
+        </button>
+      </div>
+
+      <div class="footer-right">
+        <button mat-stroked-button class="footer-btn danger" (click)="deleteInspectionType()">
+          <mat-icon>delete</mat-icon>
+          <span>Delete Type</span>
+        </button>
+        <button mat-flat-button class="footer-btn primary" (click)="editInspectionType()">
+          <mat-icon>edit</mat-icon>
+          <span>Edit Type</span>
+        </button>
+      </div>
+    </div>
   </ng-container>
 </div>

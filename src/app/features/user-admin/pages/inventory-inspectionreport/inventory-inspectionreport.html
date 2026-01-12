@@ -1,434 +1,565 @@
-<!-- src/app/pages/admin/inventory/inventory-inspectionreport/inventory-inspectionreport.html -->
-<div class="page details-theme">
-  <!-- Back -->
-  <button mat-button class="back" (click)="back()">
-    <mat-icon>arrow_back</mat-icon>
-    Back to Inventory
-  </button>
-
-  <!-- Loading -->
+<div class="user-details-page">
+  <!-- Loading State -->
   <ng-container *ngIf="loading">
-    <div class="busy">
-      <mat-spinner diameter="40"></mat-spinner>
-      <span>Loading inspection data…</span>
+    <div class="loading-container">
+      <div class="loading-spinner">
+        <mat-spinner diameter="64"></mat-spinner>
+      </div>
+      <p class="loading-text">Loading inspection report...</p>
     </div>
   </ng-container>
 
-  <!-- Error -->
+  <!-- Error State -->
   <ng-container *ngIf="!loading && error">
-    <mat-card class="error-card">
-      <mat-card-title>Error</mat-card-title>
-      <mat-card-content>{{ error }}</mat-card-content>
-      <mat-card-actions align="end">
-        <button mat-stroked-button color="primary" (click)="back()">OK</button>
-      </mat-card-actions>
-    </mat-card>
+    <div class="error-container reveal-on-scroll">
+      <div class="error-icon">
+        <mat-icon>error_outline</mat-icon>
+      </div>
+      <h2 class="error-title">Oops! Something went wrong</h2>
+      <p class="error-message">{{ error }}</p>
+      <button mat-flat-button class="error-action" (click)="back()">
+        <mat-icon>arrow_back</mat-icon>
+        Go Back to Inventory
+      </button>
+    </div>
   </ng-container>
 
-  <!-- Main content -->
+  <!-- Main -->
   <ng-container *ngIf="!loading && !error && inventory">
-    <section class="profile-card mat-elevation-z2">
-      <!-- Hero -->
-      <div class="hero">
-        <div class="hero-left">
-          <div class="avatar">
-            <mat-icon>assignment_turned_in</mat-icon>
-          </div>
-          <div class="title">
-            <h1>{{ inventoryTitle }}</h1>
-            <div class="subtitle">
-              Inventory #{{ inventory.inventoryId }}
-              <span *ngIf="inventorySubtitle">• {{ inventorySubtitle }}</span>
-            </div>
-
-            <div class="pills">
-              <span
-                class="pill"
-                [class.ok]="inventory.active"
-                [class.no]="inventory.active === false"
-              >
-                <mat-icon class="pill-icn">
-                  {{ inventory.active ? 'check_circle' : 'pause_circle' }}
-                </mat-icon>
-                {{ inventory.active ? 'Active' : 'Inactive' }}
-              </span>
-
-              <span class="pill muted">
-                <mat-icon class="pill-icn">badge</mat-icon>
-                {{ hasAssignment ? 'Assigned to ' + currentInspectorName : 'Not assigned' }}
-              </span>
-
-              <span class="pill muted status-pill">
-                <mat-icon class="pill-icn">fact_check</mat-icon>
-                <span class="status-dot" [style.background]="getCompletionStatusColor()"></span>
-                {{ getCompletionStatus() }}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <ul class="meta">
-          <li>
-            <div class="meta-label">Product Id</div>
-            <div class="meta-value">{{ inventory.productId || '—' }}</div>
-          </li>
-          <li>
-            <div class="meta-label">Chassis</div>
-            <div class="meta-value">{{ inventory.chassisNo || '—' }}</div>
-          </li>
-          <li>
-            <div class="meta-label">Registration</div>
-            <div class="meta-value">{{ inventory.registrationNo || '—' }}</div>
-          </li>
-          <li>
-            <div class="meta-label">Created</div>
-            <div class="meta-value">
-              {{ inventory.createdDate ? (inventory.createdDate | date: 'medium') : '—' }}
-            </div>
-          </li>
-        </ul>
+    <!-- Full-Width Hero Section -->
+    <section class="profile-hero reveal-on-scroll">
+      <div class="hero-background">
+        <div class="hero-gradient"></div>
+        <div class="hero-pattern"></div>
       </div>
 
-      <!-- Inventory-level image gallery (same pattern as inspector inspections page) -->
-      <div class="inventory-gallery" *ngIf="inventoryImages?.length">
-        <div class="gallery-header">
-          <mat-icon>photo_library</mat-icon>
-          <span>{{ inventoryImages.length }} vehicle photo{{ inventoryImages.length > 1 ? 's' : '' }}</span>
+      <div class="hero-content-wrapper">
+        <!-- Back Button in Hero -->
+        <div class="hero-navigation">
+          <button mat-button class="back-btn-hero" (click)="back()">
+            <mat-icon>arrow_back</mat-icon>
+            <span>Back to Inventory</span>
+          </button>
         </div>
 
-        <div class="gallery-grid">
-          <div
-            class="gallery-item"
-            *ngFor="let img of inventoryImages | slice:0:4; let idx = index"
-            (click)="openImageViewer(inventoryImages, idx)"
-          >
-            <img [src]="img" [alt]="inventoryTitle" />
-            <div class="gallery-overlay" *ngIf="idx === 3 && inventoryImages.length > 4">
-              <mat-icon>add</mat-icon>
-              <span>{{ inventoryImages.length - 4 }} more</span>
+        <!-- Main Hero -->
+        <div class="hero-main-section">
+          <div class="hero-left">
+            <div class="profile-avatar-large">
+              <span class="avatar-text">{{ initials }}</span>
+              <div class="avatar-ring"></div>
+              <div class="avatar-glow"></div>
             </div>
+
+            <div class="profile-header-info">
+              <div class="profile-header-top">
+                <h1 class="profile-name">{{ inventoryTitle }}</h1>
+
+                <div
+                  class="activity-indicator"
+                  [class.online]="activityStatus === 'online'"
+                  [class.recent]="activityStatus === 'recent'"
+                  [class.away]="activityStatus === 'away'"
+                  [class.inactive]="activityStatus === 'inactive'"
+                  [matTooltip]="activityStatusLabel"
+                >
+                  <span class="indicator-dot"></span>
+                  <span class="indicator-label">{{ activityStatusLabel }}</span>
+                </div>
+              </div>
+
+              <p class="profile-username" *ngIf="inventorySubtitle">
+                <mat-icon>directions_car</mat-icon>
+                {{ inventorySubtitle }}
+              </p>
+
+              <div class="profile-badges-row">
+                <span
+                  class="status-badge"
+                  [class.active]="inventory.active"
+                  [class.inactive]="inventory.active === false"
+                >
+                  <mat-icon>{{ inventory.active ? 'check_circle' : 'pause_circle' }}</mat-icon>
+                  {{ inventory.active ? 'Active Inventory' : 'Inactive Inventory' }}
+                </span>
+
+                <span class="status-badge" [class.verified]="hasAssignment" [class.unverified]="!hasAssignment">
+                  <mat-icon>{{ hasAssignment ? 'assignment_ind' : 'assignment_late' }}</mat-icon>
+                  {{ hasAssignment ? 'Inspector Assigned' : 'Unassigned' }}
+                </span>
+
+                <span class="status-badge id-badge">
+                  <mat-icon>fingerprint</mat-icon>
+                  ID: {{ inventory.inventoryId }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="hero-actions">
+            <button mat-flat-button class="hero-action-btn primary" (click)="scrollToSection('reportSection')">
+              <mat-icon>fact_check</mat-icon>
+              <span>View Report</span>
+            </button>
+
+            <button
+              mat-stroked-button
+              class="hero-action-btn secondary"
+              (click)="openImageViewer(inventoryImages, 0)"
+              [disabled]="!inventoryImages?.length"
+            >
+              <mat-icon>photo_library</mat-icon>
+              <span>View Photos</span>
+            </button>
+
+            <button mat-stroked-button class="hero-action-btn secondary" (click)="scrollToSection('assignmentSection')">
+              <mat-icon>assignment_ind</mat-icon>
+              <span>Assignment</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Hero Stats Grid -->
+        <div class="hero-stats-grid">
+          <div class="hero-stat-card">
+            <div class="stat-icon-wrapper">
+              <mat-icon>percent</mat-icon>
+            </div>
+            <div class="stat-details">
+              <div class="stat-label">Completion</div>
+              <div class="stat-value">{{ overallProgressPercent }}%</div>
+            </div>
+            <div class="stat-decoration"></div>
+          </div>
+
+          <div class="hero-stat-card">
+            <div class="stat-icon-wrapper">
+              <mat-icon>checklist</mat-icon>
+            </div>
+            <div class="stat-details">
+              <div class="stat-label">Completed</div>
+              <div class="stat-value">{{ totalCompleted }}/{{ totalCheckpoints }}</div>
+            </div>
+            <div class="stat-decoration"></div>
+          </div>
+
+          <div class="hero-stat-card">
+            <div class="stat-icon-wrapper">
+              <mat-icon>photo</mat-icon>
+            </div>
+            <div class="stat-details">
+              <div class="stat-label">Photos</div>
+              <div class="stat-value">{{ inventoryImages?.length || 0 }}</div>
+            </div>
+            <div class="stat-decoration"></div>
+          </div>
+
+          <div class="hero-stat-card">
+            <div class="stat-icon-wrapper">
+              <mat-icon>badge</mat-icon>
+            </div>
+            <div class="stat-details">
+              <div class="stat-label">Inspector</div>
+              <div class="stat-value">{{ currentInspectorName }}</div>
+            </div>
+            <div class="stat-decoration"></div>
           </div>
         </div>
       </div>
+    </section>
 
-      <!-- Sections -->
-      <div class="sections">
-        <!-- Assignment panel -->
-        <div class="section">
-          <h3>
-            <mat-icon>assignment_ind</mat-icon>
-            Inspector Assignment
-          </h3>
-          <div class="grid two-col">
-            <div class="item full">
-              <div class="label">Current inspector</div>
-              <div class="value">
-                {{ currentInspectorName }}
+    <!-- Details Grid -->
+    <div class="details-container">
+      <div class="details-grid">
+        <!-- Vehicle Information -->
+        <section class="detail-card reveal-on-scroll">
+          <div class="card-header">
+            <div class="card-icon-wrapper">
+              <mat-icon>directions_car</mat-icon>
+            </div>
+            <div class="card-title-group">
+              <h2 class="card-title">Vehicle Information</h2>
+              <p class="card-subtitle">Core inventory metadata</p>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>tag</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Product Id</div>
+                <div class="detail-value mono">{{ inventory.productId || '—' }}</div>
               </div>
             </div>
 
-            <div class="item">
-              <div class="label">Assign / change inspector</div>
-              <mat-form-field appearance="outline" class="field-full">
-                <mat-label>Inspector</mat-label>
-                <mat-select
-                  [(ngModel)]="selectedInspectorId"
-                  [disabled]="saving || !inspectors.length"
-                >
-                  <mat-option [value]="null">Unassigned</mat-option>
-                  <mat-option
-                    *ngFor="let ins of inspectors"
-                    [value]="ins.userId"
-                    [disabled]="ins.active === false"
-                  >
-                    {{ getInspectorDisplay(ins) }}
-                  </mat-option>
-                </mat-select>
-              </mat-form-field>
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>numbers</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Chassis Number</div>
+                <div class="detail-value mono">{{ inventory.chassisNo || '—' }}</div>
+              </div>
             </div>
 
-            <div class="item actions-row">
-              <button
-                mat-flat-button
-                color="primary"
-                class="btn-primary"
-                (click)="saveAssignment()"
-                [disabled]="saving"
-              >
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>confirmation_number</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Registration</div>
+                <div class="detail-value mono">{{ inventory.registrationNo || '—' }}</div>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>add_circle</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Created</div>
+                <div class="detail-value">{{ formatDate(inventory.createdDate) }}</div>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>update</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Last Modified</div>
+                <div class="detail-value">{{ formatDate(inventory.modifiedDate) }}</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Inspector Assignment -->
+        <section class="detail-card reveal-on-scroll" id="assignmentSection">
+          <div class="card-header">
+            <div class="card-icon-wrapper">
+              <mat-icon>assignment_ind</mat-icon>
+            </div>
+            <div class="card-title-group">
+              <h2 class="card-title">Inspector Assignment</h2>
+              <p class="card-subtitle">Assign / change responsible inspector</p>
+            </div>
+          </div>
+
+          <div class="card-body">
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>person</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Current Inspector</div>
+                <div class="detail-value">{{ currentInspectorName }}</div>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>swap_horiz</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Assign / Change</div>
+
+                <mat-form-field appearance="outline" class="field-full">
+                  <mat-label>Inspector</mat-label>
+                  <mat-select [(ngModel)]="selectedInspectorId" [disabled]="saving || !inspectors.length">
+                    <mat-option [value]="null">Unassigned</mat-option>
+                    <mat-option *ngFor="let ins of inspectors" [value]="ins.userId" [disabled]="ins.active === false">
+                      {{ getInspectorDisplay(ins) }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </div>
+
+            <div class="action-row">
+              <button mat-flat-button class="hero-action-btn primary" (click)="saveAssignment()" [disabled]="saving">
                 <mat-icon>save</mat-icon>
-                Save Assignment
+                <span>Save Assignment</span>
               </button>
 
               <button
                 mat-stroked-button
-                color="warn"
-                class="btn-clear"
+                class="hero-action-btn warning"
                 *ngIf="hasAssignment"
                 (click)="clearAssignment()"
                 [disabled]="saving"
               >
                 <mat-icon>backspace</mat-icon>
-                Unassign
+                <span>Unassign</span>
               </button>
             </div>
           </div>
-        </div>
+        </section>
 
-        <!-- Inspection report panel -->
-        <div class="section">
-          <h3>
-            <mat-icon>fact_check</mat-icon>
-            Inspection Report
-          </h3>
+        <!-- Report Overview -->
+        <section class="detail-card reveal-on-scroll">
+          <div class="card-header">
+            <div class="card-icon-wrapper">
+              <mat-icon>analytics</mat-icon>
+            </div>
+            <div class="card-title-group">
+              <h2 class="card-title">Report Overview</h2>
+              <p class="card-subtitle">Progress & totals summary</p>
+            </div>
+          </div>
 
-          <div class="report-body" *ngIf="reportLoaded">
-            <!-- Summary -->
-            <div class="report-summary" *ngIf="reportGroups.length">
-              <div class="summary-tile">
-                <div class="summary-label">Total Checkpoints</div>
-                <div class="summary-value">{{ totalCheckpoints }}</div>
+          <div class="card-body">
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>checklist</mat-icon>
               </div>
-              <div class="summary-tile">
-                <div class="summary-label">Completed</div>
-                <div class="summary-value">{{ totalCompleted }}</div>
+              <div class="detail-content">
+                <div class="detail-label">Total Checkpoints</div>
+                <div class="detail-value">{{ totalCheckpoints }}</div>
               </div>
-              <div class="summary-tile">
-                <div class="summary-label">Completion</div>
-                <div class="summary-value">
-                  {{ overallProgressPercent }}%
-                  <span class="summary-chip" [style.background]="getCompletionStatusColor()">
-                    {{ getCompletionStatus() }}
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>done_all</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Completed</div>
+                <div class="detail-value">{{ totalCompleted }}</div>
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>percent</mat-icon>
+              </div>
+              <div class="detail-content">
+                <div class="detail-label">Completion</div>
+                <div class="detail-value">
+                  <span class="inline-badge" [class.success]="getCompletionStatus() === 'Completed'"
+                    [class.warning]="getCompletionStatus() !== 'Completed'">
+                    {{ overallProgressPercent }}% • {{ getCompletionStatus() }}
                   </span>
                 </div>
               </div>
             </div>
 
-            <mat-divider *ngIf="reportGroups.length"></mat-divider>
-
-            <!-- No report yet -->
-            <ng-container *ngIf="!reportGroups.length">
-              <p class="muted">
-                No inspection data has been recorded for this inventory yet.
-              </p>
-
-              <div class="report-placeholder">
-                <mat-icon>content_paste_search</mat-icon>
-                <div>
-                  <h4>No inspection report available</h4>
-                  <p>
-                    Once the inspector completes the checklist in their portal and saves the results,
-                    a detailed read-only report will appear here.
-                  </p>
-                </div>
+            <div class="detail-row">
+              <div class="detail-icon-box">
+                <mat-icon>photo_library</mat-icon>
               </div>
-            </ng-container>
-
-            <!-- Tabbed groups -->
-            <div class="report-tabs" *ngIf="reportGroups.length">
-              <mat-tab-group
-                class="type-tabs"
-                animationDuration="200ms"
+              <div class="detail-content">
+                <div class="detail-label">Inventory Photos</div>
+                <div class="detail-value">{{ inventoryImages?.length || 0 }}</div>
+              </div>
+              <button
+                mat-icon-button
+                class="detail-action"
+                matTooltip="Open gallery"
+                (click)="openImageViewer(inventoryImages, 0)"
+                *ngIf="inventoryImages?.length"
               >
-                <mat-tab *ngFor="let group of reportGroups">
-                  <ng-template mat-tab-label>
-                    <span class="tab-label-title">
-                      {{ group.inspectionTypeName }}
-                    </span>
-                    <span class="tab-label-sub">
-                      {{ getGroupCompleted(group) }}/{{ getGroupTotal(group) }} completed
-                    </span>
-                  </ng-template>
+                <mat-icon>open_in_full</mat-icon>
+              </button>
+            </div>
+          </div>
+        </section>
 
-                  <section class="tab-panel">
-                    <article class="report-group">
-                      <header class="group-header">
-                        <div class="group-title">
-                          <mat-icon>category</mat-icon>
-                          <span class="group-name">{{ group.inspectionTypeName }}</span>
-                          <span class="group-weight" *ngIf="group.weightage">
-                            {{ group.weightage }}%
-                          </span>
-                        </div>
-
-                        <div class="group-meta">
-                          <span
-                            class="group-progress-chip"
-                            [class.complete]="getGroupCompleted(group) === getGroupTotal(group)"
-                          >
-                            <mat-icon>
-                              {{
-                                getGroupCompleted(group) === getGroupTotal(group)
-                                  ? 'check_circle'
-                                  : 'pending'
-                              }}
-                            </mat-icon>
-                            {{ getGroupCompleted(group) }}/{{ getGroupTotal(group) }} completed
-                          </span>
-                        </div>
-                      </header>
-
-                      <div class="group-checkpoints">
-                        <div
-                          class="cp-row"
-                          *ngFor="let cp of group.checkpoints"
-                          [class.answered]="isRowAnswered(cp)"
-                        >
-                          <div class="cp-main">
-                            <div class="cp-title-row">
-                              <mat-icon class="cp-status-icn">
-                                {{
-                                  isRowAnswered(cp)
-                                    ? 'check_circle'
-                                    : 'radio_button_unchecked'
-                                }}
-                              </mat-icon>
-                              <div class="cp-text">
-                                <div class="cp-name">
-                                  {{ cp.inspectionCheckpointName }}
-                                </div>
-                                <div class="cp-type">
-                                  <span *ngIf="normalizeInputType(cp.inputType) === 'yesno'">
-                                    Pass / Fail
-                                  </span>
-                                  <span *ngIf="normalizeInputType(cp.inputType) === 'number'">
-                                    Numeric value
-                                  </span>
-                                  <span *ngIf="normalizeInputType(cp.inputType) === 'textarea'">
-                                    Remarks
-                                  </span>
-                                  <span *ngIf="normalizeInputType(cp.inputType) === 'text'">
-                                    Text
-                                  </span>
-                                  <span *ngIf="normalizeInputType(cp.inputType) === 'image'">
-                                    Image(s)
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div class="cp-result">
-                            <ng-container [ngSwitch]="normalizeInputType(cp.inputType)">
-                              <!-- YES/NO -->
-                              <div
-                                *ngSwitchCase="'yesno'"
-                                class="cp-pill"
-                                [class.pass]="cp.resultValue === 'Pass'"
-                                [class.fail]="cp.resultValue === 'Fail'"
-                              >
-                                <mat-icon *ngIf="cp.resultValue === 'Pass'">
-                                  check_circle
-                                </mat-icon>
-                                <mat-icon *ngIf="cp.resultValue === 'Fail'">
-                                  cancel
-                                </mat-icon>
-                                <span>
-                                  {{ cp.resultValue || 'Not recorded' }}
-                                </span>
-                              </div>
-
-                              <!-- NUMBER -->
-                              <div *ngSwitchCase="'number'" class="cp-value-box">
-                                <span
-                                  class="cp-value"
-                                  *ngIf="isAnswered(cp.resultValue); else noNumber"
-                                >
-                                  {{ cp.resultValue }}
-                                </span>
-                                <ng-template #noNumber>
-                                  <span class="cp-empty">No value recorded</span>
-                                </ng-template>
-                              </div>
-
-                              <!-- IMAGE(S) -->
-                              <div *ngSwitchCase="'image'" class="cp-images">
-                                <ng-container *ngIf="cp.imageUrls?.length; else noImages">
-                                  <div class="cp-image-grid">
-                                    <div
-                                      class="cp-img-item"
-                                      *ngFor="let img of cp.imageUrls; let idx = index"
-                                      (click)="openImageViewer(cp.imageUrls!, idx)"
-                                    >
-                                      <img
-                                        [src]="img"
-                                        [alt]="cp.inspectionCheckpointName"
-                                      />
-                                    </div>
-                                  </div>
-                                </ng-container>
-                                <ng-template #noImages>
-                                  <span class="cp-empty">No images uploaded</span>
-                                </ng-template>
-                              </div>
-
-                              <!-- TEXT / TEXTAREA -->
-                              <div *ngSwitchDefault class="cp-notes">
-                                <span *ngIf="isAnswered(cp.resultValue); else noNotes">
-                                  {{ cp.resultValue }}
-                                </span>
-                                <ng-template #noNotes>
-                                  <span class="cp-empty">No remarks recorded</span>
-                                </ng-template>
-                              </div>
-                            </ng-container>
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                  </section>
-                </mat-tab>
-              </mat-tab-group>
+        <!-- Inspection Report (Full Width like Audit card) -->
+        <section class="detail-card audit-card reveal-on-scroll" id="reportSection">
+          <div class="card-header">
+            <div class="card-icon-wrapper">
+              <mat-icon>fact_check</mat-icon>
+            </div>
+            <div class="card-title-group">
+              <h2 class="card-title">Inspection Report</h2>
+              <p class="card-subtitle">Read-only checklist results per inspection type</p>
             </div>
           </div>
 
-          <!-- loading skeleton for report only -->
-          <div class="report-loading" *ngIf="!reportLoaded">
-            <mat-spinner diameter="32"></mat-spinner>
-            <span>Loading inspection report…</span>
+          <div class="card-body">
+            <ng-container *ngIf="reportLoaded; else reportLoading">
+              <ng-container *ngIf="reportGroups.length; else noReport">
+                <mat-tab-group class="type-tabs" animationDuration="200ms">
+                  <mat-tab *ngFor="let group of reportGroups; trackBy: trackByGroup">
+                    <ng-template mat-tab-label>
+                      <span class="tab-label-title">{{ group.inspectionTypeName }}</span>
+                      <span class="tab-label-sub">
+                        {{ getGroupCompleted(group) }}/{{ getGroupTotal(group) }} completed
+                      </span>
+                    </ng-template>
+
+                    <section class="tab-panel">
+                      <article class="report-group">
+                        <header class="group-header">
+                          <div class="group-title">
+                            <mat-icon>category</mat-icon>
+                            <span class="group-name">{{ group.inspectionTypeName }}</span>
+                            <span class="group-weight" *ngIf="group.weightage">{{ group.weightage }}%</span>
+                          </div>
+
+                          <div class="group-meta">
+                            <span
+                              class="group-progress-chip"
+                              [class.complete]="getGroupCompleted(group) === getGroupTotal(group)"
+                            >
+                              <mat-icon>
+                                {{
+                                  getGroupCompleted(group) === getGroupTotal(group)
+                                    ? 'check_circle'
+                                    : 'pending'
+                                }}
+                              </mat-icon>
+                              {{ getGroupCompleted(group) }}/{{ getGroupTotal(group) }} completed
+                            </span>
+                          </div>
+                        </header>
+
+                        <div class="group-checkpoints">
+                          <div
+                            class="cp-row"
+                            *ngFor="let cp of group.checkpoints; trackBy: trackByCheckpoint"
+                            [class.answered]="isRowAnswered(cp)"
+                          >
+                            <div class="cp-main">
+                              <div class="cp-title-row">
+                                <mat-icon class="cp-status-icn">
+                                  {{ isRowAnswered(cp) ? 'check_circle' : 'radio_button_unchecked' }}
+                                </mat-icon>
+
+                                <div class="cp-text">
+                                  <div class="cp-name">{{ cp.inspectionCheckpointName }}</div>
+                                  <div class="cp-type">
+                                    <span *ngIf="normalizeInputType(cp.inputType) === 'yesno'">Pass / Fail</span>
+                                    <span *ngIf="normalizeInputType(cp.inputType) === 'number'">Numeric value</span>
+                                    <span *ngIf="normalizeInputType(cp.inputType) === 'textarea'">Remarks</span>
+                                    <span *ngIf="normalizeInputType(cp.inputType) === 'text'">Text</span>
+                                    <span *ngIf="normalizeInputType(cp.inputType) === 'image'">Image(s)</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div class="cp-result">
+                              <ng-container [ngSwitch]="normalizeInputType(cp.inputType)">
+                                <!-- YES/NO -->
+                                <div
+                                  *ngSwitchCase="'yesno'"
+                                  class="cp-pill"
+                                  [class.pass]="cp.resultValue === 'Pass'"
+                                  [class.fail]="cp.resultValue === 'Fail'"
+                                >
+                                  <mat-icon *ngIf="cp.resultValue === 'Pass'">check_circle</mat-icon>
+                                  <mat-icon *ngIf="cp.resultValue === 'Fail'">cancel</mat-icon>
+                                  <span>{{ cp.resultValue || 'Not recorded' }}</span>
+                                </div>
+
+                                <!-- NUMBER -->
+                                <div *ngSwitchCase="'number'" class="cp-value-box">
+                                  <span class="cp-value" *ngIf="isAnswered(cp.resultValue); else noNumber">
+                                    {{ cp.resultValue }}
+                                  </span>
+                                  <ng-template #noNumber>
+                                    <span class="cp-empty">No value recorded</span>
+                                  </ng-template>
+                                </div>
+
+                                <!-- IMAGE -->
+                                <div *ngSwitchCase="'image'" class="cp-images">
+                                  <ng-container *ngIf="cp.imageUrls?.length; else noImages">
+                                    <div class="cp-image-grid">
+                                      <div
+                                        class="cp-img-item"
+                                        *ngFor="let img of cp.imageUrls; let idx = index"
+                                        (click)="openImageViewer(cp.imageUrls!, idx)"
+                                      >
+                                        <img [src]="img" [alt]="cp.inspectionCheckpointName" />
+                                      </div>
+                                    </div>
+                                  </ng-container>
+                                  <ng-template #noImages>
+                                    <span class="cp-empty">No images uploaded</span>
+                                  </ng-template>
+                                </div>
+
+                                <!-- TEXT / TEXTAREA -->
+                                <div *ngSwitchDefault class="cp-notes">
+                                  <span *ngIf="isAnswered(cp.resultValue); else noNotes">
+                                    {{ cp.resultValue }}
+                                  </span>
+                                  <ng-template #noNotes>
+                                    <span class="cp-empty">No remarks recorded</span>
+                                  </ng-template>
+                                </div>
+                              </ng-container>
+                            </div>
+                          </div>
+                        </div>
+                      </article>
+                    </section>
+                  </mat-tab>
+                </mat-tab-group>
+              </ng-container>
+
+              <ng-template #noReport>
+                <div class="report-placeholder">
+                  <mat-icon>content_paste_search</mat-icon>
+                  <div>
+                    <h4>No inspection report available</h4>
+                    <p>
+                      Once the inspector completes the checklist in their portal and saves the results,
+                      a detailed read-only report will appear here.
+                    </p>
+                  </div>
+                </div>
+              </ng-template>
+            </ng-container>
+
+            <ng-template #reportLoading>
+              <div class="report-loading">
+                <mat-spinner diameter="32"></mat-spinner>
+                <span>Loading inspection report…</span>
+              </div>
+            </ng-template>
           </div>
-        </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- Action Footer -->
+    <div class="action-footer reveal-on-scroll">
+      <div class="footer-left">
+        <button mat-stroked-button class="footer-btn secondary" (click)="back()">
+          <mat-icon>arrow_back</mat-icon>
+          <span>Back to Inventory</span>
+        </button>
       </div>
 
-      <!-- Footer -->
-      <div class="footer">
-        <div class="audit">
-          <div>
-            Created by <strong>{{ inventory.createdById ?? '—' }}</strong>
-          </div>
-          <div>
-            Modified by <strong>{{ inventory.modifiedById ?? '—' }}</strong>
-          </div>
-        </div>
-        <div class="buttons">
-          <button mat-stroked-button color="primary" (click)="back()">
-            <mat-icon>arrow_back</mat-icon>
-            Back
-          </button>
-        </div>
+      <div class="footer-right">
+        <button mat-flat-button class="footer-btn primary" (click)="scrollToSection('reportSection')">
+          <mat-icon>fact_check</mat-icon>
+          <span>Go to Report</span>
+        </button>
       </div>
-    </section>
+    </div>
   </ng-container>
 
-  <!-- Image Viewer Modal (shared for inventory + checkpoint images) -->
+  <!-- Image Viewer Modal -->
   <div class="image-viewer" *ngIf="showImageViewer" (click)="closeImageViewer()">
     <div class="viewer-content" (click)="$event.stopPropagation()">
       <button class="viewer-close" (click)="closeImageViewer()">
         <mat-icon>close</mat-icon>
       </button>
 
-      <button
-        class="viewer-nav prev"
-        (click)="prevImage()"
-        [disabled]="selectedImageIndex === 0"
-      >
+      <button class="viewer-nav prev" (click)="prevImage()" [disabled]="selectedImageIndex === 0">
         <mat-icon>chevron_left</mat-icon>
       </button>
 
       <div class="viewer-image">
-        <img
-          [src]="selectedImageGallery[selectedImageIndex]"
-          alt="Inspection image"
-        />
+        <img [src]="selectedImageGallery[selectedImageIndex]" alt="Inspection image" />
       </div>
 
       <button

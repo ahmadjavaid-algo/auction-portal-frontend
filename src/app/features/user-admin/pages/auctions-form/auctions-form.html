@@ -1,94 +1,150 @@
-<form class="dialog-form" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
-  <!-- Header -->
-  <div class="header">
-    <div class="title">
-      <h2>{{ mode === 'edit' ? 'Edit auction' : 'Create auction' }}</h2>
-      <p class="sub">
-        Set schedule & bid increment. Status is computed automatically.
-      </p>
+<form class="auction-form-dialog" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
+  <!-- Honeypots to prevent autofill -->
+  <input type="text" autocomplete="username" tabindex="-1" aria-hidden="true"
+         style="position:absolute;left:-9999px;width:0;height:0;opacity:0;" />
+  <input type="password" autocomplete="current-password" tabindex="-1" aria-hidden="true"
+         style="position:absolute;left:-9999px;width:0;height:0;opacity:0;" />
 
-      <!-- Read-only status chip in edit mode -->
-      <div class="status-chip" *ngIf="computedStatusLabel">
-        <mat-icon>info</mat-icon>
-        {{ computedStatusLabel }}
+  <!-- Dialog Header -->
+  <div class="dialog-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <mat-icon>{{ mode === 'edit' ? 'edit' : 'add_circle' }}</mat-icon>
+      </div>
+      <div class="header-text">
+        <h2 class="dialog-title">{{ dialogTitle }}</h2>
+        <p class="dialog-subtitle">
+          {{ mode === 'edit' ? 'Update auction information below' : 'Fill in the details to create a new auction' }}
+        </p>
       </div>
     </div>
+
+    <button type="button" mat-icon-button class="close-btn" (click)="onCancel()" matTooltip="Close">
+      <mat-icon>close</mat-icon>
+    </button>
   </div>
 
-  <!-- Body -->
-  <mat-dialog-content class="body">
-    <div class="sheet">
-      <div class="grid">
+  <!-- Dialog Body -->
+  <mat-dialog-content class="dialog-body">
+    <!-- Auction Information Section -->
+    <div class="form-section">
+      <div class="section-header">
+        <mat-icon>gavel</mat-icon>
+        <h3>Auction Information</h3>
+      </div>
 
+      <div class="form-grid">
         <!-- Auction Name -->
-        <mat-form-field appearance="outline">
-          <mat-label>Auction name *</mat-label>
-          <input matInput formControlName="auctionName" maxlength="200" />
+        <mat-form-field appearance="outline" class="form-field full-width">
+          <mat-label>Auction Name *</mat-label>
+          <mat-icon matPrefix>title</mat-icon>
+          <input matInput formControlName="auctionName" maxlength="200" autocomplete="off" />
           <mat-hint align="end">{{ (form.get('auctionName')?.value?.length || 0) }}/200</mat-hint>
-          <mat-error *ngIf="form.get('auctionName')?.hasError('required')">Name is required</mat-error>
+          <mat-error>{{ getErrorMessage('auctionName') }}</mat-error>
         </mat-form-field>
 
+        <!-- Status (edit mode / read-only) -->
+        <mat-form-field *ngIf="mode === 'edit' && computedStatusLabel"
+                        appearance="outline"
+                        class="form-field full-width">
+          <mat-label>Current Status</mat-label>
+          <mat-icon matPrefix>info</mat-icon>
+          <input matInput [value]="computedStatusLabel" disabled />
+          <mat-hint>Status is computed automatically by the system</mat-hint>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Schedule Section -->
+    <div class="form-section">
+      <div class="section-header">
+        <mat-icon>event</mat-icon>
+        <h3>Schedule</h3>
+      </div>
+
+      <div class="form-grid">
         <!-- Start date -->
-        <mat-form-field appearance="outline">
-          <mat-label>Start date *</mat-label>
-          <input matInput [matDatepicker]="sd" formControlName="startDate" />
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Start Date *</mat-label>
+          <mat-icon matPrefix>calendar_month</mat-icon>
+          <input matInput [matDatepicker]="sd" formControlName="startDate" autocomplete="off" />
           <mat-datepicker-toggle matSuffix [for]="sd"></mat-datepicker-toggle>
           <mat-datepicker #sd></mat-datepicker>
-          <mat-error *ngIf="form.get('startDate')?.hasError('required')">Start date is required</mat-error>
+          <mat-error>{{ getErrorMessage('startDate') }}</mat-error>
         </mat-form-field>
 
         <!-- Start time -->
-        <mat-form-field appearance="outline">
-          <mat-label>Start time *</mat-label>
-          <input matInput type="time" step="60" formControlName="startTime" />
-          <mat-error *ngIf="form.get('startTime')?.hasError('required')">Start time is required</mat-error>
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Start Time *</mat-label>
+          <mat-icon matPrefix>schedule</mat-icon>
+          <input matInput type="time" step="60" formControlName="startTime" autocomplete="off" />
+          <mat-error>{{ getErrorMessage('startTime') }}</mat-error>
         </mat-form-field>
 
         <!-- End date -->
-        <mat-form-field appearance="outline">
-          <mat-label>End date *</mat-label>
-          <input matInput [matDatepicker]="ed" formControlName="endDate" />
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>End Date *</mat-label>
+          <mat-icon matPrefix>event_available</mat-icon>
+          <input matInput [matDatepicker]="ed" formControlName="endDate" autocomplete="off" />
           <mat-datepicker-toggle matSuffix [for]="ed"></mat-datepicker-toggle>
           <mat-datepicker #ed></mat-datepicker>
-          <mat-error *ngIf="form.get('endDate')?.hasError('required')">End date is required</mat-error>
+          <mat-error>{{ getErrorMessage('endDate') }}</mat-error>
         </mat-form-field>
 
         <!-- End time -->
-        <mat-form-field appearance="outline">
-          <mat-label>End time *</mat-label>
-          <input matInput type="time" step="60" formControlName="endTime" />
-          <mat-error *ngIf="form.get('endTime')?.hasError('required')">End time is required</mat-error>
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>End Time *</mat-label>
+          <mat-icon matPrefix>schedule</mat-icon>
+          <input matInput type="time" step="60" formControlName="endTime" autocomplete="off" />
+          <mat-error>{{ getErrorMessage('endTime') }}</mat-error>
         </mat-form-field>
 
         <!-- Range error -->
-        <div class="full range-error" *ngIf="rangeInvalid$ | async">
+        <div class="form-field full-width range-error" *ngIf="rangeInvalid$ | async">
           <mat-icon>error</mat-icon>
-          End must be after start.
+          <span>End must be after start.</span>
         </div>
-
-        <!-- Bid Increment -->
-        <mat-form-field appearance="outline">
-          <mat-label>Bid increment *</mat-label>
-          <input matInput type="number" formControlName="bidIncrement" min="0" />
-          <mat-error *ngIf="form.get('bidIncrement')?.hasError('required')">Bid increment is required</mat-error>
-          <mat-error *ngIf="form.get('bidIncrement')?.hasError('min')">Must be ≥ 0</mat-error>
-        </mat-form-field>
 
         <!-- Timezone note -->
-        <div class="tz-note">
+        <div class="form-field full-width tz-note">
           <mat-icon>schedule</mat-icon>
-          Times are saved in your local timezone. Status will update automatically.
+          <span>Times are saved in your local timezone. Status updates automatically.</span>
         </div>
+      </div>
+    </div>
 
+    <!-- Bidding Section -->
+    <div class="form-section">
+      <div class="section-header">
+        <mat-icon>payments</mat-icon>
+        <h3>Bidding</h3>
+      </div>
+
+      <div class="form-grid">
+        <!-- Bid Increment -->
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Bid Increment *</mat-label>
+          <mat-icon matPrefix>trending_up</mat-icon>
+          <input matInput type="number" min="0" formControlName="bidIncrement" autocomplete="off" />
+          <mat-error>{{ getErrorMessage('bidIncrement') }}</mat-error>
+        </mat-form-field>
+
+        <!-- spacer to keep 2-col grid aligned -->
+        <div class="form-field" aria-hidden="true"></div>
       </div>
     </div>
   </mat-dialog-content>
 
-  <!-- Actions -->
-  <mat-dialog-actions align="end" class="actions">
-    <button mat-stroked-button type="button" class="btn-cancel" (click)="onCancel()">Cancel</button>
-    <button mat-flat-button type="submit" class="btn-primary" [disabled]="form.invalid">
-      {{ mode === 'edit' ? 'Update' : 'Create' }}
+  <!-- Dialog Actions -->
+  <mat-dialog-actions class="dialog-actions">
+    <button type="button" mat-stroked-button class="action-btn cancel-btn" (click)="onCancel()">
+      <mat-icon>close</mat-icon>
+      <span>Cancel</span>
+    </button>
+
+    <button type="submit" mat-flat-button class="action-btn submit-btn" [disabled]="form.invalid">
+      <mat-icon>{{ mode === 'edit' ? 'check' : 'add' }}</mat-icon>
+      <span>{{ submitButtonText }}</span>
     </button>
   </mat-dialog-actions>
 </form>

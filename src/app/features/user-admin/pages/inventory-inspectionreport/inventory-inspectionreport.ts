@@ -1,5 +1,4 @@
-
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
@@ -12,6 +11,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTabsModule } from '@angular/material/tabs';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormsModule } from '@angular/forms';
 
 import { forkJoin, of } from 'rxjs';
@@ -34,13 +34,6 @@ import { InspectionCheckpoint } from '../../../../models/inspectioncheckpoint.mo
 import { Inspection } from '../../../../models/inspection.model';
 import { InventoryDocumentFile } from '../../../../models/inventorydocumentfile.model';
 
-type SummaryTile = {
-  label: string;
-  value: number | string;
-  icon: string;
-  color: string;
-};
-
 type NormalizedInputType = 'text' | 'textarea' | 'number' | 'yesno' | 'image';
 
 interface InspectionCheckpointRow {
@@ -51,7 +44,7 @@ interface InspectionCheckpointRow {
   inspectionCheckpointName: string;
   inputType?: string | null;
   resultValue: string;
-  imageUrls?: string[]; 
+  imageUrls?: string[];
 }
 
 interface InspectionTypeGroupForUI {
@@ -67,6 +60,7 @@ interface InspectionTypeGroupForUI {
   imports: [
     CommonModule,
     RouterLink,
+
     MatCardModule,
     MatIconModule,
     MatButtonModule,
@@ -76,12 +70,14 @@ interface InspectionTypeGroupForUI {
     MatProgressSpinnerModule,
     MatDividerModule,
     MatTabsModule,
+    MatTooltipModule,
+
     FormsModule
   ],
   templateUrl: './inventory-inspectionreport.html',
   styleUrls: ['./inventory-inspectionreport.scss']
 })
-export class InventoryInspectionreport {
+export class InventoryInspectionreport implements OnInit, AfterViewInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private invSvc = inject(InventoryService);
@@ -105,23 +101,24 @@ export class InventoryInspectionreport {
   inspectors: Inspector[] = [];
   assignment: InventoryInspector | null = null;
 
-  
   selectedInspectorId: number | null = null;
 
-  
   allTypes: InspectionType[] = [];
   allCheckpoints: InspectionCheckpoint[] = [];
   reportGroups: InspectionTypeGroupForUI[] = [];
   reportLoaded = false;
 
-  
   inventoryImages: string[] = [];
 
-  
   selectedImageGallery: string[] = [];
   selectedImageIndex = 0;
   showImageViewer = false;
 
+  private intersectionObserver?: IntersectionObserver;
+
+  // ----------------------------
+  // Lifecycle
+  // ----------------------------
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (!id) {
@@ -134,6 +131,36 @@ export class InventoryInspectionreport {
     this.loadData();
   }
 
+  ngAfterViewInit(): void {
+    this.initScrollReveal();
+  }
+
+  ngOnDestroy(): void {
+    this.intersectionObserver?.disconnect();
+  }
+
+  private initScrollReveal(): void {
+    this.intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('revealed');
+            this.intersectionObserver?.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1, rootMargin: '0px 0px -50px 0px' }
+    );
+
+    setTimeout(() => {
+      const els = document.querySelectorAll('.reveal-on-scroll');
+      els.forEach((el) => this.intersectionObserver?.observe(el));
+    }, 100);
+  }
+
+  // ----------------------------
+  // Data loading
+  // ----------------------------
   private loadData(): void {
     this.loading = true;
     this.error = null;
@@ -154,15 +181,7 @@ export class InventoryInspectionreport {
         catchError(() => of([] as InventoryDocumentFile[]))
       )
     }).subscribe({
-      next: ({
-        inventory,
-        inspectors,
-        mappings,
-        types,
-        checkpoints,
-        inspections,
-        docs
-      }) => {
+      next: ({ inventory, inspectors, mappings, types, checkpoints, inspections, docs }) => {
         if (!inventory) {
           this.inventory = null;
           this.error = 'Inventory not found.';
@@ -172,49 +191,53 @@ export class InventoryInspectionreport {
         this.inventory = inventory ?? null;
         this.inspectors = inspectors ?? [];
 
-        const existing = (mappings ?? []).find(
-          m => m.inventoryId === this.inventoryId
-        ) ?? null;
+        const existing = (mappings ?? []).find(m => m.inventoryId === this.inventoryId) ?? null;
         this.assignment = existing;
         this.selectedInspectorId = existing?.assignedTo ?? null;
 
         this.allTypes = types ?? [];
         this.allCheckpoints = checkpoints ?? [];
 
-        
         this.inventoryImages = this.buildInventoryImages(docs ?? [], this.inventoryId);
 
-        this.reportGroups = this.buildGroupsForInventory(
-          this.inventory,
-          inspections ?? []
-        );
+        this.reportGroups = this.buildGroupsForInventory(this.inventory, inspections ?? []);
         this.reportLoaded = true;
       },
       error: (err) => {
         console.error('Failed to load inspection report data', err);
-        this.error =
-          err?.error?.message || 'Failed to load inspection report data.';
+        this.error = err?.error?.message || 'Failed to load inspection report data.';
       },
       complete: () => (this.loading = false)
     });
   }
 
+  // ----------------------------
+  // Navigation
+  // ----------------------------
   back(): void {
     this.router.navigate(['/admin/inventory']);
   }
 
-  
+  scrollToSection(sectionId: string): void {
+    const el = document.getElementById(sectionId);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 
+  // ----------------------------
+  // Hero display helpers (match UsersDetails vibe)
+  // ----------------------------
   get inventoryTitle(): string {
     if (!this.inventory) return '(No inventory)';
-    if (this.inventory.displayName) return this.inventory.displayName;
-    const pj = this.safeParse(this.inventory.productJSON);
+    if ((this.inventory as any).displayName) return (this.inventory as any).displayName;
+
+    const pj = this.safeParse((this.inventory as any).productJSON);
     return pj?.DisplayName || pj?.displayName || `Inventory #${this.inventory.inventoryId}`;
   }
 
   get inventorySubtitle(): string {
     if (!this.inventory) return '';
-    const pj = this.safeParse(this.inventory.productJSON);
+    const pj = this.safeParse((this.inventory as any).productJSON);
 
     const bits: string[] = [];
     const make = pj?.Make || pj?.make;
@@ -228,6 +251,31 @@ export class InventoryInspectionreport {
     return bits.join(' • ');
   }
 
+  get initials(): string {
+    const title = (this.inventoryTitle || '').trim();
+    if (!title) return 'IR';
+
+    const parts = title.replace(/[^a-zA-Z0-9 ]/g, ' ').split(' ').filter(Boolean);
+    const a = (parts[0]?.[0] ?? 'I').toUpperCase();
+    const b = (parts[1]?.[0] ?? 'R').toUpperCase();
+    return `${a}${b}`;
+  }
+
+  // Activity indicator mapped to completion (same indicator UI)
+  get activityStatus(): 'online' | 'recent' | 'away' | 'inactive' {
+    const s = this.getCompletionStatus();
+    if (s === 'Completed') return 'online';
+    if (s === 'In Progress') return 'recent';
+    return 'inactive';
+  }
+
+  get activityStatusLabel(): string {
+    const s = this.getCompletionStatus();
+    if (s === 'Completed') return 'Report Completed';
+    if (s === 'In Progress') return 'Report In Progress';
+    return 'Not Started';
+  }
+
   private safeParse(json?: string | null): any | null {
     if (!json) return null;
     try {
@@ -237,8 +285,22 @@ export class InventoryInspectionreport {
     }
   }
 
-  
+  formatDate(date: any): string {
+    if (!date) return '—';
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
 
+  // ----------------------------
+  // Inspector assignment
+  // ----------------------------
   getInspectorDisplay(i: Inspector): string {
     const name = [i.firstName, i.lastName].filter(Boolean).join(' ').trim();
     if (name) return `${name} (${i.userName})`;
@@ -248,11 +310,9 @@ export class InventoryInspectionreport {
   get currentInspectorName(): string {
     if (!this.assignment || !this.assignment.assignedTo) return 'Unassigned';
 
-    const match = this.inspectors.find(
-      x => x.userId === this.assignment!.assignedTo
-    );
+    const match = this.inspectors.find(x => x.userId === this.assignment!.assignedTo);
     if (match) return this.getInspectorDisplay(match);
-    if (this.assignment.inspectorName) return this.assignment.inspectorName;
+    if ((this.assignment as any).inspectorName) return (this.assignment as any).inspectorName;
 
     return `Inspector #${this.assignment.assignedTo}`;
   }
@@ -263,9 +323,7 @@ export class InventoryInspectionreport {
 
   saveAssignment(): void {
     if (!this.selectedInspectorId) {
-      this.snack.open('Please select an inspector to assign.', 'Dismiss', {
-        duration: 2500
-      });
+      this.snack.open('Please select an inspector to assign.', 'Dismiss', { duration: 2500 });
       return;
     }
 
@@ -273,12 +331,11 @@ export class InventoryInspectionreport {
     this.saving = true;
 
     if (this.assignment && this.assignment.inventoryInspectorId > 0) {
-      
       const payload: InventoryInspector = {
         inventoryInspectorId: this.assignment.inventoryInspectorId,
         assignedTo: this.selectedInspectorId,
         inventoryId: this.inventoryId,
-        inspectorName: this.assignment.inspectorName ?? undefined,
+        inspectorName: (this.assignment as any).inspectorName ?? undefined,
         createdById: this.assignment.createdById ?? currentUserId,
         createdDate: this.assignment.createdDate ?? null,
         modifiedById: currentUserId,
@@ -289,28 +346,19 @@ export class InventoryInspectionreport {
       this.invInspectorSvc.update(payload).subscribe({
         next: (ok) => {
           if (ok) {
-            this.snack.open('Inspector assignment updated.', 'OK', {
-              duration: 2500
-            });
+            this.snack.open('Inspector assignment updated.', 'OK', { duration: 2500 });
             this.assignment = payload;
           } else {
-            this.snack.open('Failed to update assignment.', 'Dismiss', {
-              duration: 3000
-            });
+            this.snack.open('Failed to update assignment.', 'Dismiss', { duration: 3000 });
           }
         },
         error: (err) => {
           console.error('Failed to update assignment', err);
-          this.snack.open(
-            err?.error?.message || 'Failed to update assignment.',
-            'Dismiss',
-            { duration: 3000 }
-          );
+          this.snack.open(err?.error?.message || 'Failed to update assignment.', 'Dismiss', { duration: 3000 });
         },
         complete: () => (this.saving = false)
       });
     } else {
-      
       const payload: InventoryInspector = {
         inventoryInspectorId: 0,
         assignedTo: this.selectedInspectorId,
@@ -325,18 +373,12 @@ export class InventoryInspectionreport {
 
       this.invInspectorSvc.add(payload).subscribe({
         next: (id) => {
-          this.snack.open('Inspector assigned to inventory.', 'OK', {
-            duration: 2500
-          });
+          this.snack.open('Inspector assigned to inventory.', 'OK', { duration: 2500 });
           this.assignment = { ...payload, inventoryInspectorId: id };
         },
         error: (err) => {
           console.error('Failed to assign inspector', err);
-          this.snack.open(
-            err?.error?.message || 'Failed to assign inspector.',
-            'Dismiss',
-            { duration: 3000 }
-          );
+          this.snack.open(err?.error?.message || 'Failed to assign inspector.', 'Dismiss', { duration: 3000 });
         },
         complete: () => (this.saving = false)
       });
@@ -349,120 +391,75 @@ export class InventoryInspectionreport {
     const currentUserId = this.auth.currentUser?.userId ?? null;
     this.saving = true;
 
-    this.invInspectorSvc
-      .update({
-        inventoryInspectorId: this.assignment.inventoryInspectorId,
-        assignedTo: null,
-        inventoryId: this.inventoryId,
-        inspectorName: this.assignment.inspectorName ?? undefined,
-        createdById: this.assignment.createdById ?? currentUserId,
-        createdDate: this.assignment.createdDate ?? null,
-        modifiedById: currentUserId,
-        modifiedDate: null,
-        active: this.assignment.active ?? true
-      } as InventoryInspector)
-      .subscribe({
-        next: (ok) => {
-          if (ok) {
-            this.assignment = {
-              ...this.assignment!,
-              assignedTo: null
-            };
-            this.selectedInspectorId = null;
-            this.snack.open('Inspector unassigned from this inventory.', 'OK', {
-              duration: 2500
-            });
-          } else {
-            this.snack.open('Failed to clear assignment.', 'Dismiss', {
-              duration: 3000
-            });
-          }
-        },
-        error: (err) => {
-          console.error('Failed to clear assignment', err);
-          this.snack.open(
-            err?.error?.message || 'Failed to clear assignment.',
-            'Dismiss',
-            { duration: 3000 }
-          );
-        },
-        complete: () => (this.saving = false)
-      });
+    this.invInspectorSvc.update({
+      inventoryInspectorId: this.assignment.inventoryInspectorId,
+      assignedTo: null,
+      inventoryId: this.inventoryId,
+      inspectorName: (this.assignment as any).inspectorName ?? undefined,
+      createdById: this.assignment.createdById ?? currentUserId,
+      createdDate: this.assignment.createdDate ?? null,
+      modifiedById: currentUserId,
+      modifiedDate: null,
+      active: this.assignment.active ?? true
+    } as InventoryInspector).subscribe({
+      next: (ok) => {
+        if (ok) {
+          this.assignment = { ...this.assignment!, assignedTo: null };
+          this.selectedInspectorId = null;
+          this.snack.open('Inspector unassigned from this inventory.', 'OK', { duration: 2500 });
+        } else {
+          this.snack.open('Failed to clear assignment.', 'Dismiss', { duration: 3000 });
+        }
+      },
+      error: (err) => {
+        console.error('Failed to clear assignment', err);
+        this.snack.open(err?.error?.message || 'Failed to clear assignment.', 'Dismiss', { duration: 3000 });
+      },
+      complete: () => (this.saving = false)
+    });
   }
 
-  
-
+  // ----------------------------
+  // Inspection report build
+  // ----------------------------
   private isActiveInspection(i: Inspection): boolean {
-    const raw =
-      (i as any).active ??
-      (i as any).Active ??
-      (i as any).isActive ??
-      true;
+    const raw = (i as any).active ?? (i as any).Active ?? (i as any).isActive ?? true;
     return raw !== false && raw !== 0;
   }
 
-  private buildInventoryImages(
-    files: InventoryDocumentFile[],
-    inventoryId: number
-  ): string[] {
+  private buildInventoryImages(files: InventoryDocumentFile[], inventoryId: number): string[] {
     const isImage = (d: InventoryDocumentFile): boolean => {
-      const s = (
-        d.documentUrl ||
-        d.documentName ||
-        d.documentDisplayName ||
-        ''
-      )
-        .toString()
-        .toLowerCase();
-
+      const s = (d.documentUrl || d.documentName || d.documentDisplayName || '').toString().toLowerCase();
       return ['.jpg', '.jpeg', '.png', '.webp'].some(ext => s.endsWith(ext));
     };
 
     return (files || [])
-      .filter(
-        f =>
-          (f.active ?? true) &&
-          f.inventoryId === inventoryId &&
-          !!f.documentUrl &&
-          isImage(f)
-      )
+      .filter(f => (f.active ?? true) && f.inventoryId === inventoryId && !!f.documentUrl && isImage(f))
       .map(f => f.documentUrl!);
   }
 
-  private buildGroupsForInventory(
-    inventory: Inventory,
-    existing: Inspection[]
-  ): InspectionTypeGroupForUI[] {
+  private buildGroupsForInventory(inventory: Inventory, existing: Inspection[]): InspectionTypeGroupForUI[] {
     if (!inventory) return [];
 
     const groups: InspectionTypeGroupForUI[] = [];
     const activeTypes = (this.allTypes ?? []).filter(t => t.active !== false);
-    const activeInspections = (existing ?? []).filter(i =>
-      this.isActiveInspection(i)
-    );
+    const activeInspections = (existing ?? []).filter(i => this.isActiveInspection(i));
 
     activeTypes.forEach(t => {
-      const cps = (this.allCheckpoints ?? []).filter(
-        cp =>
-          (((cp as any).inspectionTypeId === t.inspectionTypeId) ||
-            ((cp as any).InspectionTypeId === t.inspectionTypeId)) &&
-          cp.active !== false
+      const cps = (this.allCheckpoints ?? []).filter(cp =>
+        ((((cp as any).inspectionTypeId === t.inspectionTypeId) || ((cp as any).InspectionTypeId === t.inspectionTypeId)) &&
+          cp.active !== false)
       );
 
-      if (!cps.length) {
-        return;
-      }
+      if (!cps.length) return;
 
       const rows: InspectionCheckpointRow[] = cps.map(cp => {
-        const cpId =
-          (cp as any).inspectionCheckpointId ??
-          (cp as any).inspectioncheckpointId;
+        const cpId = (cp as any).inspectionCheckpointId ?? (cp as any).inspectioncheckpointId;
 
-        const cpInspectionsAll = activeInspections.filter(
-          i =>
-            i.inspectionTypeId === t.inspectionTypeId &&
-            i.inspectionCheckpointId === cpId &&
-            i.inventoryId === inventory.inventoryId
+        const cpInspectionsAll = activeInspections.filter(i =>
+          i.inspectionTypeId === t.inspectionTypeId &&
+          i.inspectionCheckpointId === cpId &&
+          i.inventoryId === inventory.inventoryId
         );
 
         const inputType = cp.inputType;
@@ -473,9 +470,7 @@ export class InventoryInspectionreport {
         let imageUrls: string[] | undefined;
 
         if (norm === 'image') {
-          imageUrls = cpInspectionsAll
-            .map(i => i.result ?? '')
-            .filter(u => !!u);
+          imageUrls = cpInspectionsAll.map(i => i.result ?? '').filter(u => !!u);
           inspectionId = cpInspectionsAll[0]?.inspectionId;
         } else {
           const match = cpInspectionsAll[0];
@@ -488,10 +483,7 @@ export class InventoryInspectionreport {
           inspectionTypeId: t.inspectionTypeId,
           inspectionTypeName: t.inspectionTypeName,
           inspectionCheckpointId: cpId,
-          inspectionCheckpointName:
-            (cp as any).inspectionCheckpointName ??
-            (cp as any).inspectioncheckpointName ??
-            '',
+          inspectionCheckpointName: (cp as any).inspectionCheckpointName ?? (cp as any).inspectioncheckpointName ?? '',
           inputType,
           resultValue,
           imageUrls: imageUrls ?? []
@@ -502,7 +494,7 @@ export class InventoryInspectionreport {
         groups.push({
           inspectionTypeId: t.inspectionTypeId,
           inspectionTypeName: t.inspectionTypeName,
-          weightage: t.weightage,
+          weightage: (t as any).weightage,
           checkpoints: rows
         });
       }
@@ -516,8 +508,7 @@ export class InventoryInspectionreport {
     if (v === 'textarea' || v === 'multiline') return 'textarea';
     if (v === 'number' || v === 'numeric' || v === 'score') return 'number';
     if (v === 'yesno' || v === 'boolean' || v === 'bool') return 'yesno';
-    if (v === 'image' || v === 'photo' || v === 'picture' || v === 'file')
-      return 'image';
+    if (v === 'image' || v === 'photo' || v === 'picture' || v === 'file') return 'image';
     return 'text';
   }
 
@@ -527,9 +518,7 @@ export class InventoryInspectionreport {
 
   isRowAnswered(row: InspectionCheckpointRow): boolean {
     const t = this.normalizeInputType(row.inputType);
-    if (t === 'image') {
-      return !!(row.imageUrls && row.imageUrls.length);
-    }
+    if (t === 'image') return !!(row.imageUrls && row.imageUrls.length);
     return this.isAnswered(row.resultValue);
   }
 
@@ -542,17 +531,11 @@ export class InventoryInspectionreport {
   }
 
   get totalCheckpoints(): number {
-    return this.reportGroups.reduce(
-      (sum, g) => sum + g.checkpoints.length,
-      0
-    );
+    return this.reportGroups.reduce((sum, g) => sum + g.checkpoints.length, 0);
   }
 
   get totalCompleted(): number {
-    return this.reportGroups.reduce(
-      (sum, g) => sum + this.getGroupCompleted(g),
-      0
-    );
+    return this.reportGroups.reduce((sum, g) => sum + this.getGroupCompleted(g), 0);
   }
 
   get overallProgressPercent(): number {
@@ -566,32 +549,13 @@ export class InventoryInspectionreport {
     return 'Completed';
   }
 
-  getCompletionStatusColor(): string {
-    switch (this.getCompletionStatus()) {
-      case 'Completed':
-        return '#22c55e';
-      case 'In Progress':
-        return '#f59e0b';
-      default:
-        return '#94a3b8';
-    }
-  }
-
-  isYesNo(value: string | null | undefined): boolean {
-    if (!value) return false;
-    const v = value.toLowerCase();
-    return v === 'pass' || v === 'fail';
-  }
-
-  
-
+  // ----------------------------
+  // Image viewer
+  // ----------------------------
   openImageViewer(images: string[], startIndex: number = 0): void {
     if (!images || !images.length) return;
     this.selectedImageGallery = images;
-    this.selectedImageIndex = Math.min(
-      Math.max(startIndex, 0),
-      images.length - 1
-    );
+    this.selectedImageIndex = Math.min(Math.max(startIndex, 0), images.length - 1);
     this.showImageViewer = true;
   }
 
@@ -602,14 +566,18 @@ export class InventoryInspectionreport {
   }
 
   nextImage(): void {
-    if (this.selectedImageIndex < this.selectedImageGallery.length - 1) {
-      this.selectedImageIndex++;
-    }
+    if (this.selectedImageIndex < this.selectedImageGallery.length - 1) this.selectedImageIndex++;
   }
 
   prevImage(): void {
-    if (this.selectedImageIndex > 0) {
-      this.selectedImageIndex--;
-    }
+    if (this.selectedImageIndex > 0) this.selectedImageIndex--;
+  }
+
+  // Trackers
+  trackByGroup(_i: number, g: InspectionTypeGroupForUI): number {
+    return g.inspectionTypeId;
+  }
+  trackByCheckpoint(_i: number, r: InspectionCheckpointRow): number {
+    return r.inspectionCheckpointId;
   }
 }

@@ -20,6 +20,9 @@ import { FavouritesList } from './pages/favourites-list/favourites-list';
 import { Auctionbid } from './pages/auctionbid/auctionbid';
 import { BidderChangePassword } from './pages/bidder-change-password/bidder-change-password';
 import { LandingPage } from './pages/landing-page/landing-page';
+import { Leaderboard } from './pages/leaderboard/leaderboard';
+import { Compare } from './pages/compare/compare';
+import { Ai } from './pages/ai/ai';
 
 @NgModule({
   declarations: [],
@@ -43,7 +46,10 @@ import { LandingPage } from './pages/landing-page/landing-page';
     FavouritesList,
     Auctionbid,
     BidderChangePassword,
-    LandingPage
+    LandingPage,
+    Leaderboard,
+    Compare,
+    Ai
   ]
 })
 export class BidderModule { }

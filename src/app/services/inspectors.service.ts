@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Inspector,InspectorStats } from '../models/inspector.model';
-import { AuthService } from '../services/auth'; 
+import { InspectorAuthService } from '../services/inspectorauth'; 
 
 
 
@@ -11,7 +11,7 @@ const API_BASE = 'http://localhost:5070/api';
 @Injectable({ providedIn: 'root' })
 export class InspectorsService {
   private http = inject(HttpClient);
-  private auth = inject(AuthService);
+  private auth = inject(InspectorAuthService);
   private base = `${API_BASE}/Inspectors`;
 
   private authHeaders(): HttpHeaders {

@@ -1,81 +1,136 @@
-<form class="dialog-form" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
-  <!-- Header -->
-  <div class="header">
-    <div class="title">
-      <h2>
-        {{ mode === 'edit' ? 'Edit inspection checkpoint' : 'Add inspection checkpoint' }}
-      </h2>
-      <p class="sub">
-        Link this checkpoint to an inspection type and define its name and input type.
-      </p>
+<form class="user-form-dialog" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
+  <!-- Honeypots to prevent autofill -->
+  <input type="text" autocomplete="username" tabindex="-1" aria-hidden="true"
+         style="position:absolute;left:-9999px;width:0;height:0;opacity:0;" />
+  <input type="password" autocomplete="current-password" tabindex="-1" aria-hidden="true"
+         style="position:absolute;left:-9999px;width:0;height:0;opacity:0;" />
+
+  <!-- Dialog Header -->
+  <div class="dialog-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <mat-icon>{{ mode === 'edit' ? 'edit' : 'rule' }}</mat-icon>
+      </div>
+      <div class="header-text">
+        <h2 class="dialog-title">{{ dialogTitle }}</h2>
+        <p class="dialog-subtitle">
+          {{ mode === 'edit'
+            ? 'Update checkpoint configuration below'
+            : 'Fill in the details to add a new checkpoint' }}
+        </p>
+      </div>
     </div>
+
+    <button type="button" mat-icon-button class="close-btn" (click)="onCancel()" matTooltip="Close">
+      <mat-icon>close</mat-icon>
+    </button>
   </div>
 
-  <!-- Body -->
-  <mat-dialog-content class="body">
-    <div class="sheet">
-      <div class="grid">
-        <!-- Inspection Type -->
-        <mat-form-field appearance="outline">
+  <!-- Dialog Body -->
+  <mat-dialog-content class="dialog-body">
+    <!-- Checkpoint Details -->
+    <div class="form-section">
+      <div class="section-header">
+        <mat-icon>checklist</mat-icon>
+        <h3>Checkpoint Details</h3>
+      </div>
+
+      <div class="form-grid">
+        <mat-form-field appearance="outline" class="form-field full-width">
           <mat-label>Inspection Type *</mat-label>
+          <mat-icon matPrefix>category</mat-icon>
+
           <mat-select formControlName="inspectionTypeId" [disabled]="loadingInspectionTypes">
             <mat-option *ngFor="let t of inspectionTypes" [value]="t.inspectionTypeId">
               {{ inspectionTypeLabel($any(t)) }}
             </mat-option>
           </mat-select>
-          <mat-error *ngIf="form.get('inspectionTypeId')?.hasError('required')">
-            Inspection type is required
-          </mat-error>
-        </mat-form-field>
 
-        <!-- Checkpoint Name -->
-        <mat-form-field appearance="outline">
-          <mat-label>Checkpoint name *</mat-label>
-          <input matInput formControlName="inspectionCheckpointName" maxlength="200" />
-          <mat-hint align="end">
-            {{ (form.get('inspectionCheckpointName')?.value?.length || 0) }}/200
+          <mat-hint *ngIf="loadingInspectionTypes">
+            <mat-spinner diameter="16" style="display:inline-block;vertical-align:middle;margin-right:8px;"></mat-spinner>
+            Loading inspection types...
           </mat-hint>
-          <mat-error *ngIf="form.get('inspectionCheckpointName')?.hasError('required')">
-            Name is required
-          </mat-error>
+          <mat-hint *ngIf="!loadingInspectionTypes && !inspectionTypes.length">No inspection types available</mat-hint>
+
+          <mat-error>{{ getErrorMessage('inspectionTypeId') }}</mat-error>
         </mat-form-field>
 
-        <!-- Input Type (Dropdown) -->
-        <mat-form-field appearance="outline">
-          <mat-label>Input type *</mat-label>
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Checkpoint Name *</mat-label>
+          <mat-icon matPrefix>title</mat-icon>
+          <input matInput formControlName="inspectionCheckpointName" maxlength="200" autocomplete="off" />
+          <mat-error>{{ getErrorMessage('inspectionCheckpointName') }}</mat-error>
+          <mat-hint align="end">{{ (form.get('inspectionCheckpointName')?.value?.length || 0) }}/200</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Input Type *</mat-label>
+          <mat-icon matPrefix>tune</mat-icon>
+
           <mat-select formControlName="inputType">
             <mat-option *ngFor="let opt of inputTypeOptions" [value]="opt">
               {{ opt }}
             </mat-option>
           </mat-select>
-          <mat-error *ngIf="form.get('inputType')?.hasError('required')">
-            Input type is required
-          </mat-error>
+
+          <mat-error>{{ getErrorMessage('inputType') }}</mat-error>
+          <mat-hint>Defines what the inspector will provide</mat-hint>
         </mat-form-field>
 
-        <!-- Note -->
-        <mat-form-field
-          class="full"
-          appearance="outline"
-          floatLabel="always"
-          subscriptSizing="dynamic"
-        >
-          <mat-label>Note</mat-label>
-          <textarea matInput rows="2" disabled>
-Checkpoints are used when filling inspection reports for a given inspection type.
-          </textarea>
-        </mat-form-field>
+        <div class="tz-note form-field full-width">
+          <mat-icon>info</mat-icon>
+          Checkpoints are used when inspectors fill inspection reports for the selected inspection type.
+        </div>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div class="form-section">
+      <div class="section-header">
+        <mat-icon>settings</mat-icon>
+        <h3>Status</h3>
+      </div>
+
+      <div class="form-grid">
+        <div class="toggles-container full-width">
+          <div class="toggle-item" *ngIf="mode === 'edit'">
+            <mat-slide-toggle formControlName="active" color="primary">
+              <div class="toggle-content">
+                <mat-icon class="toggle-icon">check_circle</mat-icon>
+                <div class="toggle-text">
+                  <span class="toggle-label">Active Status</span>
+                  <span class="toggle-hint">Enable or disable this checkpoint</span>
+                </div>
+              </div>
+            </mat-slide-toggle>
+          </div>
+
+          <div class="toggle-item" *ngIf="mode === 'create'">
+            <mat-slide-toggle formControlName="active" color="primary">
+              <div class="toggle-content">
+                <mat-icon class="toggle-icon">check_circle</mat-icon>
+                <div class="toggle-text">
+                  <span class="toggle-label">Active by default</span>
+                  <span class="toggle-hint">You can disable later if needed</span>
+                </div>
+              </div>
+            </mat-slide-toggle>
+          </div>
+        </div>
       </div>
     </div>
   </mat-dialog-content>
 
-  <!-- Actions -->
-  <mat-dialog-actions align="end" class="actions">
-    <button mat-stroked-button type="button" class="btn-cancel" (click)="onCancel()">
-      Cancel
+  <!-- Dialog Actions -->
+  <mat-dialog-actions class="dialog-actions">
+    <button type="button" mat-stroked-button class="action-btn cancel-btn" (click)="onCancel()">
+      <mat-icon>close</mat-icon>
+      <span>Cancel</span>
     </button>
-    <button mat-flat-button type="submit" class="btn-primary" [disabled]="form.invalid">
-      {{ mode === 'edit' ? 'Update' : 'Create' }}
+
+    <button type="submit" mat-flat-button class="action-btn submit-btn" [disabled]="form.invalid">
+      <mat-icon>{{ mode === 'edit' ? 'check' : 'add' }}</mat-icon>
+      <span>{{ submitButtonText }}</span>
     </button>
   </mat-dialog-actions>
 </form>

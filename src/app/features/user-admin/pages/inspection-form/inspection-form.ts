@@ -1,22 +1,22 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnInit, AfterViewInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
   FormGroup,
   Validators,
-  ReactiveFormsModule
+  ReactiveFormsModule,
+  AbstractControl
 } from '@angular/forms';
-import { CommonModule } from '@angular/common';
 
-import {
-  MAT_DIALOG_DATA,
-  MatDialogRef,
-  MatDialogModule
-} from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltip } from '@angular/material/tooltip';
 
 import { InspectionType } from '../../../../models/inspectiontype.model';
 import { AuthService } from '../../../../services/auth';
@@ -33,17 +33,21 @@ export type InspectionFormResult =
   imports: [
     CommonModule,
     ReactiveFormsModule,
+
+    MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
     MatCardModule,
-    MatDialogModule,
-    MatIconModule
+    MatIconModule,
+    MatSlideToggleModule,
+    MatProgressSpinnerModule,
+    MatTooltip
   ],
   templateUrl: './inspection-form.html',
   styleUrls: ['./inspection-form.scss']
 })
-export class InspectionForm implements OnInit {
+export class InspectionForm implements OnInit, AfterViewInit {
   form!: FormGroup;
   mode: Mode;
 
@@ -60,23 +64,42 @@ export class InspectionForm implements OnInit {
   ngOnInit(): void {
     this.form = this.fb.group({
       inspectionTypeId: [0],
-      inspectionTypeName: ['', [Validators.required, Validators.maxLength(200)]],
-      weightage: [null, [Validators.required, Validators.min(0)]]
-      
+      inspectionTypeName: ['', [Validators.required, Validators.maxLength(200), this.noWhitespaceValidator]],
+      weightage: [null, [Validators.required, Validators.min(0)]],
+      active: [true]
     });
 
     if (this.mode === 'edit' && this.data.initialData) {
       const r = this.data.initialData;
       this.form.patchValue({
-        inspectionTypeId: r.inspectionTypeId,
+        inspectionTypeId: r.inspectionTypeId ?? 0,
         inspectionTypeName: r.inspectionTypeName ?? '',
-        weightage: r.weightage ?? null
+        weightage: r.weightage ?? null,
+        active: r.active ?? true
       });
     }
   }
 
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      const fields = document.querySelectorAll('.form-field');
+      fields.forEach((field, index) => {
+        (field as HTMLElement).style.animationDelay = `${index * 0.05}s`;
+        field.classList.add('field-reveal');
+      });
+    }, 100);
+  }
+
+  private noWhitespaceValidator(control: AbstractControl): { [key: string]: any } | null {
+    const isWhitespace = (control.value || '').trim().length === 0;
+    return !isWhitespace ? null : { whitespace: true };
+  }
+
   onSubmit(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
 
     const v = this.form.getRawValue();
     const currentUserId = this.auth.currentUser?.userId ?? null;
@@ -86,15 +109,12 @@ export class InspectionForm implements OnInit {
       inspectionTypeName: (v.inspectionTypeName ?? '').trim(),
       weightage: Number(v.weightage),
 
-      
-      createdById: this.mode === 'create' ? currentUserId : null,
-      createdDate: null,
+      createdById: this.mode === 'create' ? currentUserId : (this.data.initialData?.createdById ?? null),
+      createdDate: this.data.initialData?.createdDate ?? null,
       modifiedById: currentUserId ?? null,
       modifiedDate: null,
-      active:
-        this.mode === 'create'
-          ? true
-          : this.data.initialData?.active ?? true
+
+      active: !!v.active
     } as InspectionType;
 
     this.dialogRef.close(
@@ -106,5 +126,28 @@ export class InspectionForm implements OnInit {
 
   onCancel(): void {
     this.dialogRef.close();
+  }
+
+  get dialogTitle(): string {
+    return this.mode === 'edit' ? 'Edit Inspection Type' : 'Create New Inspection Type';
+  }
+
+  get submitButtonText(): string {
+    return this.mode === 'edit' ? 'Update Inspection Type' : 'Create Inspection Type';
+  }
+
+  getErrorMessage(fieldName: string): string {
+    const control = this.form.get(fieldName);
+    if (!control || !control.errors || !control.touched) return '';
+
+    if (control.hasError('required')) return 'This field is required';
+    if (control.hasError('min')) return 'Must be ≥ 0';
+    if (control.hasError('maxlength')) {
+      const maxLength = control.errors['maxlength'].requiredLength;
+      return `Must not exceed ${maxLength} characters`;
+    }
+    if (control.hasError('whitespace')) return 'Cannot be only whitespace';
+
+    return 'Invalid value';
   }
 }

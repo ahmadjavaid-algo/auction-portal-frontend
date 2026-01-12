@@ -1,51 +1,78 @@
-<form class="dialog-form" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
-  <!-- Header -->
-  <div class="header">
-    <div class="title">
-      <h2>{{ mode === 'edit' ? 'Edit category' : 'Create category' }}</h2>
-      <p class="sub">Select a year and enter a category name. Fields marked * are required.</p>
+<form class="category-form-dialog" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
+  <!-- Honeypots to prevent autofill -->
+  <input type="text" autocomplete="username" tabindex="-1" aria-hidden="true"
+         style="position:absolute;left:-9999px;width:0;height:0;opacity:0;" />
+  <input type="password" autocomplete="current-password" tabindex="-1" aria-hidden="true"
+         style="position:absolute;left:-9999px;width:0;height:0;opacity:0;" />
+
+  <!-- Dialog Header -->
+  <div class="dialog-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <mat-icon>{{ mode === 'edit' ? 'edit' : 'category' }}</mat-icon>
+      </div>
+
+      <div class="header-text">
+        <h2 class="dialog-title">{{ dialogTitle }}</h2>
+        <p class="dialog-subtitle">
+          {{ mode === 'edit' ? 'Update category information below' : 'Fill in the details to create a new category' }}
+        </p>
+      </div>
     </div>
+
+    <button type="button" mat-icon-button class="close-btn" (click)="onCancel()" matTooltip="Close">
+      <mat-icon>close</mat-icon>
+    </button>
   </div>
 
-  <!-- Body -->
-  <mat-dialog-content class="body">
-    <div class="sheet">
-      <div class="grid">
+  <!-- Dialog Body -->
+  <mat-dialog-content class="dialog-body">
+    <!-- Category Information Section -->
+    <div class="form-section">
+      <div class="section-header">
+        <mat-icon>folder</mat-icon>
+        <h3>Category Information</h3>
+      </div>
 
+      <div class="form-grid">
         <!-- Year -->
-        <mat-form-field appearance="outline">
+        <mat-form-field appearance="outline" class="form-field">
           <mat-label>Year *</mat-label>
-          <mat-select formControlName="yearId">
+          <mat-icon matPrefix>event</mat-icon>
+
+          <mat-select formControlName="yearId" [disabled]="yearsLoading">
             <mat-option *ngFor="let y of years" [value]="y.yearId">
-              {{ y.yearName }} (ID {{ y.yearId }})
+              {{ y.yearName }} <span class="role-code">(ID {{ y.yearId }})</span>
             </mat-option>
           </mat-select>
-          <mat-error *ngIf="form.get('yearId')?.hasError('required')">
-            Year is required
-          </mat-error>
+
+          <mat-hint *ngIf="yearsLoading">Loading years...</mat-hint>
+          <mat-hint *ngIf="!yearsLoading && !years.length">No years available</mat-hint>
+          <mat-error>{{ getErrorMessage('yearId') }}</mat-error>
         </mat-form-field>
 
         <!-- Category name -->
-        <mat-form-field appearance="outline">
-          <mat-label>Category name *</mat-label>
-          <input matInput formControlName="categoryName" />
-          <mat-error *ngIf="form.get('categoryName')?.hasError('required')">
-            Category name is required
-          </mat-error>
-          <mat-error *ngIf="form.get('categoryName')?.hasError('maxlength')">
-            Maximum 120 characters
-          </mat-error>
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Category Name *</mat-label>
+          <mat-icon matPrefix>label</mat-icon>
+          <input matInput formControlName="categoryName" autocomplete="off" autocapitalize="words" />
+          <mat-error>{{ getErrorMessage('categoryName') }}</mat-error>
+          <mat-hint>Example: Sedan, SUV, Luxury, Hatchback</mat-hint>
         </mat-form-field>
-
       </div>
     </div>
   </mat-dialog-content>
 
-  <!-- Actions -->
-  <mat-dialog-actions align="end" class="actions">
-    <button mat-stroked-button type="button" class="btn-cancel" (click)="onCancel()">Cancel</button>
-    <button mat-flat-button type="submit" class="btn-primary" [disabled]="form.invalid">
-      {{ mode === 'edit' ? 'Update' : 'Create' }}
+  <!-- Dialog Actions -->
+  <mat-dialog-actions class="dialog-actions">
+    <button type="button" mat-stroked-button class="action-btn cancel-btn" (click)="onCancel()">
+      <mat-icon>close</mat-icon>
+      <span>Cancel</span>
+    </button>
+
+    <button type="submit" mat-flat-button class="action-btn submit-btn" [disabled]="form.invalid">
+      <mat-icon>{{ mode === 'edit' ? 'check' : 'add' }}</mat-icon>
+      <span>{{ submitButtonText }}</span>
     </button>
   </mat-dialog-actions>
 </form>

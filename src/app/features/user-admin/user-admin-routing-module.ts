@@ -32,6 +32,7 @@ import { InspectionDetails } from './pages/inspection-details/inspection-details
 
 import { InventoryInspectionreport } from './pages/inventory-inspectionreport/inventory-inspectionreport';
 import { NeedAccess } from './pages/need-access/need-access';
+import { EmailPreview } from './pages/email-preview/email-preview';
 
 const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -57,7 +58,7 @@ const routes: Routes = [
 
       { path: 'emails', component: EmailsList, title: 'Emails' },
       { path: 'emails/:id', component: EmailsDetails, title: 'Email Details' },
-
+      { path: 'email-preview/:id', component: EmailPreview, title: 'Email Preview' },
       { path: 'bidders', component: BiddersList, title: 'Bidders' },
       { path: 'bidders/:id', component: BiddersDetails, title: 'Bidder Details' },
 

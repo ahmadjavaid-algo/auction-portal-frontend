@@ -1,67 +1,107 @@
-<form class="dialog-form" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
-  <!-- Header -->
-  <div class="header">
-    <div class="title">
-      <h2>{{ mode === 'edit' ? 'Edit inventory' : 'Create inventory' }}</h2>
-      <p class="sub">
-        Choose a product and (optionally) add details. Fields marked * are required.
-      </p>
+<form class="inventory-form-dialog" [formGroup]="form" (ngSubmit)="onSubmit()" autocomplete="off">
+  <!-- Honeypots to prevent autofill -->
+  <input type="text" autocomplete="username" tabindex="-1" aria-hidden="true"
+         style="position:absolute;left:-9999px;width:0;height:0;opacity:0;" />
+  <input type="password" autocomplete="current-password" tabindex="-1" aria-hidden="true"
+         style="position:absolute;left:-9999px;width:0;height:0;opacity:0;" />
+
+  <!-- Dialog Header -->
+  <div class="dialog-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <mat-icon>{{ mode === 'edit' ? 'edit' : 'add_box' }}</mat-icon>
+      </div>
+      <div class="header-text">
+        <h2 class="dialog-title">{{ dialogTitle }}</h2>
+        <p class="dialog-subtitle">
+          {{ mode === 'edit' ? 'Update inventory information below' : 'Fill in the details to create a new inventory record' }}
+        </p>
+      </div>
     </div>
+
+    <button type="button" mat-icon-button class="close-btn" (click)="onCancel()" matTooltip="Close">
+      <mat-icon>close</mat-icon>
+    </button>
   </div>
 
-  <!-- Body -->
-  <mat-dialog-content class="body">
-    <div class="sheet">
-      <div class="grid">
+  <!-- Dialog Body -->
+  <mat-dialog-content class="dialog-body">
 
-        <!-- Product selector (Display Name + Category) -->
-        <mat-form-field appearance="outline">
+    <!-- Inventory Information Section -->
+    <div class="form-section">
+      <div class="section-header">
+        <mat-icon>inventory_2</mat-icon>
+        <h3>Inventory Information</h3>
+      </div>
+
+      <div class="form-grid">
+        <!-- Product -->
+        <mat-form-field appearance="outline" class="form-field full-width">
           <mat-label>Product *</mat-label>
+          <mat-icon matPrefix>sell</mat-icon>
+
           <mat-select formControlName="productId" [disabled]="loadingProducts">
             <mat-option *ngFor="let p of products" [value]="p.productId">
               {{ productLabel($any(p)) }}
             </mat-option>
           </mat-select>
-          <mat-error *ngIf="form.get('productId')?.hasError('required')">
-            Product is required
-          </mat-error>
-        </mat-form-field>
 
-        <!-- NEW: Chassis No -->
-        <mat-form-field appearance="outline">
-          <mat-label>Chassis No</mat-label>
-          <input matInput formControlName="chassisNo" maxlength="64" />
-          <mat-hint align="end">{{ (form.get('chassisNo')?.value?.length || 0) }}/64</mat-hint>
-        </mat-form-field>
-
-        <!-- NEW: Registration No -->
-        <mat-form-field appearance="outline">
-          <mat-label>Registration No</mat-label>
-          <input matInput formControlName="registrationNo" maxlength="64" />
-          <mat-hint align="end">{{ (form.get('registrationNo')?.value?.length || 0) }}/64</mat-hint>
+          <mat-hint *ngIf="loadingProducts">Loading products...</mat-hint>
+          <mat-hint *ngIf="!loadingProducts && !products.length">No products available</mat-hint>
+          <mat-error>{{ getErrorMessage('productId') }}</mat-error>
         </mat-form-field>
 
         <!-- Description -->
-        <mat-form-field class="full" appearance="outline">
+        <mat-form-field appearance="outline" class="form-field full-width">
           <mat-label>Description</mat-label>
-          <textarea matInput rows="4" formControlName="description"></textarea>
-          <mat-hint align="end">
-            {{ (form.get('description')?.value?.length || 0) }}/4000
-          </mat-hint>
-          <mat-error *ngIf="form.get('description')?.hasError('maxlength')">
-            Max 4000 characters
-          </mat-error>
+          <mat-icon matPrefix>notes</mat-icon>
+          <textarea matInput rows="4" formControlName="description" autocomplete="off"></textarea>
+          <mat-hint align="end">{{ (form.get('description')?.value?.length || 0) }}/4000</mat-hint>
+          <mat-error>{{ getErrorMessage('description') }}</mat-error>
         </mat-form-field>
-
       </div>
     </div>
+
+    <!-- Vehicle Identifiers Section -->
+    <div class="form-section">
+      <div class="section-header">
+        <mat-icon>directions_car</mat-icon>
+        <h3>Vehicle Identifiers</h3>
+      </div>
+
+      <div class="form-grid">
+        <!-- Chassis No -->
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Chassis No</mat-label>
+          <mat-icon matPrefix>qr_code_2</mat-icon>
+          <input matInput formControlName="chassisNo" maxlength="64" autocomplete="off" />
+          <mat-hint align="end">{{ (form.get('chassisNo')?.value?.length || 0) }}/64</mat-hint>
+          <mat-error>{{ getErrorMessage('chassisNo') }}</mat-error>
+        </mat-form-field>
+
+        <!-- Registration No -->
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Registration No</mat-label>
+          <mat-icon matPrefix>confirmation_number</mat-icon>
+          <input matInput formControlName="registrationNo" maxlength="64" autocomplete="off" />
+          <mat-hint align="end">{{ (form.get('registrationNo')?.value?.length || 0) }}/64</mat-hint>
+          <mat-error>{{ getErrorMessage('registrationNo') }}</mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+
   </mat-dialog-content>
 
-  <!-- Actions -->
-  <mat-dialog-actions align="end" class="actions">
-    <button mat-stroked-button type="button" class="btn-cancel" (click)="onCancel()">Cancel</button>
-    <button mat-flat-button type="submit" class="btn-primary" [disabled]="form.invalid">
-      {{ mode === 'edit' ? 'Update' : 'Create' }}
+  <!-- Dialog Actions -->
+  <mat-dialog-actions class="dialog-actions">
+    <button type="button" mat-stroked-button class="action-btn cancel-btn" (click)="onCancel()">
+      <mat-icon>close</mat-icon>
+      <span>Cancel</span>
+    </button>
+
+    <button type="submit" mat-flat-button class="action-btn submit-btn" [disabled]="form.invalid">
+      <mat-icon>{{ mode === 'edit' ? 'check' : 'add' }}</mat-icon>
+      <span>{{ submitButtonText }}</span>
     </button>
   </mat-dialog-actions>
 </form>
