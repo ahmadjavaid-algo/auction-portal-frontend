@@ -4,7 +4,9 @@ import {
   OnDestroy,
   HostListener,
   inject,
-  PLATFORM_ID
+  PLATFORM_ID,
+  AfterViewInit,
+  ElementRef
 } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
@@ -28,13 +30,7 @@ interface EnrichedAuction {
   year?: string | number | null;
   make?: string | null;
   model?: string | null;
-  vehicleDetails?: any;
 }
-
-type TiltHandlers = {
-  onMove: (ev: MouseEvent) => void;
-  onLeave: (ev: MouseEvent) => void;
-};
 
 @Component({
   selector: 'app-landing-page',
@@ -43,19 +39,15 @@ type TiltHandlers = {
   templateUrl: './landing-page.html',
   styleUrl: './landing-page.scss'
 })
-export class LandingPage implements OnInit, OnDestroy {
+export class LandingPage implements OnInit, OnDestroy, AfterViewInit {
   private platformId = inject(PLATFORM_ID);
   private isBrowser = isPlatformBrowser(this.platformId);
+  private elementRef = inject(ElementRef);
 
   private auctionSvc = inject(InventoryAuctionService);
   private fileSvc = inject(InventoryDocumentFileService);
   private inventorySvc = inject(InventoryService);
-
   private router = inject(Router);
-
-  public readonly homeLink = ['/bidder'];
-  public readonly loginLink = ['/bidder', 'login'];
-  public readonly signupLink = ['/bidder', 'signup'];
 
   public readonly algoLogoUrl =
     'https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8';
@@ -63,206 +55,147 @@ export class LandingPage implements OnInit, OnDestroy {
   loading = true;
   error: string | null = null;
 
-  liveAuctions: EnrichedAuction[] = [];
   featuredAuctions: EnrichedAuction[] = [];
   heroAuction: EnrichedAuction | null = null;
 
-  mouseX = 0;
-  mouseY = 0;
   scrollY = 0;
+  scrollProgress = 0;
 
-  // Cursor position for magnetic effects
-  cursorX = 0;
-  cursorY = 0;
-
-  // ✅ Tilt tracking (store actual attached listeners so we can remove them)
-  private tiltHandlers: Map<HTMLElement, TiltHandlers> = new Map();
-
-  heroRevealed = false;
-  statsRevealed = false;
-  contentRevealed = false;
-
-  autoBidStats = {
-    winRate: 94,
-    averageSavings: 47000,
-    activeMonitoring: '24/7',
-    fastestBid: '180ms',
-    totalBids: 2847,
-    successRate: 96.2
-  };
-
-  inspectionTypes = [
-    {
-      icon: 'engineering',
-      name: 'Mechanical Deep-Dive',
-      checkpoints: 147,
-      description:
-        'Engine compression, transmission health, drivetrain integrity, suspension geometry, brake pad depth',
-      color: '#00D9FF'
-    },
-    {
-      icon: 'brush',
-      name: 'Exterior Forensics',
-      checkpoints: 89,
-      description:
-        'Paint depth meter readings, bodywork assessment, panel gap measurements, glass condition matrix',
-      color: '#FF3366'
-    },
-    {
-      icon: 'airline_seat_recline_extra',
-      name: 'Interior Analysis',
-      checkpoints: 72,
-      description:
-        'Upholstery condition, electronic system tests, climate control calibration, dashboard diagnostics',
-      color: '#FFE600'
-    },
-    {
-      icon: 'description',
-      name: 'Documentation Audit',
-      checkpoints: 34,
-      description:
-        'Service history verification, ownership records, accident reports, maintenance log analysis',
-      color: '#00FF88'
-    }
-  ];
-
-  testimonials = [
-    {
-      quote:
-        'The inspection reports are insanely detailed. 147 mechanical checkpoints gave me confidence to bid $280K sight unseen. AutoBid won it while I was in meetings.',
-      author: 'Marcus Ashford',
-      role: 'Private Collector',
-      location: 'London',
-      avatar: 'MA',
-      highlight: 'Won 12 vehicles via AutoBid',
-      verified: true
-    },
-    {
-      quote:
-        'As a dealer, the structured inspection system is revolutionary. No more guessing from photos. Clear risk assessment on every lot. AutoBid handles timezone differences perfectly.',
-      author: 'Yuki Tanaka',
-      role: 'Exotic Car Dealer',
-      location: 'Tokyo',
-      avatar: 'YT',
-      highlight: '€2.4M in transactions',
-      verified: true
-    },
-    {
-      quote:
-        'Checkpoint-based inspections changed everything. I can see exactly where the car stands on paint depth, mechanical health, documentation. AutoBid got me a 1967 Shelby at 3 AM my time.',
-      author: 'David Chen',
-      role: 'Vintage Collector',
-      location: 'Singapore',
-      avatar: 'DC',
-      highlight: '23 auctions won',
-      verified: true
-    }
-  ];
-
-  differentiators = [
-    {
-      id: 'autobid',
-      icon: 'psychology',
-      title: 'AI AutoBid Engine',
-      tagline: 'Your Relentless 24/7 Bidding Intelligence',
-      features: [
-        'Machine learning from 50,000+ historical auction patterns',
-        'Strategic bid timing based on competitor behavioral analysis',
-        'Timezone-agnostic monitoring across global auctions',
-        'Budget-protected increments that never exceed limits',
-        'Real-time push notifications on every milestone',
-        'Predictive win probability scoring'
-      ],
-      stat: '94%',
-      statLabel: 'Win Rate',
-      statContext: 'when AutoBid is activated vs. manual bidding'
-    },
-    {
-      id: 'inspections',
-      icon: 'verified',
-      title: 'Inspection-First Bidding',
-      tagline: 'Structured Checkpoints. Zero Guesswork.',
-      features: [
-        'Up to 147 mechanical checkpoints per vehicle',
-        'Certified inspector reports with photo documentation',
-        'Paint depth readings and panel gap measurements',
-        'Fluid analysis and compression testing',
-        'Service history verification and ownership docs',
-        'AI-powered risk scoring for instant clarity'
-      ],
-      stat: '342',
-      statLabel: 'Avg Checkpoints',
-      statContext: 'average per vehicle across all inspection types'
-    }
-  ];
-
-  processSteps = [
-    {
-      step: '01',
-      title: 'Access Inspection Intel',
-      description:
-        'Review detailed checkpoint data, photos, and AI risk scores before placing any bid',
-      icon: 'search'
-    },
-    {
-      step: '02',
-      title: 'Configure AutoBid',
-      description: 'Define your max bid, increment strategy, and time constraints with precision',
-      icon: 'settings'
-    },
-    {
-      step: '03',
-      title: 'AI Takes Control',
-      description:
-        'AutoBid monitors 24/7, analyzes competitors, places strategic bids at optimal moments',
-      icon: 'smart_toy'
-    },
-    {
-      step: '04',
-      title: 'Win & Transact',
-      description: 'Secure your vehicle at the best price with full transparency and documentation',
-      icon: 'emoji_events'
-    }
-  ];
+  isDarkMode = false;
+  isThemeTransitioning = false;
 
   private observers: IntersectionObserver[] = [];
   private animationFrame?: number;
   private scrollTicking = false;
-  private magneticElements: HTMLElement[] = [];
 
-  public fallbackHeroImage =
+  public readonly fallbackHeroImage =
     'https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=1920&q=80';
 
+  // Narrative content
+  painPoints = [
+    {
+      icon: 'warning',
+      title: 'The Inspection Gamble',
+      description: '"150-point inspection" sounds thorough. Until you discover it\'s missing the transmission leak that costs $40,000 to fix.',
+      color: '#FF3366'
+    },
+    {
+      icon: 'local_fire_department',
+      title: 'The Bidding War Trap',
+      description: 'You\'re winning at $175K. You refresh. Someone bid $185K. You panic-bid $195K. You wake up with regret.',
+      color: '#FFB020'
+    },
+    {
+      icon: 'visibility_off',
+      title: 'The Invisible Competition',
+      description: 'How many bidders are serious? How many are tire-kickers? You\'re bidding blind against ghosts.',
+      color: '#7C5CFF'
+    }
+  ];
+
+  aiFeatures = [
+    {
+      id: 'report',
+      icon: 'psychology',
+      title: 'AI Report & Prediction',
+      tagline: 'The Truth Machine',
+      description: 'While others squint at inspection photos, AlgoX AI reads between the lines.',
+      features: [
+        'Analyzes 342 inspection checkpoints in 3 seconds',
+        'Cross-references with 50,000 comparable vehicles',
+        'Predicts final hammer price within 5%',
+        'Flags hidden risks even inspectors miss'
+      ],
+      testimonial: {
+        quote: 'It told me the reserve was set too high. I waited. Three days later, the seller dropped it by $20K. I won at $165K.',
+        author: 'Marcus Chen',
+        role: 'Porsche Collector',
+        location: 'San Francisco'
+      },
+      stat: '94%',
+      statLabel: 'Prediction Accuracy',
+      color: '#2F7BFF'
+    },
+    {
+      id: 'comparison',
+      icon: 'compare',
+      title: 'AI Vehicle Comparison',
+      tagline: 'The Clarity Engine',
+      description: 'Two similar vehicles. Different histories. Which one? AlgoX AI doesn\'t just compare specs—it compares destinies.',
+      features: [
+        'Side-by-side deep analysis across 17 variables',
+        'Hidden insight detection (service gaps, market sentiment)',
+        'Winner declaration with confidence scoring',
+        'Value justification for price differences'
+      ],
+      testimonial: {
+        quote: 'I was about to bid on the cheaper one. The AI comparison saved me from a $15K mistake.',
+        author: 'Sarah Kim',
+        role: 'Classic Car Investor',
+        location: 'Toronto'
+      },
+      stat: '87%',
+      statLabel: 'Cost Avoidance Rate',
+      color: '#00FF88'
+    },
+    {
+      id: 'autobid',
+      icon: 'shield_moon',
+      title: 'AI AutoBid',
+      tagline: 'The Guardian',
+      description: 'It\'s 3 AM. The auction ends in 4 minutes. You\'re asleep. Your AI isn\'t.',
+      features: [
+        'Strategic incremental bidding (never reveals max early)',
+        'Last-second sniper countermeasures',
+        'Timezone-agnostic 24/7 monitoring',
+        'Budget protection with zero panic bidding'
+      ],
+      testimonial: {
+        quote: 'I set a $125K max on a 1984 Countach. Went to dinner. Came back. I\'d won at $118K. The AI knew when to pounce.',
+        author: 'David Walsh',
+        role: 'Exotic Car Dealer',
+        location: 'Miami'
+      },
+      stat: '96.2%',
+      statLabel: 'Win Rate',
+      color: '#FF3366'
+    }
+  ];
+
+  trustMetrics = [
+    { value: '2,847', label: 'Verified Bidders', icon: 'verified_user' },
+    { value: '$127K', label: 'Avg. Purchase Value', icon: 'attach_money' },
+    { value: '94%', label: 'Success Rate', icon: 'trending_up' },
+    { value: '24/7', label: 'AI Monitoring', icon: 'schedule' }
+  ];
+
   ngOnInit(): void {
-    this.loading = true;
     this.loadRealAuctionData();
 
     if (this.isBrowser) {
-      setTimeout(() => (this.heroRevealed = true), 200);
-      setTimeout(() => (this.statsRevealed = true), 600);
+      // Check for saved theme preference
+      const savedTheme = localStorage.getItem('algoTheme');
+      if (savedTheme === 'dark') {
+        this.isDarkMode = true;
+      }
 
       setTimeout(() => {
-        this.contentRevealed = true;
         this.initScrollAnimations();
-        this.initParallaxEffects();
-        this.initMagneticButtons();
-        this.initTiltCards();
-        this.startBackgroundAnimation();
-        this.initCursorEffects();
-      }, 800);
+        this.startParallaxEffects();
+      }, 500);
+    }
+  }
+
+  ngAfterViewInit(): void {
+    if (this.isBrowser) {
+      this.initAdvancedScrollEffects();
+      this.initNeuralNetworkCanvas();
     }
   }
 
   ngOnDestroy(): void {
     this.observers.forEach(observer => observer.disconnect());
     if (this.animationFrame) cancelAnimationFrame(this.animationFrame);
-
-    // ✅ Proper cleanup: remove the same function refs we added
-    this.tiltHandlers.forEach((handlers, element) => {
-      element.removeEventListener('mousemove', handlers.onMove);
-      element.removeEventListener('mouseleave', handlers.onLeave);
-    });
-    this.tiltHandlers.clear();
   }
 
   @HostListener('window:scroll')
@@ -272,23 +205,11 @@ export class LandingPage implements OnInit, OnDestroy {
     this.scrollTicking = true;
     window.requestAnimationFrame(() => {
       this.scrollY = window.pageYOffset;
-      this.updateParallax();
       this.updateScrollProgress();
+      this.updateParallaxElements();
+      this.updateHorizontalScrollSections();
       this.scrollTicking = false;
     });
-  }
-
-  @HostListener('document:mousemove', ['$event'])
-  onMouseMove(event: MouseEvent): void {
-    if (!this.isBrowser) return;
-
-    this.mouseX = (event.clientX / window.innerWidth) * 100;
-    this.mouseY = (event.clientY / window.innerHeight) * 100;
-    this.cursorX = event.clientX;
-    this.cursorY = event.clientY;
-
-    this.updateMagneticButtons(event);
-    this.updateCustomCursor(event);
   }
 
   private loadRealAuctionData(): void {
@@ -299,14 +220,12 @@ export class LandingPage implements OnInit, OnDestroy {
       .pipe(
         switchMap(({ auctions, files }) => {
           const active = (auctions || []).filter(a => a.active ?? true);
-
           const sorted = [...active].sort((a, b) =>
             this.dateDesc(a.createdDate || a.modifiedDate, b.createdDate || b.modifiedDate)
           );
 
           const imagesMap = this.buildImagesMap(files);
-
-          const enriched: EnrichedAuction[] = sorted.slice(0, 20).map(a => ({
+          const enriched: EnrichedAuction[] = sorted.slice(0, 8).map(a => ({
             auction: a,
             imageUrl: this.pickRandom(imagesMap.get(a.inventoryId)) ?? null
           }));
@@ -326,7 +245,6 @@ export class LandingPage implements OnInit, OnDestroy {
                 enriched[i].year = details?.Year ?? details?.year ?? null;
                 enriched[i].make = details?.Make ?? details?.make ?? null;
                 enriched[i].model = details?.Model ?? details?.model ?? null;
-                enriched[i].vehicleDetails = details;
               });
               return enriched;
             })
@@ -335,8 +253,7 @@ export class LandingPage implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (enriched) => {
-          this.liveAuctions = enriched.slice(0, 12);
-          this.featuredAuctions = enriched.slice(0, 8);
+          this.featuredAuctions = enriched;
           this.heroAuction = enriched.length > 0 ? enriched[0] : null;
           this.loading = false;
         },
@@ -348,16 +265,21 @@ export class LandingPage implements OnInit, OnDestroy {
   }
 
   private initScrollAnimations(): void {
-    const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -80px 0px' };
+    const observerOptions = { 
+      threshold: [0, 0.1, 0.2, 0.3, 0.4, 0.5], 
+      rootMargin: '0px 0px -100px 0px' 
+    };
 
-    const observer = new IntersectionObserver((entries) => {
+    // Scroll reveal observer
+    const revealObserver = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('in-view');
-
-          const children = entry.target.querySelectorAll('.stagger-item');
+          
+          // Stagger children
+          const children = entry.target.querySelectorAll('.stagger-child');
           children.forEach((child, index) => {
-            setTimeout(() => child.classList.add('in-view'), index * 80);
+            setTimeout(() => child.classList.add('visible'), index * 100);
           });
         }
       });
@@ -365,176 +287,157 @@ export class LandingPage implements OnInit, OnDestroy {
 
     setTimeout(() => {
       const elements = document.querySelectorAll('.scroll-reveal');
-      elements.forEach(el => observer.observe(el));
+      elements.forEach(el => revealObserver.observe(el));
     }, 300);
 
-    this.observers.push(observer);
+    this.observers.push(revealObserver);
   }
 
-  private initParallaxEffects(): void {
-    this.updateParallax();
+  private initAdvancedScrollEffects(): void {
+    // Horizontal scroll sections
+    const horizontalSections = document.querySelectorAll('.horizontal-scroll-content');
+    
+    const horizontalObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const section = entry.target as HTMLElement;
+          const rect = entry.boundingClientRect;
+          const progress = 1 - (rect.top / window.innerHeight);
+          const translateX = Math.max(-100, Math.min(0, (progress - 0.5) * 200));
+          
+          section.style.transform = `translateX(${translateX}%)`;
+        }
+      });
+    }, { threshold: Array.from({ length: 100 }, (_, i) => i / 100) });
+
+    horizontalSections.forEach(section => horizontalObserver.observe(section));
+    this.observers.push(horizontalObserver);
   }
 
-  private updateParallax(): void {
-    const scrolled = this.scrollY;
+  private updateScrollProgress(): void {
+    const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+    this.scrollProgress = (this.scrollY / totalHeight) * 100;
+  }
 
-    const parallaxElements = document.querySelectorAll('[data-parallax]');
+  private updateParallaxElements(): void {
+    const parallaxElements = document.querySelectorAll('[data-parallax-speed]');
+    
     parallaxElements.forEach((el: any) => {
-      const speed = parseFloat(el.dataset.parallax) || 0.5;
-      const yPos = -(scrolled * speed);
+      const speed = parseFloat(el.dataset.parallaxSpeed) || 0.5;
+      const yPos = -(this.scrollY * speed);
       el.style.transform = `translate3d(0, ${yPos}px, 0)`;
     });
-
-    const hero = document.querySelector('.hero-section') as HTMLElement;
-    if (hero) {
-      const transformValue = Math.min(scrolled * 0.3, 100);
-      hero.style.transform = `perspective(1000px) rotateX(${transformValue * 0.05}deg)`;
-    }
   }
 
-  private initMagneticButtons(): void {
-    const buttons = document.querySelectorAll('.magnetic-btn');
-    buttons.forEach(btn => this.magneticElements.push(btn as HTMLElement));
-  }
+  private updateHorizontalScrollSections(): void {
+    const leftScrolls = document.querySelectorAll('.scroll-left');
+    const rightScrolls = document.querySelectorAll('.scroll-right');
 
-  private updateMagneticButtons(event: MouseEvent): void {
-    this.magneticElements.forEach(btn => {
-      const rect = btn.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
+    leftScrolls.forEach((el: any) => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        const progress = 1 - (rect.top / window.innerHeight);
+        const translateX = Math.min(0, -50 + (progress * 50));
+        el.style.transform = `translateX(${translateX}%)`;
+        el.style.opacity = Math.min(1, progress * 2).toString();
+      }
+    });
 
-      const distanceX = event.clientX - centerX;
-      const distanceY = event.clientY - centerY;
-      const distance = Math.sqrt(distanceX ** 2 + distanceY ** 2);
-
-      const magnetDistance = 100;
-
-      if (distance < magnetDistance) {
-        const strength = 0.3;
-        const moveX = distanceX * strength;
-        const moveY = distanceY * strength;
-        btn.style.transform = `translate(${moveX}px, ${moveY}px) scale(1.05)`;
-      } else {
-        btn.style.transform = 'translate(0, 0) scale(1)';
+    rightScrolls.forEach((el: any) => {
+      const rect = el.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        const progress = 1 - (rect.top / window.innerHeight);
+        const translateX = Math.max(0, 50 - (progress * 50));
+        el.style.transform = `translateX(${translateX}%)`;
+        el.style.opacity = Math.min(1, progress * 2).toString();
       }
     });
   }
 
-  private initTiltCards(): void {
-    setTimeout(() => {
-      const cards = document.querySelectorAll('.tilt-card');
-      cards.forEach(card => {
-        const element = card as HTMLElement;
-
-        const onMove = (ev: MouseEvent) => this.handleTilt(ev, element);
-        const onLeave = (_ev: MouseEvent) => this.resetTilt(element);
-
-        this.tiltHandlers.set(element, { onMove, onLeave });
-
-        element.addEventListener('mousemove', onMove);
-        element.addEventListener('mouseleave', onLeave);
-      });
-    }, 1000);
-  }
-
-  private handleTilt(event: MouseEvent, element: HTMLElement): void {
-    const rect = element.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-
-    const rotateX = ((y - centerY) / centerY) * -10;
-    const rotateY = ((x - centerX) / centerX) * 10;
-
-    element.style.transform =
-      `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-
-    const glowX = (x / rect.width) * 100;
-    const glowY = (y / rect.height) * 100;
-    element.style.setProperty('--glow-x', `${glowX}%`);
-    element.style.setProperty('--glow-y', `${glowY}%`);
-  }
-
-  private resetTilt(element: HTMLElement): void {
-    element.style.transform =
-      'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
-  }
-
-  private startBackgroundAnimation(): void {
-    let time = 0;
+  private startParallaxEffects(): void {
     const animate = () => {
-      time += 0.0008;
-
-      const meshes = document.querySelectorAll('.mesh-gradient');
-      meshes.forEach((mesh: any, index) => {
-        const offset = index * 2.5;
-        const x = Math.sin(time + offset) * 80;
-        const y = Math.cos(time + offset * 0.8) * 60;
-        const scale = 1 + Math.sin(time * 0.5 + offset) * 0.15;
-        const rotate = Math.sin(time * 0.3 + offset) * 10;
-
-        mesh.style.transform = `translate(${x}px, ${y}px) scale(${scale}) rotate(${rotate}deg)`;
-      });
-
-      const particles = document.querySelectorAll('.particle');
-      particles.forEach((particle: any, index) => {
-        const offset = index * 1.5;
-        const x = Math.sin(time * 0.5 + offset) * 30;
-        const y = Math.cos(time * 0.3 + offset) * 40;
-        particle.style.transform = `translate(${x}px, ${y}px)`;
-      });
-
+      this.updateParallaxElements();
       this.animationFrame = requestAnimationFrame(animate);
     };
     animate();
   }
 
-  private initCursorEffects(): void {
-    const cursor = document.querySelector('.custom-cursor') as HTMLElement;
-    const cursorDot = document.querySelector('.custom-cursor-dot') as HTMLElement;
+  private initNeuralNetworkCanvas(): void {
+    const canvas = document.getElementById('neuralCanvas') as HTMLCanvasElement;
+    if (!canvas) return;
 
-    if (cursor && cursorDot) {
-      document.addEventListener('mousemove', (e) => {
-        cursor.style.left = e.clientX + 'px';
-        cursor.style.top = e.clientY + 'px';
-        cursorDot.style.left = e.clientX + 'px';
-        cursorDot.style.top = e.clientY + 'px';
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    // Neural network nodes
+    const nodes: { x: number; y: number; vx: number; vy: number }[] = [];
+    const nodeCount = 80;
+    
+    for (let i = 0; i < nodeCount; i++) {
+      nodes.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: (Math.random() - 0.5) * 0.5
+      });
+    }
+
+    const drawNetwork = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Update and draw nodes
+      nodes.forEach((node, i) => {
+        // Update position
+        node.x += node.vx;
+        node.y += node.vy;
+
+        // Bounce off edges
+        if (node.x < 0 || node.x > canvas.width) node.vx *= -1;
+        if (node.y < 0 || node.y > canvas.height) node.vy *= -1;
+
+        // Draw connections
+        nodes.forEach((otherNode, j) => {
+          if (i === j) return;
+          
+          const dx = node.x - otherNode.x;
+          const dy = node.y - otherNode.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < 150) {
+            const opacity = (1 - distance / 150) * 0.15;
+            ctx.strokeStyle = `rgba(47, 123, 255, ${opacity})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(node.x, node.y);
+            ctx.lineTo(otherNode.x, otherNode.y);
+            ctx.stroke();
+          }
+        });
+
+        // Draw node
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, 2, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(47, 123, 255, 0.4)';
+        ctx.fill();
       });
 
-      const interactives = document.querySelectorAll('a, button, .auction-card');
-      interactives.forEach(el => {
-        el.addEventListener('mouseenter', () => cursor.classList.add('cursor-expanded'));
-        el.addEventListener('mouseleave', () => cursor.classList.remove('cursor-expanded'));
-      });
-    }
-  }
+      requestAnimationFrame(drawNetwork);
+    };
 
-  private updateCustomCursor(event: MouseEvent): void {
-    const cursor = document.querySelector('.custom-cursor') as HTMLElement;
-    const dot = document.querySelector('.custom-cursor-dot') as HTMLElement;
+    drawNetwork();
 
-    if (cursor && dot) {
-      cursor.style.left = event.clientX + 'px';
-      cursor.style.top = event.clientY + 'px';
-      dot.style.left = event.clientX + 'px';
-      dot.style.top = event.clientY + 'px';
-    }
-  }
-
-  private updateScrollProgress(): void {
-    const scrollProgress = document.querySelector('.scroll-progress') as HTMLElement;
-    if (scrollProgress) {
-      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = (this.scrollY / totalHeight) * 100;
-      scrollProgress.style.width = `${progress}%`;
-    }
+    // Handle resize
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
   }
 
   private buildImagesMap(files: InventoryDocumentFile[]): Map<number, string[]> {
     const map = new Map<number, string[]>();
-
     (files || [])
       .filter(f => (f.active ?? true) && !!f.inventoryId && !!f.documentUrl && this.isImageFile(f))
       .forEach(f => {
@@ -542,18 +445,15 @@ export class LandingPage implements OnInit, OnDestroy {
         list.push(f.documentUrl!);
         map.set(f.inventoryId, list);
       });
-
     return map;
   }
 
   private isImageFile(f: InventoryDocumentFile): boolean {
     const url = (f.documentUrl || '').toLowerCase();
     const name = (f.documentName || '').toLowerCase();
-
     const extFromUrl = url.match(/\.(\w+)(?:\?|#|$)/)?.[1] || '';
     const extFromName = name.match(/\.(\w+)(?:\?|#|$)/)?.[1] || '';
     const ext = (extFromUrl || extFromName).replace(/[^a-z0-9]/g, '');
-
     const ok = ['jpg', 'jpeg', 'png', 'webp'];
     return !!url && (ok.includes(ext) || ok.some(e => url.endsWith('.' + e)));
   }
@@ -578,17 +478,6 @@ export class LandingPage implements OnInit, OnDestroy {
     }
   }
 
-  get heroBackground(): string {
-    const url = this.heroAuction?.imageUrl || this.fallbackHeroImage;
-    return `url('${url}')`;
-  }
-
-  get parallaxStyle(): any {
-    return {
-      transform: `translate3d(0, ${this.scrollY * 0.5}px, 0)`
-    };
-  }
-
   formatCurrency(amount?: number | null): string {
     if (amount == null) return '$0';
     return amount.toLocaleString('en-US', {
@@ -602,39 +491,50 @@ export class LandingPage implements OnInit, OnDestroy {
   scrollToSection(sectionId: string): void {
     if (this.isBrowser) {
       const element = document.getElementById(sectionId);
-      if (element) element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
   }
 
   navigateToLogin(): void {
-    this.router.navigate(this.loginLink);
+    this.router.navigate(['/bidder', 'login']);
   }
 
   navigateToSignup(): void {
-    this.router.navigate(this.signupLink);
+    this.router.navigate(['/bidder', 'signup']);
   }
 
   getTimeRemaining(auction: InventoryAuction): string {
     if (!auction.endDate) return 'Ending soon';
-
     const now = new Date().getTime();
     const end = new Date(auction.endDate).getTime();
     const diff = end - now;
-
     if (diff <= 0) return 'Ended';
-
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
     if (hours > 24) {
       const days = Math.floor(hours / 24);
       return `${days}d ${hours % 24}h`;
     }
-
     return `${hours}h ${minutes}m`;
   }
 
-  getBidCount(_auction: InventoryAuction): number {
-    return Math.floor(Math.random() * 80) + 20;
+  toggleDarkMode(): void {
+    if (!this.isBrowser) return;
+
+    // Trigger transition overlay
+    this.isThemeTransitioning = true;
+
+    // Toggle after brief delay for smooth transition
+    setTimeout(() => {
+      this.isDarkMode = !this.isDarkMode;
+      localStorage.setItem('algoTheme', this.isDarkMode ? 'dark' : 'light');
+    }, 150);
+
+    // Remove transition overlay
+    setTimeout(() => {
+      this.isThemeTransitioning = false;
+    }, 800);
   }
 }

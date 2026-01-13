@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Outfit:wght@400;700;800;900&family=Space+Grotesk:wght@700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&family=Space+Grotesk:wght@400;700;900&display=swap');
 
 :host {
   /* Dark Mode Colors */
@@ -27,7 +27,11 @@
   --glass-bg-light: rgba(0, 0, 0, 0.03);
   --glass-border-light: rgba(0, 0, 0, 0.08);
 
-  font-family: 'Outfit', sans-serif;
+  /* ✅ Dashboard font system */
+  --font-ui: 'Outfit', sans-serif;
+  --font-metric: 'Space Grotesk', monospace;
+
+  font-family: var(--font-ui);
   display: block;
   background: var(--bg-dark);
   color: var(--text-primary);
@@ -54,74 +58,38 @@
    KEYFRAMES & ANIMATIONS
    =========================== */
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 @keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-12px);
-  }
+  0%, 100% { transform: translateY(0px); }
+  50%      { transform: translateY(-12px); }
 }
 
 @keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
 @keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.7;
-    transform: scale(1.05);
-  }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.7; transform: scale(1.05); }
 }
 
 @keyframes shimmer {
-  0% {
-    background-position: -200% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
 }
 
 @keyframes orbPulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.6;
-  }
-  50% {
-    transform: scale(1.2);
-    opacity: 0.8;
-  }
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50%      { transform: scale(1.2); opacity: 0.8; }
 }
 
 /* ===========================
@@ -158,9 +126,7 @@
     transition: transform 0.3s ease;
   }
 
-  &:hover mat-icon {
-    transform: rotate(180deg);
-  }
+  &:hover mat-icon { transform: rotate(180deg); }
 
   @media (max-width: 768px) {
     width: 48px;
@@ -190,9 +156,7 @@
   overflow: hidden;
   border-radius: 0 0 32px 32px;
 
-  @media (max-width: 768px) {
-    min-height: 440px;
-  }
+  @media (max-width: 768px) { min-height: 440px; }
 
   .hero-bg-layers {
     position: absolute;
@@ -232,9 +196,7 @@
     margin: 0 auto;
     padding: 28px 40px 40px;
 
-    @media (max-width: 768px) {
-      padding: 24px 20px 32px;
-    }
+    @media (max-width: 768px) { padding: 24px 20px 32px; }
   }
 
   .hero-crumbs {
@@ -293,9 +255,7 @@
     }
   }
 
-  .hero-main {
-    animation: fadeInUp 0.6s ease-out 0.1s backwards;
-  }
+  .hero-main { animation: fadeInUp 0.6s ease-out 0.1s backwards; }
 
   .hero-kicker {
     margin-bottom: 18px;
@@ -322,13 +282,15 @@
     }
   }
 
+  /* ✅ was Orbitron — now matches Dashboard heading vibe */
   .hero-title {
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-ui);
     font-size: clamp(36px, 6vw, 64px);
     font-weight: 900;
-    line-height: 1.1;
+    line-height: 1.06;
     margin: 0 0 20px;
-    letter-spacing: -1px;
+    letter-spacing: -1.5px;
+    text-transform: uppercase;
 
     .title-line {
       display: block;
@@ -358,13 +320,8 @@
     grid-template-columns: repeat(4, 1fr);
     gap: 16px;
 
-    @media (max-width: 960px) {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    @media (max-width: 520px) {
-      grid-template-columns: 1fr;
-    }
+    @media (max-width: 960px) { grid-template-columns: repeat(2, 1fr); }
+    @media (max-width: 520px) { grid-template-columns: 1fr; }
 
     .stat-card {
       display: flex;
@@ -420,7 +377,7 @@
         flex: 1;
 
         .stat-value {
-          font-family: 'Space Grotesk', monospace;
+          font-family: var(--font-metric);
           font-size: 28px;
           font-weight: 900;
           color: var(--text-primary);
@@ -455,9 +412,7 @@
       border-color: rgba(0, 0, 0, 0.15);
     }
 
-    .stat-icon {
-      background: rgba(0, 0, 0, 0.08);
-    }
+    .stat-icon { background: rgba(0, 0, 0, 0.08); }
   }
 }
 
@@ -467,22 +422,22 @@
 .category-selector {
   padding: 48px 40px;
 
-  @media (max-width: 768px) {
-    padding: 36px 20px;
-  }
+  @media (max-width: 768px) { padding: 36px 20px; }
 
   .selector-shell {
     max-width: 1400px;
     margin: 0 auto;
   }
 
+  /* ✅ was Orbitron */
   .selector-title {
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-ui);
     font-size: 28px;
     font-weight: 900;
     text-align: center;
     margin: 0 0 32px;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.8px;
+    text-transform: uppercase;
     animation: fadeInUp 0.5s ease-out backwards;
   }
 
@@ -491,13 +446,8 @@
     grid-template-columns: repeat(4, 1fr);
     gap: 20px;
 
-    @media (max-width: 960px) {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    @media (max-width: 520px) {
-      grid-template-columns: 1fr;
-    }
+    @media (max-width: 960px) { grid-template-columns: repeat(2, 1fr); }
+    @media (max-width: 520px) { grid-template-columns: 1fr; }
 
     .category-card {
       position: relative;
@@ -531,22 +481,15 @@
         filter: blur(20px);
       }
 
-      &:hover .card-glow {
-        opacity: 0.3;
-      }
+      &:hover .card-glow { opacity: 0.3; }
 
       &.active {
         background: linear-gradient(135deg, rgba(0, 245, 255, 0.12), rgba(255, 77, 109, 0.08));
         border-color: var(--accent-electric);
         box-shadow: 0 0 40px rgba(0, 245, 255, 0.3);
 
-        .card-glow {
-          opacity: 0.5;
-        }
-
-        .card-icon {
-          transform: scale(1.1);
-        }
+        .card-glow { opacity: 0.5; }
+        .card-icon { transform: scale(1.1); }
       }
 
       .card-icon {
@@ -570,17 +513,9 @@
           animation: pulse 2s ease-in-out infinite;
         }
 
-        &.bids {
-          background: linear-gradient(135deg, #6366f1, #8b5cf6);
-        }
-
-        &.wins {
-          background: linear-gradient(135deg, var(--accent-gold), #f59e0b);
-        }
-
-        &.amount {
-          background: linear-gradient(135deg, #10b981, #14b8a6);
-        }
+        &.bids   { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+        &.wins   { background: linear-gradient(135deg, var(--accent-gold), #f59e0b); }
+        &.amount { background: linear-gradient(135deg, #10b981, #14b8a6); }
       }
 
       .card-text {
@@ -591,6 +526,8 @@
           font-weight: 900;
           margin-bottom: 6px;
           color: var(--text-primary);
+          text-transform: uppercase;
+          letter-spacing: 0.2px;
         }
 
         .card-desc {
@@ -640,9 +577,7 @@
 .leaderboard-main {
   padding: 0 40px 60px;
 
-  @media (max-width: 768px) {
-    padding: 0 20px 48px;
-  }
+  @media (max-width: 768px) { padding: 0 20px 48px; }
 
   .leaderboard-shell {
     max-width: 1400px;
@@ -671,6 +606,8 @@
       font-size: 24px;
       font-weight: 900;
       margin: 0 0 12px;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
     }
 
     p {
@@ -687,16 +624,19 @@
 .podium-stage {
   margin-bottom: 48px;
 
+  /* ✅ was Orbitron */
   .podium-title {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 12px;
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-ui);
     font-size: 24px;
     font-weight: 900;
     text-align: center;
     margin-bottom: 40px;
+    text-transform: uppercase;
+    letter-spacing: -0.6px;
     animation: fadeInUp 0.5s ease-out backwards;
 
     mat-icon {
@@ -717,9 +657,7 @@
       grid-template-columns: 1fr;
       align-items: stretch;
 
-      .podium-card.rank-1 {
-        order: -1;
-      }
+      .podium-card.rank-1 { order: -1; }
     }
 
     .podium-card {
@@ -748,9 +686,7 @@
         z-index: -1;
       }
 
-      &:hover::before {
-        opacity: 1;
-      }
+      &:hover::before { opacity: 1; }
 
       &:hover {
         transform: translateY(-8px) scale(1.02);
@@ -762,9 +698,7 @@
         border-color: var(--accent-gold);
         background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05));
 
-        &::before {
-          background: linear-gradient(135deg, var(--accent-gold), transparent);
-        }
+        &::before { background: linear-gradient(135deg, var(--accent-gold), transparent); }
 
         .champion-crown {
           position: absolute;
@@ -795,9 +729,7 @@
         border-color: var(--accent-silver);
         background: linear-gradient(135deg, rgba(192, 192, 192, 0.12), rgba(192, 192, 192, 0.04));
 
-        &::before {
-          background: linear-gradient(135deg, var(--accent-silver), transparent);
-        }
+        &::before { background: linear-gradient(135deg, var(--accent-silver), transparent); }
       }
 
       &.rank-3 {
@@ -805,18 +737,19 @@
         border-color: var(--accent-bronze);
         background: linear-gradient(135deg, rgba(205, 127, 50, 0.12), rgba(205, 127, 50, 0.04));
 
-        &::before {
-          background: linear-gradient(135deg, var(--accent-bronze), transparent);
-        }
+        &::before { background: linear-gradient(135deg, var(--accent-bronze), transparent); }
       }
 
+      /* ✅ was Orbitron */
       .podium-rank {
         display: flex;
         align-items: center;
         gap: 8px;
-        font-family: 'Orbitron', sans-serif;
-        font-size: 20px;
+        font-family: var(--font-ui);
+        font-size: 18px;
         font-weight: 900;
+        letter-spacing: -0.4px;
+        text-transform: uppercase;
 
         mat-icon {
           font-size: 28px;
@@ -895,6 +828,8 @@
         font-weight: 900;
         text-align: center;
         color: var(--text-primary);
+        text-transform: uppercase;
+        letter-spacing: -0.3px;
       }
 
       .podium-stats {
@@ -908,7 +843,7 @@
           align-items: center;
 
           .stat-val {
-            font-family: 'Space Grotesk', monospace;
+            font-family: var(--font-metric);
             font-size: 24px;
             font-weight: 900;
             color: var(--text-primary);
@@ -973,9 +908,7 @@
         border-color: rgba(0, 0, 0, 0.2);
       }
 
-      .avatar-badge {
-        border-color: var(--bg-light);
-      }
+      .avatar-badge { border-color: var(--bg-light); }
     }
   }
 }
@@ -988,10 +921,12 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-ui);
     font-size: 20px;
     font-weight: 900;
     margin-bottom: 28px;
+    text-transform: uppercase;
+    letter-spacing: -0.4px;
     animation: fadeInUp 0.5s ease-out backwards;
 
     mat-icon {
@@ -1020,9 +955,7 @@
       transition: all 0.3s;
       animation: fadeInUp 0.5s ease-out backwards;
 
-      &:nth-child(n) {
-        animation-delay: calc(0.05s * var(--i, 1));
-      }
+      &:nth-child(n) { animation-delay: calc(0.05s * var(--i, 1)); }
 
       &:hover {
         background: rgba(255, 255, 255, 0.05);
@@ -1040,15 +973,8 @@
         gap: 12px;
         padding: 16px;
 
-        .row-ai {
-          grid-column: 3;
-          grid-row: 1;
-        }
-
-        .row-stat {
-          grid-column: 2 / -1;
-          grid-row: 2;
-        }
+        .row-ai { grid-column: 3; grid-row: 1; }
+        .row-stat { grid-column: 2 / -1; grid-row: 2; }
       }
 
       .row-rank {
@@ -1061,7 +987,7 @@
           background: rgba(255, 255, 255, 0.08);
           border: 2px solid rgba(255, 255, 255, 0.15);
           border-radius: 12px;
-          font-family: 'Space Grotesk', monospace;
+          font-family: var(--font-metric);
           font-size: 20px;
           font-weight: 900;
           color: var(--text-primary);
@@ -1101,6 +1027,8 @@
             font-weight: 900;
             color: var(--text-primary);
             margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: -0.2px;
 
             .you-badge {
               display: inline-flex;
@@ -1138,7 +1066,7 @@
         text-align: right;
 
         .stat-value {
-          font-family: 'Space Grotesk', monospace;
+          font-family: var(--font-metric);
           font-size: 20px;
           font-weight: 900;
           color: var(--text-primary);
@@ -1209,9 +1137,7 @@
   margin-top: 60px;
   padding: 0 40px 60px;
 
-  @media (max-width: 768px) {
-    padding: 0 20px 48px;
-  }
+  @media (max-width: 768px) { padding: 0 20px 48px; }
 
   .promo-shell {
     max-width: 1400px;
@@ -1256,11 +1182,14 @@
         }
       }
 
+      /* ✅ was Orbitron */
       .promo-title {
-        font-family: 'Orbitron', sans-serif;
+        font-family: var(--font-ui);
         font-size: 36px;
         font-weight: 900;
         margin: 0 0 16px;
+        text-transform: uppercase;
+        letter-spacing: -1px;
       }
 
       .promo-desc {
@@ -1282,7 +1211,7 @@
         color: white;
         font-size: 16px;
         font-weight: 900;
-        font-family: 'Outfit', sans-serif;
+        font-family: var(--font-ui);
         text-transform: uppercase;
         letter-spacing: 0.5px;
         cursor: pointer;
@@ -1307,9 +1236,7 @@
       height: 300px;
       z-index: 1;
 
-      @media (max-width: 960px) {
-        height: 200px;
-      }
+      @media (max-width: 960px) { height: 200px; }
 
       .visual-orb {
         position: absolute;
@@ -1418,6 +1345,8 @@
     font-size: 24px;
     font-weight: 900;
     margin: 0 0 24px;
+    text-transform: uppercase;
+    letter-spacing: -0.6px;
   }
 
   .btn-retry {
@@ -1431,7 +1360,7 @@
     color: white;
     font-size: 15px;
     font-weight: 800;
-    font-family: 'Outfit', sans-serif;
+    font-family: var(--font-ui);
     cursor: pointer;
     transition: all 0.3s;
 
