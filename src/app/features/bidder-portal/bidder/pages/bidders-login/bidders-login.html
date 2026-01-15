@@ -6,20 +6,28 @@
 
   <div class="auth-container">
     <div class="auth-card" [@cardEnter]>
-      <div class="card-header" [@fadeInUp]>
-        <div class="logo-section">
-          <img
-            class="logo"
-            src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8"
-            alt="Algo"
-          />
-          <div class="logo-text">
-            <span class="logo-main">ALGO</span>
-            <span class="logo-divider">×</span>
-            <span class="logo-sub">AUCTION</span>
-          </div>
-        </div>
-      </div>
+<div class="card-header" [@fadeInUp]>
+  <div
+    class="logo-section is-clickable"
+    role="link"
+    tabindex="0"
+    aria-label="Go to Algo Auctions landing page"
+    (click)="goToLanding()"
+    (keydown)="onLogoKeydown($event)"
+  >
+    <img
+      class="logo"
+      src="https://media.licdn.com/dms/image/v2/C560BAQGJ-j7r23Z79Q/company-logo_200_200/company-logo_200_200/0/1656698792543/algoai_logo?e=2147483647&v=beta&t=QaHGa0R70yu1J352TZfGUk4z2PUigcta-pMyLIznFG8"
+      alt="Algo"
+    />
+    <div class="logo-text">
+      <span class="logo-main">ALGO</span>
+      <span class="logo-divider">×</span>
+      <span class="logo-sub">AUCTION</span>
+    </div>
+  </div>
+</div>
+
 
       <div class="card-body" [@fadeInUp]>
         <div class="welcome-section">

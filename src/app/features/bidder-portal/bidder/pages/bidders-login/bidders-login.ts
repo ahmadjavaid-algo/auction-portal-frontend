@@ -19,7 +19,7 @@ export class BiddersLogin implements OnInit, AfterViewInit, OnDestroy {
 
   private auth = inject(BidderAuthService);
   private router = inject(Router);
-  
+
   email = '';
   password = '';
   loading = false;
@@ -36,8 +36,12 @@ export class BiddersLogin implements OnInit, AfterViewInit, OnDestroy {
   private mouse = { x: 0, y: 0 };
   private time = 0;
 
+  // ✅ Keep bound refs so removeEventListener works correctly
+  private readonly boundMouseMove = (e: MouseEvent) => this.onMouseMove(e);
+  private readonly boundResize = () => this.onWindowResize();
+
   ngOnInit(): void {
-    window.addEventListener('mousemove', this.onMouseMove.bind(this));
+    window.addEventListener('mousemove', this.boundMouseMove);
   }
 
   ngAfterViewInit(): void {
@@ -48,12 +52,30 @@ export class BiddersLogin implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    window.removeEventListener('mousemove', this.onMouseMove.bind(this));
-    if (this.animationId) {
-      cancelAnimationFrame(this.animationId);
-    }
+    window.removeEventListener('mousemove', this.boundMouseMove);
+    window.removeEventListener('resize', this.boundResize);
+
+    if (this.animationId) cancelAnimationFrame(this.animationId);
+
     if (this.renderer) {
       this.renderer.dispose();
+      // optional cleanup if needed:
+      // this.renderer.forceContextLoss();
+      // (this.renderer.domElement as any) = null;
+    }
+  }
+
+  // ✅ Click handler for logo/title
+  goToLanding(): void {
+    this.router.navigate(['/bidder/AlgoAuctions']);
+  }
+
+  // ✅ Keyboard accessibility (Enter / Space)
+  onLogoKeydown(event: KeyboardEvent): void {
+    const key = event.key;
+    if (key === 'Enter' || key === ' ') {
+      event.preventDefault();
+      this.goToLanding();
     }
   }
 
@@ -73,8 +95,8 @@ export class BiddersLogin implements OnInit, AfterViewInit, OnDestroy {
     this.camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000);
     this.camera.position.set(0, 0, 20);
 
-    this.renderer = new THREE.WebGLRenderer({ 
-      antialias: true, 
+    this.renderer = new THREE.WebGLRenderer({
+      antialias: true,
       alpha: true,
       powerPreference: 'high-performance'
     });
@@ -83,6 +105,7 @@ export class BiddersLogin implements OnInit, AfterViewInit, OnDestroy {
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.4;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+
     container.appendChild(this.renderer.domElement);
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
@@ -104,7 +127,7 @@ export class BiddersLogin implements OnInit, AfterViewInit, OnDestroy {
     this.createParticleField();
     this.createNeuralNetwork();
 
-    window.addEventListener('resize', this.onWindowResize.bind(this));
+    window.addEventListener('resize', this.boundResize);
   }
 
   private createFloatingGeometry(): void {
@@ -150,7 +173,7 @@ export class BiddersLogin implements OnInit, AfterViewInit, OnDestroy {
       this.scene.add(mesh);
 
       const edges = new THREE.EdgesGeometry(data.geo);
-      const lineMaterial = new THREE.LineBasicMaterial({ 
+      const lineMaterial = new THREE.LineBasicMaterial({
         color: data.color,
         transparent: true,
         opacity: 0.3
@@ -275,7 +298,7 @@ export class BiddersLogin implements OnInit, AfterViewInit, OnDestroy {
       this.particles.rotation.x = Math.sin(this.time * 0.2) * 0.1;
     }
 
-    this.neuralNodes.forEach((node, i) => {
+    this.neuralNodes.forEach((node) => {
       node.x += node.vx;
       node.y += node.vy;
       node.z += node.vz;

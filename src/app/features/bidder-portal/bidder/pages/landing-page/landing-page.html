@@ -1,9 +1,12 @@
-<div class="narrative-landing" [class.dark-mode]="isDarkMode">
-  <!-- Theme Transition Overlay -->
-  <div class="theme-transition-overlay" [class.active]="isThemeTransitioning"></div>
-
-  <!-- Scroll Progress Indicator -->
+<div class="landing-page" [class.dark-mode]="isDarkMode">
+  <!-- Scroll Progress Bar -->
   <div class="scroll-progress-bar" [style.width.%]="scrollProgress"></div>
+
+  <!-- 3D Background Scene -->
+  <div class="scene-background">
+    <div #canvasContainer class="canvas-3d"></div>
+    <div class="gradient-overlay"></div>
+  </div>
 
   <!-- Floating Navigation -->
   <nav class="floating-nav" [class.scrolled]="scrollY > 100">
@@ -18,771 +21,457 @@
       </a>
 
       <div class="nav-links">
-        <button (click)="scrollToSection('pain')" class="nav-link">The Problem</button>
-        <button (click)="scrollToSection('solution')" class="nav-link">The Solution</button>
-        <button (click)="scrollToSection('features')" class="nav-link">AI Features</button>
-        <button (click)="scrollToSection('cta')" class="nav-link">Get Started</button>
+        <button (click)="scrollToSection('features')" class="nav-link">
+          <span class="link-text"><span class="ai-accent">AI</span> Features</span>
+          <span class="link-underline"></span>
+        </button>
+        <button (click)="scrollToSection('auctions')" class="nav-link">
+          <span class="link-text">Auctions</span>
+          <span class="link-underline"></span>
+        </button>
+        <button (click)="scrollToSection('how-it-works')" class="nav-link">
+          <span class="link-text">How It Works</span>
+          <span class="link-underline"></span>
+        </button>
       </div>
 
       <div class="nav-actions">
-        <button (click)="toggleDarkMode()" class="btn-theme-toggle" [class.dark-active]="isDarkMode">
-          <div class="toggle-track">
-            <div class="toggle-thumb"></div>
-            <mat-icon class="icon-light">light_mode</mat-icon>
-            <mat-icon class="icon-dark">dark_mode</mat-icon>
-          </div>
-        </button>
-        
         <button (click)="navigateToLogin()" class="btn-nav-login">
-          <span>Login</span>
+          <span class="btn-content">
+            <mat-icon>login</mat-icon>
+            <span>Login</span>
+          </span>
+          <span class="btn-hover-bg"></span>
         </button>
         <button (click)="navigateToSignup()" class="btn-nav-signup">
-          <mat-icon>auto_awesome</mat-icon>
-          <span>Start Bidding</span>
+          <span class="btn-glass"></span>
+          <span class="btn-shine"></span>
+          <span class="btn-content">
+            <mat-icon>rocket_launch</mat-icon>
+            <span>Sign up</span>
+          </span>
         </button>
       </div>
     </div>
   </nav>
 
-  <!-- HERO: INTELLIGENT AI SHOWCASE -->
-  <section class="hero-intelligent">
-    <!-- Animated AI Neural Network Background -->
-    <div class="hero-neural-bg">
-      <canvas id="neuralCanvas"></canvas>
-      <div class="neural-overlay"></div>
-    </div>
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-container">
+      <div class="hero-content scroll-reveal">
+<h1 class="hero-title"> <span class="title-inline accent">AI</span> <span class="title-inline">Powered Auction</span> <span class="title-line">Platform for Collectors</span> </h1>
 
-    <!-- Floating AI Badges -->
-    <div class="hero-ai-badges">
-      <div class="ai-badge badge-1" data-parallax-speed="0.3">
-        <div class="badge-glow"></div>
-        <div class="badge-icon">
-          <mat-icon>psychology</mat-icon>
-        </div>
-        <div class="badge-content">
-          <div class="badge-label">AI REPORT</div>
-          <div class="badge-value">94% Accuracy</div>
-        </div>
-        <div class="badge-pulse"></div>
-      </div>
+        <p class="hero-subtitle">
+          Three <span class="ai-accent">AI</span> engines working in perfect harmony: predicting prices, comparing vehicles, and bidding strategically.
+          While you sleep, our <span class="ai-accent">AI</span> never rests.
+        </p>
 
-      <div class="ai-badge badge-2" data-parallax-speed="0.4">
-        <div class="badge-glow"></div>
-        <div class="badge-icon">
-          <mat-icon>compare</mat-icon>
-        </div>
-        <div class="badge-content">
-          <div class="badge-label">AI COMPARISON</div>
-          <div class="badge-value">17 Variables</div>
-        </div>
-        <div class="badge-pulse"></div>
-      </div>
-
-      <div class="ai-badge badge-3" data-parallax-speed="0.5">
-        <div class="badge-glow"></div>
-        <div class="badge-icon">
-          <mat-icon>shield_moon</mat-icon>
-        </div>
-        <div class="badge-content">
-          <div class="badge-label">AI AUTOBID</div>
-          <div class="badge-value">24/7 Active</div>
-        </div>
-        <div class="badge-pulse"></div>
-      </div>
-    </div>
-
-    <!-- Main Hero Content -->
-    <div class="hero-main-content">
-      <div class="hero-eyebrow">
-        <div class="eyebrow-icon-group">
-          <mat-icon class="icon-rotating">auto_awesome</mat-icon>
-          <mat-icon class="icon-pulse">psychology</mat-icon>
-          <mat-icon class="icon-rotating">neurology</mat-icon>
-        </div>
-        <span class="eyebrow-text">POWERED BY ARTIFICIAL INTELLIGENCE</span>
-      </div>
-
-      <h1 class="hero-main-title">
-        <span class="title-line line-1">
-          <span class="word w-1">The</span>
-          <span class="word w-2">Only</span>
-          <span class="word w-3 gradient-text">AI-Powered</span>
-        </span>
-        <span class="title-line line-2">
-          <span class="word w-4">Auction</span>
-          <span class="word w-5">Platform</span>
-        </span>
-        <span class="title-line line-3">
-          <span class="word w-6">for</span>
-          <span class="word w-7 gradient-text-alt">Serious Collectors</span>
-        </span>
-      </h1>
-
-      <p class="hero-subtitle">
-        <span class="subtitle-line s-1">Three AI engines working in perfect harmony:</span>
-        <span class="subtitle-line s-2">Predicting prices. Comparing vehicles. Bidding strategically.</span>
-        <span class="subtitle-line s-3">While you sleep, our AI never rests.</span>
-      </p>
-
-      <!-- AI Feature Pills -->
-      <div class="hero-feature-pills">
-        <div class="feature-pill pill-1">
-          <div class="pill-icon">
-            <mat-icon>psychology</mat-icon>
-            <div class="icon-orbit"></div>
-          </div>
-          <div class="pill-text">
-            <div class="pill-label">AI Report</div>
-            <div class="pill-desc">342 checkpoints analyzed instantly</div>
-          </div>
-          <div class="pill-stat">94%</div>
-        </div>
-
-        <div class="feature-pill pill-2">
-          <div class="pill-icon">
-            <mat-icon>compare</mat-icon>
-            <div class="icon-orbit"></div>
-          </div>
-          <div class="pill-text">
-            <div class="pill-label">AI Comparison</div>
-            <div class="pill-desc">17-variable deep analysis</div>
-          </div>
-          <div class="pill-stat">87%</div>
-        </div>
-
-        <div class="feature-pill pill-3">
-          <div class="pill-icon">
-            <mat-icon>shield_moon</mat-icon>
-            <div class="icon-orbit"></div>
-          </div>
-          <div class="pill-text">
-            <div class="pill-label">AI AutoBid</div>
-            <div class="pill-desc">24/7 strategic monitoring</div>
-          </div>
-          <div class="pill-stat">96%</div>
-        </div>
-      </div>
-
-      <!-- Live Demo Preview -->
-      <div class="hero-demo-preview">
-        <div class="demo-device">
-          <div class="device-header-mini">
-            <div class="header-dots">
-              <span></span><span></span><span></span>
-            </div>
-            <div class="header-title">
+        <div class="hero-actions">
+          <button (click)="navigateToSignup()" class="btn-hero-primary">
+            <span class="btn-glass"></span>
+            <span class="btn-shine"></span>
+            <span class="btn-content">
               <mat-icon>psychology</mat-icon>
-              <span>AlgoX AI Dashboard</span>
-            </div>
-          </div>
-          
-          <div class="device-content-mini">
-            <!-- AI Scanning Animation -->
-            <div class="ai-scan-container">
-              <div class="scan-vehicle">
-                <img *ngIf="heroAuction" [src]="heroAuction.imageUrl || fallbackHeroImage" alt="Vehicle Scan" />
-                <div class="scan-overlay">
-                  <div class="scan-line"></div>
-                  <div class="scan-grid"></div>
-                  <div class="scan-points">
-                    <div class="point point-1"></div>
-                    <div class="point point-2"></div>
-                    <div class="point point-3"></div>
-                    <div class="point point-4"></div>
-                    <div class="point point-5"></div>
-                  </div>
-                </div>
-              </div>
+              <span>Experience <span class="ai-accent">AI</span> Bidding</span>
+            </span>
+          </button>
 
-              <!-- Real-time AI Analysis -->
-              <div class="ai-analysis-cards">
-                <div class="analysis-card card-analyzing">
-                  <div class="card-icon">
-                    <mat-icon>psychology</mat-icon>
-                    <div class="icon-spinner"></div>
-                  </div>
-                  <div class="card-text">
-                    <div class="card-label">AI Analysis</div>
-                    <div class="card-status">Scanning 342 checkpoints...</div>
-                  </div>
-                  <div class="card-progress">
-                    <div class="progress-bar">
-                      <div class="progress-fill"></div>
-                    </div>
-                    <span class="progress-value">87%</span>
-                  </div>
-                </div>
-
-                <div class="analysis-card card-compare">
-                  <div class="card-icon">
-                    <mat-icon>compare</mat-icon>
-                  </div>
-                  <div class="card-text">
-                    <div class="card-label">AI Comparison</div>
-                    <div class="card-status">2 similar vehicles found</div>
-                  </div>
-                  <div class="card-result">
-                    <mat-icon>emoji_events</mat-icon>
-                    <span>Winner: +$8K value</span>
-                  </div>
-                </div>
-
-                <div class="analysis-card card-autobid">
-                  <div class="card-icon">
-                    <mat-icon>shield_moon</mat-icon>
-                  </div>
-                  <div class="card-text">
-                    <div class="card-label">AI AutoBid</div>
-                    <div class="card-status">Monitoring 24/7</div>
-                  </div>
-                  <div class="card-result success">
-                    <mat-icon>check_circle</mat-icon>
-                    <span>Active & Ready</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <button (click)="scrollToSection('auctions')" class="btn-hero-secondary">
+            <span class="btn-border"></span>
+            <span class="btn-content">
+              <mat-icon>play_circle</mat-icon>
+              <span>View Live Auctions</span>
+            </span>
+          </button>
         </div>
 
-        <!-- Live Stats -->
-        <div class="demo-live-stats">
-          <div class="live-stat">
-            <div class="stat-icon">
-              <mat-icon>speed</mat-icon>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <mat-icon>verified_user</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">2,847</span>
+              <span class="stat-label">Verified Bidders</span>
             </div>
-            <div class="stat-value">
-              <span class="value-num">180</span>
-              <span class="value-unit">ms</span>
-            </div>
-            <div class="stat-label">Analysis Speed</div>
           </div>
-
-          <div class="live-stat">
-            <div class="stat-icon">
-              <mat-icon>precision_manufacturing</mat-icon>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <mat-icon>attach_money</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">$127K</span>
+              <span class="stat-label">Avg. Purchase</span>
             </div>
-            <div class="stat-value">
-              <span class="value-num">342</span>
-              <span class="value-unit">pts</span>
-            </div>
-            <div class="stat-label">Inspection Checks</div>
           </div>
-
-          <div class="live-stat">
-            <div class="stat-icon">
-              <mat-icon>trending_up</mat-icon>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <mat-icon>trending_up</mat-icon>
+            <div class="stat-content">
+              <span class="stat-value">94%</span>
+              <span class="stat-label">Success Rate</span>
             </div>
-            <div class="stat-value">
-              <span class="value-num">94</span>
-              <span class="value-unit">%</span>
-            </div>
-            <div class="stat-label">Prediction Rate</div>
           </div>
         </div>
       </div>
 
-      <!-- CTA Buttons -->
-      <div class="hero-cta-buttons">
-        <button (click)="navigateToSignup()" class="btn-hero-primary">
-          <span class="btn-bg-animated"></span>
-          <span class="btn-content">
-            <mat-icon>psychology</mat-icon>
-            <span>Experience AI Bidding</span>
-          </span>
-          <div class="btn-shimmer"></div>
-        </button>
-
-        <button (click)="scrollToSection('features')" class="btn-hero-secondary">
-          <span class="btn-border"></span>
-          <span class="btn-content">
-            <mat-icon>play_circle</mat-icon>
-            <span>Watch AI in Action</span>
-          </span>
-        </button>
-      </div>
-
-      <!-- Trust Indicators -->
-      <div class="hero-trust-row">
-        <div class="trust-item">
-          <mat-icon>verified</mat-icon>
-          <span>2,847 verified bidders</span>
-        </div>
-        <div class="trust-divider"></div>
-        <div class="trust-item">
-          <mat-icon>attach_money</mat-icon>
-          <span>$127K avg purchase</span>
-        </div>
-        <div class="trust-divider"></div>
-        <div class="trust-item">
-          <mat-icon>trending_up</mat-icon>
-          <span>94% success rate</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Scroll Indicator -->
-    <div class="scroll-indicator-new">
-      <div class="indicator-line"></div>
-      <div class="indicator-text">
+      <!-- Scroll Indicator -->
+      <div class="scroll-indicator">
+        <div class="indicator-line"></div>
         <mat-icon>keyboard_arrow_down</mat-icon>
-        <span>Discover the Intelligence</span>
       </div>
     </div>
   </section>
 
-  <!-- ACT 2: THE PAIN (Scrolling from LEFT) -->
-  <section id="pain" class="pain-section">
-    <div class="pain-container">
-      <div class="section-intro scroll-reveal">
-        <h2 class="section-title">
-          <span class="title-accent">Every Collector's</span>
-          <span class="title-main">Nightmare</span>
-        </h2>
-        <p class="section-description">
-          You're not paranoid. These fears are justified. Here's why traditional auctions fail collectors like you.
+  <!-- AI Features Section -->
+  <section id="features" class="features-section">
+    <div class="features-container">
+      <div class="section-header scroll-reveal">
+        <h2 class="section-title">Three <span class="ai-accent">AI</span> Superpowers</h2>
+        <p class="section-subtitle">
+          Every feature designed to give you the edge. Every detail engineered for confidence.
         </p>
       </div>
 
-      <div class="pain-cards">
-        <div class="pain-card scroll-left" *ngFor="let pain of painPoints; let i = index" [style.--index]="i">
-          <div class="pain-icon-wrapper" [style.--color]="pain.color">
-            <div class="icon-glow"></div>
-            <mat-icon>{{ pain.icon }}</mat-icon>
-            <div class="icon-pulse"></div>
-          </div>
-          <h3 class="pain-title">{{ pain.title }}</h3>
-          <p class="pain-description">{{ pain.description }}</p>
-          <div class="pain-underline"></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ACT 3: THE TURNING POINT (Center Reveal with Scale) -->
-  <section class="turning-point-section">
-    <div class="turning-container">
-      <div class="turning-content scroll-reveal">
-        <div class="question-mark">?</div>
-        <h2 class="turning-title">
-          <span class="line-1">What if you had</span>
-          <span class="line-2 gradient-text">a genius on your side?</span>
-        </h2>
-
-        <div class="genius-features">
-          <div class="feature-item stagger-child" *ngFor="let item of [
-            'Analyzes every pixel of every inspection photo',
-            'Studies 10,000+ comparable sales in milliseconds',
-            'Predicts final prices with 94% accuracy',
-            'Bids strategically while you sleep'
-          ]">
-            <div class="feature-check">
-              <mat-icon>check_circle</mat-icon>
-            </div>
-            <span>{{ item }}</span>
-          </div>
-        </div>
-
-        <div class="genius-reveal">
-          <span class="not-software">Not just software.</span>
-          <span class="is-intelligence gradient-text">Intelligence.</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ACT 4: THE SOLUTION (Alternating Left/Right Scrolls) -->
-  <section id="solution" class="solution-intro-section">
-    <div class="solution-intro scroll-reveal">
-      <div class="intro-eyebrow">
-        <mat-icon>auto_awesome</mat-icon>
-        <span>INTRODUCING ALGOX AI</span>
-      </div>
-      <h2 class="intro-title">
-        <span>Your</span>
-        <span class="gradient-text">Unfair Advantage</span>
-      </h2>
-      <p class="intro-description">
-        Three AI-powered differentiators that transform you from anxious bidder to confident winner.
-      </p>
-    </div>
-  </section>
-
-  <!-- AI FEATURE 1: Report (Scroll from RIGHT) -->
-  <section id="features" class="ai-feature-section feature-1">
-    <div class="feature-container">
-      <div class="feature-visual scroll-right">
-        <div class="visual-device">
-          <div class="device-screen">
-            <div class="screen-header">
-              <div class="header-icon">
-                <mat-icon>psychology</mat-icon>
-              </div>
-              <span>AI REPORT & PREDICTION</span>
-            </div>
-            <div class="screen-content">
-              <div class="report-card">
-                <div class="report-score">
-                  <div class="score-circle">
-                    <span class="score-value">9.2</span>
-                    <span class="score-max">/10</span>
-                  </div>
-                  <div class="score-label">Overall Score</div>
+      <!-- AI Feature Cards (Alternating Layout) -->
+      <div class="ai-features-list">
+        <div
+          class="ai-feature-item scroll-reveal"
+          *ngFor="let feature of aiFeatures; let i = index"
+          [class.reverse]="i % 2 === 1"
+        >
+          <div class="feature-visual" data-parallax="0.1">
+            <div class="visual-card">
+              <div class="card-header">
+                <div class="header-icon">
+                  <mat-icon>{{ feature.icon }}</mat-icon>
                 </div>
-                <div class="report-insights">
-                  <div class="insight-item">
+                <span>{{ feature.title }}</span>
+              </div>
+
+              <div class="card-body">
+                <div class="stats-grid">
+                  <div class="stat-box stagger-item" *ngFor="let stat of feature.stats">
+                    <div class="stat-box-value">{{ stat.value }}</div>
+                    <div class="stat-box-label">{{ stat.label }}</div>
+                  </div>
+                </div>
+
+                <div class="feature-demo">
+                  <div class="demo-line stagger-item" *ngFor="let item of feature.features.slice(0, 3)">
                     <mat-icon>check_circle</mat-icon>
-                    <span>342 checkpoints analyzed</span>
-                  </div>
-                  <div class="insight-item">
-                    <mat-icon>check_circle</mat-icon>
-                    <span>Cross-referenced 50K vehicles</span>
-                  </div>
-                  <div class="insight-item">
-                    <mat-icon>check_circle</mat-icon>
-                    <span>Predicted price: $172K</span>
+                    <span>{{ item }}</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="device-glow" [style.background]="'radial-gradient(circle, ' + aiFeatures[0].color + '44, transparent)'"></div>
-        </div>
-      </div>
 
-      <div class="feature-content scroll-left">
-        <div class="content-eyebrow" [style.color]="aiFeatures[0].color">
-          <mat-icon>{{ aiFeatures[0].icon }}</mat-icon>
-          <span>SUPERPOWER #1</span>
-        </div>
-        <h3 class="content-title">{{ aiFeatures[0].tagline }}</h3>
-        <p class="content-description">{{ aiFeatures[0].description }}</p>
+          <div class="feature-content">
+            <div class="content-badge">SUPERPOWER #{{ i + 1 }}</div>
+            <h3 class="content-title">{{ feature.tagline }}</h3>
+            <p class="content-description">{{ feature.description }}</p>
 
-        <ul class="content-features">
-          <li class="stagger-child" *ngFor="let feature of aiFeatures[0].features">
-            <mat-icon>arrow_forward</mat-icon>
-            <span>{{ feature }}</span>
-          </li>
-        </ul>
+            <ul class="content-features">
+              <li class="stagger-item" *ngFor="let item of feature.features">
+                <div class="feature-bullet"></div>
+                <span>{{ item }}</span>
+              </li>
+            </ul>
 
-        <div class="content-testimonial">
-          <div class="testimonial-quote">"{{ aiFeatures[0].testimonial.quote }}"</div>
-          <div class="testimonial-author">
-            <strong>{{ aiFeatures[0].testimonial.author }}</strong>, {{ aiFeatures[0].testimonial.role }}
-            <span class="author-location">
-              <mat-icon>location_on</mat-icon>
-              {{ aiFeatures[0].testimonial.location }}
-            </span>
+            <div class="content-testimonial">
+              <div class="testimonial-quote">
+                <mat-icon>format_quote</mat-icon>
+                <p>{{ feature.testimonial.quote }}</p>
+              </div>
+              <div class="testimonial-author">
+                <strong>{{ feature.testimonial.author }}</strong>
+                <span>{{ feature.testimonial.role }} • {{ feature.testimonial.location }}</span>
+              </div>
+            </div>
           </div>
-        </div>
-
-        <div class="content-stat" [style.border-color]="aiFeatures[0].color">
-          <span class="stat-value" [style.color]="aiFeatures[0].color">{{ aiFeatures[0].stat }}</span>
-          <span class="stat-label">{{ aiFeatures[0].statLabel }}</span>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- AI FEATURE 2: Comparison (Scroll from LEFT) -->
-  <section class="ai-feature-section feature-2">
-    <div class="feature-container reverse">
-      <div class="feature-content scroll-right">
-        <div class="content-eyebrow" [style.color]="aiFeatures[1].color">
-          <mat-icon>{{ aiFeatures[1].icon }}</mat-icon>
-          <span>SUPERPOWER #2</span>
+  <!-- How It Works Section -->
+  <section id="how-it-works" class="how-it-works-section">
+    <div class="how-it-works-container">
+      <div class="section-header scroll-reveal">
+        <div class="header-badge">
+          <mat-icon>bolt</mat-icon>
+          <span>SIMPLE & POWERFUL</span>
         </div>
-        <h3 class="content-title">{{ aiFeatures[1].tagline }}</h3>
-        <p class="content-description">{{ aiFeatures[1].description }}</p>
-
-        <ul class="content-features">
-          <li class="stagger-child" *ngFor="let feature of aiFeatures[1].features">
-            <mat-icon>arrow_forward</mat-icon>
-            <span>{{ feature }}</span>
-          </li>
-        </ul>
-
-        <div class="content-testimonial">
-          <div class="testimonial-quote">"{{ aiFeatures[1].testimonial.quote }}"</div>
-          <div class="testimonial-author">
-            <strong>{{ aiFeatures[1].testimonial.author }}</strong>, {{ aiFeatures[1].testimonial.role }}
-            <span class="author-location">
-              <mat-icon>location_on</mat-icon>
-              {{ aiFeatures[1].testimonial.location }}
-            </span>
-          </div>
-        </div>
-
-        <div class="content-stat" [style.border-color]="aiFeatures[1].color">
-          <span class="stat-value" [style.color]="aiFeatures[1].color">{{ aiFeatures[1].stat }}</span>
-          <span class="stat-label">{{ aiFeatures[1].statLabel }}</span>
-        </div>
+        <h2 class="section-title">How It Works</h2>
+        <p class="section-subtitle">
+          From browsing to winning—powered by <span class="ai-accent">AI</span> at every step.
+        </p>
       </div>
 
-      <div class="feature-visual scroll-left">
-        <div class="visual-device">
-          <div class="device-screen">
-            <div class="screen-header">
-              <div class="header-icon">
-                <mat-icon>compare</mat-icon>
-              </div>
-              <span>AI COMPARISON ENGINE</span>
-            </div>
-            <div class="screen-content">
-              <div class="comparison-cards">
-                <div class="compare-card winner">
-                  <div class="card-badge">Winner</div>
-                  <div class="card-title">Vehicle B</div>
-                  <div class="card-price">$94K</div>
-                  <div class="card-insight">
-                    <mat-icon>check_circle</mat-icon>
-                    <span>Recent $12K service</span>
-                  </div>
-                </div>
-                <div class="compare-card">
-                  <div class="card-title">Vehicle A</div>
-                  <div class="card-price">$89K</div>
-                  <div class="card-insight warning">
-                    <mat-icon>warning</mat-icon>
-                    <span>Belt service overdue</span>
-                  </div>
-                </div>
-              </div>
-            </div>
+      <div class="steps-grid">
+        <div class="step-card scroll-reveal stagger-item">
+          <div class="step-number">01</div>
+          <div class="step-icon">
+            <mat-icon>search</mat-icon>
           </div>
-          <div class="device-glow" [style.background]="'radial-gradient(circle, ' + aiFeatures[1].color + '44, transparent)'"></div>
+          <h3 class="step-title">Browse & Discover</h3>
+          <p class="step-description">
+            Explore our curated inventory of verified vehicles. Every listing includes comprehensive inspection reports.
+          </p>
+        </div>
+
+        <div class="step-card scroll-reveal stagger-item">
+          <div class="step-number">02</div>
+          <div class="step-icon">
+            <mat-icon>psychology</mat-icon>
+          </div>
+          <h3 class="step-title"><span class="ai-accent">AI</span> Analysis</h3>
+          <p class="step-description">
+            Get instant <span class="ai-accent">AI</span> reports analyzing 342+ checkpoints, predicting final prices, and comparing similar vehicles.
+          </p>
+        </div>
+
+        <div class="step-card scroll-reveal stagger-item">
+          <div class="step-number">03</div>
+          <div class="step-icon">
+            <mat-icon>shield_moon</mat-icon>
+          </div>
+          <h3 class="step-title">Set & Forget</h3>
+          <p class="step-description">
+            Enable AutoBid with your maximum price. Our <span class="ai-accent">AI</span> monitors 24/7 and bids strategically on your behalf.
+          </p>
+        </div>
+
+        <div class="step-card scroll-reveal stagger-item">
+          <div class="step-number">04</div>
+          <div class="step-icon">
+            <mat-icon>emoji_events</mat-icon>
+          </div>
+          <h3 class="step-title">Win Smart</h3>
+          <p class="step-description">
+            Get instant notifications when you win. On average, our users win at $7K under their maximum budget.
+          </p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- AI FEATURE 3: AutoBid (Scroll from RIGHT) -->
-  <section class="ai-feature-section feature-3">
-    <div class="feature-container">
-      <div class="feature-visual scroll-right">
-        <div class="visual-device">
-          <div class="device-screen">
-            <div class="screen-header">
-              <div class="header-icon">
-                <mat-icon>shield_moon</mat-icon>
-              </div>
-              <span>AI AUTOBID GUARDIAN</span>
-            </div>
-            <div class="screen-content">
-              <div class="autobid-status">
-                <div class="status-header">
-                  <mat-icon class="status-icon">bedtime</mat-icon>
-                  <span class="status-text">You're asleep. AI is working.</span>
-                </div>
-                <div class="status-timeline">
-                  <div class="timeline-item">
-                    <div class="timeline-time">3:47 AM</div>
-                    <div class="timeline-action">AutoBid placed strategic bid: $118K</div>
-                  </div>
-                  <div class="timeline-item success">
-                    <div class="timeline-time">3:52 AM</div>
-                    <div class="timeline-action">
-                      <mat-icon>emoji_events</mat-icon>
-                      <span>You won! Final price: $118K (under your $125K max)</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="device-glow" [style.background]="'radial-gradient(circle, ' + aiFeatures[2].color + '44, transparent)'"></div>
+  <!-- Featured Auctions -->
+  <section id="auctions" class="auctions-section" *ngIf="featuredAuctions.length > 0">
+    <div class="auctions-container">
+      <div class="section-header scroll-reveal">
+        <div class="header-badge">
+          <mat-icon>local_fire_department</mat-icon>
+          <span>LIVE NOW</span>
         </div>
+        <h2 class="section-title">Featured Auctions</h2>
+        <p class="section-subtitle">
+          Premium vehicles ready for intelligent bidding. Every auction includes <span class="ai-accent">AI</span>-powered analysis.
+        </p>
       </div>
 
-      <div class="feature-content scroll-left">
-        <div class="content-eyebrow" [style.color]="aiFeatures[2].color">
-          <mat-icon>{{ aiFeatures[2].icon }}</mat-icon>
-          <span>SUPERPOWER #3</span>
-        </div>
-        <h3 class="content-title">{{ aiFeatures[2].tagline }}</h3>
-        <p class="content-description">{{ aiFeatures[2].description }}</p>
-
-        <ul class="content-features">
-          <li class="stagger-child" *ngFor="let feature of aiFeatures[2].features">
-            <mat-icon>arrow_forward</mat-icon>
-            <span>{{ feature }}</span>
-          </li>
-        </ul>
-
-        <div class="content-testimonial">
-          <div class="testimonial-quote">"{{ aiFeatures[2].testimonial.quote }}"</div>
-          <div class="testimonial-author">
-            <strong>{{ aiFeatures[2].testimonial.author }}</strong>, {{ aiFeatures[2].testimonial.role }}
-            <span class="author-location">
-              <mat-icon>location_on</mat-icon>
-              {{ aiFeatures[2].testimonial.location }}
-            </span>
-          </div>
-        </div>
-
-        <div class="content-stat" [style.border-color]="aiFeatures[2].color">
-          <span class="stat-value" [style.color]="aiFeatures[2].color">{{ aiFeatures[2].stat }}</span>
-          <span class="stat-label">{{ aiFeatures[2].statLabel }}</span>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- TRUST METRICS (Fade In Scale) -->
-  <section class="trust-metrics-section">
-    <div class="metrics-container scroll-reveal">
-      <h2 class="metrics-title">Trusted by the <span class="gradient-text">Intelligent Few</span></h2>
-      <div class="metrics-grid">
-        <div class="metric-card stagger-child" *ngFor="let metric of trustMetrics">
-          <div class="metric-icon">
-            <mat-icon>{{ metric.icon }}</mat-icon>
-          </div>
-          <div class="metric-value">{{ metric.value }}</div>
-          <div class="metric-label">{{ metric.label }}</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- FEATURED AUCTIONS (Horizontal Scroll Hint) -->
-  <section class="featured-auctions-section" *ngIf="featuredAuctions.length > 0">
-    <div class="auctions-header scroll-reveal">
-      <h2 class="auctions-title">
-        <span>Live Auctions</span>
-        <span class="gradient-text">Ready for AI</span>
-      </h2>
-      <p class="auctions-description">
-        Every vehicle includes full inspection reports and AutoBid capability.
-      </p>
-    </div>
-
-    <div class="auctions-scroll-container">
       <div class="auctions-grid">
-        <div class="auction-card scroll-reveal stagger-child" *ngFor="let item of featuredAuctions">
-          <div class="card-image">
-            <img [src]="item.imageUrl || fallbackHeroImage" [alt]="item.make + ' ' + item.model" />
-            <div class="image-overlay"></div>
+        <article class="auction-card scroll-reveal stagger-item" *ngFor="let item of featuredAuctions">
+          <div class="card-image-wrapper">
+            <div class="card-image">
+              <img [src]="item.imageUrl || fallbackHeroImage" [alt]="item.make + ' ' + item.model" />
+              <div class="image-overlay"></div>
+              <div class="image-gradient"></div>
+            </div>
+
             <div class="card-badges">
               <div class="badge time">
                 <mat-icon>schedule</mat-icon>
                 <span>{{ getTimeRemaining(item.auction) }}</span>
               </div>
+              <div class="badge ai">
+                <mat-icon>psychology</mat-icon>
+                <span><span class="ai-accent">AI</span> Ready</span>
+              </div>
+            </div>
+
+            <div class="card-hover-overlay">
+              <div class="hover-content">
+                <mat-icon>visibility</mat-icon>
+                <span>View Details</span>
+              </div>
             </div>
           </div>
+
           <div class="card-content">
-            <div class="card-year">{{ item.year || '2024' }}</div>
+            <div class="card-header-row">
+              <div class="card-year">{{ item.year || '2024' }}</div>
+              <div class="card-verified">
+                <mat-icon>verified</mat-icon>
+                <span>Verified</span>
+              </div>
+            </div>
+
             <h3 class="card-title">{{ item.make || 'Premium' }} {{ item.model || 'Vehicle' }}</h3>
-            <div class="card-price">{{ formatCurrency(item.auction.auctionStartPrice) }}</div>
+
+            <div class="card-price-row">
+              <div class="price-label">Current Bid</div>
+              <div class="card-price">{{ formatCurrency(item.auction.auctionStartPrice) }}</div>
+            </div>
+
             <div class="card-features">
               <span class="feature-badge">
-                <mat-icon>verified</mat-icon>
-                AI Report
+                <mat-icon>fact_check</mat-icon>
+                <span><span class="ai-accent">AI</span> Report</span>
               </span>
               <span class="feature-badge">
-                <mat-icon>psychology</mat-icon>
+                <mat-icon>compare</mat-icon>
+                Compare
+              </span>
+              <span class="feature-badge">
+                <mat-icon>auto_mode</mat-icon>
                 AutoBid
               </span>
             </div>
-            <a [routerLink]="['/bidder/auctions', item.auction.auctionId, item.auction.inventoryAuctionId]" class="card-cta">
-              <span>View Auction</span>
-              <mat-icon>arrow_forward</mat-icon>
+
+            <a
+              [routerLink]="['/bidder/auctions', item.auction.auctionId, item.auction.inventoryAuctionId]"
+              class="card-cta"
+            >
+              <span class="btn-glass"></span>
+              <span class="btn-shine"></span>
+              <span class="btn-content">
+                <span>Place Bid</span>
+                <mat-icon>arrow_forward</mat-icon>
+              </span>
             </a>
           </div>
-        </div>
+        </article>
+      </div>
+
+      <div class="auctions-cta scroll-reveal">
+        <button (click)="scrollToSection('cta')" class="btn-view-all">
+          <span class="btn-border"></span>
+          <span class="btn-content">
+            <span>View All Auctions</span>
+            <mat-icon>arrow_forward</mat-icon>
+          </span>
+        </button>
       </div>
     </div>
   </section>
 
-  <!-- FINAL CTA (Zoom In Effect) -->
-  <section id="cta" class="final-cta-section">
-    <div class="cta-background">
-      <div class="cta-orb orb-1"></div>
-      <div class="cta-orb orb-2"></div>
-      <div class="cta-orb orb-3"></div>
+  <!-- CTA Section -->
+  <section id="cta" class="cta-section">
+    <div class="cta-background" data-parallax="0.2">
+      <div class="cta-orb cta-orb-1"></div>
+      <div class="cta-orb cta-orb-2"></div>
     </div>
 
-    <div class="cta-content scroll-reveal">
+    <div class="cta-container scroll-reveal">
       <div class="cta-badge">
         <mat-icon>workspace_premium</mat-icon>
-        <span>JOIN THE INTELLIGENT FEW</span>
+        <span>EXCLUSIVE ACCESS</span>
       </div>
 
-      <h2 class="cta-title">
-        <span>Ready to Bid with</span>
-        <span class="gradient-text">Intelligence?</span>
-      </h2>
+      <h2 class="cta-title">Ready to Win with Intelligence?</h2>
 
       <p class="cta-description">
-        AlgoX is built for collectors who value precision over price, trust data over gut feelings, and want to win—not just participate.
+        Join the platform built for collectors who value precision over price, trust data over gut feelings, and want to win—not just participate.
       </p>
 
       <div class="cta-stats">
         <div class="cta-stat">
-          <span class="stat-num">2,847</span>
-          <span class="stat-text">verified bidders</span>
+          <div class="stat-icon">
+            <mat-icon>groups</mat-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-num">2,847</span>
+            <span class="stat-text">Active Bidders</span>
+          </div>
         </div>
         <div class="cta-stat">
-          <span class="stat-num">$127K</span>
-          <span class="stat-text">avg. purchase</span>
+          <div class="stat-icon">
+            <mat-icon>paid</mat-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-num">$127K</span>
+            <span class="stat-text">Avg. Purchase</span>
+          </div>
         </div>
         <div class="cta-stat">
-          <span class="stat-num">94%</span>
-          <span class="stat-text">success rate</span>
+          <div class="stat-icon">
+            <mat-icon>stars</mat-icon>
+          </div>
+          <div class="stat-info">
+            <span class="stat-num">94%</span>
+            <span class="stat-text">Win Rate</span>
+          </div>
         </div>
       </div>
 
       <div class="cta-actions">
         <button (click)="navigateToSignup()" class="btn-cta-primary">
-          <span class="btn-bg"></span>
+          <span class="btn-glass"></span>
+          <span class="btn-shine"></span>
           <span class="btn-content">
-            <mat-icon>psychology</mat-icon>
+            <mat-icon>rocket_launch</mat-icon>
             <span>Request Invitation</span>
           </span>
-          <span class="btn-shimmer"></span>
-        </button>
-        <button (click)="scrollToSection('features')" class="btn-cta-secondary">
-          <span>See AI in Action</span>
-          <mat-icon>play_circle</mat-icon>
         </button>
       </div>
 
-      <div class="cta-footnote">
+      <div class="cta-note">
         <mat-icon>lock</mat-icon>
-        <span>Limited to serious collectors with verified identity and funding</span>
+        <span>Limited to verified collectors with confirmed identity and funding</span>
       </div>
     </div>
   </section>
 
-  <!-- FOOTER -->
+  <!-- Footer -->
   <footer class="site-footer">
     <div class="footer-container">
       <div class="footer-brand">
         <div class="footer-logo">
           <img [src]="algoLogoUrl" alt="Algo Auction" />
-          <span>ALGO AUCTION</span>
+          <span>ALGO × AUCTION</span>
         </div>
         <p class="footer-tagline">
-          AI-powered bidding meets inspection-first transparency. For the world's most discerning automotive collectors.
+          <span class="ai-accent">AI</span>-powered bidding meets inspection-first transparency. For the world's most discerning automotive collectors.
         </p>
+        <div class="footer-social">
+          <a href="#" class="social-link" aria-label="Twitter">
+            <mat-icon>tag</mat-icon>
+          </a>
+          <a href="#" class="social-link" aria-label="LinkedIn">
+            <mat-icon>business</mat-icon>
+          </a>
+          <a href="#" class="social-link" aria-label="Instagram">
+            <mat-icon>photo_camera</mat-icon>
+          </a>
+        </div>
       </div>
 
       <div class="footer-links">
         <div class="footer-column">
           <h4>Platform</h4>
           <a href="#">Live Auctions</a>
-          <a href="#">AutoBid AI</a>
+          <a href="#">AutoBid <span class="ai-accent">AI</span></a>
           <a href="#">Inspection Reports</a>
+          <a href="#">Vehicle Comparison</a>
         </div>
         <div class="footer-column">
           <h4>Company</h4>
-          <a href="#">About</a>
+          <a href="#">About Us</a>
           <a href="#">Careers</a>
+          <a href="#">Press</a>
           <a href="#">Contact</a>
         </div>
         <div class="footer-column">
+          <h4>Resources</h4>
+          <a href="#">Help Center</a>
+          <a href="#">Buyer Guide</a>
+          <a href="#"><span class="ai-accent">AI</span> API Docs</a>
+          <a href="#">Blog</a>
+        </div>
+        <div class="footer-column">
           <h4>Legal</h4>
-          <a href="#">Terms</a>
-          <a href="#">Privacy</a>
+          <a href="#">Terms of Service</a>
+          <a href="#">Privacy Policy</a>
+          <a href="#">Cookie Policy</a>
           <a href="#">Security</a>
         </div>
       </div>
